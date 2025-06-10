@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -25,6 +25,8 @@
 namespace SST {
 namespace Ember {
 
+using TraceStringDefinitions = std::unordered_map<uint64_t, std::string>;
+
 class EmberOTF2Generator : public EmberMessagePassingGenerator {
 
 public:
@@ -32,7 +34,7 @@ public:
 	~EmberOTF2Generator();
     	bool generate( std::queue<EmberEvent*>& evQ );
 
-	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+	SST_ELI_REGISTER_SUBCOMPONENT(
         	EmberOTF2Generator,
         	"ember",
          	"OTF2Motif",
@@ -42,7 +44,8 @@ public:
     	)
 
 	SST_ELI_DOCUMENT_PARAMS(
-        	{   "arg.tracePrefix",       "Sets the location of the trace",  "" }
+        	{   "arg.tracePrefix",       "Sets the location of the trace" },
+        	{   "arg.addCompute",        "Add compute time to try to match trace timestamps",  "false" }
 	)
 
 	SST_ELI_DOCUMENT_STATISTICS(
@@ -69,9 +72,20 @@ public:
 	        { "time-Commcreate", "Time spent in Commcreate event", "ns", 0},
     	)
 
-	void setCurrentTime( const OTF2_TimeStamp t ) {
+	void setTimerResolution(uint64_t timerResolution) {
+		m_timerResolution = timerResolution;
+	}
+
+	uint64_t getTimerResolution() {
+		return m_timerResolution;
+	}
+
+	void setCurrentTime( const OTF2_TimeStamp t, bool addCompute ) {
 		verbose( CALL_INFO, 4, 0, "Setting current timestamp to %" PRIu64 "\n", t );
 
+		if (addCompute && m_addCompute) {
+			compute(*eventQ, (t-currentTime)*1e9/m_timerResolution);
+		}
 		currentTime = t;
 	}
 
@@ -83,7 +97,33 @@ public:
 		return eventQ;
 	}
 
-	void setEventQueue( std::queue<EmberEvent*>* newQ ) {
+	int getSize() {
+		return m_size;
+	}
+
+	void set_inMPI(bool m) {
+		m_inMPI = m;
+	}
+
+	bool get_inMPI() {
+		return m_inMPI;
+	}
+
+    void compute(Queue& q, uint64_t time);
+    void send(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group);
+    void isend(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group, MessageRequest* req);
+    void recv(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID src, uint32_t tag, Communicator group, MessageResponse* resp );
+    void irecv(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID src, uint32_t tag, Communicator group,MessageRequest* req );
+    void wait(Queue& q, MessageRequest* req, MessageResponse* resp);
+    void barrier(Queue& q, Communicator comm);
+    void bcast(Queue& q, const Hermes::MemAddr& mydata, uint32_t count, PayloadDataType dtype, int root, Communicator group);
+    void allreduce( Queue& q, const Hermes::MemAddr& mydata, const Hermes::MemAddr& result, uint32_t count, PayloadDataType dtype, ReductionOperation op, Communicator group );
+    void reduce(Queue& q, const Hermes::MemAddr& mydata, const Hermes::MemAddr& result, uint32_t count, PayloadDataType dtype, ReductionOperation op, int root,Communicator group );
+    void scatter(Queue& q, const Hermes::MemAddr& mydata, uint32_t count_send, PayloadDataType dtype_send, const Hermes::MemAddr& result, uint32_t count_recv, PayloadDataType dtype_recv, int root, Communicator group);
+    void allgather(Queue& q, const Hermes::MemAddr& mydata, uint32_t count_send, PayloadDataType dtype_send, const Hermes::MemAddr& result, uint32_t count_recv, PayloadDataType dtype_recv, Communicator group);
+    void alltoall(Queue& q, const Hermes::MemAddr& mydata, uint32_t count_send, PayloadDataType dtype_send, const Hermes::MemAddr& result, uint32_t count_recv, PayloadDataType dtype_recv, Communicator group);
+
+    void setEventQueue( std::queue<EmberEvent*>* newQ ) {
 		eventQ = newQ;
 	}
 
@@ -108,26 +148,38 @@ public:
 		return CHAR;
 	}
 
+    TraceStringDefinitions& getGlobalStringDefs() {
+        return globalStringDefs;
+    }
+
 private:
-	OTF2_DefReader* traceLocalDefReader;
-	OTF2_GlobalDefReader* traceGlobalDefReader;
-	OTF2_GlobalEvtReader* traceGlobalEvtReader;
-	OTF2_GlobalEvtReaderCallbacks* traceGlobalEvtCallbacks;
-	OTF2_DefReaderCallbacks* traceLocalCallbacks;
-	OTF2_EvtReaderCallbacks* traceLocalEvtCallbacks;
-     	OTF2_Reader* traceReader;
-	OTF2_EvtReader* traceEvtReader;
+    OTF2_DefReader* traceLocalDefReader;
+    OTF2_GlobalDefReader* traceGlobalDefReader;
+    OTF2_GlobalDefReaderCallbacks* traceGlobalDefCallbacks;
+    OTF2_GlobalEvtReader* traceGlobalEvtReader;
+    OTF2_GlobalEvtReaderCallbacks* traceGlobalEvtCallbacks;
+    OTF2_DefReaderCallbacks* traceLocalCallbacks;
+    OTF2_EvtReaderCallbacks* traceLocalEvtCallbacks;
+    OTF2_Reader* traceReader;
+    OTF2_EvtReader* traceEvtReader;
 
-	OTF2_TimeStamp currentTime;
+    OTF2_TimeStamp currentTime;
 
-	std::vector<uint64_t> traceLocations;
-	uint64_t traceLocationCount;
-	uint64_t currentLocation;
+    std::vector<uint64_t> traceLocations;
+    uint64_t traceLocationCount;
+    uint64_t currentLocation;
 
-	bool traceOpenedDefFiles;
+    bool traceOpenedDefFiles;
+    TraceStringDefinitions globalStringDefs;
 
-	std::queue<EmberEvent*>* eventQ;
-	std::unordered_map<uint64_t, MessageRequest*> requestMap;
+    std::queue<EmberEvent*>* eventQ;
+    std::unordered_map<uint64_t, MessageRequest*> requestMap;
+
+    uint64_t m_size;
+    uint64_t m_timerResolution;
+    bool m_inMPI;
+    bool m_addCompute;
+    bool m_readGlobalStrings;
 };
 
 }

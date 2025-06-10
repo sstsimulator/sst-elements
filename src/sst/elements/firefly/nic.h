@@ -1,13 +1,13 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2021, NTESS
+// Copyright (c) 2013-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -17,7 +17,8 @@
 #ifndef COMPONENTS_FIREFLY_NIC_H
 #define COMPONENTS_FIREFLY_NIC_H
 
-#include <math.h>
+#include <cmath>
+#include <list>
 #include <sstream>
 #include <queue>
 #include <sst/core/module.h>
@@ -53,11 +54,9 @@ namespace Firefly {
 #define NIC_DBG_RECV_MOVE    (1<<9)
 #define NIC_DBG_LINK_CTRL    (1<<10)
 
-#define STREAM_NUM_SIZE 12
-
 class Nic : public SST::Component  {
 
-  public:
+public:
     SST_ELI_REGISTER_COMPONENT(
         Nic,
         "firefly",
@@ -124,7 +123,7 @@ class Nic : public SST::Component  {
         { "dmaBW_GBs", "set the one way DMA bandwidth", "100"},
         { "dmaContentionMult", "set the DMA contention mult", "100"},
 
-        {" useDetailed", "Use detailed compute model", "false"},
+        { "useDetailed", "Use detailed compute model", "false"},
     )
 
 	/* PARAMS
@@ -159,12 +158,12 @@ class Nic : public SST::Component  {
         {"detailed", "Port connected to the detailed model", {"memHierarchy.memEvent" , ""}},
     )
 
-  private:
+private:
     typedef unsigned RespKey_t;
 	class LinkControlWidget {
 
         typedef std::function<void()> Callback;
-	  public:
+    public:
 		LinkControlWidget( Output& output, Callback callback, int numVN ) : m_dbg(output), m_notifiers(numVN,NULL), m_num(numVN,0), m_callback(callback) {
 		}
 
@@ -197,14 +196,14 @@ class Nic : public SST::Component  {
 		std::vector< std::function<void()> > m_notifiers;
 	};
 
-  public:
+public:
 
     typedef uint32_t NodeId;
     static const NodeId AnyId = -1;
 
 	typedef MemoryModel::MemOp MemOp;
 
-  private:
+private:
 
     struct __attribute__ ((packed)) MsgHdr {
         enum Op : unsigned char { Msg, Rdma, Shmem } op;
@@ -248,6 +247,7 @@ class Nic : public SST::Component  {
             }
         }
     };
+
     struct RdmaMsgHdr {
         enum { Put, Get, GetResp } op;
         uint16_t    rgnNum;
@@ -257,7 +257,7 @@ class Nic : public SST::Component  {
 
     class EntryBase;
     class SelfEvent : public SST::Event {
-      public:
+    public:
 
 		enum { Callback, Event } type;
         typedef std::function<void()> Callback_t;
@@ -418,7 +418,7 @@ public:
 	}
 	SimTime_t getDelay_ns( ) {
 		SimTime_t val = m_nic2host_lat_ns - ( m_nic2host_lat_ns > 0 ? 1 : 0 );
-		return val; 
+		return val;
 	}
 
     void schedEvent( SelfEvent* event, SimTime_t delay = 0 ) {
@@ -496,12 +496,22 @@ struct X {
     SST::Link*              m_selfLink;
 
     SST::Interfaces::SimpleNetwork*     m_linkControl;
-    SST::Interfaces::SimpleNetwork::Handler<Nic>* m_recvNotifyFunctor;
-    SST::Interfaces::SimpleNetwork::Handler<Nic>* m_sendNotifyFunctor;
+    SST::Interfaces::SimpleNetwork::HandlerBase* m_recvNotifyFunctor;
+    SST::Interfaces::SimpleNetwork::HandlerBase* m_sendNotifyFunctor;
     LinkControlWidget* m_linkRecvWidget;
     LinkControlWidget* m_linkSendWidget;
 
 	uint64_t m_linkBytesPerSec;
+
+    std::vector< int >      m_sendStreamNum;
+
+    int getSendStreamNum( int pid ) {
+        unsigned int val = m_sendStreamNum[pid]++;
+
+        val &= ((1 << NUM_STREAM_ID_BITS)-1);
+        m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"pid=%d stream=%d next=%d\n",pid,val, m_sendStreamNum[pid] );
+        return val;
+    }
 
     Output                  m_dbg;
     std::vector<VirtNic*>   m_vNicV;

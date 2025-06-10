@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -46,7 +46,7 @@ class example0 : public SST::Component
 public:
 
 /*
- *  SST Registration macros register Components with the SST Core and 
+ *  SST Registration macros register Components with the SST Core and
  *  document their parameters, ports, etc.
  *  SST_ELI_REGISTER_COMPONENT is required, the documentation macros
  *  are only required if relevant
@@ -73,7 +73,7 @@ public:
     SST_ELI_DOCUMENT_PORTS(
         {"port",  "Link to another component", { "simpleElementExample.basicEvent", ""} }
     )
-    
+
     // Optional since there is nothing to document - see statistics example for more info
     SST_ELI_DOCUMENT_STATISTICS( )
 
@@ -84,9 +84,14 @@ public:
 
     // Constructor. Components receive a unique ID and the set of parameters that were assigned in the Python input.
     example0(SST::ComponentId_t id, SST::Params& params);
-    
+
     // Destructor
     ~example0();
+
+// Serialization
+    example0();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::simpleElementExample::example0)
 
 private:
     // Event handler, called when an event is received on our link

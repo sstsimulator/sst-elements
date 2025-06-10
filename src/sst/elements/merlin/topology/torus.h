@@ -1,15 +1,15 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -49,15 +49,15 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         internal_router_event::serialize_order(ser);
-        ser & dimensions;
-        ser & routing_dim;
+        SST_SER(dimensions);
+        SST_SER(routing_dim);
 
         if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
             dest_loc = new int[dimensions];
         }
 
         for ( int i = 0 ; i < dimensions ; i++ ) {
-            ser & dest_loc[i];
+            SST_SER(dest_loc[i]);
         }
     }
 
@@ -72,22 +72,29 @@ class topo_torus: public Topology {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         topo_torus,
         "merlin",
         "torus",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Multi-dimensional torus topology object",
-        SST::Merlin::Topology)
+        SST::Merlin::Topology
+    )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {"torus:shape",        "Shape of the torus specified as the number of routers in each dimension, where each dimension is separated by an x.  For example, 4x4x2x2.  Any number of dimensions is supported."},
-        {"torus:width",        "Number of links between routers in each dimension, specified in same manner as for shape.  For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
-        {"torus:local_ports",  "Number of endpoints attached to each router."},
+        // Parameters needed for use with old merlin python module
+        {"torus.shape", "Shape of the torus specified as the number of routers in each dimension, where each "
+                        "dimension is separated by an x.  For example, 4x4x2x2.  Any number of dimensions is supported."},
+        {"torus.width", "Number of links between routers in each dimension, specified in same manner as for shape.  "
+                        "For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
+        {"torus.local_ports", "Number of endpoints attached to each router."},
 
-        {"shape",        "Shape of the torus specified as the number of routers in each dimension, where each dimension is separated by an x.  For example, 4x4x2x2.  Any number of dimensions is supported."},
-        {"width",        "Number of links between routers in each dimension, specified in same manner as for shape.  For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
-        {"local_ports",  "Number of endpoints attached to each router."},
+
+        {"shape", "Shape of the torus specified as the number of routers in each dimension, where each dimension is "
+                  "separated by an x.  For example, 4x4x2x2.  Any number of dimensions is supported."},
+        {"width", "Number of links between routers in each dimension, specified in same manner as for shape.  For "
+                  "example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
+        {"local_ports", "Number of endpoints attached to each router."},
     )
 
 
@@ -105,7 +112,7 @@ private:
     int local_port_start;
 
     int num_vns;
-    
+
 public:
     topo_torus(ComponentId_t cid, Params& params, int num_ports, int rtr_id, int num_vns);
     ~topo_torus();
@@ -113,8 +120,8 @@ public:
     virtual void route_packet(int port, int vc, internal_router_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
 
-    virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts);
-    virtual internal_router_event* process_InitData_input(RtrEvent* ev);
+    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts);
+    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev);
 
     virtual PortState getPortState(int port) const;
     virtual int getEndpointID(int port);
@@ -124,7 +131,7 @@ public:
             vcs_per_vn[i] = 2;
         }
     }
-    
+
 protected:
     virtual int choose_multipath(int start_port, int num_ports, int dest_dist);
 

@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -15,7 +15,6 @@
 
 
 #include <sst_config.h>
-#include <sst/core/simulation.h>
 
 #include "arielcpu.h"
 
@@ -85,29 +84,30 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     uint32_t memLevels = params.find<uint32_t>("memmgr.memorylevels", 1, found);
     if (!found) memLevels = params.find<int>("memorylevels", 1);
     char * level_buffer = (char*) malloc(sizeof(char) * 256);
+    size_t level_buffer_size = sizeof(char) * 256;
     for (uint32_t i = 0; i < memLevels; i++) {
         // Check pagesize/pagecount/pagepopulate for each level
-        sprintf(level_buffer, "pagesize%" PRIu32, i);
+        snprintf(level_buffer, level_buffer_size, "pagesize%" PRIu32, i);
         paramStr = params.find<std::string>(level_buffer, "", found);
         if (found) {
             output->verbose(CALL_INFO, 0, 0, "WARNING - ariel parameter name change: change '%s' to 'memmgr.%s' in your input. The old parameter will continue to work for now but may not be supported in future releases.\n", level_buffer, level_buffer);
-            sprintf(level_buffer, "memmgr.pagesize%" PRIu32, i);
+            snprintf(level_buffer, level_buffer_size, "memmgr.pagesize%" PRIu32, i);
             params.find<std::string>(level_buffer, "", found);
             if (!found) params.insert(level_buffer, paramStr, true);
         }
-        sprintf(level_buffer, "pagecount%" PRIu32, i);
+        snprintf(level_buffer, level_buffer_size, "pagecount%" PRIu32, i);
         paramStr = params.find<std::string>(level_buffer, "", found);
         if (found) {
             output->verbose(CALL_INFO, 0, 0, "WARNING - ariel parameter name change: change '%s' to 'memmgr.%s' in your input. The old parameter will continue to work for now but may not be supported in future releases.\n", level_buffer, level_buffer);
-            sprintf(level_buffer, "memmgr.pagecount%" PRIu32, i);
+            snprintf(level_buffer, level_buffer_size, "memmgr.pagecount%" PRIu32, i);
             params.find<std::string>(level_buffer, "", found);
             if (!found) params.insert(level_buffer, paramStr, true);
         }
-        sprintf(level_buffer, "page_populate_%" PRIu32, i);
+        snprintf(level_buffer, level_buffer_size, "page_populate_%" PRIu32, i);
         paramStr = params.find<std::string>(level_buffer, "", found);
         if (found) {
             output->verbose(CALL_INFO, 0, 0, "WARNING - ariel parameter name change: change '%s' to 'memmgr.%s' in your input. The old parameter will continue to work for now but may not be supported in future releases.\n", level_buffer, level_buffer);
-            sprintf(level_buffer, "memmgr.pagepopulate%" PRIu32, i);
+            snprintf(level_buffer, level_buffer_size, "memmgr.pagepopulate%" PRIu32, i);
             params.find<std::string>(level_buffer, "", found);
             if (!found) params.insert(level_buffer, paramStr, true);
         }
@@ -138,20 +138,11 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     uint32_t maxPendingTransCore = (uint32_t) params.find<uint32_t>("maxtranscore", 16);
     uint64_t cacheLineSize       = (uint64_t) params.find<uint32_t>("cachelinesize", 64);
 
-    int gpu_e = (uint32_t) params.find<uint32_t>("gpu_enabled", 0);
-
-#ifdef HAVE_CUDA
-    if(gpu_e == 1)
-        gpu_enabled = true;
-    else
-        gpu_enabled = false;
-#endif
-
     /////////////////////////////////////////////////////////////////////////////////////
 
     frontend = loadUserSubComponent<ArielFrontend>("frontend", ComponentInfo::SHARE_NONE, core_count, maxCoreQueueLen, memmgr->getDefaultPool());
     if (!frontend) {
-        // ariel.frontend.pin points to either pin2 or pin3 based on sst-elements configuration
+        // ariel.frontend.pin points to pin3
         frontend = loadAnonymousSubComponent<ArielFrontend>("ariel.frontend.pin", "frontend", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_STATS,
                 params, core_count, maxCoreQueueLen, memmgr->getDefaultPool());
     }
@@ -159,17 +150,13 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
         output->fatal(CALL_INFO, -1, "%s, Error: Loading frontend subcomponent failed. If Ariel was not built with Pin, user must supply a custom frontend in the input file.\n", getName().c_str());
 
     tunnel = frontend->getTunnel();
-#ifdef HAVE_CUDA
-    tunnelR = frontend->getReturnTunnel();
-    tunnelD = frontend->getDataTunnel();
-#endif
 
     /////////////////////////////////////////////////////////////////////////////////////
 
     std::string cpu_clock = params.find<std::string>("clock", "1GHz");
     output->verbose(CALL_INFO, 1, 0, "Registering ArielCPU clock at %s\n", cpu_clock.c_str());
 
-    TimeConverter* timeconverter = registerClock( cpu_clock, new Clock::Handler<ArielCPU>(this, &ArielCPU::tick ) );
+    TimeConverter* timeconverter = registerClock( cpu_clock, new Clock::Handler2<ArielCPU,&ArielCPU::tick>(this) );
 
     output->verbose(CALL_INFO, 1, 0, "Clocks registered.\n");
 
@@ -180,11 +167,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     output->verbose(CALL_INFO, 1, 0, "Configuring cores and cache links...\n");
     for(uint32_t i = 0; i < core_count; ++i) {
         cpu_cores.push_back(loadComponentExtension<ArielCore>(tunnel,
-#ifdef HAVE_CUDA
-                 tunnelR, tunnelD,
-#endif
                  i, maxPendingTransCore, output, maxIssuesPerCycle, maxCoreQueueLen,
-                 cacheLineSize, memmgr, perform_checks, params));
+                 cacheLineSize, memmgr, perform_checks, params, timeconverter));
 
         // Set max number of instructions
         cpu_cores[i]->setMaxInsts(max_insts);
@@ -202,33 +186,27 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
                     getName().c_str(), core_count, mem->getMaxPopulatedSlotNumber());
 
         for (int i = 0; i < core_count; i++) {
-            cpu_to_cache_links.push_back(mem->create<Interfaces::SimpleMem>(i, ComponentInfo::INSERT_STATS, timeconverter, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
+            cpu_to_cache_links.push_back(mem->create<Interfaces::StandardMem>(i, ComponentInfo::INSERT_STATS, timeconverter, new StandardMem::Handler2<ArielCore,&ArielCore::handleEvent>(cpu_cores[i])));
             cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
         }
     } else {
     // Load from here not the user one; let the subcomponent have our port (cache_link)
         char* link_buffer = (char*) malloc(sizeof(char) * 256);
+        size_t link_buffer_size = sizeof(char) * 256;
         for (int i = 0; i < core_count; i++) {
             Params par;
             par.insert("port", "cache_link_" + std::to_string(i));
-            cpu_to_cache_links.push_back(loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", i,
-                        ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, timeconverter, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
+            cpu_to_cache_links.push_back(loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "memory", i,
+                        ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, timeconverter, new StandardMem::Handler2<ArielCore,&ArielCore::handleEvent>(cpu_cores[i])));
             cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
 
-#ifdef HAVE_CUDA
-            if(gpu_enabled) {
-               sprintf(link_buffer, "gpu_link_%" PRIu32, i);
-               cpu_to_gpu_links.push_back(configureLink(link_buffer, new Event::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleGpuAckEvent)));
-               cpu_cores[i]->setGpuLink(cpu_to_gpu_links[i]);
-               cpu_cores[i]->setGpu();
-            }
-
-            std::string executable = params.find<std::string>("executable", "");
-            cpu_cores[i]->setFilePath(executable);
-#endif
+            //Configuring Ariel to RTL link and RTLAck Event Handle
+               snprintf(link_buffer, link_buffer_size, "rtl_link_%" PRIu32, i);
+               cpu_to_rtl_links.push_back(configureLink(link_buffer, new Event::Handler2<ArielCore,&ArielCore::handleRtlAckEvent>(cpu_cores[i])));
+               cpu_cores[i]->setRtlLink(cpu_to_rtl_links[i]);
+               output->verbose(CALL_INFO, 1, 0, "Completed initialization of the Ariel RTL Link.\n");
         }
     }
-
 
     // Register us as an important component
     registerAsPrimaryComponent();

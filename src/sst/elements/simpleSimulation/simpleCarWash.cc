@@ -1,8 +1,8 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -42,8 +42,7 @@ simpleCarWash::simpleCarWash(ComponentId_t id, Params& params) :
 
     // Set our Main Clock (register main clocks)
     // This will automatically be called by the SST framework
-    registerClock(clock_frequency_str, new Clock::Handler<simpleCarWash>(this,
-			      &simpleCarWash::tick));
+    registerClock(clock_frequency_str, new Clock::Handler2<simpleCarWash,&simpleCarWash::tick>(this));
 
 #ifdef DISABLE_ONE_SHOTS
 // These are interesting, and we should do some fun stuff with them, like maybe have a car's driver
@@ -52,11 +51,11 @@ simpleCarWash::simpleCarWash(ComponentId_t id, Params& params) :
     // Set some other clocks
     // Second Clock (5ns)
     std::cout << "REGISTER CLOCK #2 at 5 ns" << std::endl;
-    registerClock("5 ns", new Clock::Handler<simpleCarWash, uint32_t>(this, &simpleCarWash::Clock2Tick, 222));
+    registerClock("5 ns", new Clock::Handler2<simpleCarWash,&simpleCarWash::Clock2Tick,uint32_t>(this,222));
 
     // Third Clock (15ns)
     std::cout << "REGISTER CLOCK #3 at 15 ns" << std::endl;
-    Clock3Handler = new Clock::Handler<simpleCarWash, uint32_t>(this, &simpleCarWash::Clock3Tick, 333);
+    Clock3Handler = new Clock::Handler2<simpleCarWash,&simpleCarWash::Clock3Tick,uint32_t>(this,333);
     tc = registerClock("15 ns", Clock3Handler);
 #endif
 
@@ -92,8 +91,8 @@ simpleCarWash::simpleCarWash(ComponentId_t id, Params& params) :
 
 #ifdef DISABLE_ONE_SHOTS
     // Create the OneShot Callback Handlers
-    callback1Handler = new OneShot::Handler<simpleCarWash, uint32_t>(this, &simpleCarWash::Oneshot1Callback, 456);
-    callback2Handler = new OneShot::Handler<simpleCarWash>(this, &simpleCarWash::Oneshot2Callback);
+    callback1Handler = new OneShot::Handler2<simpleCarWash,&simpleCarWash::Oneshot1Callback,uint32_t>(this,456);
+    callback2Handler = new OneShot::Handler2<simpleCarWash,&simpleCarWash::Oneshot2Callback>(this);
 #endif
 
 }

@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -55,9 +55,11 @@ public:
             {"debug_level",         "(uint) Debug verbosity level. Between 0 and 10", "0"} )
 
     SST_ELI_DOCUMENT_PORTS(
-            {"cpu", "Link to cpu/cache on the cpu side", {"memHierarchy.MemEventBase"}},
-            {"memory", "Direct link to a memory or bus", {"memHierarchy.MemEventBase"}},
-            {"network", "Network link to memory", {"memHierarchy.MemRtrEvent"}} )
+            {"highlink", "Link to a processor/cache/etc. on the upper/towards-processor side", {"memHierarchy.MemEventBase"}},
+            {"lowlink",  "Link to a cache/memoryetc. on the lower/towards-memory side", {"memHierarchy.MemEventBase"}},
+            {"cpu",      "DEPRECATED: Use 'highlink' instead. Link to cpu/cache on the cpu side", {"memHierarchy.MemEventBase"}},
+            {"memory",   "DEPRECATED: Use 'lowlink' instead. Direct link to a memory or bus", {"memHierarchy.MemEventBase"}},
+            {"network",  "DEPRECATED: Fill the 'lowlink' subcomponent slot with memHierarchy.MemNIC or memHierarchy.MemNICFour instead. Network link to memory", {"memHierarchy.MemRtrEvent"}} )
 
     SST_ELI_DOCUMENT_STATISTICS(
             {"request_received_scratch_read",   "Number of scratchpad reads received from CPU", "count", 1},
@@ -71,8 +73,10 @@ public:
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"backendConvertor", "Convertor to interface to memory timing model (backend)", "SST::MemHierarchy::ScratchBackendConvertor" },
-            {"cpulink", "CPU-side link manager", "SST::MemHierarchy::MemLinkBase"},
-            {"memlink", "Memory-side link manager", "SST::MemHierarchy::MemLinkBase"} )
+            {"highlink", "Port manager on the upper/processor-side (i.e., where requests typically come from). If you use this subcomponent slot, you do not need to connect the scratchpad's highlink port. Do connect this subcomponent's ports instead. For scratchpads with a single link, use this subcomponent slot only.", "SST::MemHierarchy::MemLinkBase"},
+            {"lowlink", "Port manager on the lower/memory side (i.e., where requests should be sent to). If you use this subcomponent slot, you do not need to connect the scratchpad's lowlink port. Do connect this subcomponent's ports instead. For scratchpads with a single link, use the 'highlink' subcomponent slot only.", "SST::MemHierarchy::MemLinkBase"},
+            {"cpulink", "DEPRECATED: Renamed to 'highlink'. CPU-side link manager", "SST::MemHierarchy::MemLinkBase"},
+            {"memlink", "DEPRECATED: Renamed to 'lowlink'. Memory-side link manager", "SST::MemHierarchy::MemLinkBase"} )
 
 /* Begin class defintion */
     Scratchpad(ComponentId_t id, Params &params);
@@ -82,6 +86,7 @@ public:
     // Output for debug info
     Output dbg;
     std::set<Addr> DEBUG_ADDR;
+    int dlevel;
 
     // Output for warnings, etc.
     Output out;

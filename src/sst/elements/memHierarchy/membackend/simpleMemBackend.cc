@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -24,10 +24,10 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
-SimpleMemory::SimpleMemory(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ 
+SimpleMemory::SimpleMemory(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){
     std::string access_time = params.find<std::string>("access_time", "100 ns");
     self_link = configureSelfLink("Self", access_time,
-            new Event::Handler<SimpleMemory>(this, &SimpleMemory::handleSelfEvent));
+            new Event::Handler2<SimpleMemory, &SimpleMemory::handleSelfEvent>(this));
 
     m_maxReqPerCycle = params.find<>("max_requests_per_cycle", 1);
 }

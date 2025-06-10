@@ -7,7 +7,7 @@ Executable = os.getenv('OMP_EXE', "ompbarrier/ompbarrier.x")
 
 # Define SST core options
 sst.setProgramOption("timebase", "1 ps")
-sst.setProgramOption("stopAtCycle", "100ms")
+sst.setProgramOption("stop-at", "100ms")
 
 # Define the simulation components
 ariel_cpus = sst.Component("cpus", "ariel.ariel")
@@ -26,7 +26,7 @@ ariel_cpus.addParams({
     "memmgr.defaultlevel"      : 0,
     "executable"        : Executable
 })
-  
+
 comp_c0_l1Dcache = sst.Component("c0.l1Dcache", "memHierarchy.Cache")
 comp_c0_l1Dcache.addParams({
       "debug" : """0""",

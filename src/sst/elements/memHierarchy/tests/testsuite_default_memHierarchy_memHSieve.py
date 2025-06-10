@@ -7,41 +7,13 @@ import shutil
 import fnmatch
 import csv
 
-################################################################################
-# Code to support a single instance module initialize, must be called setUp method
-
-module_init = 0
-module_sema = threading.Semaphore()
-
-def initializeTestModule_SingleInstance(class_inst):
-    global module_init
-    global module_sema
-
-    module_sema.acquire()
-    if module_init != 1:
-        try:
-            # Put your single instance Init Code Here
-            class_inst._setup_sieve_test_files()
-        except:
-            pass
-        module_init = 1
-    module_sema.release()
-
-################################################################################
-################################################################################
-################################################################################
 
 class testcase_memHierarchy_memHSieve(SSTTestCase):
 
-    def initializeClass(self, testName):
-        super(type(self), self).initializeClass(testName)
-        # Put test based setup code here. it is called before testing starts
-        # NOTE: This method is called once for every test
-
     def setUp(self):
         super(type(self), self).setUp()
-        initializeTestModule_SingleInstance(self)
         # Put test based setup code here. it is called once before every test
+        self._setup_sieve_test_files()
 
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test
@@ -49,7 +21,7 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
 
 #####
     pin_compiled = testing_is_PIN_Compiled()
-    pin_version_valid = testing_is_PIN2_used() | testing_is_PIN3_used()
+    pin_version_valid = testing_is_PIN3_used()
     pin_loaded = testing_is_PIN_loaded()
 
     @unittest.skipIf(not pin_compiled, "memHSieve: Requires PIN, but PinTool is not compiled with Elements. In sst_element_config.h PINTOOL_EXECUTABLE={0}".format(pin_exec_path))
@@ -62,7 +34,6 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
 
     def memHSieve_Template(self, testcase, testtimeout=360):
 
-        pin2defined = testing_is_PIN2_used()
         pin3defined = testing_is_PIN3_used()
 
         # Get the path to the test files

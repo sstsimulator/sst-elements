@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -25,14 +25,14 @@ namespace MemHierarchy {
 class VaultSimMemory : public FlagMemBackend {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(VaultSimMemory, "memHierarchy", "vaultsim", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Backend to interface with VaultSimC, a generic vaulted memory model", SST::MemHierarchy::FlagMemBackend)
+    SST_ELI_REGISTER_SUBCOMPONENT(VaultSimMemory, "memHierarchy", "vaultsim", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Backend to interface with vaultsim, a generic vaulted memory model", SST::MemHierarchy::FlagMemBackend)
 
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
             {"access_time", "Link latency for the link to the VaultSim memory model. With units (SI ok).", "100ns"} )
 
-    SST_ELI_DOCUMENT_PORTS( {"cube_link", "Link to VaultSim.", {"VaultSimC.MemRespEvent", "VaultSimC.MemReqEvent"} } )
+    SST_ELI_DOCUMENT_PORTS( {"cube_link", "Link to VaultSim.", {"vaultsim.MemRespEvent", "vaultsim.MemReqEvent"} } )
 
 /* Begin class definition */
     VaultSimMemory(ComponentId_t id, Params &params);

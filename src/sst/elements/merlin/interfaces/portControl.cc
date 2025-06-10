@@ -1,13 +1,13 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2021, NTESS
+// Copyright (c) 2013-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -60,7 +60,7 @@ PortControl::sendCtrlEvent(CtrlRtrEvent* ev)
         // If we were stalled waiting for credits and we had
         // packets, we need to add stall time
         if ( have_packets) {
-            output_port_stalls->addData(Simulation::getSimulation()->getCurrentSimCycle() - start_block);
+            output_port_stalls->addData(getCurrentSimCycle() - start_block);
         }
     }
 }
@@ -70,7 +70,7 @@ PortControl::send(internal_router_event* ev, int vc)
 {
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+        printStatus(getSimulationOutput(),0,0);
     }
 #endif
 
@@ -93,7 +93,7 @@ PortControl::send(internal_router_event* ev, int vc)
 	}
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+        printStatus(getSimulationOutput(),0,0);
     }
 #endif
 }
@@ -110,7 +110,7 @@ PortControl::recv(int vc)
 {
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+        printStatus(getSimulationOutput(),0,0);
     }
 #endif
 	if ( input_buf[vc].empty() ) return NULL;
@@ -141,7 +141,7 @@ PortControl::recv(int vc)
 
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+        printStatus(getSimulationOutput(),0,0);
     }
 #endif
     return event;
@@ -247,7 +247,7 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     have_packets(false),
     start_block(0),
     parent(rif),
-    output(Simulation::getSimulation()->getSimulationOutput()),
+    output(getSimulationOutput()),
     cm_activated(false),
     current_incast(0),
     total_flits_incoming(0),
@@ -298,10 +298,10 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     case Topology::R2N:
         host_port = true;
         port_link = configureLink(link_port_name, output_latency_timebase,
-                                   new Event::Handler<PortControl>(this,&PortControl::handle_input_n2r));
+                                   new Event::Handler2<PortControl,&PortControl::handle_input_n2r>(this));
         if ( port_link != NULL ) {
             output_timing = configureSelfLink(link_port_name + "_output_timing", "1GHz",
-                                              new Event::Handler<PortControl>(this,&PortControl::handle_output));
+                                              new Event::Handler2<PortControl,&PortControl::handle_output>(this));
         }
         break;
     case Topology::R2R:
@@ -313,10 +313,10 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
         // to abort on sends from then on.
         host_port = false;
         port_link = configureLink(link_port_name, output_latency_timebase,
-                                  new Event::Handler<PortControl>(this,&PortControl::handle_input_r2r));
+                                  new Event::Handler2<PortControl,&PortControl::handle_input_r2r>(this));
         if ( port_link != NULL ) {
             output_timing = configureSelfLink(link_port_name + "_output_timing", "1GHz",
-                                              new Event::Handler<PortControl>(this,&PortControl::handle_output));
+                                              new Event::Handler2<PortControl,&PortControl::handle_output>(this));
         }
         break;
     default:
@@ -328,10 +328,10 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
 	// This is the self link to enable the logic for adaptive link widths.
 	// The initial call to the handler dynlink_timing->send is made in setup.
 	dynlink_timing = configureSelfLink(link_port_name + "_dynlink_timing", "10us",
-                                       new Event::Handler<PortControl>(this,&PortControl::handleSAIWindow));
+                                       new Event::Handler2<PortControl,&PortControl::handleSAIWindow>(this));
 
 	disable_timing = configureSelfLink(link_port_name + "_disable_timing", "1us",
-                                       new Event::Handler<PortControl>(this,&PortControl::reenablePort));
+                                       new Event::Handler2<PortControl,&PortControl::reenablePort>(this));
     connected = true;
 
     if ( port_link == NULL ) {
@@ -388,10 +388,10 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     if ( mtu.hasUnits("B") ) mtu *= UnitAlgebra("8b/B");
 
     // Get the serialization time for an mtu
-    TimeConverter* tc = getTimeConverter(mtu / link_bw);
-    mtu_ser_time = tc->getFactor();
+    TimeConverter tc = getTimeConverter(mtu / link_bw);
+    mtu_ser_time = tc.getFactor();
     tc = getTimeConverter(flit_size / link_bw );
-    flit_ser_time = tc->getFactor();
+    flit_ser_time = tc.getFactor();
 
     UnitAlgebra cm_pktsize_threshold_ua = params.find<UnitAlgebra>("cm_pktsize_threshold","128B");
     if ( cm_pktsize_threshold_ua.hasUnits("B") ) cm_pktsize_threshold_ua *= UnitAlgebra("8b/B");
@@ -536,7 +536,7 @@ PortControl::initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads_
 
 
     // Need to start the timer for links that never send data
-    idle_start = Simulation::getSimulation()->getCurrentSimCycle();
+    idle_start = getCurrentSimCycle();
     is_idle = true;
 
     output_arb->setVCs(num_vns, vcs_per_vn);
@@ -558,8 +558,8 @@ void
 PortControl::setup() {
     if ( !connected ) return;
     if ( topo->getPortState(port_number) == Topology::FAILED ) {
-        port_link->replaceFunctor(new Event::Handler<PortControl>(this,&PortControl::handle_failed));
-        output_timing->replaceFunctor(new Event::Handler<PortControl>(this,&PortControl::handle_failed));
+        port_link->replaceFunctor(new Event::Handler2<PortControl,&PortControl::handle_failed>(this));
+        output_timing->replaceFunctor(new Event::Handler2<PortControl,&PortControl::handle_failed>(this));
     }
 	if (dlink_thresh >= 0) dynlink_timing->send(1,NULL);
     while ( init_events.size() ) {
@@ -574,7 +574,7 @@ PortControl::finish() {
 
     // Any links that ended in an idle state need to add stats
     if (is_idle && connected) {
-        idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
+        idle_time->addData(getCurrentSimCycle() - idle_start);
         is_idle = false;
     }
 
@@ -632,38 +632,38 @@ PortControl::init(unsigned int phase) {
         init_ev->command = RtrInitEvent::REPORT_BW;
         init_ev->ua_value = link_bw;
 
-        port_link->sendInitData(init_ev);
+        port_link->sendUntimedData(init_ev);
 
         // If this is a host port, send the endpoint ID to the LinkControl
         if ( topo->isHostPort(port_number) ) {
             init_ev = new RtrInitEvent();
             init_ev->command = RtrInitEvent::REPORT_FLIT_SIZE;
             init_ev->ua_value = flit_size;
-            port_link->sendInitData(init_ev);
+            port_link->sendUntimedData(init_ev);
 
             RtrInitEvent* ev = new RtrInitEvent();
             ev->command = RtrInitEvent::REPORT_ID;
             ev->int_value = topo->getEndpointID(port_number);
-            port_link->sendInitData(ev);
+            port_link->sendUntimedData(ev);
         }
         else {
             // Report router ID and port number to other side of link
             init_ev = new RtrInitEvent();
             init_ev->command = RtrInitEvent::REPORT_ID;
             init_ev->int_value = rtr_id;
-            port_link->sendInitData(init_ev);
+            port_link->sendUntimedData(init_ev);
 
             init_ev = new RtrInitEvent();
             init_ev->command = RtrInitEvent::REPORT_PORT;
             init_ev->int_value = port_number;
-            port_link->sendInitData(init_ev);
+            port_link->sendUntimedData(init_ev);
         }
         break;
     case 1:
         {
         // Get the link speed from the other side.  Actual link speed
         // will be the minumum the two sides
-        ev = port_link->recvInitData();
+        ev = port_link->recvUntimedData();
         init_ev = checkInitProtocol(ev, RtrInitEvent::REPORT_BW, CALL_INFO);
         if ( link_bw > init_ev->ua_value ) link_bw = init_ev->ua_value;
 
@@ -677,7 +677,7 @@ PortControl::init(unsigned int phase) {
         // Get initialization event from endpoint, but only if I am a host port
         if ( topo->isHostPort(port_number) ) {
             // Number of VNs used by the endpoint
-            ev = port_link->recvInitData();
+            ev = port_link->recvUntimedData();
             init_ev = checkInitProtocol(ev, RtrInitEvent::REQUEST_VNS, CALL_INFO);
             int req_vns = init_ev->int_value;
             if ( num_vns == -1 ) num_vns = req_vns;
@@ -694,7 +694,7 @@ PortControl::init(unsigned int phase) {
             init_ev = new RtrInitEvent();
             init_ev->command = RtrInitEvent::REQUEST_VNS;
             init_ev->int_value = num_vns;
-            port_link->sendInitData(init_ev);
+            port_link->sendUntimedData(init_ev);
 
             for ( int i = 0; i < req_vns; ++i ) {
                 init_ev = new RtrInitEvent();
@@ -713,18 +713,18 @@ PortControl::init(unsigned int phase) {
                         }
                     }
                 }
-                port_link->sendInitData(init_ev);
+                port_link->sendUntimedData(init_ev);
             }
 
         } else {
             // If not a host port, the other side sent us their rtr_id
             // and port_number
-            ev = port_link->recvInitData();
+            ev = port_link->recvUntimedData();
             init_ev = checkInitProtocol(ev, RtrInitEvent::REPORT_ID, CALL_INFO);
             remote_rtr_id = init_ev->int_value;
             delete init_ev;
 
-            ev = port_link->recvInitData();
+            ev = port_link->recvUntimedData();
             init_ev = checkInitProtocol(ev, RtrInitEvent::REPORT_PORT, CALL_INFO);
             remote_port_number = init_ev->int_value;
             delete init_ev;
@@ -745,7 +745,7 @@ PortControl::init(unsigned int phase) {
                 int curr_vc = 0;
                 // Send credits to host, but only once for each VN
                 for ( int i = 0; i < num_vns; ++i ) {
-                    port_link->sendInitData(new credit_event(i,port_ret_credits[curr_vc]));
+                    port_link->sendUntimedData(new credit_event(i,port_ret_credits[curr_vc]));
                     curr_vc += vcs_per_vn[i];
                 }
                 // Set all return credits to zero
@@ -761,7 +761,7 @@ PortControl::init(unsigned int phase) {
             // ready to receive credits, send the credit events.
             if ( remote_rdy_for_credits ) {
                 for ( int i = 0; i < num_vcs; i++ ) {
-                    port_link->sendInitData(new credit_event(i,port_ret_credits[i]));
+                    port_link->sendUntimedData(new credit_event(i,port_ret_credits[i]));
                     port_ret_credits[i] = 0;
                 }
                 // Make sure we only send the credits once
@@ -770,7 +770,7 @@ PortControl::init(unsigned int phase) {
         }
 
         // Need to recv the credits sent from the other side
-        while ( ( ev = port_link->recvInitData() ) != NULL ) {
+        while ( ( ev = port_link->recvUntimedData() ) != NULL ) {
             credit_event* ce = dynamic_cast<credit_event*>(ev);
             if ( ce != NULL ) {
                 if ( ce->vc >= num_vcs ) {
@@ -800,28 +800,16 @@ PortControl::complete(unsigned int phase) {
     Event *ev;
 
     // Need to get all the init events
-    while ( ( ev = port_link->recvInitData() ) != NULL ) {
+    while ( ( ev = port_link->recvUntimedData() ) != NULL ) {
         init_events.push_back(ev);
     }
-}
-
-void
-PortControl::sendInitData(Event *ev)
-{
-    sendUntimedData(ev);
-}
-
-Event*
-PortControl::recvInitData()
-{
-    return recvUntimedData();
 }
 
 void
 PortControl::sendUntimedData(Event *ev)
 {
     if ( connected ) {
-        port_link->sendInitData(ev);
+        port_link->sendUntimedData(ev);
     }
 }
 
@@ -844,7 +832,7 @@ PortControl::dumpState(std::ostream& stream)
 	stream << "Router id: " << rtr_id << ", port " << port_number << ":" << std::endl;
 	stream << "  Waiting = " << waiting << std::endl;
     if (is_idle)
-        stream << "Time since last active = " << (Simulation::getSimulation()->getCurrentSimCycle() - idle_start) << std::endl;
+        stream << "Time since last active = " << (getCurrentSimCycle() - idle_start) << std::endl;
     stream << "  have_packets = " << have_packets << std::endl;
     stream << "  start_block = " << start_block << std::endl;
 	for ( int i = 0; i < num_vcs; i++ ) {
@@ -947,7 +935,7 @@ PortControl::handle_input_n2r(Event* ev)
             // If we were stalled waiting for credits and we had
             // packets, we need to add stall time
             if ( have_packets) {
-                output_port_stalls->addData(Simulation::getSimulation()->getCurrentSimCycle() - start_block);
+                output_port_stalls->addData(getCurrentSimCycle() - start_block);
             }
 	    }
 	}
@@ -1007,8 +995,8 @@ PortControl::handle_input_r2r(Event* ev)
 {
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        ev->print("  ", Simulation::getSimulation()->getSimulationOutput());
-        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+        ev->print("  ", getSimulationOutput());
+        printStatus(getSimulationOutput(),0,0);
     }
 #endif
 	// Check to see if this is a credit or data packet
@@ -1030,7 +1018,7 @@ PortControl::handle_input_r2r(Event* ev)
             // If we were stalled waiting for credits and we had
             // packets, we need to add stall time
             if ( have_packets) {
-                output_port_stalls->addData(Simulation::getSimulation()->getCurrentSimCycle() - start_block);
+                output_port_stalls->addData(getCurrentSimCycle() - start_block);
             }
 	    }
 	}
@@ -1082,7 +1070,7 @@ PortControl::handle_input_r2r(Event* ev)
 	}
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+        printStatus(getSimulationOutput(),0,0);
     }
 #endif
 }
@@ -1091,7 +1079,7 @@ void
 PortControl::handle_output(Event* ev) {
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+        printStatus(getSimulationOutput(),0,0);
     }
 #endif
 	// The event is an empty event used just for timing.
@@ -1144,7 +1132,7 @@ PortControl::handle_output(Event* ev) {
 	    output_buf_count[vc_to_send]++;
 
         if (is_idle) {
-            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
+            idle_time->addData(getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
 
@@ -1188,18 +1176,18 @@ PortControl::handle_output(Event* ev) {
 	    // we either get something new in the output buffers or
 	    // receive credits back from the router.  However, we need
 	    // to know that we got to this state.
-        start_block = Simulation::getSimulation()->getCurrentSimCycle();
+        start_block = getCurrentSimCycle();
 	    waiting = true;
         // Begin counting the amount of time this port was idle
         if (!have_packets && !is_idle) {
-            idle_start = Simulation::getSimulation()->getCurrentSimCycle();
+            idle_start = getCurrentSimCycle();
             is_idle = true;
         }
 		// Should be in a stalled state rather than idle
 		// This should also be triggered when a link is temporarily disabled due to
 		// adjusting the link width
 		if (have_packets && is_idle){
-            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
+            idle_time->addData(getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
 		if (sai_port_disabled){
@@ -1208,7 +1196,7 @@ PortControl::handle_output(Event* ev) {
 	}
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+        printStatus(getSimulationOutput(),0,0);
     }
 #endif
 }
@@ -1231,7 +1219,7 @@ PortControl::reenablePort(Event* ev) {
 // This resets SAI metrics and calls increase/decreaseLinkWidth
 void
 PortControl::handleSAIWindow(Event* ev) {
-	SimTime_t cur_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t cur_time = getCurrentSimCycle();
 	// If we are in the middle of an active state.
 
 	// If we are in the middle of an idle state.
@@ -1277,7 +1265,7 @@ PortControl::decreaseLinkWidth() {
         cur_link_width = cur_link_width/2;
         link_bw = link_bw/2;
         UnitAlgebra link_clock = link_bw / flit_size;
-        TimeConverter* tc = getTimeConverter(link_clock);
+        TimeConverter tc = getTimeConverter(link_clock);
         output_timing->setDefaultTimeBase(tc);
         width_adj_count->addData(1);
         // I need to add a delay before messages can transmit on the link
@@ -1304,7 +1292,7 @@ PortControl::increaseLinkWidth()
         cur_link_width = max_link_width;
         link_bw = link_bw*2;
         UnitAlgebra link_clock = link_bw / flit_size;
-        TimeConverter* tc = getTimeConverter(link_clock);
+        TimeConverter tc = getTimeConverter(link_clock);
         output_timing->setDefaultTimeBase(tc);
         width_adj_count->addData(1);
         // I need to add a delay before messages can transmit on the link

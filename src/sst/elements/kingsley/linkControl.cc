@@ -1,13 +1,13 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2021, NTESS
+// Copyright (c) 2013-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -17,8 +17,7 @@
 #include <sst_config.h>
 
 #include "linkControl.h"
-
-#include <sst/core/simulation.h>
+#include <sst/core/output.h>
 
 namespace SST {
 using namespace Interfaces;
@@ -36,7 +35,7 @@ LinkControl::LinkControl(ComponentId_t id, Params &params, int vns) :
     waiting(true), have_packets(false),
     receiveFunctor(NULL), sendFunctor(NULL),
     network_initialized(false),
-    output(Simulation::getSimulation()->getSimulationOutput())
+    output(getSimulationOutput())
 {
     link_bw = params.find<UnitAlgebra>("link_bw");
     if ( link_bw.hasUnits("B/s") ) {
@@ -80,14 +79,14 @@ LinkControl::LinkControl(ComponentId_t id, Params &params, int vns) :
     if ( isAnonymous())
         port_name = params.find<std::string>("port_name");
 
-    rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
+    rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler2<LinkControl,&LinkControl::handle_input>(this));
 
     if (!rtr_link)
         output.fatal(CALL_INFO, -1, "%s, unable to configure link for port '%s'. Check port validity and subcomponent sharing flags\n",
                 getName().c_str(), port_name.c_str());
 
     output_timing = configureSelfLink(port_name + "_output_timing", "1GHz",
-            new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
+            new Event::Handler2<LinkControl,&LinkControl::handle_output>(this));
 
     // Register statistics
     packet_latency = registerStatistic<uint64_t>("packet_latency");
@@ -140,12 +139,12 @@ LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw
 
     // Configure the links
     // For now give it a fake timebase.  Will give it the real timebase during init
-    // rtr_link = rif->configureLink(port_name, time_base, new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
-    rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
+    // rtr_link = rif->configureLink(port_name, time_base, new Event::Handler2<LinkControl,&LinkControl::handle_input>(this));
+    rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler2<LinkControl,&LinkControl::handle_input>(this));
     // output_timing = rif->configureSelfLink(port_name + "_output_timing", time_base,
-    //         new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
+    //         new Event::Handler2<LinkControl,&LinkControl::handle_output>(this));
     output_timing = configureSelfLink(port_name + "_output_timing", "1GHz",
-            new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
+            new Event::Handler2<LinkControl,&LinkControl::handle_output>(this));
 
     // Register statistics
     packet_latency = registerStatistic<uint64_t>("packet_latency");
@@ -187,14 +186,14 @@ void LinkControl::init(unsigned int phase)
         init_ev = new NocInitEvent();
         init_ev->command = NocInitEvent::REPORT_ENDPOINT;
         init_ev->int_value = req_vns;
-        rtr_link->sendInitData(init_ev);
+        rtr_link->sendUntimedData(init_ev);
 
         init_state = 1;
         break;
     }
     case 1:
     {
-        ev = rtr_link->recvInitData();
+        ev = rtr_link->recvUntimedData();
         if ( NULL == ev ) break;
         init_ev = static_cast<NocInitEvent*>(ev);
         UnitAlgebra flit_size_ua = init_ev->ua_value;
@@ -202,7 +201,7 @@ void LinkControl::init(unsigned int phase)
 
         UnitAlgebra link_clock = link_bw / flit_size_ua;
 
-        TimeConverter* tc = getTimeConverter(link_clock);
+        TimeConverter tc = getTimeConverter(link_clock);
         output_timing->setDefaultTimeBase(tc);
 
         for ( int i = 0; i < req_vns; ++i ) {
@@ -210,19 +209,21 @@ void LinkControl::init(unsigned int phase)
             in_ret_credits[i] = inbuf_size.getRoundedValue() /flit_size;
         }
 
+        delete ev;
         init_state = 2;
         break;
     }
     case 2:
     {
-        ev = rtr_link->recvInitData();
+        ev = rtr_link->recvUntimedData();
         if ( NULL == ev ) break;
         init_ev = static_cast<NocInitEvent*>(ev);
         id = init_ev->int_value;
+	delete ev;
 
         // Send credit event to router
         credit_event* cr_ev = new credit_event(0,inbuf_size.getRoundedValue() / flit_size);
-        rtr_link->sendInitData(cr_ev);
+        rtr_link->sendUntimedData(cr_ev);
 
         // network_initialized = true;
         init_state = 3;
@@ -236,7 +237,7 @@ void LinkControl::init(unsigned int phase)
         // For all other phases, look for credit events, any other
         // events get passed up to containing component by adding them
         // to init_events queue
-        while ( ( ev = rtr_link->recvInitData() ) != NULL ) {
+        while ( ( ev = rtr_link->recvUntimedData() ) != NULL ) {
             BaseNocEvent* bev = static_cast<BaseNocEvent*>(ev);
             switch (bev->getType()) {
             case BaseNocEvent::CREDIT:
@@ -275,7 +276,7 @@ void LinkControl::complete(unsigned int phase)
     // For all other phases, look for credit events, any other
     // events get passed up to containing component by adding them
     // to init_events queue
-    while ( ( ev = rtr_link->recvInitData() ) != NULL ) {
+    while ( ( ev = rtr_link->recvUntimedData() ) != NULL ) {
         BaseNocEvent* bev = static_cast<BaseNocEvent*>(ev);
         switch (bev->getType()) {
         case BaseNocEvent::CREDIT:
@@ -399,12 +400,12 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
     return ret;
 }
 
-void LinkControl::sendInitData(SST::Interfaces::SimpleNetwork::Request* req)
+void LinkControl::sendUntimedData(SST::Interfaces::SimpleNetwork::Request* req)
 {
-    rtr_link->sendInitData(new NocPacket(req));
+    rtr_link->sendUntimedData(new NocPacket(req));
 }
 
-SST::Interfaces::SimpleNetwork::Request* LinkControl::recvInitData()
+SST::Interfaces::SimpleNetwork::Request* LinkControl::recvUntimedData()
 {
     if ( init_events.size() ) {
         NocPacket *ev = init_events.front();
@@ -557,7 +558,7 @@ LinkControl::printStatus(Output& out)
     }
     else {
         NocPacket* event = output_buf[0].front();
-        out.output("      src = %lld, dest = %lld, flits = %d\n",
+        out.output("      src = %" PRI_NID ", dest = %" PRI_NID ", flits = %d\n",
                    event->request->src, event->request->dest,
                    event->getSizeInFlits());
     }

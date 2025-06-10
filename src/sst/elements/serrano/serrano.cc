@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -36,7 +36,7 @@ SerranoComponent::SerranoComponent( SST::ComponentId_t id, SST::Params& params )
 
 	const std::string clock = params.find<std::string>("clock", "1GHz");
 	output->verbose(CALL_INFO, 2, 0, "Configuring Serrano for clock of %s...\n", clock.c_str());
-	registerClock( clock, new Clock::Handler<SerranoComponent>( this, &SerranoComponent::tick ) );
+	registerClock( clock, new Clock::Handler2<SerranoComponent,&SerranoComponent::tick>(this) );
 
 	constexpr int kernel_name_len = 128;
 	char* kernel_name = new char[kernel_name_len];
@@ -197,12 +197,12 @@ void SerranoComponent::constructGraph( SST::Output* output, const char* kernel_f
 		} else if( 0 == strcmp( token, "LINK" ) ) {
 			char* in_unit      = strtok( nullptr, " " );
 			char* out_unit     = strtok( nullptr, " " );
-		
+
 			const uint64_t u64_in_unit  = std::atoll( in_unit );
 			const uint64_t u64_out_unit = std::atoll( out_unit );
 
 			SerranoCircularQueue<SerranoMessage*>* new_q = new SerranoCircularQueue<SerranoMessage*>(2);
-	
+
 			if( ( units.find( u64_in_unit ) != units.end() ) && ( units.find( u64_out_unit ) != units.end() ) ) {
 				output->verbose(CALL_INFO, 4, 0, "Connecting %" PRIu64 " -> %" PRIu64 " (link-id: %" PRIu64 ")\n",
 					u64_in_unit, u64_out_unit, id);
@@ -223,7 +223,7 @@ void SerranoComponent::constructGraph( SST::Output* output, const char* kernel_f
 	/* cycle over and check queues are good, these will fatal */
 	for( auto next_unit : units ) {
 		next_unit.second->checkRequiredQueues( output );
-	}	
+	}
 }
 
 int SerranoComponent::read_line( FILE* file_h, char* buffer, const size_t buffer_max ) {

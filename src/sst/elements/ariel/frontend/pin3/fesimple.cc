@@ -1,8 +1,8 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,15 +21,18 @@
 #include <sys/stat.h>
 #include "atomic.hpp"
 #include <time.h>
+#include <inttypes.h>
 
 #include <string>
 #include <map>
 #include <set>
+#include "tb_header.h"
 
-#ifdef HAVE_CUDA
-#include "host_defines.h"
-#include "builtin_types.h"
+#if __has_include(<mpi.h>)
+#include <mpi.h>
+#define HAVE_MPI_H
 #endif
+
 
 // TODO add check for PinCRT compatible libz and try to pick that up
 /*#ifdef HAVE_PINCRT_LIBZ
@@ -54,6 +57,23 @@
 
 #undef __STDC_FORMAT_MACROS
 
+// Undo some Clang-specific changes possibly made by the libc++ bundled with
+// PinCRT
+#ifdef __LP64__
+# ifdef __clang__
+#  if defined(PIN_VERSION_MINOR) && PIN_VERSION_MINOR > 29
+// Allow usage of the warnmacros header without modifying it
+#   ifdef UNUSED
+#   undef UNUSED
+#   endif
+#   include <sst/core/warnmacros.h>
+DIAG_DISABLE(macro-redefined)
+#   define __PRI_64_prefix  "l"
+#   define __PRI_PTR_prefix "l"
+REENABLE_WARNING
+#  endif
+# endif
+#endif
 
 using namespace SST::ArielComponent;
 using namespace std;
@@ -72,10 +92,6 @@ KNOB<UINT32> InterceptMemAllocations(KNOB_MODE_WRITEONCE, "pintool", "m", "1", "
 KNOB<string> UseMallocMap           (KNOB_MODE_WRITEONCE, "pintool", "u", "",  "Should intercept ariel_malloc_flag() and interpret using a malloc map: specify filename or leave blank for disabled");
 KNOB<UINT32> KeepMallocStackTrace   (KNOB_MODE_WRITEONCE, "pintool", "k", "1", "Should keep shadow stack and dump on malloc calls. 1 = enabled, 0 = disabled");
 KNOB<UINT32> DefaultMemoryPool      (KNOB_MODE_WRITEONCE, "pintool", "d", "0", "Default Ariel Memory Pool");
-// GPGPUSim
-KNOB<string> SSTNamedPipe2          (KNOB_MODE_WRITEONCE, "pintool", "g", "",  "Named pipe to connect to SST simulator");
-KNOB<string> SSTNamedPipe3          (KNOB_MODE_WRITEONCE, "pintool", "x", "",  "Named pipe to connect to SST simulator");
-
 
 #define ARIEL_MAX(a,b) \
    ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
@@ -118,20 +134,16 @@ struct mallocFlagInfo {
 };
 std::vector<mallocFlagInfo> toFast;
 
-// GPGPUSim
-#ifdef HAVE_CUDA
-SST::Core::Interprocess::MMAPChild_Pin3<GpuReturnTunnel> * tunnelRmgr;
-SST::Core::Interprocess::MMAPChild_Pin3<GpuDataTunnel> * tunnelDmgr;
-GpuReturnTunnel *tunnelR = NULL;
-GpuDataTunnel *tunnelD = NULL;
-#endif
-
 // Time function interception
 struct timeval offset_tv;
+int timer_initialized = 0;
 #if !defined(__APPLE__)
 struct timespec offset_tp_mono;
 struct timespec offset_tp_real;
 #endif
+
+// MPI
+int api_mpi_init_used = 0;
 
 /****************************************************************/
 /********************** SHADOW STACK ****************************/
@@ -198,7 +210,7 @@ VOID ariel_print_stack(UINT32 thr, UINT64 allocSize, UINT64 allocAddr, UINT64 al
 {
 
     unsigned int depth = arielStack[thr].size() - 1;
-    BT_PRINTF("Malloc,0x%" PRIx64 ",%lu,%" PRIu64 "\n", allocAddr, allocSize, allocIndex);
+    BT_PRINTF("Malloc,0x%" PRIx64 ",%" PRIu64 ",%" PRIu64 "\n", allocAddr, allocSize, allocIndex);
 
     vector<ADDRINT> newMappings;
     for (vector<StackRecord>::reverse_iterator rit = arielStack[thr].rbegin(); rit != arielStack[thr].rend(); rit++) {
@@ -293,10 +305,6 @@ VOID Fini(INT32 code, VOID* v)
     tunnel->writeMessage(0, ac);
 
     delete tunnelmgr;
-#ifdef HAVE_CUDA
-    delete tunnelRmgr;
-    delete tunnelDmgr;
-#endif
 
     if(funcProfileLevel > 0) {
         FILE* funcProfileOutput = fopen("func.profile", "wt");
@@ -400,11 +408,13 @@ VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr, ADD
     tunnel->writeMessage(thr, ac);
 }
 
-VOID WriteStartInstructionMarker(UINT32 thr, ADDRINT ip)
+VOID WriteStartInstructionMarker(UINT32 thr, ADDRINT ip, UINT32 instClass, UINT32 simdOpWidth)
 {
     ArielCommand ac;
     ac.command = ARIEL_START_INSTRUCTION;
     ac.instPtr = (uint64_t) ip;
+    ac.inst.simdElemCount = simdOpWidth;
+    ac.inst.instClass = instClass;
     tunnel->writeMessage(thr, ac);
 }
 
@@ -423,7 +433,7 @@ VOID WriteInstructionReadWrite(THREADID thr, ADDRINT* readAddr, UINT32 readSize,
 
     if(enable_output) {
         if(thr < core_count) {
-            WriteStartInstructionMarker( thr, ip );
+            WriteStartInstructionMarker( thr, ip, instClass, simdOpWidth);
             WriteInstructionRead(  readAddr,  readSize,  thr, ip, instClass, simdOpWidth );
             WriteInstructionWrite( writeAddr, writeSize, thr, ip, instClass, simdOpWidth );
             WriteEndInstructionMarker( thr, ip );
@@ -432,14 +442,16 @@ VOID WriteInstructionReadWrite(THREADID thr, ADDRINT* readAddr, UINT32 readSize,
 }
 
 VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize, ADDRINT ip,
-            UINT32 instClass, UINT32 simdOpWidth)
+            UINT32 instClass, UINT32 simdOpWidth, BOOL first, BOOL last)
 {
 
     if(enable_output) {
         if(thr < core_count) {
-            WriteStartInstructionMarker(thr, ip);
+            if (first)
+                WriteStartInstructionMarker(thr, ip, instClass, simdOpWidth);
             WriteInstructionRead(  readAddr,  readSize,  thr, ip, instClass, simdOpWidth );
-            WriteEndInstructionMarker(thr, ip);
+            if (last)
+                WriteEndInstructionMarker(thr, ip);
         }
     }
 
@@ -458,14 +470,16 @@ VOID WriteNoOp(THREADID thr, ADDRINT ip)
 }
 
 VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSize, ADDRINT ip,
-            UINT32 instClass, UINT32 simdOpWidth)
+            UINT32 instClass, UINT32 simdOpWidth, BOOL first, BOOL last)
 {
 
     if(enable_output) {
         if(thr < core_count) {
-            WriteStartInstructionMarker(thr, ip);
+            if (first)
+                WriteStartInstructionMarker(thr, ip, instClass, simdOpWidth);
             WriteInstructionWrite(writeAddr, writeSize,  thr, ip, instClass, simdOpWidth);
-            WriteEndInstructionMarker(thr, ip);
+            if (last)
+                WriteEndInstructionMarker(thr, ip);
         }
     }
 
@@ -542,12 +556,51 @@ VOID InstrumentInstruction(INS ins, VOID *v)
         }
     }
 
-    if( INS_IsMemoryRead(ins) && INS_IsMemoryWrite(ins) ) {
+    UINT32 operands = INS_MemoryOperandCount(ins);
+    for (UINT32 op = 0; op < operands; op++) {
+        BOOL first = (op == 0);
+        BOOL last = (op == (operands - 1));
+
+        if (INS_MemoryOperandIsRead(ins, op)) {
+            INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
+                    WriteInstructionReadOnly,
+                    IARG_THREAD_ID,
+                    IARG_MEMORYREAD_EA, IARG_UINT32, INS_MemoryOperandSize(ins, op),
+                    IARG_INST_PTR,
+                    IARG_UINT32, instClass,
+                    IARG_UINT32, simdOpWidth,
+                    IARG_BOOL, first,
+                    IARG_BOOL, last,
+                    IARG_END);
+        } else {
+            INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
+                    WriteInstructionWriteOnly,
+                    IARG_THREAD_ID,
+                    IARG_MEMORYWRITE_EA, IARG_UINT32, INS_MemoryOperandSize(ins, op),
+                    IARG_INST_PTR,
+                    IARG_UINT32, instClass,
+                    IARG_UINT32, simdOpWidth,
+                    IARG_BOOL, first,
+                    IARG_BOOL, last,
+                    IARG_END);
+
+        }
+    }
+
+    if (operands == 0) {
+        INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
+                WriteNoOp,
+                IARG_THREAD_ID,
+                IARG_INST_PTR,
+                IARG_END);
+    }
+
+/*    if( INS_IsMemoryRead(ins) && INS_IsMemoryWrite(ins) ) {
         INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
                 WriteInstructionReadWrite,
                 IARG_THREAD_ID,
-                IARG_MEMORYREAD_EA, IARG_UINT32, INS_MemoryReadSize(ins),
-                IARG_MEMORYWRITE_EA, IARG_UINT32, INS_MemoryWriteSize(ins),
+                IARG_MEMORYREAD_EA, IARG_UINT32, INS_MemoryOperandSize(ins),
+                IARG_MEMORYWRITE_EA, IARG_UINT32, INS_MemoryOperandSize(ins),
                 IARG_INST_PTR,
                 IARG_UINT32, instClass,
                 IARG_UINT32, simdOpWidth,
@@ -556,7 +609,7 @@ VOID InstrumentInstruction(INS ins, VOID *v)
         INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
                 WriteInstructionReadOnly,
                 IARG_THREAD_ID,
-                IARG_MEMORYREAD_EA, IARG_UINT32, INS_MemoryReadSize(ins),
+                IARG_MEMORYREAD_EA, IARG_UINT32, INS_MemoryOperandSize(ins),
                 IARG_INST_PTR,
                 IARG_UINT32, instClass,
                 IARG_UINT32, simdOpWidth,
@@ -565,19 +618,14 @@ VOID InstrumentInstruction(INS ins, VOID *v)
         INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
                 WriteInstructionWriteOnly,
                 IARG_THREAD_ID,
-                IARG_MEMORYWRITE_EA, IARG_UINT32, INS_MemoryWriteSize(ins),
+                IARG_MEMORYWRITE_EA, IARG_UINT32, INS_MemoryOperandSize(ins),
                 IARG_INST_PTR,
                 IARG_UINT32, instClass,
                 IARG_UINT32, simdOpWidth,
                 IARG_END);
     } else {
-        INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
-                WriteNoOp,
-                IARG_THREAD_ID,
-                IARG_INST_PTR,
-                IARG_END);
     }
-
+*/
     if(funcProfileLevel > 0) {
         RTN rtn = INS_Rtn(ins);
         std::string rtn_name = "Unknown Function";
@@ -607,11 +655,19 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 void mapped_ariel_enable()
 {
 
-    // Note
-    // By adding clock offset calculation, this function now has visible side-effects when called more than once
-    // In most cases won't matter -> ariel_enable() called once or close together in time so offsets will stabilize quickly
-    // In some cases could cause a big jump in time in the middle of simulation -> ariel_enable() left in app but mode is always-on
-    // So, update ariel_enable & offsets in lock & don't update if already enabled
+    // Notes
+    // (1) After the first time ariel_enable is called, gettimeofday and clock_gettime will
+    // return simulation time instead of real time. In order to ensure monotonicity of the
+    // clock, the first time ariel_enable is called, we store the real time, and have
+    // gettimeofday and clock_gettime return the simulation time offset from that point.
+    // Furthermore, even if ariel_disable is called, we continue to return the simulation
+    // time, again to ensure monotonicity.
+    //
+    // (2) In some cases, switching to simulation time could cause a big jump in time in the
+    // middle of simulation.
+    //
+    // (3) One should not try to reason about gettimeofday and clock_gettime calls made
+    // in different enabled regions.
 
     /* LOCK */
     THREADID thr = PIN_ThreadId();
@@ -623,26 +679,54 @@ void mapped_ariel_enable()
     }
 
     // Setup timers to count start time + elapsed simulated time
-    struct timeval tvsim;
-    gettimeofday(&offset_tv, NULL);
-    tunnel->getTime(&tvsim);
-    offset_tv.tv_sec -= tvsim.tv_sec;
-    offset_tv.tv_usec -= tvsim.tv_usec;
+    // Only do this the first time Ariel is enabled
+    if (!timer_initialized) {
+        timer_initialized = 1;
+        struct timeval tvsim;
+        gettimeofday(&offset_tv, NULL);
+        tunnel->getTime(&tvsim);
+        offset_tv.tv_sec -= tvsim.tv_sec;
+        offset_tv.tv_usec -= tvsim.tv_usec;
 #if ! defined(__APPLE__)
-    struct timespec tpsim;
-    tunnel->getTimeNs(&tpsim);
-    offset_tp_mono.tv_sec = tvsim.tv_sec - tpsim.tv_sec;
-    offset_tp_mono.tv_nsec = (tvsim.tv_usec * 1000) - tpsim.tv_nsec;
-    offset_tp_real.tv_sec = tvsim.tv_sec - tpsim.tv_sec;
-    offset_tp_real.tv_nsec = (tvsim.tv_usec * 1000) - tpsim.tv_nsec;
+        struct timespec tpsim;
+        tunnel->getTimeNs(&tpsim);
+        offset_tp_mono.tv_sec = tvsim.tv_sec - tpsim.tv_sec;
+        offset_tp_mono.tv_nsec = (tvsim.tv_usec * 1000) - tpsim.tv_nsec;
+        offset_tp_real.tv_sec = tvsim.tv_sec - tpsim.tv_sec;
+        offset_tp_real.tv_nsec = (tvsim.tv_usec * 1000) - tpsim.tv_nsec;
 #endif
     /* ENABLE */
+    }
     enable_output = true;
 
     /* UNLOCK */
     PIN_ReleaseLock(&mainLock);
 
     fprintf(stderr, "ARIEL: Enabling memory and instruction tracing from program control at simulated Ariel cycle %" PRIu64 ".\n",
+            tunnel->getCycles());
+    fflush(stdout);
+    fflush(stderr);
+}
+
+/* Intercept ariel_disable() in application & stop simulating instructions */
+void mapped_ariel_disable()
+{
+    /* LOCK */
+    THREADID thr = PIN_ThreadId();
+    PIN_GetLock(&mainLock, thr);
+
+    if (!enable_output) {
+        PIN_ReleaseLock(&mainLock);
+        return;
+    }
+
+    /* DISABLE */
+    enable_output = false;
+
+    /* UNLOCK */
+    PIN_ReleaseLock(&mainLock);
+
+    fprintf(stderr, "ARIEL: Disabling memory and instruction tracing from program control at simulated Ariel cycle %" PRIu64 ".\n",
             tunnel->getCycles());
     fflush(stdout);
     fflush(stderr);
@@ -656,13 +740,16 @@ uint64_t mapped_ariel_cycles()
 
 /*
  * Override gettimeofday to return simulated time
- * If ariel_enable is false, returns system gettimeofday value
- * If ariel_enable is true, returns system gettimeofday when ariel was enabled + elapsed simulated time since ariel was enabled
+ * If timer_initialized is false, returns system gettimeofday value
+ * If timer_initialized is true, returns system gettimeofday when ariel was enabled + elapsed simulated time since ariel was *first* enabled
+ * See notes in mapped_ariel_enable.
  */
 int mapped_gettimeofday(struct timeval *tp, void *tzp)
 {
-    // Return 'real' time if simulation not enabled
-    if (!enable_output) {
+    // Return 'real' time if ariel_enable has not been called yet,
+    // otherwise return the sim time, offset by the real time
+    // ariel_enable was called to ensure monotonicity.
+    if (!timer_initialized) {
        return gettimeofday(tp, NULL);
     }
 
@@ -675,14 +762,15 @@ int mapped_gettimeofday(struct timeval *tp, void *tzp)
 
 /*
  * Override clock_gettime to return simulated time
- * If ariel_enable is false, returns actual clock_gettime value
- * If ariel_enable is true, returns elapsed simulated time since ariel was enabled + clock_gettime(CLOCK_MONOTONIC) from
- * when ariel was enabled
+ * If timer_initialized is false, returns actual clock_gettime value
+ * If timer_initialized is true, returns elapsed simulated time since ariel was enabled + clock_gettime(CLOCK_MONOTONIC) from
+ * when ariel was *first* enabled
+ * See notes in mapped_ariel_enable.
  */
 #if ! defined(__APPLE__)
 int mapped_clockgettime(clockid_t clock, struct timespec *tp)
 {
-    if (!enable_output) {
+    if (!timer_initialized) {
         struct timeval tv;
         int retval = gettimeofday(&tv, NULL);
         tp->tv_sec = tv.tv_sec;
@@ -743,6 +831,18 @@ void mapped_ariel_fence(void *virtualAddress)
     ADDRINT ip = IARG_INST_PTR;
 
     WriteFenceInstructionMarker(thr, ip);
+}
+
+void mapped_api_mpi_init() {
+    api_mpi_init_used = 1;
+}
+
+int check_for_api_mpi_init() {
+    if (!api_mpi_init_used && !getenv("ARIEL_DISABLE_MPI_INIT_CHECK")) {
+        fprintf(stderr, "Error: fesimple.cc: The Ariel API verion of MPI_Init_{thread} was not used, which can result in errors when used in conjunction with OpenMP. Please link against the Ariel API (included in this distribution at src/sst/elements/ariel/api) or disable this message by setting the environment variable `ARIEL_DISABLE_MPI_INIT_CHECK`\n");
+        exit(1);
+    }
+    return 0;
 }
 
 int ariel_mlm_memcpy(void* dest, void* source, size_t size) {
@@ -950,9 +1050,9 @@ void ariel_mlm_free(void* ptr)
 #ifdef ARIEL_DEBUG
         fprintf(stderr, "ARIEL: Matched call to free, passing to Ariel free routine.\n");
 #endif
-        free(ptr);
 
         const uint64_t virtAddr = (uint64_t) ptr;
+        free(ptr);
 
         ArielCommand ac;
         ac.command = ARIEL_ISSUE_TLM_FREE;
@@ -975,9 +1075,9 @@ VOID ariel_premalloc_instrument(ADDRINT allocSize, ADDRINT ip)
 
 VOID ariel_postmalloc_instrument(ADDRINT allocLocation)
 {
-    if(lastMallocSize >= 0) {
-        THREADID currentThread = PIN_ThreadId();
-        UINT32 thr = (UINT32) currentThread;
+    THREADID currentThread = PIN_ThreadId();
+    UINT32 thr = (UINT32) currentThread;
+    if(lastMallocSize[thr] >= 0) {
 
         const uint64_t virtualAddress = (uint64_t) allocLocation;
         const uint64_t allocationLength = (uint64_t) lastMallocSize[thr];
@@ -1024,503 +1124,6 @@ VOID ariel_postmalloc_instrument(ADDRINT allocLocation)
     }
 }
 
-#ifdef HAVE_CUDA
-#define GLOBAL_HEAP_START 0xC0000000
-size_t limit_size = 0;
-__host__ cudaError_t CUDARTAPI cudaMalloc(void **devPtr, size_t size){
-#ifdef ARIEL_DEBUG
-    printf("Call cudaMalloc.\n");
-#endif
-    THREADID currentThread = PIN_ThreadId();
-    UINT32 thr = (UINT32) currentThread;
-    tunnelR->clearBuffer(thr);
-
-    //Calculate GPU heap limit size
-    limit_size += size;
-    if (size % 256) limit_size += (size - size % 256);
-    ArielCommand ac;
-    ac.command = ARIEL_ISSUE_CUDA;
-    ac.API.name = GPU_MALLOC;
-    ac.API.CA.cuda_malloc.dev_ptr = devPtr;
-    ac.API.CA.cuda_malloc.size = size;
-    tunnel->writeMessage(thr, ac);
-
-    GpuCommand gc;
-    bool avail = false;
-    do {
-        avail = tunnelR->readMessageNB(thr, &gc);
-    } while (!avail);
-
-#ifdef ARIEL_DEBUG
-    printf("CUDA fesimple updated address %p\n", gc.ptr_address);
-#endif
-
-    //Set the devPtr to the malloc'd address
-    *devPtr = (void *)gc.ptr_address;
-
-    std::cout << gc.API_Return.name << std::endl;
-    tunnelR->clearBuffer(thr);
-    return cudaSuccess;
-}
-
-void** CUDARTAPI __cudaRegisterFatBinary(void *fatCubin) {
-#ifdef ARIEL_DEBUG
-    printf("Call __cudaRegisterFatBinary.\n");
-#endif
-    THREADID currentThread = PIN_ThreadId();
-    UINT32 thr = (UINT32) currentThread;
-
-    ArielCommand ac;
-    ac.command = ARIEL_ISSUE_CUDA;
-    ac.API.name = GPU_REG_FAT_BINARY;
-    tunnel->writeMessage(thr, ac);
-
-    GpuCommand gc;
-    bool avail=false;
-    do {
-        avail = tunnelR->readMessageNB(thr, &gc);
-    } while (!avail);
-
-    void** handle = (void **)gc.fat_cubin_handle;
-#ifdef ARIEL_DEBUG
-    printf("CUDA fesimple return from __cudaRegisterFatBinary with handle %d\n", gc.fat_cubin_handle);
-#endif
-    std::cout << gc.API_Return.name << std::endl;
-    tunnelR->clearBuffer(thr);
-    return handle;
-}
-
-void CUDARTAPI __cudaRegisterFunction(
-    void        **fatCubinHandle,
-    const char  *hostFun,
-    char        *deviceFun,
-    const char  *deviceName,
-    int         thread_limit,
-    uint3       *tid,
-    uint3       *bid,
-    dim3        *bDim,
-    dim3        *gDim,
-    int         *wSize
-){
-#ifdef ARIEL_DEBUG
-    printf("Call __cudaRegisterFunction\n");
-#endif
-    THREADID currentThread = PIN_ThreadId();
-    UINT32 thr = (UINT32) currentThread;
-
-    ArielCommand ac;
-    ac.command = ARIEL_ISSUE_CUDA;
-    ac.API.name = GPU_REG_FUNCTION;
-    ac.API.CA.register_function.fat_cubin_handle = (unsigned)(unsigned long long)fatCubinHandle;
-    ac.API.CA.register_function.host_fun = reinterpret_cast<uint64_t>(hostFun);
-    strncpy(ac.API.CA.register_function.device_fun, deviceFun, 512);
-    tunnel->writeMessage(thr, ac);
-
-    GpuCommand gc;
-    bool avail=false;
-    do {
-        avail = tunnelR->readMessageNB(thr, &gc);
-    } while (!avail);
-
-#ifdef ARIEL_DEBUG
-    printf("CUDA fesimple return from __cudaRegisterFunction\n");
-#endif
-    std::cout << gc.API_Return.name << std::endl;
-    tunnelR->clearBuffer(thr);
-}
-
-__host__ cudaError_t CUDARTAPI cudaMemcpy(void *dst, const void *src, size_t count, enum cudaMemcpyKind kind){
-    printf("Call cudaMemcpy. %p\n", dst);
-    fflush(stdout);
-    THREADID currentThread = PIN_ThreadId();
-    UINT32 thr = (UINT32) currentThread;
-    tunnelR->clearBuffer(thr);
-
-    //TunnelD supports 4k byte transfers
-    size_t max_page_size = 1<<12;
-    uint8_t payload[max_page_size];
-    size_t bytes_copied = 0;
-    bool avail=false;
-
-    GpuCommand gc;
-    GpuDataCommand gd;
-
-    enum cudaMemcpyKind final_kind = kind;
-    // Address need to justify the direction
-    if (kind == cudaMemcpyDefault) {
-        if (((size_t)src >= GLOBAL_HEAP_START) && ((size_t)src < GLOBAL_HEAP_START + limit_size )) {
-            if (((size_t)dst >= GLOBAL_HEAP_START) && ((size_t)dst < GLOBAL_HEAP_START + limit_size )) {
-                //device to device
-                final_kind = cudaMemcpyDeviceToDevice;
-            } else {
-                //device to host
-                final_kind = cudaMemcpyDeviceToHost;
-            }
-        } else {
-            if (((size_t)dst >= GLOBAL_HEAP_START) && ((size_t)dst < GLOBAL_HEAP_START + limit_size )) {
-                //host to device
-                final_kind = cudaMemcpyHostToDevice;
-            } else {
-                //host to host not supported
-                fprintf(stderr, "Error: cudaMemcpy host to host not suppoorted!\n");
-                fflush(stderr);
-                exit(-5);
-            }
-        }
-#ifdef ARIEL_DEBUG
-        printf("Copy with cudaMemcpyDefault under implementing %d!\n", final_kind);
-        fflush(stdout);
-#endif
-    }
-    ArielCommand ac;
-    ac.command = ARIEL_ISSUE_CUDA;
-    ac.API.name = GPU_MEMCPY;
-    ac.API.CA.cuda_memcpy.dst = (uint64_t) dst;
-    ac.API.CA.cuda_memcpy.src = (uint64_t) src;
-    ac.API.CA.cuda_memcpy.count = count;
-    ac.API.CA.cuda_memcpy.kind = final_kind;
-    tunnel->writeMessage(thr, ac);
-
-    if(final_kind == cudaMemcpyHostToDevice) {
-        if(count <= max_page_size){
-            // Single transfer (<=4k)
-            bytes_copied = PIN_SafeCopy(&payload, static_cast<const uint8_t*>(src), count);
-            memcpy(gd.page_4k, payload, count);
-            gd.count = count;
-            tunnelD->writeMessage(thr, gd);
-            do {
-                avail = tunnelR->readMessageNB(thr, &gc);
-            } while (!avail);
-        }else {
-            // Multiple transfers (>4k)
-            size_t remainder = count % (1<<12);
-            size_t pages = count - remainder;
-            uint64_t offset = 0;
-            while((pages != 0) || (remainder != 0)){
-                if(pages != 0){
-                    // Transfer 4k page
-                    bytes_copied = PIN_SafeCopy(&payload, static_cast<const uint8_t*>(src)+offset, 1<<12);
-                    memcpy(gd.page_4k, payload, 1<<12);
-                    gd.count = (1<<12);
-                    pages = pages - (1<<12);
-                    offset = offset + (1<<12);
-                }else {
-                    // Transfer any remaining data smaller than 4k
-                    bytes_copied = PIN_SafeCopy(&payload, static_cast<const uint8_t*>(src)+offset, remainder);
-                    memcpy(gd.page_4k, payload, remainder);
-                    gd.count = remainder;
-                    remainder = 0;
-                }
-                tunnelD->writeMessage(thr, gd);
-                do {
-                    avail = tunnelR->readMessageNB(thr, &gc);
-                } while (!avail);
-
-                // Clear flags and buffers for next page transfer
-                avail = false;
-                tunnelR->clearBuffer(thr);
-            }
-#ifdef ARIEL_DEBUG
-            printf("CUDA Transferred all Data\n");
-            fflush(stdout);
-#endif
-        }
-    } else if(final_kind==cudaMemcpyDeviceToHost) {
-        if(count <= max_page_size){
-            do {
-                avail = tunnelR->readMessageNB(thr, &gc);
-            } while (!avail);
-            avail = false;
-            do {
-                avail = tunnelD->readMessageNB(thr, &gd);
-            } while (!avail);
-            bytes_copied = PIN_SafeCopy((uint8_t*)dst, gd.page_4k, count);
-        } else {
-            /// Multiple transfers (>4k)
-            size_t remainder = count % (1<<12);
-            size_t pages = count - remainder;
-            uint64_t offset = 0;
-            uint8_t *data = (uint8_t*)malloc(count);
-            while((pages != 0) || (remainder != 0)){
-                if(pages != 0){
-                    // Receive 4k page
-                    do {
-                        avail = tunnelD->readMessageNB(thr, &gd);
-                    } while (!avail);
-
-                    memcpy(data+offset, gd.page_4k, (1<<12));
-                    pages = pages - (1<<12);
-                    offset = offset + (1<<12);
-                }else {
-                    // Receive any remaining data smaller than 4k
-                    do {
-                        avail = tunnelD->readMessageNB(thr, &gd);
-                    } while (!avail);
-
-                    memcpy(data+offset, gd.page_4k, remainder);
-                    remainder = 0;
-                }
-                tunnelD->clearBuffer(thr);
-                tunnelR->writeMessage(thr, gc);
-                // Clear flags and buffers for next page transfer
-                avail = false;
-            }
-            bytes_copied = PIN_SafeCopy((uint8_t*)dst, data, count);
-        }
-    } else if (final_kind==cudaMemcpyDeviceToDevice) {
-        //TODO: should Device-to-Device transfer do anything here?
-    } else {
-        fprintf(stderr, "Error: Unsupported cudaMemcpyKind %d!\n", kind);
-        exit(-7);
-    }
-
-#ifdef ARIEL_DEBUG
-    printf("CUDA sent/rec data. Wait for ACK\n");
-    fflush(stdout);
-#endif
-
-    do {
-        avail = tunnelR->readMessageNB(thr, &gc);
-    } while (!avail);
-
-#ifdef ARIEL_DEBUG
-    printf("CUDA sent/rec data. Continuing to next transfer\n");
-    std::cout << gc.API_Return.name << std::endl;
-    fflush(stdout);
-#endif
-    tunnelR->clearBuffer(thr);
-    return cudaSuccess;
-}
-
-__host__ cudaError_t CUDARTAPI cudaConfigureCall(dim3 gridDim, dim3 blockDim, size_t sharedMem, cudaStream_t stream){
-    THREADID currentThread = PIN_ThreadId();
-    UINT32 thr = (UINT32) currentThread;
-
-    ArielCommand ac;
-    ac.command = ARIEL_ISSUE_CUDA;
-    ac.API.name = GPU_CONFIG_CALL;
-    // TODO fix copy of dim3 params
-    ac.API.CA.cfg_call.gdx = gridDim.x;
-    ac.API.CA.cfg_call.gdy = gridDim.y;
-    ac.API.CA.cfg_call.gdz = gridDim.y;
-    ac.API.CA.cfg_call.bdx = blockDim.x;
-    ac.API.CA.cfg_call.bdy = blockDim.y;
-    ac.API.CA.cfg_call.bdz = blockDim.z;
-    ac.API.CA.cfg_call.sharedMem = sharedMem;
-    ac.API.CA.cfg_call.stream = stream;
-    tunnel->writeMessage(thr, ac);
-
-    GpuCommand gc;
-    bool avail=false;
-    do {
-        avail = tunnelR->readMessageNB(thr, &gc);
-    } while (!avail);
-    std::cout << "out of the do while " << std::endl;
-
-    std::cout << gc.API_Return.name << std::endl;
-    tunnelR->clearBuffer(thr);
-    return cudaSuccess;
-}
-
-__host__ cudaError_t CUDARTAPI cudaSetupArgument(const void *arg, size_t size, size_t offset){
-    printf("Call cudaSetupArgument.\n");
-    THREADID currentThread = PIN_ThreadId();
-    UINT32 thr = (UINT32) currentThread;
-    ArielCommand ac;
-
-    //TODO fix this so that it doesn't care about addresses vs values
-    uint8_t value[200] = {0};
-    if(size == 8){
-        ac.API.CA.set_arg.address = reinterpret_cast<uint64_t>(*((void**)arg));
-#ifdef ARIEL_DEBUG
-        printf("CUDA ADDRESS ARG %p\n",ac.API.CA.set_arg.address);
-#endif
-    } else{
-        ac.API.CA.set_arg.address = 0x00;
-        PIN_SafeCopy(&value, arg, size);
-        memcpy(ac.API.CA.set_arg.value, value, size);
-#ifdef ARIEL_DEBUG
-        printf("CUDA VALUE ARG ");
-        for(size_t i = 0; i < size; i++)
-            printf("%d ", value[i]);
-        printf("\n");
-#endif
-    }
-
-#ifdef ARIEL_DEBUG
-    printf("CUDA SIZE %d\n", size);
-    printf("CUDA OFFSET %d\n", offset);
-#endif
-
-    ac.API.CA.set_arg.size = size;
-    ac.API.CA.set_arg.offset = offset;
-    ac.command = ARIEL_ISSUE_CUDA;
-    ac.API.name = GPU_SET_ARG;
-    tunnel->writeMessage(thr, ac);
-
-    GpuCommand gc;
-    bool avail=false;
-    do {
-        avail = tunnelR->readMessageNB(thr, &gc);
-    } while (!avail);
-    std::cout << "out of the do while " << std::endl;
-
-    std::cout << gc.API_Return.name << std::endl;
-    tunnelR->clearBuffer(thr);
-    return cudaSuccess;
-}
-
-__host__ cudaError_t CUDARTAPI cudaLaunch(const void *func){
-#ifdef ARIEL_DEBUG
-    printf("Call cudaLaunch.\n");
-#endif
-    THREADID currentThread = PIN_ThreadId();
-    UINT32 thr = (UINT32) currentThread;
-
-    ArielCommand ac;
-    ac.command = ARIEL_ISSUE_CUDA;
-    ac.API.name = GPU_LAUNCH;
-    ac.API.CA.cuda_launch.func = reinterpret_cast<uint64_t>(func);
-    tunnel->writeMessage(thr, ac);
-
-    GpuCommand gc;
-    bool avail=false;
-    do {
-        avail = tunnelR->readMessageNB(thr, &gc);
-    } while (!avail);
-    std::cout << "out of the do while " << std::endl;
-
-    std::cout << gc.API_Return.name << std::endl;
-    tunnelR->clearBuffer(thr);
-}
-
-__host__ cudaError_t CUDARTAPI cudaFree(void *devPtr){
-#ifdef ARIEL_DEBUG
-    printf("Call cudaFree. %p\n", devPtr);
-#endif
-    THREADID currentThread = PIN_ThreadId();
-    UINT32 thr = (UINT32) currentThread;
-
-    ArielCommand ac;
-    ac.command = ARIEL_ISSUE_CUDA;
-    ac.API.name = GPU_FREE;
-    ac.API.CA.free_address = (uint64_t)devPtr;
-    tunnel->writeMessage(thr, ac);
-
-    GpuCommand gc;
-    bool avail=false;
-    do {
-        avail = tunnelR->readMessageNB(thr, &gc);
-    } while (!avail);
-    std::cout << "out of the do while " << std::endl;
-
-    std::cout << gc.API_Return.name << std::endl;
-    tunnelR->clearBuffer(thr);
-    return cudaSuccess;
-}
-
-__host__ __cudart_builtin__ cudaError_t CUDARTAPI cudaGetLastError(void){
-#ifdef ARIEL_DEBUG
-    printf("Call cudaGetLastError.\n");
-#endif
-    THREADID currentThread = PIN_ThreadId();
-    UINT32 thr = (UINT32) currentThread;
-    ArielCommand ac;
-    ac.command = ARIEL_ISSUE_CUDA;
-    ac.API.name = GPU_GET_LAST_ERROR;
-    tunnel->writeMessage(thr, ac);
-    GpuCommand gc;
-
-    bool avail=false;
-    do {
-        avail = tunnelR->readMessageNB(thr, &gc);
-    } while (!avail);
-    std::cout << gc.API_Return.name << std::endl;
-    std::cout << "out of the do while " << std::endl;
-    tunnelR->clearBuffer(thr);
-    return cudaSuccess;
-}
-
-void CUDARTAPI __cudaRegisterVar(
-		void **fatCubinHandle,
-		char *hostVar, //pointer to...something
-		char *deviceAddress, //name of variable
-		const char *deviceName, //name of variable (same as above)
-		int ext,
-		int size,
-		int constant,
-		int global )
-{
-#ifdef ARIEL_DEBUG
-    printf("Call __cudaRegisterVar.\n");
-#endif
-    THREADID currentThread = PIN_ThreadId();
-    UINT32 thr = (UINT32) currentThread;
-
-    ArielCommand ac;
-    ac.command = ARIEL_ISSUE_CUDA;
-    ac.API.name = GPU_REG_VAR;
-    ac.API.CA.register_var.fatCubinHandle = (unsigned)(unsigned long long)fatCubinHandle;
-    ac.API.CA.register_var.hostVar = reinterpret_cast<uint64_t>(hostVar);
-    strncpy(ac.API.CA.register_var.deviceName, deviceName, 256);
-    ac.API.CA.register_var.ext = ext;
-    ac.API.CA.register_var.size = size;
-    ac.API.CA.register_var.constant = constant;
-    ac.API.CA.register_var.global = global;
-    tunnel->writeMessage(thr, ac);
-
-    GpuCommand gc;
-    bool avail=false;
-    do {
-        avail = tunnelR->readMessageNB(thr, &gc);
-    } while (!avail);
-
-#ifdef ARIEL_DEBUG
-    printf("CUDA fesimple return from __cudaRegisterVar\n");
-    std::cout << gc.API_Return.name << std::endl;
-#endif
-    tunnelR->clearBuffer(thr);
-}
-
-__host__ cudaError_t CUDARTAPI __maxActiveBlock(
-        int* numBlocks,
-        const char *hostFunc,
-        int blockSize,
-        size_t dynamicSMemSize,
-        unsigned int flags)
-{
-#ifdef ARIEL_DEBUG
-    printf("Call cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags %p\n", hostFunc);
-    fflush(stdout);
-#endif
-    THREADID currentThread = PIN_ThreadId();
-    UINT32 thr = (UINT32) currentThread;
-
-    ArielCommand ac;
-    ac.command = ARIEL_ISSUE_CUDA;
-    ac.API.name = GPU_MAX_BLOCK;
-    ac.API.CA.max_active_block.hostFunc = reinterpret_cast<uint64_t>(hostFunc);
-    ac.API.CA.max_active_block.blockSize = blockSize;
-    ac.API.CA.max_active_block.dynamicSMemSize = dynamicSMemSize;
-    ac.API.CA.max_active_block.flags = flags;
-    tunnel->writeMessage(thr, ac);
-
-    GpuCommand gc;
-    bool avail=false;
-    do {
-        avail = tunnelR->readMessageNB(thr, &gc);
-    } while (!avail);
-
-    *numBlocks = gc.num_block;
-#ifdef ARIEL_DEBUG
-    printf("CUDA fesimple return from cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags with numBlock %d\n", gc.num_block);
-    std::cout << gc.API_Return.name << std::endl;
-#endif
-    tunnelR->clearBuffer(thr);
-    return cudaSuccess;
-}
-#endif
-
 VOID ariel_postfree_instrument(ADDRINT allocLocation)
 {
     THREADID currentThread = PIN_ThreadId();
@@ -1564,6 +1167,49 @@ void mapped_ariel_malloc_flag(int64_t mallocLocId, int count, int level)
     }
 }
 
+void ariel_start_RTL_sim(RTL_shmem_info* rtl_shmem) {
+
+    ArielCommand acRtl;
+    acRtl.command = ARIEL_ISSUE_RTL;
+    acRtl.shmem.inp_size = rtl_shmem->get_inp_size();
+    acRtl.shmem.ctrl_size = rtl_shmem->get_ctrl_size();
+    acRtl.shmem.updated_rtl_params_size = rtl_shmem->get_params_size();
+
+    acRtl.shmem.inp_ptr = rtl_shmem->get_inp_ptr();
+    acRtl.shmem.ctrl_ptr = rtl_shmem->get_ctrl_ptr();
+    acRtl.shmem.updated_rtl_params = rtl_shmem->get_updated_rtl_params();
+
+    THREADID thr = PIN_ThreadId();
+    const uint32_t thrID = (uint32_t) thr;
+    tunnel->writeMessage(thrID, acRtl);
+    #ifdef ARIEL_DEBUG
+    fprintf(stderr, "\nMessage to add RTL Event into Ariel Event Queue successfully delivered via ArielTunnel");
+    #endif
+
+    return;
+}
+
+void ariel_update_RTL_signals(RTL_shmem_info* rtl_shmem) {
+
+    ArielCommand acRtl;
+    acRtl.command = ARIEL_ISSUE_RTL;
+    acRtl.shmem.inp_size = rtl_shmem->get_inp_size();
+    acRtl.shmem.ctrl_size = rtl_shmem->get_ctrl_size();
+    acRtl.shmem.updated_rtl_params_size = rtl_shmem->get_params_size();
+    acRtl.shmem.inp_ptr = rtl_shmem->get_inp_ptr();
+    acRtl.shmem.ctrl_ptr = rtl_shmem->get_ctrl_ptr();
+    acRtl.shmem.updated_rtl_params = rtl_shmem->get_updated_rtl_params();
+
+    THREADID thr = PIN_ThreadId();
+    const uint32_t thrID = (uint32_t) thr;
+    tunnel->writeMessage(thrID, acRtl);
+    #ifdef ARIEL_DEBUG
+    fprintf(stderr, "\nMessage to add RTL Event into Ariel Event Queue to update RTL signals successfully delivered via ArielTunnel");
+    #endif
+
+    return;
+}
+
 VOID InstrumentRoutine(RTN rtn, VOID* args)
 {
     if (KeepMallocStackTrace.Value() == 1) {
@@ -1579,6 +1225,11 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
             enable_output = false;
         }
         return;
+    } else if (RTN_Name(rtn) == "ariel_disable" || RTN_Name(rtn) == "_ariel_disable" || RTN_Name(rtn) == "__arielfort_MOD_ariel_disable") {
+        fprintf(stderr,"Identified routine: ariel_disable, replacing with Ariel equivalent...\n");
+        RTN_Replace(rtn, (AFUNPTR) mapped_ariel_disable);
+        fprintf(stderr,"Replacement complete.\n");
+        return;
     } else if (RTN_Name(rtn) == "gettimeofday" || RTN_Name(rtn) == "_gettimeofday") {
         fprintf(stderr,"Identified routine: gettimeofday, replacing with Ariel equivalent...\n");
         RTN_Replace(rtn, (AFUNPTR) mapped_gettimeofday);
@@ -1589,6 +1240,24 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
         RTN_Replace(rtn, (AFUNPTR) mapped_ariel_cycles);
         fprintf(stderr, "Replacement complete\n");
         return;
+    } else if (RTN_Name(rtn) == "MPI_Init" || RTN_Name(rtn) == "_MPI_Init") {
+        fprintf(stderr, "Identified routine: MPI_Init. Instrumenting.\n");
+        RTN_Open(rtn);
+        RTN_InsertCall(rtn, IPOINT_AFTER, (AFUNPTR) check_for_api_mpi_init, IARG_END);
+        RTN_Close(rtn);
+        fprintf(stderr, "Instrumentation complete\n");
+    } else if (RTN_Name(rtn) == "MPI_Init_thread" || RTN_Name(rtn) == "_MPI_Init_thread") {
+        fprintf(stderr, "Identified routine: MPI_Init_thread. Instrumenting.\n");
+        RTN_Open(rtn);
+        RTN_InsertCall(rtn, IPOINT_AFTER, (AFUNPTR) check_for_api_mpi_init, IARG_END);
+        RTN_Close(rtn);
+        fprintf(stderr, "Instrumentation complete\n");
+    } else if (RTN_Name(rtn) == "api_mpi_init" || RTN_Name(rtn) == "_api_mpi_init") {
+        fprintf(stderr, "Replacing api_mpi_init with mapped_api_mpi_init.\n");
+        RTN_Replace(rtn, (AFUNPTR) mapped_api_mpi_init);
+        fprintf(stderr, "Replacement complete\n");
+        return;
+        return;
 #if ! defined(__APPLE__)
     } else if (RTN_Name(rtn) == "clock_gettime" || RTN_Name(rtn) == "_clock_gettime" ||
         RTN_Name(rtn) == "__clock_gettime") {
@@ -1597,6 +1266,17 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
         fprintf(stderr,"Replacement complete.\n");
         return;
 #endif
+    } else if (RTN_Name(rtn) == "start_RTL_sim") {
+        fprintf(stderr,"Identified routine: start_RTL_sim, replacing with Ariel equivalent...\n");
+        RTN_Replace(rtn, (AFUNPTR) ariel_start_RTL_sim);
+        fprintf(stderr,"Replacement complete.\n");
+        return;
+    } else if(RTN_Name(rtn) == "update_RTL_sig") {
+        fprintf(stderr,"Identified routine: update_RTL_signals, replacing with Ariel equivalent...\n");
+        RTN_Replace(rtn, (AFUNPTR) ariel_update_RTL_signals);
+        fprintf(stderr,"Replacement complete.\n");
+        return;
+
     } else if ((InterceptMemAllocations.Value() > 0) && RTN_Name(rtn) == "mlm_malloc") {
         // This means we want a special malloc to be used (needs a TLB map inside the virtual core)
         fprintf(stderr,"Identified routine: mlm_malloc, replacing with Ariel equivalent...\n");
@@ -1668,63 +1348,6 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
         return;
     } else if (RTN_Name(rtn) == "ariel_munmap_mlm" || RTN_Name(rtn) == "_ariel_munmap_mlm") {
         return;
-#ifdef HAVE_CUDA
-    } else if(RTN_Name(rtn) == "__cudaRegisterFatBinary") {
-    fprintf(stderr, "Identified routine: __cudaRegisterFatBinary, replacing with GPGPU-Sim equivilant...\n");
-    AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) __cudaRegisterFatBinary);
-    fprintf(stderr,"Replacement complete. (%p)\n", ret);
-    return;
-    } else if(RTN_Name(rtn) == "__cudaRegisterFunction") {
-    fprintf(stderr, "Identified routine: __cudaRegisterFunction, replacing with GPGPU-Sim equivilant...\n");
-    AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) __cudaRegisterFunction);
-    fprintf(stderr,"Replacement complete. (%p)\n", ret);
-    return;
-    } else if(RTN_Name(rtn) == "cudaMalloc") {
-    fprintf(stderr, "Identified routine: cudaMalloc, replacing with GPGPU-Sim equivilant...\n");
-    AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) cudaMalloc);
-    fprintf(stderr,"Replacement complete. (%p)\n", ret);
-    return;
-    } else if(RTN_Name(rtn) == "cudaMemcpy") {
-    fprintf(stderr, "Identified routine: cudaMemcpy, replacing with GPGPU-Sim equivilant...\n");
-    AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) cudaMemcpy);
-    fprintf(stderr,"Replacement complete. (%p)\n", ret);
-    return;
-    } else if(RTN_Name(rtn) == "cudaConfigureCall") {
-    fprintf(stderr, "Identified routine: cudaConfigureCall, replacing with GPGPU-Sim equivilant...\n");
-    AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) cudaConfigureCall);
-    fprintf(stderr,"Replacement complete. (%p)\n", ret);
-    return;
-    } else if(RTN_Name(rtn) == "cudaSetupArgument") {
-    fprintf(stderr, "Identified routine: cudaSetupArgument, replacing with GPGPU-Sim equivilant...\n");
-    AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) cudaSetupArgument);
-    fprintf(stderr,"Replacement complete. (%p)\n", ret);
-    return;
-    } else if(RTN_Name(rtn) == "cudaLaunch") {
-    fprintf(stderr, "Identified routine: cudaLaunch, replacing with GPGPU-Sim equivilant...\n");
-    AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) cudaLaunch);
-    fprintf(stderr,"Replacement complete. (%p)\n", ret);
-    return;
-    } else if(RTN_Name(rtn) == "cudaFree") {
-    fprintf(stderr, "Identified routine: cudaFree, replacing with GPGPU-Sim equivilant...\n");
-    AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) cudaFree);
-    fprintf(stderr,"Replacement complete. (%p)\n", ret);
-    return;
-    } else if(RTN_Name(rtn) == "cudaGetLastError") {
-    fprintf(stderr, "Identified routine: cudaGetLastError, replacing with GPGPU-Sim equivilant...\n");
-    AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) cudaGetLastError);
-    fprintf(stderr,"Replacement complete. (%p)\n", ret);
-    return;
-    } else if(RTN_Name(rtn) == "__cudaRegisterVar") {
-    fprintf(stderr, "Identified routine: __cudaRegisterVar, replacing with GPGPU-Sim equivilant...\n");
-    AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) __cudaRegisterVar);
-    fprintf(stderr,"Replacement complete. (%p)\n", ret);
-    return;
-    } else if(RTN_Name(rtn) == "cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags") {
-    fprintf(stderr, "Identified routine: cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags, replacing with GPGPU-Sim equivilant...\n");
-    AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) __maxActiveBlock);
-    fprintf(stderr,"Replacement complete. (%p)\n", ret);
-    return;
-#endif
     } else if (UseMallocMap.Value() != "") {
         if (RTN_Name(rtn) == "ariel_malloc_flag" || RTN_Name(rtn) == "_ariel_malloc_flag") {
 
@@ -1738,6 +1361,13 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
             return;
         }
     }
+}
+
+void fork_disable_child_output(THREADID threadid, const CONTEXT *ctx, VOID *v) {
+#ifdef ARIEL_DEBUG
+    fprintf(stderr, "Warning: fesimple cannot trace forked processes. Disabling Pin for pid %d\n", getpid());
+#endif
+    PIN_Detach();
 }
 
 void loadFastMemLocations()
@@ -1817,12 +1447,6 @@ int main(int argc, char *argv[])
 // Pin version specific tunnel attach
     tunnelmgr = new SST::Core::Interprocess::MMAPChild_Pin3<ArielTunnel>(SSTNamedPipe.Value());
     tunnel = tunnelmgr->getTunnel();
-#ifdef HAVE_CUDA
-    tunnelRmgr = new SST::Core::Interprocess::MMAPChild_Pin3<GpuReturnTunnel>(SSTNamedPipe2.Value());
-    tunnelDmgr = new SST::Core::Interprocess::MMAPChild_Pin3<GpuDataTunnel>(SSTNamedPipe3.Value());
-    tunnelR = tunnelRmgr->getTunnel();
-    tunnelD = tunnelDmgr->getTunnel();
-#endif
     lastMallocSize = (UINT64*) malloc(sizeof(UINT64) * core_count);
     lastMallocLoc = (UINT64*) malloc(sizeof(UINT64) * core_count);
     mallocIndex = 0;
@@ -1901,6 +1525,9 @@ int main(int argc, char *argv[])
             toFast.push_back(mallocFlagInfo(false, 0, 0, 0));
         }
     }
+
+    // Fork callback
+    PIN_AddForkFunction(FPOINT_AFTER_IN_CHILD, (FORK_CALLBACK) fork_disable_child_output, NULL);
 
     fprintf(stderr, "ARIEL: Starting program.\n");
     fflush(stdout);

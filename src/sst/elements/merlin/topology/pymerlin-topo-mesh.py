@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2021 NTESS. Under the terms
+# Copyright 2009-2025 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2021, NTESS
+# Copyright (c) 2009-2025, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
 # See the file CONTRIBUTORS.TXT in the top level directory
-# the distribution for more information.
+# of the distribution for more information.
 #
 # This file is part of the SST software package. For license
 # information, see the LICENSE file in the top level directory of the
@@ -34,7 +34,7 @@ class _topoMeshBase(Topology):
         self._lockVariable(variable_name)
         if variable_name == "local_ports":
             return
-        
+
         if not self._areVariablesLocked(["shape","width"]):
             return
 
@@ -44,7 +44,7 @@ class _topoMeshBase(Topology):
         else:
             shape = self.shape
             width = value
-            
+
         # Get the size in dimension
         self._dim_size = [int(x) for x in shape.split('x')]
 
@@ -60,7 +60,7 @@ class _topoMeshBase(Topology):
 
     def _getTopologyName():
         pass
-        
+
     def _includeWrapLinks():
         pass
 
@@ -77,10 +77,10 @@ class _topoMeshBase(Topology):
 
 
     def setShape(self,shape,width,local_ports):
-        this.shape = shape
-        this.width = width
-        this.local_ports = local_ports
-        
+        self.shape = shape
+        self.width = width
+        self.local_ports = local_ports
+
     def _formatShape(self, arr):
         return 'x'.join([str(x) for x in arr])
 
@@ -99,22 +99,22 @@ class _topoMeshBase(Topology):
 
     def getRouterNameForId(self,rtr_id):
         return self.getRouterNameForLocation(self._idToLoc(rtr_id))
-        
+
     def getRouterNameForLocation(self,location):
-        return "%srtr.%s"%(self._prefix,self._formatShape(location))
-    
+        return "rtr_%s"%(self._formatShape(location))
+
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location))
-        
-    def build(self, endpoint):
+
+    def _build_impl(self, endpoint):
         if self.host_link_latency is None:
             self.host_link_latency = self.link_latency
-        
+
         # get some local variables from the parameters
         local_ports = int(self.local_ports)
         num_dims = len(self._dim_size)
 
-        
+
 
         # Calculate number of routers and endpoints
         num_routers = 1
@@ -126,23 +126,23 @@ class _topoMeshBase(Topology):
         radix = local_ports
         for x in range(num_dims):
             radix = radix + (self._dim_width[x] * 2)
-            
-        
+
+
         links = dict()
         def getLink(leftName, rightName, num):
-            name = "link.%s:%s:%d"%(leftName, rightName, num)
+            name = "link_%s_%s_%d"%(leftName, rightName, num)
             if name not in links:
                 links[name] = sst.Link(name)
             return links[name]
 
-        
+
         for i in range(num_routers):
             # set up 'mydims'
             mydims = self._idToLoc(i)
             mylocstr = self._formatShape(mydims)
 
             rtr = self._instanceRouter(radix,i)
-            
+
             topology = rtr.setSubComponent(self.router.getTopologySlotName(),self._getTopologyName())
             self._applyStatisticsSettings(topology)
             topology.addParams(self._getGroupParams("main"))
@@ -228,19 +228,19 @@ class topoSingle(Topology):
         return self.num_ports
 
     def getRouterNameForId(self,rtr_id):
-        return "%srouter"%self._prefix
-        
-    def build(self, endpoint):
+        return "router"
+
+    def _build_impl(self, endpoint):
         rtr = self._instanceRouter(self.num_ports,0)
 
         topo = rtr.setSubComponent(self.router.getTopologySlotName(),"merlin.singlerouter",0)
         self._applyStatisticsSettings(topo)
         topo.addParams(self._getGroupParams("main"))
-        
+
         for l in range(self.num_ports):
             (ep, portname) = endpoint.build(l, {})
             if ep:
-                link = sst.Link("link:%d"%l)
+                link = sst.Link("link%d"%l)
                 if self.bundleEndpoints:
                     link.setNoCut()
                 link.connect( (ep, portname, self.link_latency), (rtr, "port%d"%l, self.link_latency) )

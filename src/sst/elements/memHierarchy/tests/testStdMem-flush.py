@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 
 # Define the simulation components
@@ -32,13 +31,13 @@ comp_network.addParams({
       "num_ports" : cores + caches + memories,
       "flit_size" : "36B",
       "output_buf_size" : "2KiB",
-      "id" : "0",  
+      "id" : "0",
       "topology" : "merlin.singlerouter"
 })
 comp_network.setSubComponent("topology","merlin.singlerouter")
 
 for x in range(cores):
-    comp_cpu = sst.Component("cpu" + str(x), "memHierarchy.standardCPU")
+    comp_cpu = sst.Component("core" + str(x), "memHierarchy.standardCPU")
     comp_cpu.addParams({
         "clock" : coreclock,
         "memFreq" : 4, # issue request every 4th cycle
@@ -90,8 +89,7 @@ for x in range(cores):
         "debug" : DEBUG_L2,
         "debug_level" : 10,
     })
-    l2tol1 = l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-    l2NIC = l2cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+    l2NIC = l2cache.setSubComponent("lowlink", "memHierarchy.MemNIC")
     l2NIC.addParams({
         "group" : 1,
         "network_bw" : network_bw,
@@ -100,10 +98,10 @@ for x in range(cores):
     })
 
     cpu_l1_link = sst.Link("link_cpu_cache_" + str(x))
-    cpu_l1_link.connect ( (iface, "port", "500ps"), (comp_l1cache, "high_network_0", "500ps") )
-    
+    cpu_l1_link.connect ( (iface, "lowlink", "500ps"), (comp_l1cache, "highlink", "500ps") )
+
     l1_l2_link = sst.Link("link_l1_l2_" + str(x))
-    l1_l2_link.connect( (comp_l1cache, "low_network_0", "100ps"), (l2tol1, "port", "100ps") )
+    l1_l2_link.connect( (comp_l1cache, "lowlink", "100ps"), (l2cache, "highlink", "100ps") )
 
     l2_network_link = sst.Link("link_l2_network_" + str(x))
     l2_network_link.connect( (l2NIC, "port", "100ps"), (comp_network, "port" + str(x), "100ps") )
@@ -130,7 +128,7 @@ for x in range(caches):
         "debug_level" : 10,
     })
 
-    l3NIC = l3cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
+    l3NIC = l3cache.setSubComponent("highlink", "memHierarchy.MemNIC")
     l3NIC.addParams({
         "group" : 2,
         "network_bw" : network_bw,
@@ -161,12 +159,7 @@ for x in range(memories):
         "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
     })
 
-    dirtoM = directory.setSubComponent("memlink", "memHierarchy.MemLink")
-    dirtoM.addParams({
-        "debug" : DEBUG_NOC,
-        "debug_level" : 10
-    })
-    dirNIC = directory.setSubComponent("cpulink", "memHierarchy.MemNIC")
+    dirNIC = directory.setSubComponent("highlink", "memHierarchy.MemNIC")
     dirNIC.addParams({
         "group" : 3,
         "group" : 3, # L2 = 1, L3 = 2, dir = 3
@@ -205,9 +198,9 @@ for x in range(memories):
     portid = x + caches + cores
     link_directory_network = sst.Link("link_directory_network_" + str(x))
     link_directory_network.connect( (dirNIC, "port", "100ps"), (comp_network, "port" + str(portid), "100ps") )
-    
+
     link_directory_memory_network = sst.Link("link_directory_memory_" + str(x))
-    link_directory_memory_network.connect( (dirtoM, "port", "400ps"), (memctrl, "direct_link", "400ps") )
+    link_directory_memory_network.connect( (directory, "lowlink", "400ps"), (memctrl, "highlink", "400ps") )
 
 # Enable statistics
 sst.setStatisticLoadLevel(7)

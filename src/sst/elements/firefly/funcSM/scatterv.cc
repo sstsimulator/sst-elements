@@ -1,13 +1,13 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2021, NTESS
+// Copyright (c) 2013-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -84,7 +84,7 @@ void ScattervFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 	}
 	if ( 0 != m_event->root && m_event->root == m_info->getGroup(m_event->group)->getMyRank() ) {
 
-		// root is not 0, we need to swap new root data with rank 0 
+		// root is not 0, we need to swap new root data with rank 0
 
 		char* backing = (char*) m_event->sendBuf.getBacking();
 
@@ -104,7 +104,7 @@ void ScattervFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 			// calc ptr of new root rank's data
 			void *ptr = backing + offset;
 
-			// copy new root rank data to rank 0 
+			// copy new root rank data to rank 0
 			memcpy( backing, ptr ,sendSize );
 
 			// copy rank 0 data to new root rank

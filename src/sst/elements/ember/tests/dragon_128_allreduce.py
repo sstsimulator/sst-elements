@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2021 NTESS. Under the terms
+# Copyright 2009-2025 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2021, NTESS
+# Copyright (c) 2009-2025, NTESS
 # All rights reserved.
 #
 # This file is part of the SST software package. For license
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     topo.intergroup_links = 2
     topo.num_groups = 4
     topo.algorithm = ["minimal","adaptive-local"]
-    
+
     # Set up the routers
     router = hr_router()
     router.link_bw = "4GB/s"
@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     topo.router = router
     topo.link_latency = "20ns"
-    
+
     ### set up the endpoint
     networkif = ReorderLinkControl()
     networkif.link_bw = "4GB/s"
@@ -54,14 +54,14 @@ if __name__ == "__main__":
 
     # Set up VN remapping
     #networkif.vn_remap = [0]
-    
+
     ep = EmberMPIJob(0,topo.getNumNodes())
     ep.network_interface = networkif
     ep.addMotif("Init")
     ep.addMotif("Allreduce")
     ep.addMotif("Fini")
     ep.nic.nic2host_lat= "100ns"
-        
+
     system = System()
     system.setTopology(topo)
     system.allocateNodes(ep,"linear")

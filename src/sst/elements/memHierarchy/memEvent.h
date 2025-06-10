@@ -1,20 +1,22 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef MEMHIERARHCY_MEMEVENT_H
-#define MEMHIERARHCY_MEMEVENT_H
+#ifndef MEMHIERARCHY_MEMEVENT_H
+#define MEMHIERARCHY_MEMEVENT_H
+
+#include <utility>
 
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
@@ -41,50 +43,34 @@ using namespace std;
 class MemEvent : public MemEventBase  {
 public:
 
-    /****** Old calls will now throw deprecated warnings since parent pointer is not available *************/
-    /** Creates a new MemEvent - Generic */
-    MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd) : MemEventBase(src->getName(), cmd) {
-        initialize();
-        addr_ = addr;
-        baseAddr_ = baseAddr;
-    }
-
-    /** MemEvent constructor - Reads */
-    MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd, uint32_t size) : MemEventBase(src->getName(), cmd) {
-        initialize();
-        addr_ = addr;
-        baseAddr_ = baseAddr;
-        size_ = size;
-    }
-
-    /** MemEvent constructor - Writes */
-    MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd, std::vector<uint8_t>& data) : MemEventBase(src->getName(), cmd) {
-        initialize();
-        addr_ = addr;
-        baseAddr_ = baseAddr;
-        setPayload(data); // Also sets size_ field
-    }
-
-    /************ New calls - use these! *****************/
+    /* Constructor - Coherence control */
     MemEvent(std::string src, Addr addr, Addr baseAddr, Command cmd) : MemEventBase(src, cmd) {
         initialize();
         addr_ = addr;
         baseAddr_ = baseAddr;
     }
+    /* Constructor - Events that request data */
     MemEvent(std::string src, Addr addr, Addr baseAddr, Command cmd, uint32_t size) : MemEventBase(src, cmd) {
         initialize();
         addr_ = addr;
         baseAddr_ = baseAddr;
         size_ = size;
     }
+    /* Constructor - Events that carry data */
     MemEvent(std::string src, Addr addr, Addr baseAddr, Command cmd, std::vector<uint8_t>& data) : MemEventBase(src, cmd) {
         initialize();
         addr_ = addr;
         baseAddr_ = baseAddr;
         setPayload(data);
     }
+    /* Constructor - Events that are not routed by address */
+    MemEvent(std::string src, Command cmd) : MemEventBase(src, cmd) {
+        initialize();
+        addr_ = 0;
+        baseAddr_ = 0;
+    }
 
-
+    ~MemEvent() { }
 
     /** Create a new MemEvent instance, pre-configured to act as a NACK response */
     MemEvent* makeNACKResponse(MemEvent* NACKedEvent) {
@@ -130,22 +116,24 @@ public:
     }
 
     void initialize() {
-        addr_               = 0;
-        baseAddr_           = 0;
-        addrGlobal_         = true;
-        size_               = 0;
-        prefetch_           = false;
-        NACKedEvent_        = nullptr;
-        retries_            = 0;
+        addr_        = 0;
+        baseAddr_    = 0;
+        addrGlobal_  = true;
+        size_        = 0;
+        prefetch_    = false;
+        NACKedEvent_ = nullptr;
+        retries_     = 0;
         payload_.clear();
-        dirty_              = false;
-	instPtr_	    = 0;
-	vAddr_		    = 0;
-        isEvict_            = false;
+        dirty_       = false;
+        instPtr_     = 0;
+        vAddr_	     = 0;
+        isEvict_     = false;
     }
 
     /** return the original event that caused a NACK */
     MemEvent* getNACKedEvent() { return NACKedEvent_; }
+
+    MemEvent* releaseNACKedEvent() { return std::exchange(NACKedEvent_, nullptr); }
 
     /** @return  the target Address of this MemEvent */
     Addr getAddr(void) const { return addr_; }
@@ -181,11 +169,14 @@ public:
     void incrementRetries() { retries_++; }
     int getRetries() { return retries_; }
 
+    void setReadLock() { setFlag(MemEventBase::F_LOCKED); }
+    bool isReadLock() { return cmd_ == Command::GetSX && queryFlag(MemEventBase::F_LOCKED); }
+
     void setLoadLink() { setFlag(MemEventBase::F_LLSC); }
-    bool isLoadLink() { return cmd_ == Command::GetS && queryFlag(MemEventBase::F_LLSC); }
+    bool isLoadLink() { return cmd_ == Command::GetSX && queryFlag(MemEventBase::F_LLSC); }
 
     void setStoreConditional() { setFlag(MemEventBase::F_LLSC); }
-    bool isStoreConditional() { return cmd_ == Command::GetX && queryFlag(MemEventBase::F_LLSC); }
+    bool isStoreConditional() { return (cmd_ == Command::GetX || cmd_ == Command::Write) && queryFlag(MemEventBase::F_LLSC); }
 
     void setFail() { setFlag(MemEventBase::F_FAIL); }
     void setSuccess(bool b) { b ? clearFlag(MemEventBase::F_FAIL) : setFlag(MemEventBase::F_FAIL); }
@@ -254,18 +245,36 @@ public:
         return new MemEvent(*this);
     }
 
-    virtual std::string getVerboseString() override {
+    virtual std::string getVerboseString(int level = 1) override {
         std::ostringstream str;
         if (addr_ != baseAddr_)
             str << std::hex << " Addr: 0x" << baseAddr_ << "/0x" << addr_;
         else
             str << std::hex << " Addr: 0x" << baseAddr_;
         str << (addrGlobal_ ? " (G)" : " (L)");
-        str << " Data: " << (payload_.empty() ? "F" : "T");
+        if (payload_.empty() || level < 11)
+            str << " Data: " << (payload_.empty() ? "F" : "T");
+        else {
+            std::stringstream value;
+            value << std::hex << std::setfill('0');
+            for (unsigned int i = 0; i < payload_.size(); i++)
+                value << std::hex << std::setw(2) << (int)payload_[i];
+            str << " Data: 0x" << value.str();
+        }
         str << " VA: 0x" << vAddr_ << " IP: 0x" << instPtr_;
         str << std::dec << " Size: " << size_;
         str << " Prf: " << (prefetch_ ? "T" : "F");
-        return MemEventBase::getVerboseString() + str.str();
+        return MemEventBase::getVerboseString(level) + str.str();
+    }
+
+    virtual std::string toString() const override {
+        std::ostringstream str;
+        if (addr_ != baseAddr_)
+            str << std::hex << " Addr: 0x" << baseAddr_ << "/0x" << addr_;
+        else
+            str << std::hex << " Addr: 0x" << baseAddr_;
+        str << std::dec << " Size: " << size_;
+        return MemEventBase::toString() + str.str();
     }
 
     virtual std::string getBriefString() override {
@@ -289,36 +298,36 @@ public:
     }
 
 private:
-    uint32_t        size_;              // Size in bytes that are being requested
-    Addr            addr_;              // Address
-    Addr            baseAddr_;          // Base (line) address
-    bool            addrGlobal_;        // Whether address is a local or global address
-    MemEvent*       NACKedEvent_;       // For a NACK, pointer to the NACKed event
-    int             retries_;           // For NACKed events, how many times a retry has been sent
-    dataVec         payload_;           // Data
-    bool            prefetch_;          // Whether this request came from a prefetcher
-    bool            dirty_;             // For a replacement, whether the data is dirty or not
-    bool            isEvict_;           // Whether an event is an eviction
-    Addr	    instPtr_;           // Instruction pointer associated with the request
-    Addr 	    vAddr_;             // Virtual address associated with the request
+    uint32_t  size_;              // Size in bytes that are being requested
+    Addr      addr_;              // Address
+    Addr      baseAddr_;          // Base (line) address
+    bool      addrGlobal_;        // Whether address is a local or global address
+    MemEvent* NACKedEvent_;       // For a NACK, pointer to the NACKed event
+    int       retries_;           // For NACKed events, how many times a retry has been sent
+    dataVec   payload_;           // Data
+    bool      prefetch_;          // Whether this request came from a prefetcher
+    bool      dirty_;             // For a replacement, whether the data is dirty or not
+    bool      isEvict_;           // Whether an event is an eviction
+    Addr      instPtr_;           // Instruction pointer associated with the request
+    Addr      vAddr_;             // Virtual address associated with the request
 
     MemEvent() : MemEventBase() {} // For serialization only
 
 public:
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         MemEventBase::serialize_order(ser);
-        ser & size_;
-        ser & addr_;
-        ser & baseAddr_;
-        ser & addrGlobal_;
-        ser & NACKedEvent_;
-        ser & retries_;
-        ser & payload_;
-        ser & prefetch_;
-        ser & dirty_;
-        ser & isEvict_;
-        ser & instPtr_;
-        ser & vAddr_;
+        SST_SER(size_);
+        SST_SER(addr_);
+        SST_SER(baseAddr_);
+        SST_SER(addrGlobal_);
+        SST_SER(NACKedEvent_);
+        SST_SER(retries_);
+        SST_SER(payload_);
+        SST_SER(prefetch_);
+        SST_SER(dirty_);
+        SST_SER(isEvict_);
+        SST_SER(instPtr_);
+        SST_SER(vAddr_);
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEvent);
@@ -326,4 +335,4 @@ public:
 
 }}
 
-#endif /* INTERFACES_MEMEVENT_H */
+#endif /* MEMHIERARCHY_MEMEVENT_H */

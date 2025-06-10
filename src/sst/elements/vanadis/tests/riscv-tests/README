@@ -1,0 +1,30 @@
+# These commands build and run part of the RISCV test suite. It does not run 32BiT and RVV instructions.
+#
+# NOTE: The test suite would normally run natively on a RISCV system and each test would run in a virtual machine.
+# The test suite is modifed such that each test executable runs directly in Vanadis and run-riscv-tests checks
+# the output of Vanadis to see if the test succeeded.
+
+git clone https://github.com/riscv/riscv-tests
+cd riscv-tests
+git submodule update --init --recursive
+ autoconf
+./configure --prefix=$RISCV/target
+
+patch -p1 < ../patch.txt
+
+make
+
+cd isa
+
+# this creates the list of tests that will be used by run-riscv-tests
+ls *dump > testlist
+
+cd ../..
+
+# This tells Vanadis to not fault if it sees a Div by Zero. The Div by Zero tests shouldn't fault.
+export VANADIS_NO_FAULT=yes
+
+./run-riscv-tests
+
+
+# Note that not all tests pass. "run-riscv-tests.out" shows which test pass.

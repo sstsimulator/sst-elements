@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -28,7 +28,7 @@ namespace SST { namespace MemHierarchy {
 class IncoherentL1 : public CoherenceController {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(IncoherentL1, "memHierarchy", "coherence.incoherent_l1", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(IncoherentL1, "memHierarchy", "coherence.incoherent_l1", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Implements an L1 cache without coherence", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -77,7 +77,7 @@ public:
         {"stateEvent_GetSX_I",          "Event/State: Number of times a GetSX was seen in state I (Miss)", "count", 3},
         {"stateEvent_GetSX_E",          "Event/State: Number of times a GetSX was seen in state E (Hit)", "count", 3},
         {"stateEvent_GetSX_M",          "Event/State: Number of times a GetSX was seen in state M (Hit)", "count", 3},
-        {"stateEvent_GetSResp_IS",      "Event/State: Number of times a GetSResp was seen in state IS", "count", 3},
+        {"stateEvent_GetSResp_IM",      "Event/State: Number of times a GetSResp was seen in state IM", "count", 3},
         {"stateEvent_GetXResp_IM",      "Event/State: Number of times a GetXResp was seen in state IM", "count", 3},
         {"stateEvent_FlushLine_I",      "Event/State: Number of times a FlushLine was seen in state I", "count", 3},
         {"stateEvent_FlushLine_E",      "Event/State: Number of times a FlushLine was seen in state E", "count", 3},
@@ -100,7 +100,6 @@ public:
         {"evict_I",                 "Eviction: Attempted to evict a block in state I", "count", 3},
         {"evict_E",                 "Eviction: Attempted to evict a block in state E", "count", 3},
         {"evict_M",                 "Eviction: Attempted to evict a block in state M", "count", 3},
-        {"evict_IS",                "Eviction: Attempted to evict a block in state IS", "count", 3},
         {"evict_IM",                "Eviction: Attempted to evict a block in state IM", "count", 3},
         {"evict_IB",                "Eviction: Attempted to evict a block in state S_B", "count", 3},
         {"evict_SB",                "Eviction: Attempted to evict a block in state I_B", "count", 3},
@@ -130,7 +129,6 @@ public:
     /** Constructor for IncoherentL1 */
     IncoherentL1(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
-        debug->debug(_INFO_,"--------------------------- Initializing [L1Controller] ... \n\n");
 
         // Cache Array
         uint64_t lines = params.find<uint64_t>("lines");
@@ -141,6 +139,8 @@ public:
         cacheArray_ = new CacheArray<L1CacheLine>(debug, lines, assoc, lineSize_, rmgr, ht);
         cacheArray_->setBanked(params.find<uint64_t>("banks", 0));
 
+        llscBlockCycles_ = params.find<Cycle_t>("llsc_block_cycles", 0);
+
         stat_eventState[(int)Command::GetS][I] = registerStatistic<uint64_t>("stateEvent_GetS_I");
         stat_eventState[(int)Command::GetS][E] = registerStatistic<uint64_t>("stateEvent_GetS_E");
         stat_eventState[(int)Command::GetS][M] = registerStatistic<uint64_t>("stateEvent_GetS_M");
@@ -150,7 +150,7 @@ public:
         stat_eventState[(int)Command::GetSX][I] = registerStatistic<uint64_t>("stateEvent_GetSX_I");
         stat_eventState[(int)Command::GetSX][E] = registerStatistic<uint64_t>("stateEvent_GetSX_E");
         stat_eventState[(int)Command::GetSX][M] = registerStatistic<uint64_t>("stateEvent_GetSX_M");
-        stat_eventState[(int)Command::GetSResp][IS] = registerStatistic<uint64_t>("stateEvent_GetSResp_IS");
+        stat_eventState[(int)Command::GetSResp][IM] = registerStatistic<uint64_t>("stateEvent_GetSResp_IM");
         stat_eventState[(int)Command::GetXResp][IM] = registerStatistic<uint64_t>("stateEvent_GetXResp_IM");
         stat_eventState[(int)Command::FlushLine][I] = registerStatistic<uint64_t>("stateEvent_FlushLine_I");
         stat_eventState[(int)Command::FlushLine][E] = registerStatistic<uint64_t>("stateEvent_FlushLine_E");
@@ -211,6 +211,12 @@ public:
         stat_miss[2][1] = registerStatistic<uint64_t>("GetSXMiss_Blocked");
         stat_hits = registerStatistic<uint64_t>("CacheHits");
         stat_misses = registerStatistic<uint64_t>("CacheMisses");
+        stat_evict[I] = registerStatistic<uint64_t>("evict_I");
+        stat_evict[E] = registerStatistic<uint64_t>("evict_E");
+        stat_evict[M] = registerStatistic<uint64_t>("evict_M");
+        stat_evict[IM] = registerStatistic<uint64_t>("evict_IM");
+        stat_evict[I_B] = registerStatistic<uint64_t>("evict_IB");
+        stat_evict[S_B] = registerStatistic<uint64_t>("evict_SB");
 
         /* Only for caches that write back clean blocks (i.e., lower cache is non-inclusive and may need the data) but don't know yet and can't register statistics later. Always enabled for now. */
         stat_eventSent[(int)Command::PutE] =           registerStatistic<uint64_t>("eventSent_PutE");
@@ -289,12 +295,13 @@ private:
     /* Statistics recording */
     void recordPrefetchResult(L1CacheLine * line, Statistic<uint64_t> * stat);
     void recordLatency(Command cmd, int type, uint64_t timestamp);
-    void eventProfileAndNotify(MemEvent * event, State state, NotifyAccessType type, NotifyResultType result, bool inMSHR, bool stalled);
 
     /* Debug output */
     void printLine(Addr addr);
 
     CacheArray<L1CacheLine>* cacheArray_;
+
+    Cycle_t llscBlockCycles_;
 
     /* Statistics */
     Statistic<uint64_t>* stat_latencyGetS[2];

@@ -1,15 +1,15 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -99,11 +99,11 @@ private:
     SimTime_t next_time;
     SimTime_t send_interval;
 
-    TimeConverter* base_tc;
+    TimeConverter base_tc;
 
     SST::Interfaces::SimpleNetwork* link_if;
-    SST::Interfaces::SimpleNetwork::Handler<BackgroundTraffic>* send_notify_functor;
-    SST::Interfaces::SimpleNetwork::Handler<BackgroundTraffic>* recv_notify_functor;
+    SST::Interfaces::SimpleNetwork::HandlerBase* send_notify_functor;
+    SST::Interfaces::SimpleNetwork::HandlerBase* recv_notify_functor;
 
 
     TargetGenerator *packetDestGen;

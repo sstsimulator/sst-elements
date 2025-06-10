@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -21,7 +21,6 @@
 using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
-using namespace SST::Interfaces;
 using namespace SST::CACHETRACER;
 
 /*
@@ -48,7 +47,7 @@ cacheTracer::cacheTracer( ComponentId_t id, Params& params ): Component( id ) {
 
     string frequency = params.find<std::string>("clock", "1 Ghz");
     out->debug(CALL_INFO, 1, 0, "Registering cacheTracer clock at %s\n", frequency.c_str());
-    registerClock( frequency, new Clock::Handler<cacheTracer>(this, &cacheTracer::clock) );
+    registerClock( frequency, new Clock::Handler2<cacheTracer,&cacheTracer::clock>(this) );
     out->debug(CALL_INFO, 1, 0, "Clock registered\n");
 
     string tracePrefix = params.find<std::string>("tracePrefix", "");
@@ -58,7 +57,7 @@ cacheTracer::cacheTracer( ComponentId_t id, Params& params ): Component( id ) {
     } else {
         out->debug(CALL_INFO, 1, 0, "Tracing is Enabled, prefix is set to %s\n", tracePrefix.c_str());
         char* traceFilePath = (char*) malloc( sizeof(char) * (tracePrefix.size()+ 20) );
-        sprintf(traceFilePath, "%s", tracePrefix.c_str());
+        snprintf(traceFilePath, (tracePrefix.size()+ 20), "%s", tracePrefix.c_str());
         out->output("Writing trace to file: %s\n", traceFilePath);
         traceFile = fopen(traceFilePath, "wt");
         free(traceFilePath);
@@ -72,7 +71,7 @@ cacheTracer::cacheTracer( ComponentId_t id, Params& params ): Component( id ) {
     } else {
         out->debug(CALL_INFO, 1, 0, "Stats are directed to file %s\n", statsPrefix.c_str());
         char* statFilePath = (char*) malloc( sizeof(char) * (statsPrefix.size()+20) );
-        sprintf(statFilePath, "%s", statsPrefix.c_str());
+        snprintf(statFilePath, (statsPrefix.size()+20), "%s", statsPrefix.c_str());
         out->output("Writing stats to file: %s\n", statFilePath);
         statsFile = fopen(statFilePath,"wt");
         free(statFilePath);
@@ -87,8 +86,8 @@ cacheTracer::cacheTracer( ComponentId_t id, Params& params ): Component( id ) {
     northBus = configureLink("northBus");
     southBus = configureLink("southBus");
 
-    picoTimeConv = SST::Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ps");
-    nanoTimeConv = SST::Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ns");
+    picoTimeConv = getTimeConverter("1ps");
+    nanoTimeConv = getTimeConverter("1ns");
 
     out->debug(CALL_INFO, 1, 0, "cacheTracer initialization complete\n");
     nbCount = 0;
@@ -102,11 +101,11 @@ cacheTracer::~cacheTracer() {}
 
 void cacheTracer::init(unsigned int phase) {
     // Since cacheTracer can sit between memH components, it needs to forward init events
-    while (SST::Event * ev = northBus->recvInitData()) {
-        southBus->sendInitData(ev);
+    while (SST::Event * ev = northBus->recvUntimedData()) {
+        southBus->sendUntimedData(ev);
     }
-    while (SST::Event * ev = southBus->recvInitData()) {
-        northBus->sendInitData(ev);
+    while (SST::Event * ev = southBus->recvUntimedData()) {
+        northBus->sendUntimedData(ev);
     }
 }
 
@@ -117,8 +116,8 @@ bool cacheTracer::clock(Cycle_t current){
     unsigned int accessLatency = 0;
     SST::Event *ev = NULL;
     SST::MemHierarchy::Addr addr =0;
-    //uint64_t picoseconds = (uint64_t) picoTimeConv->convertFromCoreTime(Simulation::getSimulation()->getCurrentSimCycle());
-    uint64_t nanoseconds = (uint64_t) nanoTimeConv->convertFromCoreTime(Simulation::getSimulation()->getCurrentSimCycle());
+    //uint64_t picoseconds = (uint64_t) picoTimeConv.convertFromCoreTime(getCurrentSimCycle());
+    uint64_t nanoseconds = (uint64_t) nanoTimeConv.convertFromCoreTime(getCurrentSimCycle());
 
     // process Memevents from north-side to south-side
     while((ev = northBus->recv())){
@@ -142,7 +141,7 @@ bool cacheTracer::clock(Cycle_t current){
         if(writeDebug_8 & writeTrace){
              fprintf(traceFile,"NB: Addr: 0x%" PRIu64, addr);
              fprintf(traceFile, " timestamp: %" PRIu64, timestamp);
-             fprintf(traceFile, " Cmd: %u", me->getCmd());
+             fprintf(traceFile, " Cmd: %d", (int) me->getCmd());
              fprintf(traceFile, " ID: %" PRIu64 "-%d", me->getID().first, me->getID().second);
              fprintf(traceFile, " ResponseID: %" PRIu64 "-%d", me->getResponseToID().first, me->getResponseToID().second);
              //fprintf(traceFile, " @%" PRIu64, picoseconds);
@@ -185,7 +184,7 @@ bool cacheTracer::clock(Cycle_t current){
         if(writeDebug_8 & writeTrace){
              fprintf(traceFile,"SB: Addr: 0x%" PRIu64, me->getAddr());
              fprintf(traceFile, " timestamp: %" PRIu64, timestamp);
-             fprintf(traceFile, " Cmd: %u", me->getCmd());
+             fprintf(traceFile, " Cmd: %d", (int) me->getCmd());
              fprintf(traceFile, " ID: %" PRIu64 "-%d", me->getID().first, me->getID().second);
              fprintf(traceFile, " ResponseID: %" PRIu64 "-%d", me->getResponseToID().first, me->getResponseToID().second);
              //fprintf(traceFile, " @%" PRIu64, picoseconds);

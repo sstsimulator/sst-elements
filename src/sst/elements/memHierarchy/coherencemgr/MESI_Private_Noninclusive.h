@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -27,7 +27,7 @@ namespace SST { namespace MemHierarchy {
 
 class MESIPrivNoninclusive : public CoherenceController {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MESIPrivNoninclusive, "memHierarchy", "coherence.mesi_private_noninclusive", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(MESIPrivNoninclusive, "memHierarchy", "coherence.mesi_private_noninclusive", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Implements MESI or MSI coherence for a non-inclusive, non-L1 private cache", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -71,6 +71,11 @@ public:
         {"eventSent_FlushLine",     "Number of FlushLine requests sent", "events", 2},
         {"eventSent_FlushLineInv",  "Number of FlushLineInv requests sent", "events", 2},
         {"eventSent_FlushLineResp", "Number of FlushLineResp responses sent", "events", 2},
+        {"eventSent_FlushAll",      "Number of FlushAll requests sent", "events", 2},
+        {"eventSent_FlushAllResp",  "Number of FlushAllResp responses sent", "events", 2},
+        {"eventSent_ForwardFlush",  "Number of ForwardFlush requests sent", "events", 2},
+        {"eventSent_UnblockFlush",  "Number of UnblockFlush requests sent", "events", 2},
+        {"eventSent_AckFlush",      "Number of AckFlush requests sent", "events", 2},
         {"eventSent_Put",           "Number of Put requests sent", "events", 6},
         {"eventSent_Get",           "Number of Get requests sent", "events", 6},
         {"eventSent_AckMove",       "Number of AckMove responses sent", "events", 6},
@@ -232,6 +237,9 @@ public:
         cacheArray_ = new CacheArray<PrivateCacheLine>(debug, lines, assoc, lineSize_, rmgr, ht);
         cacheArray_->setBanked(params.find<uint64_t>("banks", 0));
 
+        flush_state_ = FlushState::Ready;
+        shutdown_flush_counter_ = 0;
+
         stat_evict[I] =      registerStatistic<uint64_t>("evict_I");
         stat_evict[S] =      registerStatistic<uint64_t>("evict_S");
         stat_evict[M] =      registerStatistic<uint64_t>("evict_M");
@@ -323,6 +331,11 @@ public:
         stat_eventSent[(int)Command::PutX]          = registerStatistic<uint64_t>("eventSent_PutX");
         stat_eventSent[(int)Command::FlushLine]     = registerStatistic<uint64_t>("eventSent_FlushLine");
         stat_eventSent[(int)Command::FlushLineInv]  = registerStatistic<uint64_t>("eventSent_FlushLineInv");
+        stat_eventSent[(int)Command::FlushAll]      = registerStatistic<uint64_t>("eventSent_FlushAll");
+        stat_eventSent[(int)Command::FlushAllResp]  = registerStatistic<uint64_t>("eventSent_FlushAllResp");
+        stat_eventSent[(int)Command::ForwardFlush]  = registerStatistic<uint64_t>("eventSent_ForwardFlush");
+        stat_eventSent[(int)Command::UnblockFlush]  = registerStatistic<uint64_t>("eventSent_UnblockFlush");
+        stat_eventSent[(int)Command::AckFlush]      = registerStatistic<uint64_t>("eventSent_AckFlush");
         stat_eventSent[(int)Command::FetchResp]     = registerStatistic<uint64_t>("eventSent_FetchResp");
         stat_eventSent[(int)Command::FetchXResp]    = registerStatistic<uint64_t>("eventSent_FetchXResp");
         stat_eventSent[(int)Command::AckInv]        = registerStatistic<uint64_t>("eventSent_AckInv");
@@ -418,43 +431,50 @@ public:
  *---------------------------------------------------------------------------------------------------------------------*/
 
 /* Event handlers */
-    virtual bool handleGetS(MemEvent * event, bool inMSHR);
-    virtual bool handleGetX(MemEvent * event, bool inMSHR);
-    virtual bool handleGetSX(MemEvent * event, bool inMSHR);
-    virtual bool handleFlushLine(MemEvent * event, bool inMSHR);
-    virtual bool handleFlushLineInv(MemEvent * event, bool inMSHR);
-    virtual bool handlePutS(MemEvent * event, bool inMSHR);
-    virtual bool handlePutE(MemEvent * event, bool inMSHR);
-    virtual bool handlePutM(MemEvent * event, bool inMSHR);
-    virtual bool handlePutX(MemEvent * event, bool inMSHR);
-    virtual bool handleFetch(MemEvent * event, bool inMSHR);
-    virtual bool handleInv(MemEvent * event, bool inMSHR);
-    virtual bool handleForceInv(MemEvent * event, bool inMSHR);
-    virtual bool handleFetchInv(MemEvent * event, bool inMSHR);
-    virtual bool handleFetchInvX(MemEvent * event, bool inMSHR);
-    virtual bool handleGetSResp(MemEvent * event, bool inMSHR);
-    virtual bool handleGetXResp(MemEvent * event, bool inMSHR);
-    virtual bool handleFlushLineResp(MemEvent * event, bool inMSHR);
-    virtual bool handleFetchResp(MemEvent * event, bool inMSHR);
-    virtual bool handleFetchXResp(MemEvent * event, bool inMSHR);
-    virtual bool handleAckInv(MemEvent * event, bool inMSHR);
-    virtual bool handleAckPut(MemEvent * event, bool inMSHR);
-    virtual bool handleNULLCMD(MemEvent * event, bool inMSHR);
-    virtual bool handleNACK(MemEvent* event, bool inMSHR);
+    virtual bool handleGetS(MemEvent * event, bool inMSHR) override;
+    virtual bool handleGetX(MemEvent * event, bool inMSHR) override;
+    virtual bool handleGetSX(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFlushLine(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFlushLineInv(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFlushAll(MemEvent * event, bool inMSHR) override;
+    virtual bool handleForwardFlush(MemEvent * event, bool inMSHR) override;
+    virtual bool handlePutS(MemEvent * event, bool inMSHR) override;
+    virtual bool handlePutE(MemEvent * event, bool inMSHR) override;
+    virtual bool handlePutM(MemEvent * event, bool inMSHR) override;
+    virtual bool handlePutX(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFetch(MemEvent * event, bool inMSHR) override;
+    virtual bool handleInv(MemEvent * event, bool inMSHR) override;
+    virtual bool handleForceInv(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFetchInv(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFetchInvX(MemEvent * event, bool inMSHR) override;
+    virtual bool handleGetSResp(MemEvent * event, bool inMSHR) override;
+    virtual bool handleGetXResp(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFlushLineResp(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFlushAllResp(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFetchResp(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFetchXResp(MemEvent * event, bool inMSHR) override;
+    virtual bool handleAckFlush(MemEvent * event, bool inMSHR) override;
+    virtual bool handleUnblockFlush(MemEvent * event, bool inMSHR) override;
+    virtual bool handleAckInv(MemEvent * event, bool inMSHR) override;
+    virtual bool handleAckPut(MemEvent * event, bool inMSHR) override;
+    virtual bool handleNULLCMD(MemEvent * event, bool inMSHR) override;
+    virtual bool handleNACK(MemEvent* event, bool inMSHR) override;
 
-    virtual Addr getBank(Addr addr) { return cacheArray_->getBank(addr); }
-    virtual void setSliceAware(uint64_t size, uint64_t step) { cacheArray_->setSliceAware(size, step); }
+    virtual Addr getBank(Addr addr) override { return cacheArray_->getBank(addr); }
+    virtual void setSliceAware(uint64_t size, uint64_t step) override { cacheArray_->setSliceAware(size, step); }
 
     /* Initialization */
-    virtual void hasUpperLevelCacheName(std::string cachename);
-    MemEventInitCoherence* getInitCoherenceEvent();
+    virtual void hasUpperLevelCacheName(std::string cachename) override;
+    MemEventInitCoherence* getInitCoherenceEvent() override;
 
-    std::set<Command> getValidReceiveEvents() {
+    std::set<Command> getValidReceiveEvents() override {
         std::set<Command> cmds = { Command::GetS,
             Command::GetX,
             Command::GetSX,
             Command::FlushLine,
             Command::FlushLineInv,
+            Command::FlushAll,
+            Command::ForwardFlush,
             Command::PutS,
             Command::PutE,
             Command::PutM,
@@ -468,8 +488,11 @@ public:
             Command::GetSResp,
             Command::GetXResp,
             Command::FlushLineResp,
+            Command::FlushAllResp,
             Command::FetchResp,
             Command::FetchXResp,
+            Command::AckFlush,
+            Command::UnblockFlush,
             Command::AckInv,
             Command::AckPut,
             Command::Write,
@@ -496,7 +519,7 @@ private:
     uint64_t sendFwdRequest(MemEvent * event, Command cmd, std::string dst, uint32_t size, uint64_t startTime, bool inMSHR);
 
     /** Send response up (to processor) */
-    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t baseTime, Command cmd = Command::GetSResp, bool success = true);
+    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t baseTime, Command cmd = Command::NULLCMD, bool success = true);
     uint64_t sendExclusiveResponse(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t baseTime, bool dirty);
 
     /** Send response down (towards memory) */
@@ -512,19 +535,23 @@ private:
     void forwardMessageUp(MemEvent * event);
 
     /** Call through to coherenceController with statistic recording */
-    void forwardByAddress(MemEventBase* ev, Cycle_t timestamp);
-    void forwardByDestination(MemEventBase* ev, Cycle_t timestamp);
+    void forwardByAddress(MemEventBase* ev, Cycle_t timestamp) override;
+    void forwardByDestination(MemEventBase* ev, Cycle_t timestamp) override;
 
 /* Miscellaneous */
     void printLine(Addr addr);
+    void beginCompleteStage() override;
+    void processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) override;
 
 /* Statistics */
-    void recordLatency(Command cmd, int type, uint64_t latency);
+    void recordLatency(Command cmd, int type, uint64_t latency) override;
 
 /* Private data members */
     CacheArray<PrivateCacheLine> * cacheArray_; // Cache array
     bool protocol_;  // True for MESI, false for MSI
     State protocolState_;
+    FlushState flush_state_;
+    int shutdown_flush_counter_;
 
     std::string upperCacheName_; // Private so only one
 

@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -21,13 +21,13 @@
 namespace SST {
 namespace Vanadis {
 
-template <VanadisRegisterFormat register_format>
-class VanadisSetRegisterInstruction : public VanadisInstruction
+template<typename reg_format>
+class VanadisSetRegisterInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisSetRegisterInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
-        const int64_t immediate) :
+        const reg_format immediate) :
         VanadisInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1, 0, 0, 0, 0)
     {
 
@@ -41,41 +41,46 @@ public:
 
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
-        snprintf(
-            buffer, buffer_size, "SETREG  %5" PRIu16 " <- imm=%" PRId64 " (phys: %5" PRIu16 " <- %" PRId64 ")",
-            isa_int_regs_out[0], imm_value, phys_int_regs_out[0], imm_value);
+        std::ostringstream ss;
+        ss << getInstCode();
+
+        ss << " "       << isa_int_regs_out[0]  << " <- imm=" << imm_value;
+        ss << " phys: " << phys_int_regs_out[0] << " <- imm=" << imm_value;
+
+        strncpy( buffer, ss.str().c_str(), buffer_size );
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void log (SST::Output* output, int verboselevel, uint16_t sw_thr,
+                            uint16_t phys_int_regs_out_0)
     {
-#ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: (addr=0x%0llx) SETREG phys: out=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16 "\n",
-            getInstructionAddress(), phys_int_regs_out[0], imm_value, isa_int_regs_out[0]);
-#endif
-        switch ( register_format ) {
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
-        {
-            regFile->setIntReg<int64_t>(phys_int_regs_out[0], imm_value);
-        } break;
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
-        {
-            regFile->setIntReg<int32_t>(phys_int_regs_out[0], static_cast<int32_t>(imm_value));
-        } break;
-        default:
-        {
-            flagError();
-        } break;
+        #ifdef VANADIS_BUILD_DEBUG
+        if(output->getVerboseLevel() >= verboselevel) {
+
+            std::ostringstream ss;
+            ss << "hw_thr="<<getHWThread()<<" sw_thr="<< sw_thr;
+            ss << " Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
+            ss << " phys: out=" <<  phys_int_regs_out_0 << " imm=" << imm_value;
+            ss << ", isa: out=" <<  isa_int_regs_out[0];
+            ss << " Result-reg " << phys_int_regs_out_0  << ": " << imm_value;
+            output->verbose( CALL_INFO, verboselevel, 0, "%s\n", ss.str().c_str());
         }
-#ifdef VANADIS_BUILD_DEBUG
-        output->verbose(CALL_INFO, 16, 0, "Result-reg %" PRIu16 ": %" PRId64 "\n", phys_int_regs_out[0], imm_value);
-#endif
+        #endif
+    }
+    void instOp(VanadisRegisterFile* regFile, uint16_t phys_int_regs_out_0)
+    {
+		regFile->setIntReg<reg_format>(phys_int_regs_out_0, imm_value);
+    }
+
+    virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
+        log(output, 16, 65535,phys_int_regs_out_0);
+        instOp(regFile,phys_int_regs_out_0);
         markExecuted();
     }
 
 private:
-    int64_t imm_value;
+    reg_format imm_value;
 };
 
 } // namespace Vanadis

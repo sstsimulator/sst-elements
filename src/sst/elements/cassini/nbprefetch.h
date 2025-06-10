@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -39,11 +39,11 @@ public:
     NextBlockPrefetcher(ComponentId_t id, Params& params);
     ~NextBlockPrefetcher();
 
-    void notifyAccess(const CacheListenerNotification& notify);
-    void registerResponseCallback(Event::HandlerBase *handler);
-    void printStats(Output& out);
+    void notifyAccess(const CacheListenerNotification& notify) override;
+    void registerResponseCallback(Event::HandlerBase *handler) override;
+    void printStats(Output& out) override;
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         NextBlockPrefetcher,
         "cassini",
         "NextBlockPrefetcher",
@@ -61,6 +61,12 @@ public:
         { "miss_events_processed", "Number of cache misses received", "misses", 2 },
         { "hit_events_processed", "Number of cache hits received", "hits", 2 }
     )
+
+
+    // Serialization support
+    NextBlockPrefetcher() : SST::MemHierarchy::CacheListener() {} // For serialization
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::Cassini::NextBlockPrefetcher)
 
 private:
     std::vector<Event::HandlerBase*> registeredCallbacks;

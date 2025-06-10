@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -25,10 +25,22 @@
 #include <iostream>
 #include <inttypes.h>
 
-#ifndef HAVE_PIN3
-#ifdef HAVE_LIBZ
-#include <zlib.h>
-#endif
+// Undo some Clang-specific changes possibly made by the libc++ bundled with
+// PinCRT
+#ifdef __LP64__
+# ifdef __clang__
+#  if defined(PIN_VERSION_MINOR) && PIN_VERSION_MINOR > 29
+// Allow usage of the warnmacros header without modifying it
+#   ifdef UNUSED
+#   undef UNUSED
+#   endif
+#   include <sst/core/warnmacros.h>
+DIAG_DISABLE(macro-redefined)
+#   define __PRI_64_prefix  "l"
+#   define __PRI_PTR_prefix "l"
+REENABLE_WARNING
+#  endif
+# endif
 #endif
 
 using namespace std;
@@ -47,12 +59,6 @@ char RECORD_BUFFER[ sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + siz
 // We have two file pointers, one for compressed traces and one for
 // "normal" (binary or text) traces
 FILE** trace;
-
-#ifndef HAVE_PIN3
-#ifdef HAVE_LIBZ
-gzFile* traceZ;
-#endif
-#endif
 
 typedef struct {
 	UINT64 threadInit;
@@ -73,7 +79,7 @@ KNOB<string> KnobInsRoutine(KNOB_MODE_WRITEONCE, "pintool",
 KNOB<string> KnobTraceFile(KNOB_MODE_WRITEONCE, "pintool",
     "o", "sstprospero", "Output analysis to trace file.");
 KNOB<string> KnobTraceFormat(KNOB_MODE_WRITEONCE, "pintool",
-    "f", "text", "Output format, \'text\' = Plain text, \'binary\' = Binary, \'compressed\' = zlib compressed (pin2 only)");
+    "f", "text", "Output format, \'text\' = Plain text, \'binary\' = Binary");
 KNOB<UINT32> KnobMaxThreadCount(KNOB_MODE_WRITEONCE, "pintool",
     "t", "1", "Maximum number of threads to record memory patterns");
 KNOB<UINT32> KnobFileBufferSize(KNOB_MODE_WRITEONCE, "pintool",
@@ -144,17 +150,8 @@ VOID RecordMemRead(VOID * addr, UINT32 size, THREADID thr)
     			fwrite(RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace[thr]);
 			thread_instr_id[thr].readCount++;
 		}
-	} else {
-#ifndef HAVE_PIN3
-#ifdef HAVE_LIBZ
-		if(thr < max_thread_count && (traceEnabled > 0)) {
-			gzwrite(traceZ[thr], RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
-			thread_instr_id[thr].readCount++;
-		}
-#endif
-#endif
 	}
-     }
+	}
 
 #ifdef PROSPERO_DEBUG
      printf("PROSPERO: Completed into RecordMemRead...\n");
@@ -190,17 +187,8 @@ VOID RecordMemWrite(VOID * addr, UINT32 size, THREADID thr)
 	   		fwrite(RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace[thr]);
 			thread_instr_id[thr].writeCount++;
 		}
-	} else {
-#ifndef HAVE_PIN3
-#ifdef HAVE_LIBZ
-		if(thr < max_thread_count && (traceEnabled > 0)) {
-			gzwrite(traceZ[thr], RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
-			thread_instr_id[thr].writeCount++;
-		}
-#endif
-#endif
 	}
-     }
+	}
 #ifdef PROSPERO_DEBUG
      printf("PROSPERO: Completed into RecordMemWrite...\n");
 #endif
@@ -230,18 +218,6 @@ VOID IncrementInstructionCount(THREADID id) {
                                 trace[id] = fopen(buffer, "wb");
 			}
 		}
-#ifndef HAVE_PIN3
-#ifdef HAVE_LIBZ
-		else if(trace_format == 2) {
-			gzclose(traceZ[id]);
-			sprintf(buffer, "%s-%lu-%lu-gz.trace",
-				KnobTraceFile.Value().c_str(),
-				(unsigned long) id,
-				(unsigned long) thread_instr_id[id].currentFile);
-			traceZ[id] = gzopen(buffer, "wb");
-		}
-#endif
-#endif
 		thread_instr_id[id].currentFile++;
 	}
 }
@@ -331,14 +307,6 @@ VOID Fini(INT32 code, VOID *v)
 	for(UINT32 i = 0; i < max_thread_count; ++i) {
     		fclose(trace[i]);
 	}
-#ifndef HAVE_PIN3
-#ifdef HAVE_LIBZ
-    } else if (2 == trace_format) {
-	for(UINT32 i = 0; i < max_thread_count; ++i) {
-		gzclose(traceZ[i]);
-	}
-#endif
-#endif
     }
 
     printf("PROSPERO: Thread read entries:     %" PRIu64 "\n", thread_instr_id[0].readCount);
@@ -379,11 +347,6 @@ int main(int argc, char *argv[])
     }
 
     trace  = (FILE**) malloc(sizeof(FILE*) * max_thread_count);
-#ifndef HAVE_PIN3
-#ifdef HAVE_LIBZ
-    traceZ = (gzFile*) malloc(sizeof(gzFile) * max_thread_count);
-#endif
-#endif
     fileBuffers = (char**) malloc(sizeof(char*) * max_thread_count);
 
     char nameBuffer[256];
@@ -414,18 +377,6 @@ int main(int argc, char *argv[])
 		fileBuffers[i] = (char*) malloc(sizeof(char) * KnobFileBufferSize.Value());
 		setvbuf(trace[i], fileBuffers[i], _IOFBF, (size_t) KnobFileBufferSize.Value());
 	}
-#ifndef HAVE_PIN3
-#ifdef HAVE_LIBZ
-    } else if(KnobTraceFormat.Value() == "compressed") {
-	printf("PROSPERO: Tracing will be recorded in compressed binary format.\n");
-	trace_format = 2;
-
-	for(UINT32 i = 0; i < max_thread_count; ++i) {
-		sprintf(nameBuffer, "%s-%lu-0-gz.trace", KnobTraceFile.Value().c_str(), (unsigned long) i);
-		traceZ[i] = gzopen(nameBuffer, "wb");
-	}
-#endif
-#endif
     } else {
 	std::cerr << "Error: Unknown trace format: " << KnobTraceFormat.Value() << "." << std::endl;
         exit(-1);

@@ -3,41 +3,16 @@
 from sst_unittest import *
 from sst_unittest_support import *
 import os.path
+import re
 
-################################################################################
-# Code to support a single instance module initialize, must be called setUp method
 
-module_init = 0
-module_sema = threading.Semaphore()
-
-def initializeTestModule_SingleInstance(class_inst):
-    global module_init
-    global module_sema
-
-    module_sema.acquire()
-    if module_init != 1:
-        try:
-            # Put your single instance Init Code Here
-            pass
-        except:
-            pass
-        module_init = 1
-    module_sema.release()
-
-################################################################################
 ################################################################################
 ################################################################################
 
 class testcase_memHierarchy_memHA(SSTTestCase):
 
-    def initializeClass(self, testName):
-        super(type(self), self).initializeClass(testName)
-        # Put test based setup code here. it is called before testing starts
-        # NOTE: This method is called once for every test
-
     def setUp(self):
         super(type(self), self).setUp()
-        initializeTestModule_SingleInstance(self)
         # Put test based setup code here. it is called once before every test
 
     def tearDown(self):
@@ -98,11 +73,16 @@ class testcase_memHierarchy_memHA(SSTTestCase):
     def test_memHA_ThroughputThrottling(self):
         self.memHA_Template("ThroughputThrottling")
 
+    def test_memHA_CoherenceDomains(self):
+        self.memHA_Template("CoherenceDomains")
+
     @skip_on_sstsimulator_conf_empty_str("GOBLIN_HMCSIM", "LIBDIR", "GOBLIN_HMCSIM is not included as part of this build")
+    @unittest.skipIf(not testing_check_is_nightly(), "test_memHA_BackendGoblinHMC only runs on Nightly builds.")
     def test_memHA_BackendGoblinHMC(self):
-        self.memHA_Template("BackendGoblinHMC")
+        self.memHA_Template("BackendGoblinHMC", testtimeout=400)
 
     @skip_on_sstsimulator_conf_empty_str("DRAMSIM3", "LIBDIR", "DRAMSIM3 is not included as part of this build")
+    @unittest.skipIf(not testing_check_is_nightly(), "test_memHA_BackendDramsim3 only runs on Nightly builds.")
     def test_memHA_BackendDramsim3(self):
         self.memHA_Template("BackendDramsim3")
 
@@ -118,15 +98,31 @@ class testcase_memHierarchy_memHA(SSTTestCase):
     def test_memHA_CustomCmdGoblin_3(self):
         self.memHA_Template("CustomCmdGoblin_3")
 
+    @skip_on_sstsimulator_conf_empty_str("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
+    def test_memHierarchy_BackendRamulator_1(self):
+        self.memHA_Template("BackendRamulator_1")
+
+    @skip_on_sstsimulator_conf_empty_str("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
+    def test_memHierarchy_BackendRamulator_2(self):
+        self.memHA_Template("BackendRamulator_2")
+
+    @skip_on_sstsimulator_conf_empty_str("RAMULATOR2", "LIBDIR", "RAMULATOR2 is not included as part of this build")
+    def test_memHierarchy_BackendRamulator2(self):
+        self.memHA_Template("BackendRamulator2")
+
+    @unittest.skipIf(not testing_check_is_nightly(), "test_memHA_BackendTimingDRAM only runs on Nightly builds.")
     def test_memHA_BackendTimingDRAM_1(self):
         self.memHA_Template("BackendTimingDRAM_1")
 
+    @unittest.skipIf(not testing_check_is_nightly(), "test_memHA_BackendTimingDRAM only runs on Nightly builds.")
     def test_memHA_BackendTimingDRAM_2(self):
         self.memHA_Template("BackendTimingDRAM_2")
 
+    @unittest.skipIf(not testing_check_is_nightly(), "test_memHA_BackendTimingDRAM only runs on Nightly builds.")
     def test_memHA_BackendTimingDRAM_3(self):
         self.memHA_Template("BackendTimingDRAM_3")
 
+    @unittest.skipIf(not testing_check_is_nightly(), "test_memHA_BackendTimingDRAM only runs on Nightly builds.")
     def test_memHA_BackendTimingDRAM_4(self):
         self.memHA_Template("BackendTimingDRAM_4")
 
@@ -144,45 +140,48 @@ class testcase_memHierarchy_memHA(SSTTestCase):
 
     def test_memHA_Kingsley(self):
         self.memHA_Template("Kingsley")
-    
+
     def test_memHA_ScratchCache_1(self):
         self.memHA_Template("ScratchCache_1")
-    
+
     def test_memHA_ScratchCache_2(self):
         self.memHA_Template("ScratchCache_2")
-    
+
     def test_memHA_ScratchCache_3(self):
         self.memHA_Template("ScratchCache_3")
-    
+
     def test_memHA_ScratchCache_4(self):
         self.memHA_Template("ScratchCache_4")
-    
+
     def test_memHA_ScratchDirect(self):
         self.memHA_Template("ScratchDirect")
-    
+
     def test_memHA_ScratchNetwork(self):
-        self.memHA_Template("ScratchDirect")
-    
+        self.memHA_Template("ScratchNetwork")
+
     def test_memHA_StdMem(self):
         self.memHA_Template("StdMem")
-    
+
     def test_memHA_StdMem_flush(self):
         self.memHA_Template("StdMem_flush")
-    
+
     def test_memHA_StdMem_nic(self):
         self.memHA_Template("StdMem_nic")
-    
+
     def test_memHA_StdMem_noninclusive(self):
         self.memHA_Template("StdMem_noninclusive")
-    
+
     def test_memHA_StdMem_mmio(self):
         self.memHA_Template("StdMem_mmio")
-    
+
     def test_memHA_StdMem_mmio2(self):
         self.memHA_Template("StdMem_mmio2")
-    
+
     def test_memHA_StdMem_mmio3(self):
         self.memHA_Template("StdMem_mmio3")
+
+    def test_memHA_RangeCheck(self):
+        self.memHA_Template("RangeCheck", testtimeout=60)
 #####
 
     def memHA_Template(self, testcase,
@@ -199,7 +198,7 @@ class testcase_memHierarchy_memHA(SSTTestCase):
         testDataFileName=("test_memHA_{0}".format(testcase))
         sdlfile = "{0}/test{1}.py".format(test_path, testcasename_sdl)
         reffile = "{0}/refFiles/{1}.out".format(test_path, testDataFileName)
-        
+
         tmpfile = "{0}/{1}.tmp".format(outdir, testDataFileName)
 
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
@@ -214,11 +213,11 @@ class testcase_memHierarchy_memHA(SSTTestCase):
         # Run SST in the tests directory
         self.run_sst(sdlfile, outfile, errfile, set_cwd=test_path,
                      timeout_sec=testtimeout, mpi_out_files=mpioutfiles)
-        
+
         # Lines to ignore
         # These are generated by DRAMSim
         ignore_lines = ["===== MemorySystem"]
-        ignore_lines.append("TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank") 
+        ignore_lines.append("TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank")
         ignore_lines.append("== Loading")
         ignore_lines.append("DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz")
         ignore_lines.append("WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE")
@@ -234,7 +233,7 @@ class testcase_memHierarchy_memHA(SSTTestCase):
                       "total_cycles" : [20, 'X', 20, 20, 20],    # This stat is set once at the end of sim. May vary in all fields
                       "MSHR_occupancy" : [0, 0, 20, 0, 0] }      # Only diffs in number of cycles
 
-        filesAreTheSame, statDiffs, othDiffs = self._diffStatFiles(reffile, outfile, ignore_lines, tol_stats, True)
+        filesAreTheSame, statDiffs, othDiffs = testing_stat_output_diff(outfile, reffile, ignore_lines, tol_stats, True)
 
         # Perform the tests
         if ignore_err_file is False:
@@ -255,10 +254,10 @@ class testcase_memHierarchy_memHA(SSTTestCase):
     def _remove_lines_cleanup_file(self, remove_strs, in_file, out_file = None):
         with open(in_file, 'r') as fp:
             lines = fp.readlines()
-        
+
         if out_file == None:
             out_file = in_file
-        
+
         with open(out_file, 'w') as fp:
             fp.truncate(0)
             for line in lines:
@@ -275,12 +274,12 @@ class testcase_memHierarchy_memHA(SSTTestCase):
     # These are used to diff statistic output files with some extra checking abilities
     ####################################
 
-    
+
     # Return a parsed statistic or 'None' if the line is not a statistic
     # Currently handles console output format only and integer statistic formats
     # Stats are parsed into [component_name, stat_name, sum, sumSQ, count, min, max]
     def _is_stat(self, line):
-        cons_accum = re.compile(' ([\w.]+)\.(\w+) : Accumulator : Sum.(\w+) = (\d+); SumSQ.\w+ = (\d+); Count.\w+ = (\d+); Min.\w+ = (\d+); Max.\w+ = (\d+);')
+        cons_accum = re.compile(r' ([\w.]+)\.(\w+) : Accumulator : Sum.(\w+) = (\d+); SumSQ.\w+ = (\d+); Count.\w+ = (\d+); Min.\w+ = (\d+); Max.\w+ = (\d+);')
         m = cons_accum.match(line)
         if m == None:
             return None
@@ -300,12 +299,12 @@ class testcase_memHierarchy_memHA(SSTTestCase):
     # Input: ref - Reference filename
     # Input: out - Output filename to diff against
     # Input: ignore_lines - list of strings to ignore in the ref and out files. Any line that contains one of these strings will be ignored.
-    # Input: tol_stats - statistics to diff within a tolerance. 
-    #                    A map of statistic name to a list of tolerances on each field (sum, sumSq, count, min, max). 
+    # Input: tol_stats - statistics to diff within a tolerance.
+    #                    A map of statistic name to a list of tolerances on each field (sum, sumSq, count, min, max).
     #                    'X' indicates don't care. All others are treated as a +/- on the ref value
     # Input: new_stats - if True, the diff will ignore any new statistics in the out file that don't exist in the ref file
     # Ouput: pass - whether the test passed (no diffs) or not
-    # Output: stat_diffs - list of diffs on statistics with '<' indicating ref file lines and '>' indicating out file lines 
+    # Output: stat_diffs - list of diffs on statistics with '<' indicating ref file lines and '>' indicating out file lines
     # Output: oth_diffs - list of diffs on non-statistic lines with '<' indicating ref file lines and '>' indicating out file lines
     def _diffStatFiles(self, ref, out, ignore_lines, tol_stats, new_stats):
         with open(ref, 'r') as fp:
@@ -358,29 +357,29 @@ class testcase_memHierarchy_memHA(SSTTestCase):
                                     break
                             if not diffs:
                                 ref_stats.remove(ref)
-                        else: # Tolerance on stat but doesn't match a stat in ref 
+                        else: # Tolerance on stat but doesn't match a stat in ref
                             out_stats.append(stat)
                     else: # No tolerance on stat and doesn't match a stat in ref
                         out_stats.append(stat)
-    
+
         stat_diffs = [ ['<',x[0],x[1],x[2],x[3],x[4],x[5],x[6]] for x in ref_stats ]
         stat_diffs += [ ['>',x[0],x[1],x[2],x[3],x[4],x[5],x[6]] for x in out_stats ]
-    
+
         oth_diffs = [ ['<',x] for x in ref_oth ]
         oth_diffs += [ ['>',x] for x in out_oth ]
-    
+
         if len(stat_diffs) > 0 or len(oth_diffs) > 0:
             return False, stat_diffs, oth_diffs
         else:
             return True, stat_diffs, oth_diffs
-    
+
     def _prettyPrintDiffs(self, stat_diff, oth_diff):
         out = ""
         if len(stat_diff) != 0:
             out = "Statistic diffs:\n"
             for x in stat_diff:
                 out += (x[0] + " " + ",".join(str(y) for y in x[1:]) + "\n")
-        
+
         if len(oth_diff) != 0:
             out += "Non-statistic diffs:\n"
             for x in oth_diff:

@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 
 # Define the simulation components
@@ -26,22 +25,29 @@ comp_network.addParams({
       "num_ports" : cores + caches + (memories*2),
       "flit_size" : "36B",
       "output_buf_size" : "2KiB",
-      "id" : "0",  
+      "id" : "0",
       "topology" : "merlin.singlerouter"
 })
 comp_network.setSubComponent("topology","merlin.singlerouter")
 
 for x in range(cores):
-    comp_cpu = sst.Component("cpu" + str(x), "memHierarchy.trivialCPU")
+    comp_cpu = sst.Component("core" + str(x), "memHierarchy.standardCPU")
     comp_cpu.addParams({
+        "memFreq" : 4,
+        "memSize" : "1GiB",
+        "verbose" : 0,
         "clock" : coreclock,
-        "commFreq" : 4, # issue request every 4th cycle
         "rngseed" : 20+x,
-        "do_write" : 1,
-        "num_loadstore" : 1200,
-        "memSize" : 1024*1024*1024
+        "maxOutstanding" : 32,
+        "opCount" : 3000,
+        "reqsPerIssue" : 2,
+        "write_freq" : 36,      # 36% writes
+        "read_freq" : 55,       # 55% reads
+        "llsc_freq" : 2,        # 2% LLSC
+        "flush_freq" : 4,       # 4% flushes
+        "flushinv_freq" : 3,    # 3% flush-inv
     })
-    iface = comp_cpu.setSubComponent("memory", "memHierarchy.memInterface")
+    iface = comp_cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 
     l1cache = sst.Component("l1cache" + str(x), "memHierarchy.Cache")
     l1cache.addParams({
@@ -56,15 +62,14 @@ for x in range(cores):
         "debug" : DEBUG_L1,
         "debug_level" : 10,
     })
-    l1toC = l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-    l1NIC = l1cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+    l1NIC = l1cache.setSubComponent("lowlink", "memHierarchy.MemNIC")
     l1NIC.addParams({
         "group" : 1,
         "network_bw" : network_bw,
     })
 
     cpu_l1_link = sst.Link("link_cpu_cache_" + str(x))
-    cpu_l1_link.connect ( (iface, "port", "500ps"), (l1toC, "port", "500ps") )
+    cpu_l1_link.connect ( (iface, "lowlink", "500ps"), (l1cache, "highlink", "500ps") )
 
     l1_network_link = sst.Link("link_l1_network_" + str(x))
     l1_network_link.connect( (l1NIC, "port", "100ps"), (comp_network, "port" + str(x), "100ps") )
@@ -88,7 +93,7 @@ for x in range(caches):
         "debug_level" : 10,
         "verbose" : 2,
     })
-    l2NIC = l2cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
+    l2NIC = l2cache.setSubComponent("highlink", "memHierarchy.MemNIC")
     l2NIC.addParams({
         "group" : 2,
         "network_bw" : network_bw,
@@ -114,7 +119,7 @@ for x in range(memories):
         "addr_range_start" : x*64,
         "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
     })
-    dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+    dirNIC = dirctrl.setSubComponent("highlink", "memHierarchy.MemNIC")
     dirNIC.addParams({
         "group" : 3,
         "network_bw" : network_bw,
@@ -136,7 +141,7 @@ for x in range(memories):
         "addr_range_start" : x*64,
         "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
     })
-    memNIC = memctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+    memNIC = memctrl.setSubComponent("highlink", "memHierarchy.MemNIC")
     memNIC.addParams({
         "group" : 4,
         "network_bw" : network_bw,
@@ -161,7 +166,7 @@ for x in range(memories):
     portid = x + caches + cores
     link_directory_network = sst.Link("link_directory_network_" + str(x))
     link_directory_network.connect( (dirNIC, "port", "100ps"), (comp_network, "port" + str(portid), "100ps") )
-    
+
     portid = x + caches + cores + memories
     link_memory_network = sst.Link("link_memory_network_" + str(x))
     link_memory_network.connect( (memNIC, "port", "100ps",), (comp_network, "port" + str(portid), "100ps") )

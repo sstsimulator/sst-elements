@@ -1,13 +1,13 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2021, NTESS
+// Copyright (c) 2013-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -16,7 +16,6 @@
 /*
  * File:   directoryController.h
  * Author: Branden Moore / Caesar De la Paz III
- * Email:  bjmoor@sandia.gov / caesar.sst@gmail.com
  */
 
 #ifndef _MEMHIERARCHY_DIRCONTROLLER_H_
@@ -58,7 +57,6 @@ public:
             {"cache_line_size",         "Size of a cache line [aka cache block] in bytes.", "64"},
             {"coherence_protocol",      "Coherence protocol.  Supported --MESI, MSI--", "MESI"},
             {"mshr_num_entries",        "Number of MSHRs. Set to -1 for almost unlimited number.", "-1"},
-            {"net_memory_name",         "For directories connected to a memory over the network: name of the memory this directory owns", ""},
             {"access_latency_cycles",   "Latency of directory access in cycles", "0"},
             {"mshr_latency_cycles",     "Latency of mshr access in cycles", "0"},
             {"max_requests_per_cycle",  "Maximum number of requests to process per cycle (0 or negative is unlimited)", "0"},
@@ -69,18 +67,22 @@ public:
             {"interleave_step",         "Distance between interleaved chunks. E.g., to interleave 8B chunks among 3 directories, set size=8B, step=24B", "0B"},
             {"node",					"Node number in multinode environment"},
             /* Old parameters - deprecated or moved */
-            {"network_num_vc",          "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"}, // Remove SST 9.0
-            {"network_address",         "DEPRECATD - Now auto-detected by link control", ""},   // Remove SST 9.0
-            {"network_bw",                  "MOVED. Now a member of the MemNIC/MemLink subcomponent.", "80GiB/s"}, // Remove SST 9.0
-            {"network_input_buffer_size",   "MOVED. Now a member of the MemNIC/MemLink subcomponent.", "1KiB"}, // Remove SST 9.0
-            {"network_output_buffer_size",  "MOVED. Now a member of the MemNIC/MemLink subcomponent.", "1KiB"}) // Remove SST 9.0
+            {"network_bw",                  "MOVED. Now a member of the MemNIC subcomponent.", "80GiB/s"}, // Remove SST 9.0
+            {"network_input_buffer_size",   "MOVED. Now a member of the MemNIC subcomponent.", "1KiB"}, // Remove SST 9.0
+            {"network_output_buffer_size",  "MOVED. Now a member of the MemNIC subcomponent.", "1KiB"}) // Remove SST 9.0
 
     SST_ELI_DOCUMENT_PORTS(
-            {"memory",      "Link to memory controller", { "memHierarchy.MemEventBase" } },
-            {"network",     "Link to network; doubles as request network for split networks", { "memHierarchy.MemRtrEvent" } },
-            {"network_ack", "For split networks, link to response/ack network",     { "memHierarchy.MemRtrEvent" } },
-            {"network_fwd", "For split networks, link to forward request network",  { "memHierarchy.MemRtrEvent" } },
-            {"network_data","For split networks, link to data network",             { "memHierarchy.MemRtrEvent" } })
+            {"highlink",    "Non-network upper/CPU-side link (i.e., link towards the core/accelerator/etc.). This port loads the 'memHierarchy.MemLink' manager. "
+                            "To connect to a network component or to use non-default parameters on the MemLink subcomponent, fill the 'highlink' subcomponent slot instead of connecting this port.", {"memHierarchy.MemEventBase"} },
+            {"lowlink",     "Non-network lower/memory-side link (i.e., link towards memory). This port loads the 'memHierarchy.MemLink' manager. "
+                            "To connect to a network component or use non-default parameters on the MemLink subcomponent, fill the 'lowlink' subcomponent slot instead of connecting this port.", {"memHierarchy.MemEventBase"} },
+            {"network",     "DEPRECATED. Fill 'lowlink' subcomponent slot with 'memHierarchy.MemNIC' or 'memHierarchy.MemNICFour' instead and connect that subcomponent's ports. Network CPU-side link (i.e., link towards the core/accelerator/etc.). This port loads the 'memHierarchy.MemNIC' manager. If the 'lowlink' or deprecated 'memory' port is not filled, traffic to memory will also route through this port. Doubles as request network for split networks.", { "memHierarchy.MemRtrEvent" } },
+            {"memory",      "DEPRECATED. Use 'lowlink' port or fill 'lowlink' subcomponent slot instead. Link to memory controller", { "memHierarchy.MemEventBase" } },
+            {"network_ack", "DEPRECATED. Fill 'highlink' subcomponent slot with 'memHierarchy.MemNICFour' instead. For split networks, link to response/ack network",     { "memHierarchy.MemRtrEvent" } },
+            {"network_fwd", "DEPRECATED. Fill 'highlink' subcomponent slot with 'memHierarchy.MemNICFour' instead. For split networks, link to forward request network",  { "memHierarchy.MemRtrEvent" } },
+            {"network_data","DEPRECATED. Fill 'highlink' subcomponent slot with 'memHierarchy.MemNICFour' instead. For split networks, link to data network",             { "memHierarchy.MemRtrEvent" } },
+            )
+
 
     SST_ELI_DOCUMENT_STATISTICS(
             {"replacement_request_latency", "Total latency in ns of all replacement (put*) requests handled",   "nanoseconds",  1},
@@ -104,8 +106,10 @@ public:
             {"FetchResp_recv",      "Event received: FetchResp (response to FetchInv/Fetch)", "count", 2},
             {"FetchXResp_recv",     "Event received: FetchXResp (response to FetchInvX)", "count", 2},
             {"AckInv_recv",         "Event received: AckInv (response to Inv/FetchInv/ForceInv)", "count", 2},
+            {"AckFlush_recv",       "Event received: AckFlush (response to ForwardFlush)", "count", 2},
             {"FlushLine_recv",      "Event received: FlushLine (flush, don't invalidate)", "count", 2},
             {"FlushLineInv_recv",   "Event received: FlushLineInv (flush and invalidate)", "count", 2},
+            {"FlushAll_recv",       "Event received: FlushAll (full cache flush)", "count", 2},
             {"FlushLineResp_recv",  "Event received: FlushLineResp (response to FlushLine/Inv)", "count", 2},
             {"NACK_recv",           "Event received: NACK", "count", 2},
             {"GetS_uncache_recv",   "Noncacheable Event: GetS received", "count", 4},
@@ -128,22 +132,27 @@ public:
             {"eventSent_FetchInv",      "Event sent: FetchInv", "count", 2},
             {"eventSent_FetchInvX",     "Event sent: FetchInvX","count", 2},
             {"eventSent_ForceInv",      "Event sent: ForceInv", "count", 2},
+            {"eventSent_ForwardFlush",  "Event sent: ForwardFlush", "count", 2},
             {"eventSent_NACK",          "Event sent: NACK", "count", 2},
             {"eventSent_GetSResp",      "Event sent: GetSResp (shared data response)", "count", 1},
             {"eventSent_GetXResp",      "Event sent: GetXResp (exclusive data response)", "count", 1},
-            {"eventSent_WriteResp",      "Event sent: WriteResp (write ack)", "count", 1},
+            {"eventSent_WriteResp",     "Event sent: WriteResp (write ack)", "count", 1},
             {"eventSent_FetchResp",     "Event sent: FetchResp", "count", 2},
             {"eventSent_AckInv",        "Event sent: AckInv", "count", 2},
             {"eventSent_AckPut",        "Event sent: AckPut", "count", 2},
             {"eventSent_FlushLine",     "Event sent: FlushLine", "count", 2},
             {"eventSent_FlushLineInv",  "Event sent: FlushLineInv", "count", 2},
             {"eventSent_FlushLineResp", "Event sent: FlushLineResp", "count", 2},
+            {"eventSent_FlushAllResp",  "Event sent: FlushAllResp", "count", 2},
+            {"eventSent_UnblockFlush",  "Event sent: UnblockFlush", "count", 2},
             {"MSHR_occupancy",          "Number of events in MSHR each cycle",  "events",       1},
             {"default_stat",            "Default statistic. If not 0 then a statistic is missing", "", 1})
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-            {"cpulink", "CPU-side link manager, for single-link directories, use this one only", "SST::MemHierarchy::MemLinkBase"},
-            {"memlink", "Memory-side link manager", "SST::MemHierarchy::MemLinkBase"} )
+            {"highlink", "Port manager on the upper/processor-side (i.e., where requests typically come from). If you use this subcomponent slot, you do not need to connect the directory's highlink port. Do connect this subcomponent's ports instead. For directories with a single link, use this subcomponent slot only.", "SST::MemHierarchy::MemLinkBase"},
+            {"lowlink", "Port manager on the lower/memory side. If you use this subcomponent slot, you do not need to connect the directory's lowlink port. Do connect the subcomponent's ports instead. For directories with a single link, use the 'highlink' subcomponent slot only.", "SST::MemHierarchy::MemLinkBase"},
+            {"cpulink", "DEPRECATED. Renamed to 'highlink'. CPU-side port manager, for single-link directories, use this one only", "SST::MemHierarchy::MemLinkBase"},
+            {"memlink", "DEPRECATD. Renamed to 'lowlink'. Memory-side port manager", "SST::MemHierarchy::MemLinkBase"} )
 
 /* Begin class definition */
 private:
@@ -154,7 +163,7 @@ private:
     uint32_t    cacheLineSize;
 
     /* Range of addresses supported by this directory */
-    MemRegion   region; 
+    MemRegion   region;
     Addr        memOffset; // Stack addresses if multiple DCs handle the same memory
 
     /* Timestamp & latencies */
@@ -162,10 +171,10 @@ private:
     int         maxRequestsPerCycle;
 
     /* Turn clocks off when idle */
-    bool        clockOn;
-    Clock::Handler<DirectoryController>*  clockHandler;
-    TimeConverter* defaultTimeBase;
-    SimTime_t   lastActiveClockCycle;
+    bool                clockOn;
+    Clock::HandlerBase* clockHandler;
+    TimeConverter       defaultTimeBase;
+    SimTime_t           lastActiveClockCycle;
 
     std::map<SST::Event::id_type, uint64_t> startTimes;
 
@@ -192,11 +201,11 @@ private:
     std::set<Addr> addrsThisCycle;
 
     /* Network connections */
-    MemLinkBase*    memLink;
-    MemLinkBase*    cpuLink;
-    string          memoryName; // if connected to mem via network, this should be the name of the memory we own - param is memory_name
-    bool clockMemLink;
-    bool clockCpuLink;
+    MemLinkBase*    linkDown_;
+    MemLinkBase*    linkUp_;
+
+    bool clockLinkUp_;
+    bool clockLinkDown_;
 
     bool isRequestAddressValid(Addr addr);
 
@@ -214,9 +223,11 @@ private:
 public:
     DirectoryController(ComponentId_t id, Params &params);
     ~DirectoryController();
-    void setup(void);
     void init(unsigned int phase);
+    void setup(void);
+    void complete(unsigned int phase);
     void finish(void);
+
 
     /** Debug - triggered by output.fatal() or SIGUSR2 */
     virtual void printStatus(Output &out);
@@ -245,17 +256,21 @@ public:
     bool handlePutX(MemEvent* event, bool inMSHR);
     bool handleFlushLine(MemEvent* event, bool inMSHR);
     bool handleFlushLineInv(MemEvent* event, bool inMSHR);
+    bool handleFlushAll(MemEvent* event, bool inMSHR);
     bool handleFetchInv(MemEvent* event, bool inMSHR);
     bool handleForceInv(MemEvent* event, bool inMSHR);
     bool handleGetSResp(MemEvent* event, bool inMSHR);
     bool handleGetXResp(MemEvent* event, bool inMSHR);
     bool handleWriteResp(MemEvent* event, bool inMSHR);
     bool handleFlushLineResp(MemEvent* event, bool inMSHR);
+    bool handleAckFlush(MemEvent* event, bool inMSHR);
     bool handleAckPut(MemEvent* event, bool inMSHR);
     bool handleAckInv(MemEvent* event, bool inMSHR);
     bool handleFetchResp(MemEvent* event, bool inMSHR);
     bool handleFetchXResp(MemEvent* event, bool inMSHR);
     bool handleNACK(MemEvent* event, bool inMSHR);
+
+    bool handleDirEntryResponse(MemEvent* event);
 
     void sendOutgoingEvents();
 
@@ -290,11 +305,11 @@ private:
     } eventDI, evictDI;
 
     struct DirEntry {
-	bool                cached;         // whether block is cached or not
+        bool                cached;         // whether block is cached or not
         Addr                addr;           // block address
         State               state;          // state
         std::list<DirEntry*>::iterator cacheIter;
-	std::set<std::string> sharers;      // set of sharers for block
+        std::set<std::string> sharers;      // set of sharers for block
         std::string         owner;          // Owner of block
 
         DirEntry(Addr a) {
@@ -374,7 +389,7 @@ private:
     void updateCache(DirEntry * entry);
     void sendEntryToMemory(DirEntry* entry);
 
-    void issueMemoryRequest(MemEvent* event, DirEntry* entry);
+    void issueMemoryRequest(MemEvent* event, DirEntry* entry, bool lineGranularity);
     void issueFlush(MemEvent* event);
     void issueFetch(MemEvent* event, DirEntry* entry, Command cmd);
     void issueInvalidations(MemEvent* event, DirEntry* entry, Command cmd);
@@ -387,7 +402,9 @@ private:
     void sendAckInv(MemEvent* event);
     void sendAckPut(MemEvent* event);
     void sendNACK(MemEvent* event);
-    
+
+    void processCompleteEvent(MemEventInit* event);
+
     MSHR * mshr;
     std::unordered_map<Addr, DirEntry*> directory; // Master list of all directory entries, including noncached ones
 
@@ -418,8 +435,11 @@ private:
     uint64_t accessLatency;
     uint64_t mshrLatency;
 
-    std::map<MemEvent::id_type, Addr> memReqs;
-    std::map<Addr, std::map<std::string, MemEvent::id_type> > responses;
+    FlushState flush_state_;
+
+    std::map<Addr, std::map<std::string, MemEventBase::id_type> > responses;
+
+    std::map<MemEventBase::id_type, Addr> dirMemAccesses;
 
     CoherenceProtocol protocol;
     bool waitWBAck;
@@ -427,6 +447,8 @@ private:
 
     std::set<std::string> incoherentSrc;
 
+    // During init() we need to store routing for requests that get a response
+    std::map<MemEventBase::id_type, std::string> init_requests_;
 };
 
 }

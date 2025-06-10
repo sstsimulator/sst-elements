@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -17,8 +17,6 @@
 #include "offeredload/offered_load.h"
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
-#include <sst/core/timeLord.h>
 
 using namespace SST::Merlin;
 using namespace SST::Interfaces;
@@ -90,8 +88,8 @@ OfferedLoad::OfferedLoad(ComponentId_t cid, Params& params) :
 
 
     // Register functors for the SimpleNetwork IF
-    send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler<OfferedLoad>(this, &OfferedLoad::send_notify);
-    recv_notify_functor = new SST::Interfaces::SimpleNetwork::Handler<OfferedLoad>(this, &OfferedLoad::handle_receives);
+    send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler2<OfferedLoad,&OfferedLoad::send_notify>(this);
+    recv_notify_functor = new SST::Interfaces::SimpleNetwork::Handler2<OfferedLoad,&OfferedLoad::handle_receives>(this);
 
     // link_if->setNotifyOnSend(send_notify_functor);
     link_if->setNotifyOnReceive(recv_notify_functor);
@@ -132,13 +130,13 @@ OfferedLoad::OfferedLoad(ComponentId_t cid, Params& params) :
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
-    // clock_functor = new Clock::Handler<TrafficGen>(this,&TrafficGen::clock_handler);
+    // clock_functor = new Clock::Handler2<TrafficGen,&TrafficGen::clock_handler>(this);
     // clock_tc = registerClock( params.find<std::string>("message_rate", "1GHz"), clock_functor, false);
 
     base_tc = registerTimeBase("1ps",false);
-    timing_link = configureSelfLink("timing_link", base_tc, new Event::Handler<OfferedLoad>(this, &OfferedLoad::output_timing));
+    timing_link = configureSelfLink("timing_link", base_tc, new Event::Handler2<OfferedLoad,&OfferedLoad::output_timing>(this));
 
-    end_link = configureSelfLink("end_link", base_tc, new Event::Handler<OfferedLoad>(this, &OfferedLoad::end_handler));
+    end_link = configureSelfLink("end_link", base_tc, new Event::Handler2<OfferedLoad,&OfferedLoad::end_handler>(this));
 
     complete_event.push_back(new offered_load_complete_event(generation));
 
@@ -251,7 +249,7 @@ OfferedLoad::handle_receives(int vn)
 {
     SimpleNetwork::Request* req = link_if->recv(vn);
     if ( req->dest != id ) {
-        out.fatal(CALL_INFO,-1,"Endpoint %d received a packet intended for %lld\n",id,req->dest);
+        out.fatal(CALL_INFO,-1,"Endpoint %d received a packet intended for %" PRI_NID "\n",id,req->dest);
     }
     if ( req != NULL ) {
         SimTime_t current_time = getCurrentSimTime(base_tc);

@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -20,6 +20,7 @@
 #include <sst/core/event.h>
 #include <sst/core/output.h>
 #include <sst/core/warnmacros.h>
+#include <sst/core/interfaces/stdMem.h>
 
 #include <iostream>
 #include <map>
@@ -42,19 +43,24 @@ public:
 
 #define MEMBACKEND_ELI_PARAMS {"debug_level",     "(uint) Debugging level: 0 (no output) to 10 (all output). Output also requires that SST Core be compiled with '--enable-debug'", "0"},\
             {"debug_mask",      "(uint) Mask on debug_level", "0"},\
-            {"debug_location",  "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE", "0"},\
+            {"debug_location",  "DEPRECATED: Use 'debug' instead.", "0"},\
+            {"debug", "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE", "0"},\
             {"max_requests_per_cycle", "(int) Maximum number of requests to accept each cycle. Use 0 or -1 for unlimited.", "-1"},\
             {"request_width", "(int) Maximum size, in bytes, for a request", "64"},\
             {"mem_size", "(string) Size of memory with units (SI ok). E.g., '2GiB'.", NULL}
 
     typedef MemBackendConvertor::ReqId ReqId;
-    MemBackend();
+    MemBackend() {}
 
-    MemBackend(ComponentId_t id, Params &params) : SubComponent(id) { 
+    MemBackend(ComponentId_t id, Params &params) : SubComponent(id) {
+        uint32_t output_location = params.find<uint32_t>("debug", 0);
+        if (output_location == 0) {
+            params.find<uint32_t>("debug_location", 0);
+        }
     	output = new SST::Output("@t:MemoryBackend[@p:@l]: ",
                 params.find<uint32_t>("debug_level", 0),
                 params.find<uint32_t>("debug_mask", 0),
-                (Output::output_location_t)params.find<int>("debug_location", 0) );
+                (Output::output_location_t)output_location);
 
         m_maxReqPerCycle = params.find<>("max_requests_per_cycle",-1);
         if (m_maxReqPerCycle == 0) m_maxReqPerCycle = -1;
@@ -81,8 +87,8 @@ public:
         return m_getRequestor( id );
     }
 
-    virtual void setup() {}
-    virtual void finish() {}
+    virtual void setup() override {}
+    virtual void finish() override {}
 
     /* Called by parent's clock() function */
     virtual bool clock(Cycle_t UNUSED(cycle)) { return true; }
@@ -92,12 +98,22 @@ public:
     virtual uint32_t getRequestWidth() { return m_reqWidth; }
     virtual int32_t getMaxReqPerCycle() { return m_maxReqPerCycle; }
     virtual bool isClocked() { return true; }
-    virtual bool issueCustomRequest(ReqId, CustomCmdInfo*) {
+    virtual bool issueCustomRequest(ReqId, Interfaces::StandardMem::CustomData*) {
         output->fatal(CALL_INFO, -1, "Error (%s): This backend cannot handle custom requests\n", getName().c_str());
         return false;
     }
 
     virtual std::string getBackendConvertorType() = 0; /* Backend must return the compatible convertor type */
+
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SubComponent::serialize_order(ser);
+        SST_SER(output);
+        SST_SER(m_maxReqPerCycle);
+        SST_SER(m_memSize);
+        SST_SER(m_reqWidth);
+        // m_getRequestor is re-initialized during UNPACK by MemBackendConvertor
+    }
+    ImplementVirtualSerializable(SST::MemHierarchy::MemBackend);
 
 protected:
     Output*         output;
@@ -126,9 +142,14 @@ class SimpleMemBackend : public MemBackend {
         m_respFunc = func;
     }
 
-    virtual std::string getBackendConvertorType() {
+    virtual std::string getBackendConvertorType() override {
         return "memHierarchy.simpleMemBackendConvertor";
     }
+
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        MemBackend::serialize_order(ser);
+    }
+    ImplementVirtualSerializable(SST::MemHierarchy::SimpleMemBackend);
 
   private:
     std::function<void(ReqId)> m_respFunc;
@@ -149,7 +170,7 @@ class FlagMemBackend : public MemBackend {
         m_respFunc = func;
     }
 
-    virtual std::string getBackendConvertorType() {
+    virtual std::string getBackendConvertorType() override {
         return "memHierarchy.flagMemBackendConvertor";
     }
 
@@ -164,9 +185,7 @@ class ExtMemBackend : public MemBackend {
     virtual bool issueRequest( ReqId, Addr, bool isWrite,
                                std::vector<uint64_t> ins,
                                uint32_t flags, unsigned numBytes ) = 0;
-    virtual bool issueCustomRequest( ReqId, Addr, uint32_t Cmd,
-                                     std::vector<uint64_t> ins,
-                                     uint32_t flags, unsigned numBytes ) = 0;
+    virtual bool issueCustomRequest( ReqId, Interfaces::StandardMem::CustomData* ) override = 0;
 
     void handleMemResponse( ReqId id, uint32_t flags ) {
         m_respFunc( id, flags );
@@ -176,7 +195,7 @@ class ExtMemBackend : public MemBackend {
         m_respFunc = func;
     }
 
-    virtual std::string getBackendConvertorType() {
+    virtual std::string getBackendConvertorType() override {
         return "memHierarchy.extMemBackendConvertor";
     }
 

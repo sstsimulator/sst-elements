@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -20,12 +20,21 @@ class RecvMachine {
 
     typedef std::function<void()> Callback;
 
+
 	typedef uint64_t ProcessPairId;
 	static ProcessPairId getPPI(FireflyNetworkEvent* ev) {
-		ProcessPairId value;
-		value = (uint64_t) ev->getSrcNode() << 32;
-		value |= ev->getSrcPid() << 16;
-		value |= ev->getDestPid();
+		ProcessPairId value = ev->getDestPid();
+		value |= ev->getSrcPid() << NUM_PID_BITS;
+		value |= (uint64_t) ev->getSrcNode() << (NUM_PID_BITS * 2);
+		return value;
+	}
+
+    typedef uint64_t StreamKey;
+    static StreamKey getStreamKey( FireflyNetworkEvent* ev) {
+        StreamKey value = ev->getDestPid();
+		value |= ev->getSrcPid() << NUM_PID_BITS;
+		value |= (uint64_t) ev->getSrcNode() << (NUM_PID_BITS * 2);
+        value += (uint64_t) ev->getSrcStream() << ( (NUM_PID_BITS * 2) + NUM_NODE_BITS );
 		return value;
 	}
 
@@ -127,8 +136,8 @@ class RecvMachine {
 			while ( iter != m_pktBuf.end() ) {
 				FireflyNetworkEvent* ev = iter->second.front();
 
-				m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "packet from node=%d pid=%d for pid=%d %s %s PPI=0x%" PRIx64 "\n",
-						ev->getSrcNode(),ev->getSrcPid(),ev->getDestPid(),ev->isHdr() ? "hdr":"",ev->isTail() ? "tail":"",getPPI(ev));
+				m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "packet from node=%d pid=%d for pid=%d %s %s PPI=0x%" PRIx64 " stream=%d\n",
+						ev->getSrcNode(),ev->getSrcPid(),ev->getDestPid(),ev->isHdr() ? "hdr":"",ev->isTail() ? "tail":"",getPPI(ev),ev->getSrcStream());
 
 				if ( ev->isCtrl() ) {
 					++m_numActiveStreams;
@@ -136,7 +145,7 @@ class RecvMachine {
 					processPkt( ev );
 					--m_numPendingPkts;
 					iter->second.pop();
-				} else if ( m_streamMap.find(iter->first) == m_streamMap.end() ) {
+				} else if ( m_streamMap.find( getStreamKey( ev ) ) == m_streamMap.end() ) {
 					if ( m_numActiveStreams < m_maxActiveStreams ) {
 						++m_numActiveStreams;
 						m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE, "new stream numActiveStreams=%d m_numPendingPkts=%d\n",m_numActiveStreams,m_numPendingPkts-1);
@@ -147,7 +156,7 @@ class RecvMachine {
 						m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "can't start new stream numActiveStreams=%d\n",m_numActiveStreams);
 					}
 				} else {
-					if ( ! m_streamMap[iter->first]->isBlocked( ) ) {
+                    if ( ! m_streamMap[getStreamKey(ev)]->isBlocked( ) ) {
 						processPkt( ev );
 						--m_numPendingPkts;
 						m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE, "stream consumed packet, m_numPendingPkts=%d\n",m_numPendingPkts);
@@ -216,5 +225,5 @@ class RecvMachine {
         bool        m_clocking;
 
         std::unordered_map<ProcessPairId, std::queue<FireflyNetworkEvent*> > m_pktBuf;
-        std::unordered_map<ProcessPairId, StreamBase* >  m_streamMap;
+        std::unordered_map<StreamKey, StreamBase* >  m_streamMap;
 };

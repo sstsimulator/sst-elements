@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -66,22 +66,22 @@ public:
                output->verbose(CALL_INFO, 2, 0, "Memory is set to LINEAR mapping, will not adjust current page maps\n");
                // Nothing to do
                break;
-               
+
            case RANDOMIZED:
                output->verbose(CALL_INFO, 2, 0, "Memory is set to RANDOMIZED mapping, will perform a randomized shuffle of pages...\n");
                MarsagliaRNG rng(11, 200009011);
-               
+
                // Random swap pages all over the space so we can distribute accesses
                // across the memory system unevenly
                for(uint64_t i = 0; i < (pageCount * 2); ++i) {
                    const uint64_t selectA = (rng.generateNextUInt64() % pageCount);
                    const uint64_t selectB = (rng.generateNextUInt64() % pageCount);
-                   
+
                    if( selectA != selectB ) {
                        const uint64_t pageA = pageArr[selectA];
                        pageArr[selectA] = pageArr[selectB];
                        pageArr[selectB] = pageA;
-                       
+
                        output->verbose(CALL_INFO, 64, 0, "Swapping index %" PRIu64 " with index %" PRIu64 ", pageA=%" PRIu64 ", pageB=%" PRIu64 "\n",
                                        selectA, selectB, pageA, pageArr[selectA]);
                    }
@@ -91,7 +91,7 @@ public:
                    output->verbose(CALL_INFO, 32, 0, "Virtual Start = %20" PRIu64 " Physical Start = %20" PRIu64 "\n",
                                    (i * pageSize), pageArr[i]);
                }
-               
+
                break;
            }
 
@@ -100,7 +100,7 @@ public:
                pageMap.write(i, pageArr[i]);
            }
            free(pageArr);
-           
+
        } // End mapping by 'first' sharer
    }
 
@@ -134,7 +134,7 @@ private:
 	uint64_t maxMemoryAddress;
 	SST::Output* output;
 
-    Shared::SharedArray<uint64_t> pageMap;    
+    Shared::SharedArray<uint64_t> pageMap;
 	// const uint64_t * pageMap;
 
 };

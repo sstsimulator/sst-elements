@@ -1,13 +1,13 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2021, NTESS
+// Copyright (c) 2013-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -60,7 +60,7 @@ public:
         { "clock",                          "(string) Units for latency statistics. If not specified, units provided by parent component will be used.", "1GHz"}
 
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemNICFour, "memHierarchy", "MemNICFour", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(MemNICFour, "memHierarchy", "MemNICFour", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Memory-oriented network interface for split networks", SST::MemHierarchy::MemLinkBase)
 
     SST_ELI_DOCUMENT_PARAMS( MEMNICFOUR_ELI_PARAMS )
@@ -94,8 +94,8 @@ public:
     ~MemNICFour() { }
 
     /* Functions called by parent for handling events */
-    bool isClocked() { return false; }
-    void send(MemEventBase * ev);
+    bool isClocked() override { return false; }
+    void send(MemEventBase * ev) override;
     bool recvNotifyReq(int);
     bool recvNotifyAck(int);
     bool recvNotifyFwd(int);
@@ -106,12 +106,14 @@ public:
     size_t getSizeInBits(MemEventBase * ev, NetType net);
 
     /* Initialization and finish */
-    void init(unsigned int phase);
-    void finish() {
+    void init(unsigned int phase) override;
+    void setup() override;
+    void complete(unsigned int phase) override;
+    void finish() override {
         for (int i = 0; i < 4; i++)
             link_control[i]->finish();
     }
-    void setup();
+    void sendUntimedData(MemEventInit* ev, bool broadcast = true, bool lookup_dst = true) override;
 
     /* Internal clock function to handle buffered events */
     bool clock(Cycle_t cycle);
@@ -137,14 +139,14 @@ public:
 
             void serialize_order(SST::Core::Serialization::serializer &ser) override {
                 MemRtrEvent::serialize_order(ser);
-                ser & tag;
+                SST_SER(tag);
             }
 
             ImplementSerializable(SST::MemHierarchy::MemNICFour::OrderedMemRtrEvent);
     };
 
     /* Debug support */
-    void printStatus(Output& out);
+    void printStatus(Output& out) override;
 
 private:
 
@@ -158,8 +160,8 @@ private:
     std::array<SST::Interfaces::SimpleNetwork*, 4> link_control;
 
     // Clocks
-    Clock::Handler<MemNICFour>* clockHandler;
-    TimeConverter* clockTC;
+    Clock::HandlerBase* clockHandler;
+    TimeConverter clockTC;
     bool clockOn;
 
     // Event queues

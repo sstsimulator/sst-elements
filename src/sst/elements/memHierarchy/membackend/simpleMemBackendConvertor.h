@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -28,7 +28,7 @@ public:
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::MemHierarchy::SimpleMemBackendConvertor, SST::MemHierarchy::MemBackendConvertor, MemBackend*, uint32_t)
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(SimpleMemBackendConvertor, "memHierarchy", "simpleMemBackendConvertor", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(SimpleMemBackendConvertor, "memHierarchy", "simpleMemBackendConvertor", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Converts a MemEventBase* for base MemBackend", SST::MemHierarchy::SimpleMemBackendConvertor)
 
     SST_ELI_DOCUMENT_PARAMS( MEMBACKENDCONVERTOR_ELI_PARAMS )
@@ -38,11 +38,15 @@ public:
 /* Begin class definition */
     SimpleMemBackendConvertor(ComponentId_t id, Params &params, MemBackend* backend, uint32_t);
 
-    virtual bool issue( BaseReq* req );
+    virtual bool issue( BaseReq* req ) override;
 
     virtual void handleMemResponse( ReqId reqId ) {
         doResponse(reqId);
     }
+
+    SimpleMemBackendConvertor() { }
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::MemHierarchy::SimpleMemBackendConvertor)
 };
 
 }

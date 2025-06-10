@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -33,7 +33,7 @@ EmberSIRIUSTraceGenerator::EmberSIRIUSTraceGenerator(SST::ComponentId_t id,
 		fatal(CALL_INFO, -1, "Error: trace prefix is empty, no way to load a trace!\n");
 	} else {
 		char* full_trace = (char*) malloc( sizeof(char) * PATH_MAX );
-		sprintf(full_trace, "%s.%d", trace_prefix.c_str(), rank());
+		snprintf(full_trace, sizeof(char)*PATH_MAX, "%s.%d", trace_prefix.c_str(), rank());
 
 		trace_file = fopen(full_trace, "rb");
 
@@ -371,7 +371,7 @@ void EmberSIRIUSTraceGenerator::readMPIWaitall( std::queue<EmberEvent*>& evQ ) {
 	const double endTime = readTime();
 	const int32_t result = readINT32();
 
-	MessageRequest* reqs = (MessageRequest*) malloc( sizeof(MessageRequest*) * requestAddr.size() );
+	MessageRequest* reqs = (MessageRequest*) malloc( sizeof(MessageRequest) * requestAddr.size() );
 	for(uint32_t i = 0; i < requestAddr.size(); i++) {
 		auto findReq = liveRequests.find(requestAddr[i]);
 

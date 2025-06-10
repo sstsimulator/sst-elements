@@ -1,0 +1,2533 @@
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/include/mpichconf.h.in mvapich2-2.3.7-1-orig/src/include/mpichconf.h.in
+*** mvapich2-2.3.7-1/src/include/mpichconf.h.in	2022-05-23 11:45:44.000000000 -0600
+--- mvapich2-2.3.7-1-orig/src/include/mpichconf.h.in	2023-08-31 08:32:32.283251965 -0600
+***************
+*** 44,49 ****
+--- 44,52 ----
+  /* Define if using the psm channel */
+  #undef CHANNEL_PSM
+  
++ /* Define if using the rdma channel */
++ #undef CHANNEL_RDMA
++ 
+  /* Define to enable Checkpoint/Restart support. */
+  #undef CKPT
+  
+***************
+*** 500,506 ****
+  /* Define to 1 if you have the <netinet/tcp.h> header file. */
+  #undef HAVE_NETINET_TCP_H
+  
+! /* Define to 1 if you have the <net/if.h> header file. */
+  #undef HAVE_NET_IF_H
+  
+  /* Define if the Fortran types are not available in C */
+--- 503,509 ----
+  /* Define to 1 if you have the <netinet/tcp.h> header file. */
+  #undef HAVE_NETINET_TCP_H
+  
+! /* Define if you have the <net/if.h> header file. */
+  #undef HAVE_NET_IF_H
+  
+  /* Define if the Fortran types are not available in C */
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/Makefile.mk mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/Makefile.mk
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/Makefile.mk	2022-05-16 10:58:22.000000000 -0600
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/Makefile.mk	2023-08-31 08:29:09.585780696 -0600
+***************
+*** 16,21 ****
+--- 16,22 ----
+  ##
+  
+  include $(top_srcdir)/src/mpid/ch3/channels/nemesis/Makefile.mk
++ include $(top_srcdir)/src/mpid/ch3/channels/rdma/Makefile.mk
+  include $(top_srcdir)/src/mpid/ch3/channels/sock/Makefile.mk
+  include $(top_srcdir)/src/mpid/ch3/channels/mrail/Makefile.mk
+  include $(top_srcdir)/src/mpid/ch3/channels/psm/Makefile.mk
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/include/mpidi_ch3_impl.h mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/include/mpidi_ch3_impl.h
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/include/mpidi_ch3_impl.h	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/include/mpidi_ch3_impl.h	2023-08-31 08:29:09.605780940 -0600
+***************
+*** 0 ****
+--- 1,14 ----
++ #if !defined(MPICH_MPIDI_CH3_IMPL_H_INCLUDED)
++ #define MPICH_MPIDI_CH3_IMPL_H_INCLUDED
++ 
++ #include "mpidimpl.h"
++ 
++ extern int MPIDI_CH3I_Progress_init();
++ 
++ #define MPIDI_CH3I_SHM_MUTEX_LOCK(win_ptr)
++ #define MPIDI_CH3I_SHM_MUTEX_UNLOCK(win_ptr)
++ #define MPIDI_CH3I_SHM_MUTEX_INIT(win_ptr)
++ #define MPIDI_CH3I_SHM_MUTEX_DESTROY(win_ptr)
++ /* Shared memory window atomic/accumulate mutex implementation */
++ 
++ #endif /* !defined(MPICH_MPIDI_CH3_IMPL_H_INCLUDED) */
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/include/mpidi_ch3_post.h mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/include/mpidi_ch3_post.h
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/include/mpidi_ch3_post.h	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/include/mpidi_ch3_post.h	2023-08-31 08:29:09.605780940 -0600
+***************
+*** 0 ****
+--- 1,22 ----
++ 
++ #if !defined(MPICH_MPIDI_CH3_POST_H_INCLUDED)
++ #define MPICH_MPIDI_CH3_POST_H_INCLUDED
++ 
++ 
++ #define MPIDI_CH3_RECV_REQ_IS_READ(rreq) (1) 
++ 
++ #if 0
++ #define MPIDI_CH3_RECV_REQ_IS_READ(rreq) \
++     (MV2_RNDV_PROTOCOL_RGET == rreq->mrail.protocol)
++ #endif
++ 
++ 
++ #define MPIDI_CH3_RNDV_PROTOCOL_IS_READ(rts_pkt) (1)
++ #if 0
++ #define MPIDI_CH3_RNDV_PROTOCOL_IS_READ(rts_pkt) \
++     (MV2_RNDV_PROTOCOL_RGET == rts_pkt->rndv.protocol)
++ #endif
++ 
++ 
++ #endif /* !defined(MPICH_MPIDI_CH3_POST_H_INCLUDED) */
++ 
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/include/mpidi_ch3_pre.h mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/include/mpidi_ch3_pre.h
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/include/mpidi_ch3_pre.h	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/include/mpidi_ch3_pre.h	2023-08-31 08:29:09.606780953 -0600
+***************
+*** 0 ****
+--- 1,14 ----
++ 
++ #if !defined(MPICH_MPIDI_CH3_PRE_H_INCLUDED)
++ #define MPICH_MPIDI_CH3_PRE_H_INCLUDED
++ 
++ #define MPIDI_CH3_REQUEST_DECL
++ #define MV2_RNDV_PROTOCOL_RGET 22 
++ 
++ typedef struct {
++     int dummy;  /* dummy variable to ensure we don't have an empty structure */
++ } MPIDI_CH3I_CH_comm_t;
++ 
++ extern volatile unsigned int MPIDI_CH3I_progress_completion_count;
++ 
++ #endif /* !defined(MPICH_MPIDI_CH3_PRE_H_INCLUDED) */
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/include/mpidi_rdma_rndv.h mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/include/mpidi_rdma_rndv.h
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/include/mpidi_rdma_rndv.h	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/include/mpidi_rdma_rndv.h	2023-08-31 08:29:09.606780953 -0600
+***************
+*** 0 ****
+--- 1,36 ----
++ /* Copyright (c) 2001-2022, The Ohio State University. All rights
++  * reserved.
++  *
++  * This file is part of the MVAPICH2 software package developed by the
++  * team members of The Ohio State University's Network-Based Computing
++  * Laboratory (NBCL), headed by Professor Dhabaleswar K. (DK) Panda.
++  *
++  * For detailed copyright and licensing information, please refer to the
++  * copyright file COPYRIGHT in the top level MVAPICH2 directory.
++  *
++  */
++ 
++ #ifndef __MPID_RDMA_RNDV_H_
++ #define __MPID_RDMA_RNDV_H_
++ 
++ #include <mpiimpl.h>
++ #include <mpidimpl.h>
++ 
++ int MPIDI_CH3_iStartRndvMsg(MPIDI_VC_t * vc,
++                             MPID_Request * sreq,
++                             MPIDI_CH3_Pkt_t * rts_pkt);
++ 
++ int MPIDI_CH3_Prepare_rndv_get(MPIDI_VC_t * vc,
++                                MPID_Request * rreq);
++ 
++ 
++ int MPIDI_CH3_Rndv_transfer(MPIDI_VC_t *, MPID_Request *, MPID_Request *,
++                                     MPIDI_CH3_Pkt_rndv_clr_to_send_t *,
++                                     MPIDI_CH3_Pkt_rndv_req_to_send_t *);
++ 
++ int MPIDI_CH3_iStartRndvTransfer(MPIDI_VC_t * vc,
++                                  MPID_Request * rreq);
++ 
++ #endif /* __MPID_MRAIL_RNDV_H_ */
++ 
++ 
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/Makefile.mk mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/Makefile.mk
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/Makefile.mk	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/Makefile.mk	2023-08-31 08:29:09.606780953 -0600
+***************
+*** 0 ****
+--- 1,23 ----
++ ## -*- Mode: Makefile; -*-
++ ## vim: set ft=automake :
++ ##
++ ## (C) 2011 by Argonne National Laboratory.
++ ##     See COPYRIGHT in top-level directory.
++ ##
++ 
++ include $(top_srcdir)/src/mpid/ch3/channels/rdma/src/Makefile.mk
++ 
++ if BUILD_CH3_RDMA
++ 
++ AM_CPPFLAGS +=                                           \
++     -I$(top_srcdir)/src/mpid/ch3/channels/rdma/include   \
++     -I$(top_builddir)/src/mpid/ch3/channels/rdma/include \
++     -I$(top_srcdir)/src/mpi/coll
++ 
++ noinst_HEADERS +=                                       \
++     src/mpid/ch3/channels/rdma/include/mpidi_ch3_impl.h \
++     src/mpid/ch3/channels/rdma/include/mpidi_ch3_pre.h \
++     src/mpid/ch3/channels/rdma/include/mpidi_ch3_post.h
++ 
++ endif BUILD_CH3_RDMA
++ 
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_assert.h mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_assert.h
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_assert.h	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_assert.h	2023-10-05 14:58:20.492781796 -0600
+***************
+*** 0 ****
+--- 1,16 ----
++ 
++ #ifndef _RDMA_CH3_ASSERT_H
++ #define _RDMA_CH3_ASSERT_H
++ 
++ #include <stdio.h>
++ #include <stdlib.h>
++ #define my_assert( x ) if ( ! ( x ) ) { printf("%s:%d\n",__FILE__,__LINE__); abort(); }
++ 
++ extern int _rdma_dbg_lvl;
++ #if 0 
++ #define Dbg( lvl, format, ... ) if ( lvl <= _rdma_dbg_lvl ) {  printf( "%s():%d " format, __func__,__LINE__, ##__VA_ARGS__ ); }
++ #else
++ #define Dbg( lvl, format, ... )
++ #endif
++ 
++ #endif
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_init.c mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_init.c
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_init.c	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_init.c	2023-10-04 15:30:40.560763161 -0600
+***************
+*** 0 ****
+--- 1,213 ----
++ 
++ #include "mpidi_ch3_impl.h"
++ 
++ #include "./ch3_rdma.h"
++ #include "./ch3_assert.h"
++ 
++ #include "pmi.h"
++ 
++ int mv2_iov_density_min = MPIDI_IOV_DENSITY_MIN;
++ 
++ volatile unsigned int MPIDI_CH3I_progress_completion_count = 0;
++ 
++ static int getShortMsgLength() {
++     static int length = 0;
++     if ( 0 == length ) {
++         char* str = getenv( "RDMA_SHORT_LENGTH" );
++ 
++         if ( str ) {
++             length = atoi( str );
++         } else {
++             length = 4096;
++         }
++     }   
++     return length;
++ }
++ 
++ /*@
++   MPIDI_CH3_Init - Initialize the channel implementation.
++ 
++   Input Parameters:
++ + has_parent - boolean value that is true if this MPI job was spawned by 
++   another set of MPI processes
++ . pg_ptr - the new process group representing MPI_COMM_WORLD
++ - pg_rank - my rank in the process group
++ 
++   Return value:
++   A MPI error code.
++ 
++   Notes:
++   MPID_Init has called 'PMI_Init' and created the process group structure 
++   before this routine is called.
++ @*/
++ 
++ #undef FUNCNAME
++ #define FUNCNAME MPIDI_CH3_Init
++ #undef FCNAME
++ #define FCNAME MPL_QUOTE(FUNCNAME)
++ 
++ 
++ int _rdma_dbg_lvl = 1;
++ int MPIDI_CH3_Init(int has_parent, MPIDI_PG_t *pg_p, int pg_rank )
++ {
++     char* str = getenv("RDMA_NIC_DBG_LEVEL");
++     if ( str ) {
++         _rdma_dbg_lvl = atoi( str );
++     }
++     Dbg(1,"pg->size=%d pg_rank=%d %s shortMsgLen=%d\n", pg_p->size, pg_rank, pg_p->connData, getShortMsgLength());
++ 
++     ch3_rdma_init( getShortMsgLength() );
++ 
++     int mpi_errno = MPIDI_CH3I_Progress_init();
++     my_assert(mpi_errno == MPI_SUCCESS);
++     
++     return MPI_SUCCESS;
++ }
++ 
++ 
++ /*@
++   MPIDI_CH3_Finalize - Shutdown the channel implementation.
++ 
++   Return value:
++   A MPI error class.
++ @*/
++ int MPIDI_CH3_Finalize(void)
++ {
++     int mpi_errno = MPI_SUCCESS;
++     Dbg(1,"\n");
++ 
++     mpi_errno = MPIDI_CH3I_Progress_finalize();
++     my_assert( mpi_errno == MPI_SUCCESS );
++ 
++     return mpi_errno;
++ }
++ 
++ /*@ MPIDI_CH3_InitCompleted - Perform any channel-specific initialization
++   actions after MPID_Init but before MPI_Init (or MPI_Initthread) returns
++   @*/
++ 
++ int MPIDI_CH3_InitCompleted( void )
++ {
++     Dbg(1,"\n");
++     return MPI_SUCCESS;
++ }
++ 
++ 
++ // CH3_Win
++ int MPIDI_CH3_Win_fns_init(MPIDI_CH3U_Win_fns_t *win_fns)
++ {
++     Dbg(1,"\n");
++     return -1;
++ }
++ int MPIDI_CH3_Win_hooks_init(MPIDI_CH3U_Win_hooks_t *win_hooks)
++ {
++     Dbg(1,"\n");
++     return -1;
++ }
++ 
++ // CH3I_Progress
++ int MPIDI_CH3I_Progress_register_hook(int (*progress_fn)(int*), int *id)
++ { 
++     Dbg(1,"\n");
++     return -1;
++ }
++ int MPIDI_CH3I_Progress_deregister_hook(int id)
++ {
++     Dbg(1,"\n");
++     return -1;
++ } 
++ int MPIDI_CH3I_Progress_activate_hook(int id)
++ {
++     Dbg(1,"\n");
++     return -1;
++ } 
++ int MPIDI_CH3I_Progress_deactivate_hook(int id)
++ {
++     Dbg(1,"\n");
++     return -1;
++ }
++ 
++ int MPIDI_PG_Create_from_string(const char * str, MPIDI_PG_t ** pg_pptr, int *flag )
++ {
++     Dbg(1,"\n");
++     my_assert(0);
++     return -1;
++ }
++ int MPIDI_PG_To_string(MPIDI_PG_t *pg_ptr, char **str_ptr, int * x)
++ {
++     Dbg(1,"\n");
++     my_assert(0);
++     return -1;
++ }
++ 
++ // CH3_VC
++ int MPIDI_CH3_VC_Init( struct MPIDI_VC *vc )
++ {
++     Dbg(1,"rank=%d vc->state=%p eager_max_msg_sz=%d\n", vc->pg_rank, vc->state, getShortMsgLength() );
++     vc->state = MPIDI_VC_STATE_ACTIVE;
++     vc->eager_max_msg_sz = getShortMsgLength();
++     return MPI_SUCCESS;
++ }
++ 
++ int MPIDI_CH3_VC_Destroy( struct MPIDI_VC *vc )
++ {
++     Dbg(1,"rank=%d vc->state=%p\n",vc->pg_rank,vc->state);
++     return MPI_SUCCESS;
++ }
++ 
++ /*@
++   MPIDI_CH3_Connection_terminate - terminate the underlying connection
++   associated with the specified VC
++ 
++   Input Parameters:
++ . vc - virtual connection
++ 
++   Return value:
++   An MPI error code
++ @*/
++ int MPIDI_CH3_Connection_terminate(MPIDI_VC_t * vc)
++ {
++     Dbg(1,"rank=%d vc->state=%p\n",vc->pg_rank,vc->state);
++     int mpi_errno = MPIDI_CH3U_Handle_connection(vc, MPIDI_VC_EVENT_TERMINATED);
++     my_assert(mpi_errno == MPI_SUCCESS );
++ 
++     return MPI_SUCCESS;
++ }
++ 
++ int MPIDI_CH3_PortFnsInit( MPIDI_PortFns * arg)
++ {
++     Dbg(1,"\n");
++     return -1;
++ }
++ 
++ // CH3_PG
++ int MPIDI_CH3_PG_Destroy( struct MPIDI_PG *pg )
++ {
++     Dbg(1,"\n");
++     return MPI_SUCCESS;
++ }
++ int MPIDI_CH3_PG_Init( MPIDI_PG_t * pg )
++ {
++     Dbg(1,"\n");
++     return MPI_SUCCESS;
++ }
++ 
++ /* added by brad.  business card related global and functions */
++ /* FIXME: Make these part of the channel support headers */
++ 
++ int MPIDI_CH3_Get_business_card(int myRank, char *value, int length)
++ {
++     Dbg(1,"\n");
++     return -1;
++ }
++ 
++ /* MPIDI_CH3_Connect_to_root (really connect to peer) - channel routine
++    for connecting to a process through a port, used in implementing
++    MPID_Comm_connect and accept */
++ 
++ int MPIDI_CH3_Connect_to_root(const char * arg1, MPIDI_VC_t ** arg2)
++ {
++     Dbg(1,"\n");
++     my_assert(0);
++     return -1;
++ }
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_isend.c mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_isend.c
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_isend.c	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_isend.c	2023-09-22 11:48:43.688512286 -0600
+***************
+*** 0 ****
+--- 1,69 ----
++ 
++ 
++ #include "mpidi_ch3_impl.h"
++ 
++ #include "./ch3_rdma.h"
++ #include "./ch3_assert.h"
++ 
++ int MPIDI_CH3_iSend(MPIDI_VC_t * vc, MPID_Request * sreq, void * _pkt, MPIDI_msg_sz_t pkt_sz)
++ {
++     int mpi_errno = MPI_SUCCESS;
++ 
++     size_t hdr_sz = pkt_sz;
++ 
++     my_assert( pkt_sz < sizeof(MPIDI_CH3_Pkt_t));
++     MPIDI_CH3_Pkt_send_t* pkt = (MPIDI_CH3_Pkt_send_t*) _pkt;
++     Dbg(1,"enter VC: pg_rank=%d lpid=%d node_id=%d state=%d %s\n", vc->pg_rank, vc->lpid, vc->node_id, vc->state, MPIDI_CH3_Pkt_type_to_string[pkt->type] );
++     Dbg(2,"enter PG: id=%s size=%d\n", vc->pg->id, vc->pg->size );
++ 
++     switch( pkt->type ) {
++ 
++         case MPIDI_CH3_PKT_EAGER_SEND: {
++             MPIDI_CH3_Pkt_eager_send_t* send = (MPIDI_CH3_Pkt_eager_send_t*) pkt;
++             my_assert( hdr_sz == sizeof(MPIDI_CH3_Pkt_eager_send_t));
++             Dbg(2,"EAGER_SEND: req_id=%#x match=%#x data_sz=%d\n",send->sender_req_id,send->match,send->data_sz);
++         } break;
++ 
++         default:
++             my_assert(0);
++     }
++ 
++     MPL_IOV iov[1];
++     iov[0].iov_len = hdr_sz;
++     iov[0].iov_base = pkt;
++     ch3_rdma_post_sendv( iov, 1, vc->pg->id, vc->pg_rank, sreq, vc );
++ 
++     return mpi_errno;
++ }
++ int MPIDI_CH3_iSendv(MPIDI_VC_t * vc, MPID_Request * sreq, MPL_IOV * iov, int iov_n)
++ {
++     int mpi_errno = MPI_SUCCESS;
++ 
++ 
++     void* hdr = iov[0].iov_base;;
++     size_t hdr_sz = iov[0].iov_len;
++ 
++     my_assert( hdr_sz < sizeof(MPIDI_CH3_Pkt_t));
++     MPIDI_CH3_Pkt_send_t* pkt = (MPIDI_CH3_Pkt_send_t*) hdr;
++ 
++     Dbg(1,"enter VC: pg_rank=%d lpid=%d node_id=%d state=%d %s\n", vc->pg_rank, vc->lpid, vc->node_id, vc->state, MPIDI_CH3_Pkt_type_to_string[pkt->type] );
++     Dbg(2,"enter PG: id=%s size=%d\n", vc->pg->id, vc->pg->size );
++     Dbg(2,"iov_n %d\n",iov_n);
++ 
++     switch( pkt->type ) {
++ 
++         case MPIDI_CH3_PKT_EAGER_SEND: {
++             MPIDI_CH3_Pkt_eager_send_t* send = (MPIDI_CH3_Pkt_eager_send_t*) pkt;
++             my_assert( hdr_sz == sizeof(MPIDI_CH3_Pkt_eager_send_t));
++             Dbg(2,"EAGER_SEND: req_id=%#x match=%#x data_sz=%d\n",send->sender_req_id,send->match,send->data_sz);
++         } break;
++ 
++         default:
++             my_assert(0);
++     }
++ 
++     ch3_rdma_post_sendv( iov, iov_n, vc->pg->id, vc->pg_rank, sreq, vc );
++ 
++     return mpi_errno;
++ }
++ 
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_istartMsg.c mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_istartMsg.c
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_istartMsg.c	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_istartMsg.c	2023-09-22 14:53:32.430795374 -0600
+***************
+*** 0 ****
+--- 1,134 ----
++ #include "mpidi_ch3_impl.h"
++ 
++ #include "./ch3_rdma.h"
++ #include "./ch3_assert.h"
++ 
++ 
++ MPID_Request * create_request(void * hdr, MPIDI_msg_sz_t hdr_sz,
++                                      MPIU_Size_t nb)
++ {
++     MPID_Request * sreq = MPID_Request_create();
++     /* --BEGIN ERROR HANDLING-- */
++     if (sreq == NULL)
++         return NULL;
++     /* --END ERROR HANDLING-- */
++     MPIU_Object_set_ref(sreq, 2);
++     sreq->kind = MPID_REQUEST_SEND;
++     MV2_INC_NUM_POSTED_SEND();
++     MPIU_Assert(hdr_sz == sizeof(MPIDI_CH3_Pkt_t));
++     MPIU_Memcpy(&sreq->dev.pending_pkt, hdr, sizeof(MPIDI_CH3_Pkt_t));
++     sreq->dev.iov[0].MPL_IOV_BUF = (MPL_IOV_BUF_CAST)((char *) &sreq->dev.pending_pkt + nb);
++     sreq->dev.iov[0].MPL_IOV_LEN = hdr_sz - nb;
++     sreq->dev.iov_count = 1;
++     sreq->dev.OnDataAvail = 0;
++ 
++     MPIDI_FUNC_EXIT(MPID_STATE_CREATE_REQUEST);
++     return sreq;
++ }
++ 
++ int MPIDI_CH3_iStartMsg(MPIDI_VC_t * vc, void * hdr, MPIDI_msg_sz_t hdr_sz, MPID_Request ** sreq_ptr)
++ {
++     MPID_Request * sreq = NULL;
++     int mpi_errno = MPI_SUCCESS;
++ 
++     my_assert( hdr_sz <= sizeof(MPIDI_CH3_Pkt_t));
++     MPIDI_CH3_Pkt_send_t* pkt = (MPIDI_CH3_Pkt_send_t*) hdr;
++ 
++     Dbg(1,"enter VC: pg_rank=%d lpid=%d node_id=%d state=%d %s\n", vc->pg_rank, vc->lpid, vc->node_id, vc->state, MPIDI_CH3_Pkt_type_to_string[pkt->type] );
++     Dbg(2,"enter PG: id=%s size=%d\n", vc->pg->id, vc->pg->size );
++         
++     switch( pkt->type ) {
++         case MPIDI_CH3_PKT_CLOSE: {
++             MPIDI_CH3_Pkt_close_t* close = (MPIDI_CH3_Pkt_close_t*) pkt;
++             Dbg(2,"EAGER_SEND: ack=%d\n",close->ack);
++         } break;
++ 
++         case MPIDI_CH3_PKT_EAGER_SEND: {
++             MPIDI_CH3_Pkt_eager_send_t* send = (MPIDI_CH3_Pkt_eager_send_t*) pkt;
++             Dbg(2,"EAGER_SEND: req_id=%#x match=%#x data_sz=%d\n",send->sender_req_id,send->match,send->data_sz);
++         } break;
++ 
++         case MPIDI_CH3_PKT_EAGER_SYNC_ACK: {
++             MPIDI_CH3_Pkt_eager_sync_ack_t* send = (MPIDI_CH3_Pkt_eager_sync_ack_t*) pkt;
++             Dbg(2,"EAGER_SYNC_ACKD: req_id=%#x\n",send->sender_req_id);
++         } break;
++ 
++         default:
++             my_assert(0);
++     }
++ 
++     sreq = create_request(hdr, hdr_sz, 0);
++     if (!sreq) {
++         my_assert(0);
++     }
++ 
++     if ( MPIDI_CH3_PKT_CLOSE != pkt->type ) {
++         MPL_IOV iov[1];
++         iov[0].iov_len = hdr_sz;
++         iov[0].iov_base = hdr;
++         ch3_rdma_post_sendv( iov, 1, vc->pg->id, vc->pg_rank, sreq, vc );
++     } else {
++         if ( sreq->cc_ptr ) {
++ 
++             Dbg(1,"MPID_REQUEST_SEND *cc_ptr=%d \n",*sreq->cc_ptr );
++ 
++             int complete;
++             MPIU_cc_decr(sreq->cc_ptr, &complete);
++ 
++             Dbg(2,"*cc_ptr=%d complete=%d \n",*sreq->cc_ptr,complete );
++         }
++         mpi_errno = MPIDI_CH3U_Handle_connection(vc, MPIDI_VC_EVENT_TERMINATED);
++         my_assert(mpi_errno == MPI_SUCCESS );
++ 
++     }
++ 
++     Dbg(2,"return sreq=%p\n",sreq);
++     *sreq_ptr = sreq;
++     return mpi_errno;
++ }
++ 
++ int MPIDI_CH3_iStartMsgv(MPIDI_VC_t * vc, MPL_IOV * iov, int iov_n, MPID_Request **sreq_ptr)
++ {
++     MPID_Request * sreq = NULL;
++     int mpi_errno = MPI_SUCCESS;
++ 
++     void* hdr = iov[0].iov_base;;
++     size_t hdr_sz = iov[0].iov_len;
++ 
++     my_assert( hdr_sz < sizeof(MPIDI_CH3_Pkt_t));
++     MPIDI_CH3_Pkt_send_t* pkt = (MPIDI_CH3_Pkt_send_t*) hdr;
++ 
++     Dbg(1,"enter VC: pg_rank=%d lpid=%d node_id=%d state=%d %s\n", vc->pg_rank, vc->lpid, vc->node_id, vc->state, MPIDI_CH3_Pkt_type_to_string[pkt->type] );
++     Dbg(2,"enter PG: id=%s size=%d\n", vc->pg->id, vc->pg->size );
++     Dbg(2,"iov_n %d\n",iov_n);
++         
++     switch( pkt->type ) {
++         case MPIDI_CH3_PKT_CLOSE: {
++             my_assert(0);
++             MPIDI_CH3_Pkt_close_t* close = (MPIDI_CH3_Pkt_close_t*) pkt;
++             my_assert( hdr_sz == sizeof(MPIDI_CH3_Pkt_close_t));
++             Dbg(2,"EAGER_SEND: ack=%d\n",close->ack);
++         } break;
++ 
++         case MPIDI_CH3_PKT_EAGER_SEND: {
++             MPIDI_CH3_Pkt_eager_send_t* send = (MPIDI_CH3_Pkt_eager_send_t*) pkt;
++             my_assert( hdr_sz == sizeof(MPIDI_CH3_Pkt_eager_send_t));
++             Dbg(2,"EAGER_SEND: req_id=%#x match=%#x data_sz=%d\n",send->sender_req_id,send->match,send->data_sz);
++         } break;
++ 
++         default:
++             my_assert(0);
++     }
++ 
++     sreq = create_request(hdr, hdr_sz, 0);
++     if (!sreq) {
++         my_assert(0);
++     }
++ 
++     ch3_rdma_post_sendv( iov, iov_n, vc->pg->id, vc->pg_rank, sreq, vc );
++ 
++     Dbg(2,"return sreq=%p\n",sreq);
++ 
++     *sreq_ptr = sreq;
++     return mpi_errno;
++ }
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_istartMsg.c.old mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_istartMsg.c.old
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_istartMsg.c.old	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_istartMsg.c.old	2023-08-31 08:29:09.607780965 -0600
+***************
+*** 0 ****
+--- 1,110 ----
++ #include "mpidi_ch3_impl.h"
++ 
++ #include "./ch3_rdma.h"
++ #include "./ch3_assert.h"
++ 
++ 
++ #undef FUNCNAME
++ #define FUNCNAME create_request
++ #undef FCNAME
++ #define FCNAME MPL_QUOTE(FUNCNAME)
++ static MPID_Request * create_request(void * hdr, MPIDI_msg_sz_t hdr_sz,
++                                      MPIU_Size_t nb)
++ {
++     MPID_Request * sreq = MPID_Request_create();
++     /* --BEGIN ERROR HANDLING-- */
++     if (sreq == NULL)
++         return NULL;
++     /* --END ERROR HANDLING-- */
++     MPIU_Object_set_ref(sreq, 2);
++     sreq->kind = MPID_REQUEST_SEND;
++     MV2_INC_NUM_POSTED_SEND();
++     MPIU_Assert(hdr_sz == sizeof(MPIDI_CH3_Pkt_t));
++     MPIU_Memcpy(&sreq->dev.pending_pkt, hdr, sizeof(MPIDI_CH3_Pkt_t));
++     sreq->dev.iov[0].MPL_IOV_BUF = (MPL_IOV_BUF_CAST)((char *) &sreq->dev.pending_pkt + nb);
++     sreq->dev.iov[0].MPL_IOV_LEN = hdr_sz - nb;
++     sreq->dev.iov_count = 1;
++     sreq->dev.OnDataAvail = 0;
++ 
++     MPIDI_FUNC_EXIT(MPID_STATE_CREATE_REQUEST);
++     return sreq;
++ }
++ 
++ int MPIDI_CH3_iStartMsg(MPIDI_VC_t * vc, void * hdr, MPIDI_msg_sz_t hdr_sz, MPID_Request ** sreq_ptr)
++ {
++     MPID_Request * sreq = NULL;
++     int mpi_errno = MPI_SUCCESS;
++ 
++     printf("%s():%d enter VC: pg_rank=%d lpid=%d node_id=%d state=%d\n", __func__, __LINE__, vc->pg_rank, vc->lpid, vc->node_id, vc->state );
++     printf("%s():%d enter PG: id=%s size=%d\n", __func__, __LINE__, vc->pg->id, vc->pg->size );
++ 
++     my_assert( hdr_sz <= sizeof(MPIDI_CH3_Pkt_t));
++     MPIDI_CH3_Pkt_send_t* pkt = (MPIDI_CH3_Pkt_send_t*) hdr;
++ 
++     printf("%s() %s\n",__func__,MPIDI_CH3_Pkt_type_to_string[pkt->type]);
++         
++     switch( pkt->type ) {
++         case MPIDI_CH3_PKT_CLOSE: {
++             MPIDI_CH3_Pkt_close_t* close = (MPIDI_CH3_Pkt_close_t*) pkt;
++             printf("%s():%d EAGER_SEND: ack=%d\n",__func__,__LINE__,close->ack);
++         } break;
++ 
++         case MPIDI_CH3_PKT_EAGER_SEND: {
++             MPIDI_CH3_Pkt_eager_send_t* send = (MPIDI_CH3_Pkt_eager_send_t*) pkt;
++             printf("%s():%d EAGER_SEND: req_id=%#x match=%#x data_sz=%d\n",__func__,__LINE__,send->sender_req_id,send->match,send->data_sz);
++         } break;
++ 
++         default:
++             my_assert(0);
++     }
++ 
++     sreq = create_request(hdr, hdr_sz, 0);
++     if (!sreq) {
++ 	    exit(0);
++     }
++ 
++     ch3_rdma_post_send( hdr, hdr_sz, vc->pg->id, vc->pg_rank, sreq );
++ 
++     printf("%s():%d return\n",__func__,__LINE__);
++     return mpi_errno;
++ }
++ 
++ int MPIDI_CH3_iStartMsgv(MPIDI_VC_t * vc, MPL_IOV * iov, int iov_n, MPID_Request **sreq_ptr)
++ {
++     printf("%s():%d enter\n",__func__,__LINE__);
++     MPIDI_CH3_Pkt_t *genpkt;
++     void *buf;
++ //    int psmerr, mpi_errno = MPI_SUCCESS;
++     MPIDI_msg_sz_t buflen;
++ 
++ //    PSM_ESTABLISH_CONNECTION(vc->pg_rank);
++ //    assert(iov_n > 0);
++ //    genpkt = (MPIDI_CH3_Pkt_t *) iov[0].MPL_IOV_BUF;
++ 
++     printf("%s() iov_n=%d\n",__func__,iov_n);
++     /* 2-sided packet handling */
++     MPIDI_CH3_Pkt_send_t *pkt;
++ 
++     pkt = (MPIDI_CH3_Pkt_send_t *) iov[0].MPL_IOV_BUF;
++     buf = (void *) iov[1].MPL_IOV_BUF;
++     buflen = iov[1].MPL_IOV_LEN;
++ 
++     printf("%s() match %#" PRIx64 ", rank %d, length %d\n",__func__, pkt->match, vc->pg_rank, buflen );
++ 
++     printf("%s() lpid=%d node_id=%d state=%d \n",__func__, vc->lpid, vc->node_id, vc->state );
++     printf("%s() %p %p\n",__func__, vc->rndvSend_fn, vc->rndvRecv_fn );  
++     printf("%s() eager_max %d,  eager_fast_max_msg_size %d, ready_eager_max_msg_sz %d\n",
++         __func__, vc->eager_max_msg_sz, vc-> eager_fast_max_msg_sz, vc->ready_eager_max_msg_sz );  
++ 
++     printf("%s() pg->size %d, \n", __func__, vc->pg->size);
++ #if 0
++     psmerr = psm_send_pkt(rptr, pkt->match, vc->pg_rank, buf, buflen);
++     if(unlikely(psmerr != PSM_OK)) {
++         mpi_errno = psm_map_error(psmerr);
++     }
++ #endif
++     printf("%s():%d return\n",__func__,__LINE__);
++     exit(0);
++ 
++     return -1;
++ }
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_progress.c mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_progress.c
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_progress.c	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_progress.c	2023-10-04 16:56:18.875670310 -0600
+***************
+*** 0 ****
+--- 1,183 ----
++ #include "mpidi_ch3_impl.h"
++ 
++ #include "./ch3_rdma.h"
++ #include "./ch3_assert.h"
++ 
++ static MPIDI_CH3_PktHandler_Fcn *pktArray[MPIDI_CH3_PKT_END_CH3+1];
++ 
++ int MPIDI_CH3I_Progress_init(void)
++ {
++     int mpi_errno;
++     Dbg(1,"\n");
++     mpi_errno = MPIDI_CH3_PktHandler_Init( pktArray, MPIDI_CH3_PKT_END_CH3+1 );
++     my_assert( mpi_errno == MPI_SUCCESS );
++ 
++     return MPI_SUCCESS;
++ }
++ 
++ static int process_msg(int); 
++ 
++ int MPIDI_CH3_Progress_poke(void)
++ {
++     Dbg(1,"\n");
++     return process_msg( 0 );
++ }
++ 
++ void MPIDI_CH3_Progress_start(MPID_Progress_state * state)
++ {
++     Dbg(1,"\n");
++ }
++ 
++ void MPIDI_CH3_Progress_end(MPID_Progress_state * state)
++ {
++     Dbg(1,"\n");
++ }
++ 
++ int MPIDI_CH3_Progress_wait(MPID_Progress_state * state)
++ {
++     Dbg(1,"entered\n");
++     return process_msg( 1 );
++ }
++ static int process_msg(int blocking) 
++ {
++ 
++     MPIDI_msg_sz_t dataLen = 0;
++     void* data = NULL;
++ 
++     int srcNode = -1;
++     int srcPid = -1;
++     int rank = -1;
++     char group[GRP_ID_LEN];
++     struct MPIDI_VC* vc = NULL;
++ 
++     MPID_Request* req = ch3_rdma_progress( blocking, &data, &dataLen, &srcNode, &srcPid, group, &rank, &vc );
++ 
++     if ( req == NULL && data ) {
++         MPIDI_CH3_Pkt_t* pkt = (MPIDI_CH3_Pkt_t*) data;
++ 
++         Dbg(2,"%s srcNode=%d srcPid=%d group=%s rank=%d datLen=%d\n",
++             MPIDI_CH3_Pkt_type_to_string[pkt->type], srcNode, srcPid, group, rank, dataLen ); 
++ 
++         MPID_Request* rreqp = NULL;
++         MPIDI_PG_t* pg = NULL;
++         int retval = MPIDI_PG_Find(group, &pg);
++         my_assert( retval == MPI_SUCCESS );
++         my_assert( pg );
++ 
++         Dbg(2,"%s\n",pg->id );
++ 
++         MPIDI_PG_Get_vc( pg, srcNode, &vc );
++         my_assert( vc );
++ 
++ 	    switch ( pkt->type ) {
++             case MPIDI_CH3_PKT_CLOSE: {
++                 MPIDI_CH3_Pkt_close_t* close = (MPIDI_CH3_Pkt_close_t*) pkt;
++ 	            Dbg(1,"%s ack=%d\n",MPIDI_CH3_Pkt_type_to_string[pkt->type],close->ack);
++ 
++                 pktArray[pkt->type]( vc, pkt, 0, &dataLen, &rreqp );
++                 ch3_free_buf( data );
++             } break;
++ 
++             case MPIDI_CH3_PKT_EAGER_SEND: {
++                 MPIDI_CH3_Pkt_eager_send_t* send = (MPIDI_CH3_Pkt_eager_send_t*) pkt;
++ 
++                 Dbg(1,"%s req_id=%#x match=%#x data_sz=%d dataLen=%d ptk=%p\n",MPIDI_CH3_Pkt_type_to_string[pkt->type], 
++                             send->sender_req_id,send->match,send->data_sz,dataLen,pkt);
++ 
++                 dataLen -= sizeof( MPIDI_CH3_Pkt_eager_send_t );
++                 pktArray[pkt->type]( vc, pkt, send+1, &dataLen, &rreqp );
++                 ch3_free_buf( data );
++ 
++                 Dbg(2,"dataLen=%d\n",dataLen);
++             } break;
++ 
++             case MPIDI_CH3_PKT_RNDV_REQ_TO_SEND: {
++                 MPIDI_CH3_Pkt_rndv_req_to_send_t* send = (MPIDI_CH3_Pkt_rndv_req_to_send_t*) pkt;
++ 
++                 Dbg(1,"%s req_id=%#x match=%#x data_sz=%d dataLen=%d ptk=%p\n",MPIDI_CH3_Pkt_type_to_string[pkt->type],
++                             send->sender_req_id,send->match,send->data_sz,dataLen,pkt);
++ 
++                 dataLen -= sizeof( MPIDI_CH3_Pkt_rndv_req_to_send_t );
++                 pktArray[pkt->type]( vc, pkt, send+1, &dataLen, &rreqp );
++                 ch3_free_buf( data );
++ 
++                 Dbg(2,"dataLen=%d\n",dataLen);
++             } break;
++ 
++             case MPIDI_CH3_PKT_EAGER_SYNC_ACK: {
++                 MPIDI_CH3_Pkt_eager_sync_ack_t* send = (MPIDI_CH3_Pkt_eager_sync_ack_t*) pkt;
++ 
++                 Dbg(1,"%s sender_req_id=%#x\n",MPIDI_CH3_Pkt_type_to_string[pkt->type], send->sender_req_id );
++ 
++                 ch3_rdma_memory_unreg( send->sender_req_id  );
++                 pktArray[pkt->type]( vc, pkt, NULL, &dataLen, &rreqp );
++                 ch3_free_buf( data );
++             } break;
++ 
++             case MPIDI_CH3_PKT_RNDV_CLR_TO_SEND: {
++                 MPIDI_CH3_Pkt_rndv_clr_to_send_t* send = (MPIDI_CH3_Pkt_rndv_clr_to_send_t*) pkt;
++ 
++                 Dbg(1,"%s sender_req_id=%#x receiver_req_id=%#x dataLen=%d ptk=%p\n",MPIDI_CH3_Pkt_type_to_string[pkt->type],
++                             send->sender_req_id,send->receiver_req_id,dataLen,pkt);
++ 
++                 dataLen -= sizeof( MPIDI_CH3_Pkt_rndv_req_to_send_t );
++                 pktArray[pkt->type]( vc, pkt, send+1, &dataLen, &rreqp );
++                 ch3_free_buf( data );
++ 
++                 Dbg(2,"dataLen=%d\n",dataLen);
++             } break;
++ 
++ 	        default: {
++        	        Dbg(0,"Received a pkt type %d\n",pkt->type);
++                 my_assert(0);
++ 	        } break;
++ 	    }
++     }
++     Dbg(2,"req=%p\n",req);
++ 
++     if ( req ) {
++ 
++         Dbg(2,"kind=%d status=%d cc=%d cd_ptr=%p\n",req->kind,req->status,req->cc,req->cc_ptr );
++         switch ( req->kind ) { 
++             case MPID_REQUEST_SEND: {
++                 if ( req->cc_ptr ) {
++               
++                     Dbg(1,"MPID_REQUEST_SEND *cc_ptr=%d \n",*req->cc_ptr );
++ 
++                     int complete;
++                     MPIU_cc_decr(req->cc_ptr, &complete);
++ 
++                     Dbg(2,"*cc_ptr=%d complete=%d \n",*req->cc_ptr,complete );
++                 }
++             } break;
++ 
++             case MPID_REQUEST_RECV: {
++                 int complete;
++                 my_assert( MPI_SUCCESS == MPIDI_CH3_EagerSyncAck( vc, req ) );
++ 
++                 my_assert( MPI_SUCCESS == MPIDI_CH3U_Handle_recv_req(vc, req, &complete) );
++                 Dbg(1,"MPID_REQUEST_RECV complete=%d \n",complete );
++             } break;
++ 
++             default: {
++                 my_assert(0);
++             }
++         } 
++     }
++ 
++     Dbg(2,"returned\n");
++     return MPI_SUCCESS;
++ }
++ 
++ int MPIDI_CH3_Progress_test(void)
++ {
++     Dbg(1,"\n");
++     my_assert(0);
++     return -1;
++ }
++ 
++ int MPIDI_CH3I_Progress_finalize(void)
++ {
++     Dbg(1,"\n");
++     return MPI_SUCCESS;
++ }
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_rdma.cpp mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_rdma.cpp
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_rdma.cpp	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_rdma.cpp	2023-10-04 16:13:12.859504411 -0600
+***************
+*** 0 ****
+--- 1,268 ----
++ 
++ #include "./ch3_rdma.h"
++ 
++ #include <map>
++ #include <string.h>
++ #include <stdlib.h>
++ #include <stdio.h>
++ #include <sys/uio.h>
++ 
++ #include "./ch3_assert.h"
++ 
++ #define ADDR_TYPE uint64_t
++ 
++ #include "rdma.h"
++ 
++ typedef struct Ch3_Rdma_info {
++         int compQ;
++         int shortMsgRq;
++         int shortMsgLen;
++ } Ch3_Rdma_info_t;
++ 
++ typedef enum  { RdmaInvalidCtx = 0, RdmaSendCtx, RdmaRecvCtx, RdmaReadCtx, RdmaSendAckCtx } RdmaCtxType;
++ 
++ typedef struct RdmaCtx {
++         void* buf;
++         RdmaCtxType type;
++         MPID_Request *mpiReq;
++         struct MPIDI_VC* vc;
++ } RdmaCtx_t;
++ 
++ #define SHORT_MSG_TAG 0xf00d
++ 
++ static Ch3_Rdma_info_t g_info;
++ 
++ #define NUM_SEND_CTX 256 
++ 
++ static RdmaCtx_t* _sendCtxQ[NUM_SEND_CTX];
++ static int _foo;
++ 
++ inline RdmaCtx_t* popSendCtx() {
++     my_assert( _foo );
++     --_foo;
++ 
++     RdmaCtx_t* ret = _sendCtxQ[ _foo ];
++     return ret;
++ }
++ 
++ inline void pushSendCtx( RdmaCtx_t* ctx ) {
++     _sendCtxQ[_foo] = ctx;
++     ++_foo;
++ }
++ 
++ struct RdmaMsg {
++     char group[GRP_ID_LEN];
++     int srcNode;
++     int rank;
++     int srcPid;
++     int dataLen;
++ };
++ 
++ int ch3_rdma_init( int shortLen ) {
++ 
++     rdma_init();
++ 
++     g_info.compQ = rdma_create_cq();
++     g_info.shortMsgRq = rdma_create_rq( SHORT_MSG_TAG, g_info.compQ );
++ 
++     g_info.shortMsgLen = sizeof( RdmaMsg ) + shortLen;;
++ 
++     for ( int i = 0; i < NUM_SEND_CTX; i++ ) {
++         _sendCtxQ[i] = (RdmaCtx_t*) malloc( sizeof( RdmaCtx_t ) + g_info.shortMsgLen); 
++     }
++     _foo = NUM_SEND_CTX;
++ 
++ 
++     int numPostedRecvs = 16;
++     char* str = getenv( "RDMA_NIC_NUM_POSTED_RECV" );
++     if ( str ) {
++         numPostedRecvs = atoi( str );
++     }
++ 
++     Dbg(1,"number of posted receives: %d\n",numPostedRecvs);
++     for ( int i =0; i < numPostedRecvs; i++ ) {
++         RdmaCtx_t* ctx = (RdmaCtx_t*) malloc( sizeof( RdmaCtx_t ) + g_info.shortMsgLen); 
++         my_assert(ctx);
++         Dbg(2,"ctx=%p buf=%p\n", ctx,ctx->buf );
++         ctx->buf = ctx + 1;
++         ctx->type = RdmaRecvCtx;
++         ctx->mpiReq = NULL;
++         rdma_recv_post( ctx->buf, g_info.shortMsgLen, g_info.shortMsgRq, (Context) ctx );
++     }
++ 
++     rdma_barrier();
++ 
++     return 0;
++ }
++ 
++ void printData( const char* txt, char* data, size_t len)
++ {
++ #if 0
++     printf("%s %p %zu\n",txt, data,len);
++     for ( auto i = 0; i < len/4; i++ ) {
++         printf("0x");
++         for ( auto j = 0; j < 4; j++ ) {
++             printf("%02x",data[i*4+j]);
++         }
++         printf("\n");
++     }
++ #endif
++ }
++ 
++ int ch3_rdma_post_sendv( struct iovec* vec, int iov_len, const char* group, int rank, MPID_Request* sreq, struct MPIDI_VC * vc  )
++ {
++     Dbg(1,"rank=%d sreq=%p group=%s\n",rank,sreq,group);
++ 
++     my_assert( strlen( group ) > 0 );
++     my_assert( strlen( group ) < GRP_ID_LEN );
++ 
++ #if 0
++     for ( auto i = 0; i < iov_len; i++ ) {
++         Dbg("IOV base=%p len=%zu\n",vec[i].iov_base,vec[i].iov_len);
++         printData( __func__, (char*) vec[i].iov_base,vec[i].iov_len );
++     }
++ #endif
++ 
++     auto dataLen = 0;
++     // Note that the first vector is the MPI Packet
++     for ( auto i = 0; i < iov_len; i++ ) {
++         dataLen += vec[i].iov_len; 
++     }
++ 
++     assert( sizeof( RdmaMsg ) + dataLen <= g_info.shortMsgLen );
++ 
++     auto ctx = popSendCtx();
++ 
++     auto msg = (RdmaMsg*) (ctx + 1);
++     msg->dataLen = dataLen;
++ 
++     msg->srcNode = rdma_getMyNode();  
++     msg->srcPid = 100;
++     msg->rank = rank;
++     strncpy( msg->group, group, GRP_ID_LEN );
++ 
++     auto ptr = (char*) (msg + 1); 
++ 
++     for ( auto i = 0; i < iov_len; i++ ) {
++         Dbg(2,"%p %p %zu\n",ptr,vec[i].iov_base, vec[i].iov_len);
++         memcpy( ptr, vec[i].iov_base, vec[i].iov_len ); 
++         ptr += vec[i].iov_len;
++     }
++ 
++     printData( __func__, (char*) (msg+1), msg->dataLen );
++ 
++     ctx->type = RdmaSendCtx;
++     ctx->buf = msg;
++     ctx->mpiReq = sreq;
++     ctx->vc = vc;
++ 
++     Dbg(2,"ctx=%p type=%d\n",ctx);
++     int ret = rdma_send_post( msg, sizeof( RdmaMsg ) + msg->dataLen, rank, 0, SHORT_MSG_TAG, g_info.compQ, (Context) ctx );
++     my_assert(ret==0);
++ 
++     return 0;
++ }
++ 
++ 
++ int ch3_rdma_memory_reg( int key, void* ptr, size_t length ) {
++     Dbg(1,"key=%#x ptr=%p length=%zu\n",key,ptr,length);
++     auto ret = rdma_memory_reg( key, ptr, length );
++     my_assert( ret == 0 );
++     return 0;
++ }
++ 
++ int ch3_rdma_memory_unreg( int key ) {
++     Dbg(1,"key=%#x\n",key);
++     auto ret = rdma_memory_unreg( key );
++     my_assert( ret == 0 );
++     return 0;
++ }
++ 
++ int ch3_rdma_memory_read( int key, int src_rank, int src_pid, void* dest, size_t length, MPID_Request* req, struct MPIDI_VC *vc ) {
++ 
++     auto ctx = (RdmaCtx_t*) malloc( sizeof( RdmaCtx_t ) );
++     my_assert(ctx);
++ 
++     Dbg(1,"key=%#x src_rank=%d src_pid=%d dest=%p length=%zu req=%p vc=%p\n",key,src_rank,src_pid,dest,length,req,vc);
++ 
++     ctx->type = RdmaReadCtx;
++     ctx->mpiReq = req;
++     ctx->vc = vc;
++ 
++     Dbg(2,"ctx=%p type=%d\n",ctx);
++     auto ret = rdma_memory_read( key, src_rank, src_pid, /*offset*/ 0, dest, length, g_info.compQ, (Context) ctx );
++     my_assert( ret == 0 );
++ 
++     return 0;
++ }
++ 
++ MPID_Request* ch3_rdma_progress( int blocking, void** dataOut, size_t* dataLen, int* srcNode, int* srcPid, char* group, int* rank, struct MPIDI_VC ** vc )
++ {
++     MPID_Request* req = nullptr;
++     Dbg(2,"\n");
++ 
++     RdmaCompletion comp;
++     int ret = rdma_read_comp( g_info.compQ, &comp, blocking );
++ 
++     if ( ret == 0 ) {
++         my_assert( ! blocking );
++         *dataOut = NULL;
++         return NULL;
++     }
++ 
++     auto ctx = (RdmaCtx_t*) comp.context;
++     my_assert( ctx );
++ 
++     Dbg(2,"got context ctx=%p type=%d\n",ctx, ctx->type);
++ 
++     switch ( ctx->type ) {
++         case  RdmaSendCtx: {
++    
++             Dbg(1,"Send is complete req=%p vc=%p buf=%p\n",ctx->mpiReq,ctx->vc,ctx->buf);
++             req = ctx->mpiReq;
++             *vc = ctx->vc;
++             pushSendCtx( ctx );
++ 
++         } break;
++ 
++         case  RdmaRecvCtx: {
++         
++             auto msg = (RdmaMsg*) ctx->buf;
++ 
++             Dbg(1,"received a msg from node=%d pid=%d \n",msg->srcNode,msg->srcPid,msg->dataLen);
++ 
++ 	        *dataOut = ( msg + 1 );
++             *dataLen = msg->dataLen;
++ 
++             printData( __func__, (char*) *dataOut, *dataLen );
++ 
++             *srcNode = msg->srcNode;
++             *srcPid = msg->srcPid;
++             strncpy( group,  msg->group, GRP_ID_LEN );
++             *rank = msg->rank;
++ 
++         } break;
++ 
++         case  RdmaReadCtx: {
++             auto msg = (RdmaMsg*) ctx->buf;
++             Dbg(1,"Recv Read is complete req=%p vc=%p\n",ctx->mpiReq,ctx->vc);
++ 
++             req = ctx->mpiReq;
++             *vc = ctx->vc;
++             free( ctx );	
++ 
++         } break;
++ 
++         default:
++             my_assert(0);
++     }
++     Dbg(2,"return %p\n",req);
++    
++     return req;
++ }
++ 
++ void ch3_free_buf( char* data ) {
++     auto ctx = (RdmaCtx_t*) (data - sizeof( RdmaMsg) - sizeof( RdmaCtx_t));
++     Dbg(2,"ctx=%p buf=%p\n", ctx,ctx->buf );
++     rdma_recv_post( ctx->buf, g_info.shortMsgLen, g_info.shortMsgRq, (Context) ctx );
++ }
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_rdma.h mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_rdma.h
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_rdma.h	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_rdma.h	2023-10-04 16:05:50.357174749 -0600
+***************
+*** 0 ****
+--- 1,46 ----
++ #ifndef _RDMA_CH3_RDMA_H
++ #define _RDMA_CH3_RDMA_H
++ 
++ struct MPID_Request;
++ struct MPIDI_PG;
++ struct MPIDI_VC;
++ 
++ #include <stddef.h>
++ 
++ #if 0
++ #if 0
++ #define Dbg( format, ... ) printf( format, __func__, ##__VA_ARGS__ )
++ #else
++ #define Dbg( format, ... )
++ #endif
++ #endif
++ 
++ 
++ #ifdef __cplusplus
++ extern "C" {
++ #endif
++ 
++ #define GRP_ID_LEN 8
++ 
++ 
++ int ch3_rdma_init( int shortLen );
++ //int ch3_rdma_post_send( void* hdr, size_t hdr_sz, const char* group, int rank, MPID_Request* sreq );
++ int ch3_rdma_post_sendv( struct iovec*, int iov_len, const char* group, int rank, MPID_Request* sreq, struct MPIDI_VC* vc );
++ 
++ MPID_Request* ch3_rdma_progress( int blocking, void** dataOut, size_t* dataLen, int* srcNode, int* srcPid, char* group, int* rank, struct MPIDI_VC** vc );
++ int ch3_rdma_has_event();
++ 
++ void ch3_free_buf( char* data );
++ 
++ int ch3_rdma_add_group( const char* );
++ int ch3_rdma_memory_reg( int key, void* ptr, size_t length );
++ int ch3_rdma_memory_unreg( int key );
++ int ch3_rdma_memory_read( int key, int src_rank, int pid, void* dest, size_t length, MPID_Request* req, struct MPIDI_VC *vc );
++ 
++ struct MPIDI_PG* find_group( int i);
++ 
++ #ifdef __cplusplus
++ }
++ #endif
++ 
++ #endif
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_rdma_internal.h mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_rdma_internal.h
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_rdma_internal.h	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_rdma_internal.h	2023-08-31 08:29:09.607780965 -0600
+***************
+*** 0 ****
+--- 1,33 ----
++ 
++ #ifndef _CH3_RDMA
++ #define _CH3_RDMA
++ 
++ #if 0
++ typedef char _Bool; 
++ #include "mpidimpl.h"
++ 
++ #define ADDR_TYPE uint64_t
++ 
++ #include "rdma.h"
++ 
++ typedef struct Ch3_Rdma_info {
++         int compQ;
++         int shortMsgRq;
++ } Ch3_Rdma_info_t;
++ 
++ typedef enum  { RdmaInvalidCtx = 0, RdmaSendCtx, RdmaRecvCtx, RdmaReadCtx, RdmaSendAckCtx } RdmaCtxType;
++ 
++ typedef struct RdmaCtx {
++         void* buf;
++         RdmaCtxType type;
++         MPID_Request *mpiReq;
++ } RdmaCtx_t;
++ 
++ 
++ #define SHORT_MSG_TAG 0xf00d
++ //internal.h:#define SHORT_MSG_SIZE 4000 
++ //internal.h:#define SHORT_MSG_BUFFER_SIZE (SHORT_MSG_SIZE+sizeof(MpiMsgHdr))
++ 
++ extern Ch3_Rdma_info_t g_info;
++ #endif
++ #endif
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_rndv.c mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_rndv.c
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/ch3_rndv.c	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/ch3_rndv.c	2023-10-04 16:45:54.796145391 -0600
+***************
+*** 0 ****
+--- 1,71 ----
++ 
++ 
++ #include "mpidi_ch3_impl.h"
++ #include "mpidi_rdma_rndv.h"
++ 
++ #include "./ch3_rdma.h"
++ #include "./ch3_assert.h"
++ 
++ int MPIDI_CH3_iStartRndvMsg(MPIDI_VC_t * vc,
++                             MPID_Request * sreq,
++                             MPIDI_CH3_Pkt_t * rts_pkt) 
++ {
++     int mpi_errno = MPI_SUCCESS;
++ 
++     Dbg(1,"enter VC: pg_rank=%d lpid=%d node_id=%d state=%d\n", vc->pg_rank, vc->lpid, vc->node_id, vc->state );
++     Dbg(2,"enter PG: id=%s size=%d\n", vc->pg->id, vc->pg->size );
++ 
++     Dbg(2,"sreq %p\n",sreq);
++     MPIDI_CH3_Pkt_rndv_req_to_send_t* pkt = (MPIDI_CH3_Pkt_rndv_req_to_send_t*) rts_pkt;
++ 
++     Dbg(2,"%s sender_req_id=%#x match=%#x data_sz=%d\n",MPIDI_CH3_Pkt_type_to_string[pkt->type],pkt->sender_req_id,pkt->match,pkt->data_sz);
++ 
++     Dbg(2,"addr=%#lx length=%d\n", sreq->dev.iov[0].MPL_IOV_BUF, sreq->dev.iov[0].MPL_IOV_LEN );
++ 
++     ch3_rdma_memory_reg( pkt->sender_req_id, sreq->dev.iov[0].MPL_IOV_BUF, sreq->dev.iov[0].MPL_IOV_LEN );
++ 
++     my_assert( pkt->type == MPIDI_CH3_PKT_RNDV_REQ_TO_SEND );
++ 
++     MPL_IOV iov[1];
++     iov[0].iov_len = sizeof( MPIDI_CH3_Pkt_rndv_req_to_send_t );
++     iov[0].iov_base = pkt; 
++     ch3_rdma_post_sendv( iov, 1, vc->pg->id, vc->pg_rank, sreq, vc );
++ 
++     if ( sreq->cc_ptr ) {
++             int complete;
++             MPIU_cc_incr(sreq->cc_ptr, &complete);
++             Dbg(2,"*cc_ptr=%d complete=%d\n",*sreq->cc_ptr, complete );
++     } else {
++         my_assert(0);
++     }
++ 
++     return mpi_errno;
++ }
++ 
++ int MPIDI_CH3_Prepare_rndv_get(MPIDI_VC_t * vc,
++                                MPID_Request * rreq) 
++ {
++     Dbg(1,"addr=%#lx length=%d\n", rreq->dev.iov[0].MPL_IOV_BUF, rreq->dev.iov[0].MPL_IOV_LEN );
++     return MPI_SUCCESS;
++ }
++ 
++ int MPIDI_CH3_Rndv_transfer(MPIDI_VC_t *vc, MPID_Request *x, MPID_Request *rreq,
++                                     MPIDI_CH3_Pkt_rndv_clr_to_send_t *y,
++                                     MPIDI_CH3_Pkt_rndv_req_to_send_t *rts_pkt)
++ {
++     Dbg(1,"sender_req_id=%#x, PG id=%s rank=%d\n",rts_pkt->sender_req_id,vc->pg->id, vc->pg_rank);
++     int src_pid = 100;
++     ch3_rdma_memory_read( rts_pkt->sender_req_id, vc->pg_rank, src_pid, 
++                     rreq->dev.iov[0].MPL_IOV_BUF, rreq->dev.iov[0].MPL_IOV_LEN, rreq, vc );
++ 
++     return MPI_SUCCESS;
++ }
++ 
++ int MPIDI_CH3_iStartRndvTransfer(MPIDI_VC_t * vc, MPID_Request * rreq) 
++ {
++     Dbg(1,"sender_req_id=%#x, PG id=%s rank=%d\n",rreq->dev.sender_req_id,vc->pg->id, vc->pg_rank);
++     int src_pid = 100;
++     ch3_rdma_memory_read( rreq->dev.sender_req_id, vc->pg_rank, src_pid, 
++                     rreq->dev.iov[0].MPL_IOV_BUF, rreq->dev.iov[0].MPL_IOV_LEN, rreq, vc );
++     return MPI_SUCCESS;
++ }
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/errnames.txt mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/errnames.txt
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/errnames.txt	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/errnames.txt	2023-08-31 08:29:09.607780965 -0600
+***************
+*** 0 ****
+--- 1,3 ----
++ **ch3|rdma|connectionfailed:Connection failed for virtual channel
++ **ch3|rdma|writefailed:Write to socket failed
++ **ch3|rdma|writefailed %d:Write to socket failed with code %d
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/Makefile.mk mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/Makefile.mk
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/src/Makefile.mk	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/src/Makefile.mk	2023-08-31 08:29:09.607780965 -0600
+***************
+*** 0 ****
+--- 1,23 ----
++ ## -*- Mode: Makefile; -*-
++ ## vim: set ft=automake :
++ ##
++ ## (C) 2011 by Argonne National Laboratory.
++ ##     See COPYRIGHT in top-level directory.
++ ##
++ 
++ # should be added unconditionally, since the error name list does not
++ # depend on any choices made by configure
++ errnames_txt_files += src/mpid/ch3/channels/rdma/src/errnames.txt
++ 
++ if BUILD_CH3_RDMA
++ 
++ mpi_core_sources +=   \
++     src/mpid/ch3/channels/rdma/src/ch3_init.c \
++     src/mpid/ch3/channels/rdma/src/ch3_progress.c \
++     src/mpid/ch3/channels/rdma/src/ch3_istartMsg.c \
++     src/mpid/ch3/channels/rdma/src/ch3_isend.c \
++     src/mpid/ch3/channels/rdma/src/ch3_rndv.c \
++     src/mpid/ch3/channels/rdma/src/ch3_rdma.cpp
++ 
++ endif BUILD_CH3_RDMA
++ 
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/subconfigure.m4 mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/subconfigure.m4
+*** mvapich2-2.3.7-1/src/mpid/ch3/channels/rdma/subconfigure.m4	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/channels/rdma/subconfigure.m4	2023-08-31 08:29:09.607780965 -0600
+***************
+*** 0 ****
+--- 1,59 ----
++ [#] start of __file__
++ 
++ dnl
++ dnl _PREREQ handles the former role of mpichprereq, setup_device, etc
++ AC_DEFUN([PAC_SUBCFG_PREREQ_]PAC_SUBCFG_AUTO_SUFFIX,[
++     AM_CONDITIONAL([BUILD_CH3_RDMA],[test "X$device_name" = "Xch3" -a "X$channel_name" = "Xrdma"])
++     AM_COND_IF([BUILD_CH3_RDMA],[
++         AC_MSG_NOTICE([RUNNING PREREQ FOR ch3:rdma])
++ 
++         MPID_CH3I_CH_HCOLL_BCOL="basesmuma,basesmuma,ptpcoll"
++ 
++         # code that formerly lived in setup_args
++         #
++         # Variables of interest...
++         #
++         # $with_device - device name and arguments
++         # $device_name - name of the device
++         # $device_args - contains name of channel select plus an channel args
++         # $channel_name - name of the channel
++         # $master_top_srcdir - top-level source directory
++         # $master_top_builddir - top-level build directory
++         # $ac_configure_args - all arguments passed to configure
++         #
++         
++         pathlist=""
++         pathlist="$pathlist src/mpid/${device_name}/channels/${channel_name}/include"
++         pathlist="$pathlist src/util/wrappers"
++     ])
++ ])dnl
++ 
++ 
++ dnl
++ dnl _BODY handles the former role of configure in the subsystem
++ AC_DEFUN([PAC_SUBCFG_BODY_]PAC_SUBCFG_AUTO_SUFFIX,[
++ AM_COND_IF([BUILD_CH3_RDMA],[
++ AC_MSG_NOTICE([RUNNING CONFIGURE FOR ch3:rdma])
++ 
++ # ABIVERSION is needed when a separate rdma dll library is built
++ if test "X$ABIVERSION" = "X" ; then
++    if test "X$libmpi_so_version" != X ; then
++       ABIVERSION="$libmpi_so_version"
++    else
++       # Note that an install of a rdma-dll will fail if the ABI version is not
++       # available
++       AC_MSG_WARN([Unable to set the ABIVERSION])
++    fi
++ fi
++ AC_SUBST(ABIVERSION)
++ 
++ AC_DEFINE([CHANNEL_RDMA], [1], [Define if using the rdma channel])
++ AC_DEFINE([MPIDI_CH3_CHANNEL_RNDV], [1], [Define to enable channel rendezvous (Required by MVAPICH2)])
++ 
++ AC_CHECK_HEADERS(				\
++ 	errno.h)
++ 
++ ])dnl end AM_COND_IF(BUILD_CH3_RDMA,...)
++ ])dnl end _BODY
++ 
++ [#] end of __file__
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/src/ch3u_eager.c mvapich2-2.3.7-1-orig/src/mpid/ch3/src/ch3u_eager.c
+*** mvapich2-2.3.7-1/src/mpid/ch3/src/ch3u_eager.c	2022-05-16 10:58:22.000000000 -0600
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/src/ch3u_eager.c	2023-08-31 08:29:09.608780977 -0600
+***************
+*** 973,979 ****
+      } else
+  #endif
+     {
+!      data_buf = (char *)pkt + sizeof(MPIDI_CH3_Pkt_t);
+     }
+     
+      
+--- 973,980 ----
+      } else
+  #endif
+     {
+!      //data_buf = (char *)pkt + sizeof(MPIDI_CH3_Pkt_t);
+!      data_buf = data;
+     }
+     
+      
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/src/ch3u_rndv.c mvapich2-2.3.7-1-orig/src/mpid/ch3/src/ch3u_rndv.c
+*** mvapich2-2.3.7-1/src/mpid/ch3/src/ch3u_rndv.c	2022-05-16 10:58:22.000000000 -0600
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/src/ch3u_rndv.c	2023-08-31 08:29:09.608780977 -0600
+***************
+*** 20,25 ****
+--- 20,28 ----
+  #include "mpid_mrail_rndv.h"
+  #include "mpidi_ch3_impl.h"
+  #endif
++ #ifdef CHANNEL_RDMA
++ #include "mpidi_rdma_rndv.h"
++ #endif
+  
+  
+  MPIR_T_PVAR_ULONG2_COUNTER_DECL_EXTERN(MV2,expected_recvs_rendezvous);
+***************
+*** 466,472 ****
+  	
+  	MPIU_DBG_MSG(CH3_OTHER,VERBOSE,"posted request found");	
+          MPIR_T_PVAR_COUNTER_INC(MV2, expected_recvs_rendezvous, 1);	
+! #if defined(CHANNEL_MRAIL)
+          if(MPIDI_CH3_RNDV_PROTOCOL_IS_READ(rts_pkt)) {
+  
+              mpi_errno = MPIDI_CH3U_Post_data_receive_found(rreq);
+--- 469,475 ----
+  	
+  	MPIU_DBG_MSG(CH3_OTHER,VERBOSE,"posted request found");	
+          MPIR_T_PVAR_COUNTER_INC(MV2, expected_recvs_rendezvous, 1);	
+! #if defined(CHANNEL_MRAIL) || defined(CHANNEL_RDMA)
+          if(MPIDI_CH3_RNDV_PROTOCOL_IS_READ(rts_pkt)) {
+  
+              mpi_errno = MPIDI_CH3U_Post_data_receive_found(rreq);
+***************
+*** 481,486 ****
+--- 484,490 ----
+                  MPIR_ERR_SETANDJUMP(mpi_errno,MPI_ERR_OTHER,"**ch3|rndv");
+              }
+  
++ #if defined(CHANNEL_MRAIL)
+              if (MV2_RNDV_PROTOCOL_RGET == rreq->mrail.protocol) {
+                  mpi_errno = MPIDI_CH3_Rndv_transfer(vc,
+                          NULL, rreq, NULL, rts_pkt);
+***************
+*** 492,497 ****
+--- 496,512 ----
+                  *rreqp = NULL;
+                  goto fn_exit;
+              }
++ #endif
++ 
++ #if defined(CHANNEL_RDMA)
++             mpi_errno = MPIDI_CH3_Rndv_transfer(vc, NULL, rreq, NULL, rts_pkt);
++             if (mpi_errno != MPI_SUCCESS && rreq != NULL) {
++                 MPIR_ERR_SETANDJUMP(mpi_errno, MPI_ERR_OTHER,"**ch3|senddata");
++             }
++ 
++             *rreqp = NULL;
++             goto fn_exit;
++ #endif
+              /*else send back CTS with R3 protocol and fallback*/
+          }
+  #endif /* defined(CHANNEL_MRAIL) */
+***************
+*** 591,597 ****
+      
+      *rreqp = NULL;
+  
+! #if defined(CHANNEL_MRAIL)
+   fn_exit:
+  #endif
+   fn_fail:
+--- 606,612 ----
+      
+      *rreqp = NULL;
+  
+! #if defined(CHANNEL_MRAIL) || defined(CHANNEL_RDMA)
+   fn_exit:
+  #endif
+   fn_fail:
+***************
+*** 881,896 ****
+      if (rreq->dev.recv_data_sz == 0) {
+  	MPID_Request_complete(rreq);
+  #else /* defined(CHANNEL_MRAIL) */
+!     if (req->dev.recv_data_sz == 0) {
+! 	MPID_Request_complete(req);
+! 	*rreqp = NULL;
+  #endif /* defined(CHANNEL_MRAIL) */
+      }
+      else {
+  #if defined(CHANNEL_MRAIL)
+  	mpi_errno = MPIDI_CH3U_Post_data_receive_found(rreq);
+  #else /* defined(CHANNEL_MRAIL) */
+! 	mpi_errno = MPIDI_CH3U_Post_data_receive_found(req);
+  #endif /* defined(CHANNEL_MRAIL) */
+  	if (mpi_errno != MPI_SUCCESS) {
+  	    MPIR_ERR_SETANDJUMP1(mpi_errno,MPI_ERR_OTHER,
+--- 896,910 ----
+      if (rreq->dev.recv_data_sz == 0) {
+  	MPID_Request_complete(rreq);
+  #else /* defined(CHANNEL_MRAIL) */
+!     if (rreq->dev.recv_data_sz == 0) {
+! 	MPID_Request_complete(rreq);
+  #endif /* defined(CHANNEL_MRAIL) */
+      }
+      else {
+  #if defined(CHANNEL_MRAIL)
+  	mpi_errno = MPIDI_CH3U_Post_data_receive_found(rreq);
+  #else /* defined(CHANNEL_MRAIL) */
+! 	mpi_errno = MPIDI_CH3U_Post_data_receive_found(rreq);
+  #endif /* defined(CHANNEL_MRAIL) */
+  	if (mpi_errno != MPI_SUCCESS) {
+  	    MPIR_ERR_SETANDJUMP1(mpi_errno,MPI_ERR_OTHER,
+***************
+*** 905,919 ****
+--- 919,936 ----
+          /*when cuda is enabled, the rts packet is in a dynamically allocated buffer*/
+          rts_pkt = (MPIDI_CH3_Pkt_rndv_req_to_send_t *) rreq->dev.pending_pkt;
+  #else
++ #if defined(CHANNEL_MRAIL) 
+          MPIDI_CH3_Pkt_t *tmp_pkt = (MPIDI_CH3_Pkt_t *) &(rreq->ch.pkt);
+          rts_pkt = &(tmp_pkt->rndv_req_to_send);;
+  #endif
++ #endif
+  
+          mpi_errno = MPIDI_CH3_Prepare_rndv_get(vc, rreq);
+          if (mpi_errno != MPI_SUCCESS) {
+              MPIR_ERR_SETANDJUMP(mpi_errno,MPI_ERR_OTHER,"**ch3|rndv");
+          }
+  
++ #if defined(CHANNEL_MRAIL)
+          if (MV2_RNDV_PROTOCOL_RGET == rreq->mrail.protocol) {
+             mpi_errno = MPIDI_CH3_Rndv_transfer(vc,
+                      NULL, rreq, NULL, rts_pkt);
+***************
+*** 924,929 ****
+--- 941,947 ----
+              }
+              goto fn_exit;
+          }
++ #endif
+          /*else send back CTS with R3 protocol and fallback*/
+      } 
+  
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/src/mpid_finalize.c mvapich2-2.3.7-1-orig/src/mpid/ch3/src/mpid_finalize.c
+*** mvapich2-2.3.7-1/src/mpid/ch3/src/mpid_finalize.c	2022-05-16 10:58:22.000000000 -0600
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/src/mpid_finalize.c	2023-10-10 09:29:47.828703162 -0600
+***************
+*** 164,170 ****
+       * without it, particularly under gforker */
+      /* FIXME: The close actions should use the same code as the other
+         connection close code */
+! #if !defined (CHANNEL_PSM) && !defined(CHANNEL_MRAIL)
+      mpi_errno = MPIDI_PG_Close_VCs();
+      if (mpi_errno) MPIR_ERR_POP(mpi_errno);
+      /*
+--- 164,171 ----
+       * without it, particularly under gforker */
+      /* FIXME: The close actions should use the same code as the other
+         connection close code */
+! #if !defined (CHANNEL_PSM) && !defined(CHANNEL_MRAIL) && !defined(CHANNEL_RDMA)
+! 
+      mpi_errno = MPIDI_PG_Close_VCs();
+      if (mpi_errno) MPIR_ERR_POP(mpi_errno);
+      /*
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/src/mpidi_printf.c mvapich2-2.3.7-1-orig/src/mpid/ch3/src/mpidi_printf.c
+*** mvapich2-2.3.7-1/src/mpid/ch3/src/mpidi_printf.c	2022-05-16 10:58:22.000000000 -0600
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/src/mpidi_printf.c	2023-08-31 08:29:09.609780989 -0600
+***************
+*** 358,364 ****
+      case MPIDI_CH3_PKT_FLOW_CNTL_UPDATE:
+          MPL_snprintf(pktmsg, sizeof(pktmsg), "FLOW_CNTL_UPDATE");
+          break;
+! #if !defined(CHANNEL_MRAIL)
+  #ifdef MPIDI_CH3_CHANNEL_RNDV
+      case MPIDI_CH3_PKT_RTS_IOV:
+  	MPL_snprintf( pktmsg, sizeof(pktmsg), 
+--- 358,364 ----
+      case MPIDI_CH3_PKT_FLOW_CNTL_UPDATE:
+          MPL_snprintf(pktmsg, sizeof(pktmsg), "FLOW_CNTL_UPDATE");
+          break;
+! #if !defined(CHANNEL_MRAIL) && !defined(CHANNEL_RDMA)
+  #ifdef MPIDI_CH3_CHANNEL_RNDV
+      case MPIDI_CH3_PKT_RTS_IOV:
+  	MPL_snprintf( pktmsg, sizeof(pktmsg), 
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/mpid/ch3/src/mpid_recv.c mvapich2-2.3.7-1-orig/src/mpid/ch3/src/mpid_recv.c
+*** mvapich2-2.3.7-1/src/mpid/ch3/src/mpid_recv.c	2022-05-16 10:58:22.000000000 -0600
+--- mvapich2-2.3.7-1-orig/src/mpid/ch3/src/mpid_recv.c	2023-10-04 16:48:43.805183239 -0600
+***************
+*** 216,222 ****
+  	else if (MPIDI_Request_get_msg_type(rreq) == MPIDI_REQUEST_RNDV_MSG)
+  	{
+          MPIR_T_PVAR_COUNTER_INC(MV2, unexpected_recvs_rendezvous, 1);
+! #if defined(CHANNEL_MRAIL)
+          MPIDI_Comm_get_vc(comm, rreq->dev.match.parts.rank, &vc);
+          mpi_errno = MPIDI_CH3_RecvRndv( vc, rreq );
+  #else
+--- 216,222 ----
+  	else if (MPIDI_Request_get_msg_type(rreq) == MPIDI_REQUEST_RNDV_MSG)
+  	{
+          MPIR_T_PVAR_COUNTER_INC(MV2, unexpected_recvs_rendezvous, 1);
+! #if defined(CHANNEL_MRAIL) || defined(CHANNEL_RDMA)
+          MPIDI_Comm_get_vc(comm, rreq->dev.match.parts.rank, &vc);
+          mpi_errno = MPIDI_CH3_RecvRndv( vc, rreq );
+  #else
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/pmi/Makefile.mk mvapich2-2.3.7-1-orig/src/pmi/Makefile.mk
+*** mvapich2-2.3.7-1/src/pmi/Makefile.mk	2022-05-16 10:58:22.000000000 -0600
+--- mvapich2-2.3.7-1-orig/src/pmi/Makefile.mk	2023-08-31 08:29:09.610781001 -0600
+***************
+*** 7,12 ****
+--- 7,13 ----
+  
+  include $(top_srcdir)/src/pmi/pmi2/Makefile.mk
+  include $(top_srcdir)/src/pmi/simple/Makefile.mk
++ include $(top_srcdir)/src/pmi/vanadis/Makefile.mk
+  include $(top_srcdir)/src/pmi/upmi/Makefile.mk
+  
+  errnames_txt_files += src/pmi/errnames.txt
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/pmi/vanadis/Makefile.mk mvapich2-2.3.7-1-orig/src/pmi/vanadis/Makefile.mk
+*** mvapich2-2.3.7-1/src/pmi/vanadis/Makefile.mk	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/pmi/vanadis/Makefile.mk	2023-08-31 08:29:09.610781001 -0600
+***************
+*** 0 ****
+--- 1,15 ----
++ ## -*- Mode: Makefile; -*-
++ ## vim: set ft=automake :
++ ##
++ ## (C) 2011 by Argonne National Laboratory.
++ ##     See COPYRIGHT in top-level directory.
++ ##
++ 
++ mpi_core_sources +=       \
++     src/pmi/vanadis/vanadis_pmiutil.c \
++     src/pmi/vanadis/vanadis_pmi.c
++ 
++ noinst_HEADERS +=                   \
++     src/pmi/vanadis/vanadis_pmiutil.h
++ 
++ AM_CPPFLAGS += -I$(top_srcdir)/src/pmi/vanadis
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/pmi/vanadis/subconfigure.m4 mvapich2-2.3.7-1-orig/src/pmi/vanadis/subconfigure.m4
+*** mvapich2-2.3.7-1/src/pmi/vanadis/subconfigure.m4	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/pmi/vanadis/subconfigure.m4	2023-08-31 08:29:09.610781001 -0600
+***************
+*** 0 ****
+--- 1,83 ----
++ [#] start of __file__
++ dnl MPICH_SUBCFG_AFTER=src/pmi
++ 
++ AC_DEFUN([PAC_SUBCFG_PREREQ_]PAC_SUBCFG_AUTO_SUFFIX,[
++ ])
++ 
++ AC_DEFUN([PAC_SUBCFG_BODY_]PAC_SUBCFG_AUTO_SUFFIX,[
++ 
++ AM_CONDITIONAL([BUILD_PMI_VANADIS],[test "x$pmi_name" = "xvanadis"])
++ 
++ AM_COND_IF([BUILD_PMI_VANADIS],[
++ if test "$enable_pmiport" != "no" ; then
++    enable_pmiport=yes
++ fi
++ AC_CHECK_HEADERS(unistd.h string.h stdlib.h sys/socket.h strings.h assert.h arpa/inet.h)
++ dnl Use snprintf if possible when creating messages
++ AC_CHECK_FUNCS(snprintf)
++ if test "$ac_cv_func_snprintf" = "yes" ; then
++     PAC_FUNC_NEEDS_DECL([#include <stdio.h>],snprintf)
++ fi
++ AC_CHECK_FUNCS(strncasecmp)
++ 
++ #
++ # PM's that need support for a port can set the environment variable
++ # NEED_PMIPORT in their setup_pm script.
++ if test "$NEED_PMIPORT" = "yes" -a "$enable_pmiport" != "yes" ; then
++     AC_MSG_WARN([The process manager requires the pmiport capability.  Do not specify --disable-pmiport.])
++     enable_pmiport=yes
++ fi
++ #
++ if test "$enable_pmiport" = "yes" ; then
++     # Check for the necessary includes and functions
++     missing_headers=no
++     AC_CHECK_HEADERS([	\
++ 	sys/types.h	\
++ 	sys/param.h	\
++ 	sys/socket.h	\
++ 	netinet/in.h	\
++ 	netinet/tcp.h	\
++ 	sys/un.h	\
++ 	netdb.h		\
++ 	],,missing_headers=yes )
++     AC_SEARCH_LIBS(socket,socket)
++     AC_SEARCH_LIBS(getaddrinfo,nsl)
++     missing_functions=no
++     AC_CHECK_FUNCS(socket setsockopt getaddrinfo,,missing_functions=yes)
++     
++     if test "$missing_functions" = "no" ; then
++         AC_DEFINE(USE_PMI_PORT,1,[Define if access to PMI information through a port rather than just an fd is allowed])
++     else
++         AC_MSG_ERROR([Cannot build vanadis PMI with support for an IP port because of missing functions])
++     fi
++ fi
++ 
++ # Check for socklen_t .  If undefined, define it as int
++ # (note the conditional inclusion of sys/socket.h)
++ AC_CACHE_CHECK([whether socklen_t is defined (in sys/socket.h if present)],
++ pac_cv_have_socklen_t,[
++ AC_TRY_COMPILE([
++ #include <sys/types.h>
++ #ifdef HAVE_SYS_SOCKET_H
++ #include <sys/socket.h>
++ #endif
++ ]
++ typedef struct { double a; int b; } socklen_t;,[socklen_t a;a.a=1.0;],pac_cv_have_socklen_t=no,pac_cv_have_socklen_t=yes)])
++ if test "$pac_cv_have_socklen_t" = no ; then
++     AC_DEFINE(socklen_t,int,[Define if socklen_t is not defined])
++ fi
++ # Check for h_addr or h_addr_list
++ AC_CACHE_CHECK([whether struct hostent contains h_addr_list],
++ pac_cv_have_haddr_list,[
++ AC_TRY_COMPILE([
++ #include <netdb.h>],[struct hostent hp;hp.h_addr_list[0]=0;],
++ pac_cv_have_haddr_list=yes,pac_cv_have_haddr_list=no)])
++ if test "$pac_cv_have_haddr_list" = "yes" ; then
++     AC_DEFINE(HAVE_H_ADDR_LIST,1,[Define if struct hostent contains h_addr_list])
++ fi
++ PAC_C_GNU_ATTRIBUTE
++ ])dnl end COND_IF
++ 
++ ])dnl end BODY macro
++ 
++ [#] end of __file__
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/pmi/vanadis/vanadis_pmi.c mvapich2-2.3.7-1-orig/src/pmi/vanadis/vanadis_pmi.c
+*** mvapich2-2.3.7-1/src/pmi/vanadis/vanadis_pmi.c	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/pmi/vanadis/vanadis_pmi.c	2023-08-31 08:29:09.610781001 -0600
+***************
+*** 0 ****
+--- 1,338 ----
++ /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
++ /*  
++  *  (C) 2001 by Argonne National Laboratory.
++  *      See COPYRIGHT in top-level directory.
++  */
++ 
++ /* Copyright (c) 2001-2022, The Ohio State University. All rights
++  * reserved.
++  *
++  * This file is part of the MVAPICH2 software package developed by the
++  * team members of The Ohio State University's Network-Based Computing
++  * Laboratory (NBCL), headed by Professor Dhabaleswar K. (DK) Panda.
++  *
++  * For detailed copyright and licensing information, please refer to the
++  * copyright file COPYRIGHT in the top level MVAPICH2 directory.
++  *
++  */
++ 
++ /*********************** PMI implementation ********************************/
++ /*
++  * This file implements the client-side of the PMI interface.
++  *
++  * Note that the PMI client code must not print error messages (except 
++  * when an abort is required) because MPI error handling is based on
++  * reporting error codes to which messages are attached.  
++  *
++  * In v2, we should require a PMI client interface to use MPI error codes
++  * to provide better integration with MPICH.  
++  */
++ /***************************************************************************/
++ 
++ #include "mpichconf.h"
++ 
++ #if 0
++ #define Dbg( format, ... ) printf( "%s():%d " format, __func__, __LINE__, ##__VA_ARGS__ )
++ #else
++ #define Dbg( format, ... )
++ #endif
++ 
++ 
++ #include "pmi.h"
++ #include "mpl.h"            /* Get ATTRIBUTE, some base functions */
++ 
++ #include <stdio.h>
++ #include <stdlib.h>
++ #define my_assert( x ) if ( ! ( x ) ) { printf("%s:%d\n",__FILE__,__LINE__); abort(); }
++ 
++ static int PMI_size = 0;
++ static int PMI_rank = 0;
++ static int PMI_appnum = 100;
++ #define KVS_NAME "vanadis"
++ 
++ typedef enum {  PMI_UNINITIALIZED = 0, 
++                 SINGLETON_INIT_BUT_NO_PM = 1,
++ 	            NORMAL_INIT_WITH_PM,
++ 	            SINGLETON_INIT_WITH_PM } PMIState;
++ 
++ static PMIState PMI_initialized = PMI_UNINITIALIZED;
++ 
++ #define PMI_kvsname_max 256
++ #define PMI_keylen_max 256
++ #define PMI_vallen_max 256
++ 
++ typedef struct KeyValue {
++     char key[PMI_keylen_max];
++     char value[PMI_vallen_max];
++ } KeyValue_t;
++ 
++ #define KEY_VALUE_MAP_SIZE 16
++ KeyValue_t l_keyValueMap[KEY_VALUE_MAP_SIZE];
++ 
++ static void keyValueInit();
++ static char* keyValueFind( const char* );
++ static int keyValueSet( const char key[], const char value[] );
++ 
++ /******************************** Group functions *************************/
++ 
++ int PMI_Init( int *spawned )
++ {
++     char *p;
++     int rc;
++     Dbg("\n");
++     
++     p = getenv( "PMI_SIZE" );
++     my_assert( p );
++     PMI_size = atoi( p );
++ 	
++ 	p = getenv( "PMI_RANK" );
++     my_assert( p );
++ 	PMI_rank = atoi( p );
++ 
++ 	p = getenv( "PMI_APPNUM" );
++     if ( p ) {
++ 	    PMI_appnum = atoi( p );
++     }
++ 
++     Dbg("PMI_SIZE %d, PMI_RANK %d PMI_APPNUM=%d\n",PMI_size,PMI_rank,PMI_appnum);
++ 
++     my_assert( PMI_size );
++     my_assert( PMI_rank  < PMI_size );
++ 
++     keyValueInit();
++     char buf[PMI_vallen_max]; 
++     snprintf(buf, PMI_vallen_max, "(vector,(0,%d,1))",PMI_size);
++ 
++     keyValueSet( "PMI_process_mapping", buf );
++     Dbg("PMI_process_mapping=`%s`\n",buf);
++ 
++ 	*spawned = 0;
++ 
++     if ( ! PMI_initialized )
++ 	PMI_initialized = NORMAL_INIT_WITH_PM;
++ 
++     return 0;
++ }
++ 
++ int PMI_Initialized( int *initialized )
++ {
++     Dbg("\n");
++     *initialized = (PMI_initialized != 0);
++     return PMI_SUCCESS;
++ }
++ 
++ int PMI_Finalize( void )
++ {
++     Dbg("\n");
++     return PMI_SUCCESS;
++ }
++ 
++ int PMI_Get_size( int *size )
++ {
++     int ret = PMI_SUCCESS; 
++     if ( PMI_initialized ) {
++ 	    *size = PMI_size;
++     } else {
++ 	    *size = 0;
++         ret = PMI_FAIL;
++     }
++     Dbg("*size=%d\n",*size);
++     return ret;
++ }
++ 
++ int PMI_Get_rank( int *rank )
++ {
++     int ret = PMI_SUCCESS; 
++     if ( PMI_initialized ) {
++ 	    *rank = PMI_rank;
++     } else {
++ 	    *rank = 0;
++         ret = PMI_FAIL;
++     }
++     Dbg("*rank=%d\n",*rank);
++     return ret;
++ }
++ 
++ int PMI_Get_appnum( int *appnum )
++ {
++     int ret = PMI_SUCCESS; 
++     if ( PMI_initialized ) {
++ 	    *appnum = PMI_appnum;
++     } else {
++ 	    *appnum = 0;
++         ret = PMI_FAIL;
++     }
++     Dbg("*appnum=%d\n",*appnum);
++     return ret;
++ }
++ 
++ int PMI_Get_universe_size( int *size)
++ {
++     my_assert(0);
++ }
++ 
++ 
++ int PMI_Barrier( void )
++ {
++     my_assert(0);
++ }
++ 
++ int PMI_Abort(int exit_code, const char error_msg[])
++ {
++     my_assert(0);
++ }
++ 
++ /************************************* Keymap functions **********************/
++ int PMI_KVS_Get_my_name( char kvsname[], int length )
++ {
++     int ret = PMI_SUCCESS;
++ 
++     Dbg("kvs_name=`%s` length %d\n",KVS_NAME,length);
++ 
++     if ( length < strlen( KVS_NAME ) + 1 ) {
++         ret = PMI_FAIL;
++     }
++     strncpy(kvsname,KVS_NAME ,length);
++     return ret;
++ }
++ 
++ int PMI_KVS_Get_name_length_max( int *maxlen )
++ {
++     if (maxlen == NULL) {
++         Dbg("failed\n");
++ 	    return PMI_ERR_INVALID_ARG;
++     }
++ 
++     *maxlen = PMI_kvsname_max;
++     Dbg("*maxlen=%d\n",*maxlen);
++     return PMI_SUCCESS;
++ }
++ 
++ int PMI_KVS_Get_key_length_max( int *maxlen )
++ {
++     if (maxlen == NULL) {
++         Dbg("failed\n");
++ 	    return PMI_ERR_INVALID_ARG;
++     }
++ 
++     *maxlen = PMI_keylen_max;
++     Dbg("*maxlen=%d\n",*maxlen);
++     return PMI_SUCCESS;
++ }
++ 
++ int PMI_KVS_Get_value_length_max( int *maxlen )
++ {
++     if (maxlen == NULL) {
++         Dbg("failed\n");
++ 	    return PMI_ERR_INVALID_ARG;
++     }
++ 
++     *maxlen = PMI_vallen_max;
++     Dbg("*maxlen=%d\n",*maxlen);
++     return PMI_SUCCESS;
++ }
++ 
++ void keyValueInit() {
++     for ( int i = 0; i < KEY_VALUE_MAP_SIZE; i++ ) {
++         l_keyValueMap[0].key[0] = 0;
++     }
++ }
++ 
++ char*  keyValueFind( const char key[] ) {
++     Dbg("want key %s\n",key);
++     for ( int i = 0; i < KEY_VALUE_MAP_SIZE; i++ ) {
++         Dbg("key %s\n",l_keyValueMap[i].key);
++         if ( 0 ==  strcmp( l_keyValueMap[i].key, key ) ) {
++             return l_keyValueMap[i].value; 
++         } 
++     }
++     return NULL;
++ }
++ 
++ int keyValueFindFreeSlot(){
++     for ( int i = 0; i < KEY_VALUE_MAP_SIZE; i++ ) {
++         if ( 0 == l_keyValueMap[i].key[0] ) {
++             return i; 
++         } 
++     }
++     return -1;
++ }
++ 
++ int keyValueSet( const char key[], const char value[] ) {
++ 
++     int slot = keyValueFindFreeSlot();
++     if ( -1 == slot ) { 
++         return -1;
++     }
++     strcpy( l_keyValueMap[slot].key, key );
++     strcpy( l_keyValueMap[slot].value, value );
++ }
++ 
++ 
++ int PMI_KVS_Put( const char kvsname[], const char key[], const char value[] )
++ {
++     Dbg("kvsname=%s key=%s value=%s\n",kvsname,key,value);
++     if ( -1 == keyValueSet( key, value ) ) {
++         return PMI_FAIL;
++     }
++     return PMI_SUCCESS;
++ }
++ 
++ int PMI_KVS_Commit( const char kvsname[] ATTRIBUTE((unused)))
++ {
++     Dbg("\n");
++     /* no-op in this implementation */
++     return( 0 );
++ }
++ 
++ int PMI_KVS_Get( const char kvsname[], const char key[], char value[], 
++ 		 int length)
++ {
++     Dbg("kvsname=`%s` key=`%s`\n",kvsname,key);
++ 
++     if ( 0 != strcmp( KVS_NAME, kvsname ) ) {
++         Dbg("kvsname=`%s` key='%s' FAILED\n",kvsname,key);
++         return -1;
++     }
++ 
++     char* ptr = keyValueFind( key );
++     if ( NULL == ptr ) {
++         Dbg("kvsname=`%s` key='%s' FAILED\n",kvsname,key);
++         return -1;
++     }
++     strcpy( value, ptr );
++     Dbg("kvsname=`%s` key='%s' value='%s'\n",kvsname,key,value);
++     return PMI_SUCCESS;
++ }
++ 
++ /*************************** Name Publishing functions **********************/
++ 
++ int PMI_Publish_name( const char service_name[], const char port[] )
++ {
++     my_assert(0);
++ }
++ 
++ int PMI_Unpublish_name( const char service_name[] )
++ {
++     my_assert(0);
++ }
++ 
++ int PMI_Lookup_name( const char service_name[], char port[] )
++ {
++     my_assert(0);
++ }
++ 
++ /************************** Process Creation functions **********************/
++ 
++ int PMI_Spawn_multiple(int count,
++                        const char * cmds[],
++                        const char ** argvs[],
++                        const int maxprocs[],
++                        const int info_keyval_sizes[],
++                        const PMI_keyval_t * info_keyval_vectors[],
++                        int preput_keyval_size,
++                        const PMI_keyval_t preput_keyval_vector[],
++                        int errors[])
++ {
++     my_assert(0);
++ }
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/pmi/vanadis/vanadis_pmiutil.c mvapich2-2.3.7-1-orig/src/pmi/vanadis/vanadis_pmiutil.c
+*** mvapich2-2.3.7-1/src/pmi/vanadis/vanadis_pmiutil.c	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/pmi/vanadis/vanadis_pmiutil.c	2023-08-31 08:29:09.610781001 -0600
+***************
+*** 0 ****
+--- 1,301 ----
++ /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
++ /*
++  *  (C) 2001 by Argonne National Laboratory.
++  *      See COPYRIGHT in top-level directory.
++  */
++ 
++ /* Allow fprintf to logfile */
++ /* style: allow:fprintf:1 sig:0 */
++ 
++ /* Utility functions associated with PMI implementation, but not part of
++    the PMI interface itself.  Reading and writing on pipes, signals, and parsing
++    key=value messages
++ */
++ 
++ #include "mpichconf.h"
++ 
++ #if 0
++ 
++ #include <stdio.h>
++ #ifdef HAVE_STDLIB_H
++ #include <stdlib.h>
++ #endif
++ #include <stdarg.h>
++ #ifdef HAVE_STRING_H
++ #include <string.h>
++ #endif
++ #ifdef HAVE_UNISTD_H
++ #include <unistd.h>
++ #endif
++ #include <errno.h>
++ 
++ #include "mpl.h"
++ 
++ #include "vanadis_pmiutil.h"
++ 
++ /* Use the memory definitions from mpich/src/include */
++ #include "mpimem.h"
++ 
++ #define MAXVALLEN 1024
++ #define MAXKEYLEN   32
++ 
++ /* These are not the keyvals in the keyval space that is part of the 
++    PMI specification.
++    They are just part of this implementation's internal utilities.
++ */
++ struct PMIU_keyval_pairs {
++     char key[MAXKEYLEN];
++     char value[MAXVALLEN];	
++ };
++ static struct PMIU_keyval_pairs PMIU_keyval_tab[64] = { { {0}, {0} } };
++ static int  PMIU_keyval_tab_idx = 0;
++ 
++ /* This is used to prepend printed output.  Set the initial value to 
++    "unset" */
++ static char PMIU_print_id[PMIU_IDSIZE] = "unset";
++ 
++ void PMIU_Set_rank( int PMI_rank )
++ {
++     MPL_snprintf( PMIU_print_id, PMIU_IDSIZE, "cli_%d", PMI_rank );
++ }
++ void PMIU_SetServer( void )
++ {
++     MPIU_Strncpy( PMIU_print_id, "server", PMIU_IDSIZE );
++ }
++ 
++ /* Note that vfprintf is part of C89 */
++ 
++ /* style: allow:fprintf:1 sig:0 */
++ /* style: allow:vfprintf:1 sig:0 */
++ /* This should be combined with the message routines */
++ void PMIU_printf( int print_flag, const char *fmt, ... )
++ {
++     va_list ap;
++     static FILE *logfile= 0;
++     
++     /* In some cases when we are debugging, the handling of stdout or
++        stderr may be unreliable.  In that case, we make it possible to
++        select an output file. */
++     if (!logfile) {
++ 	char *p;
++ 	p = getenv("PMI_USE_LOGFILE");
++ 	if (p) {
++ 	    char filename[1024];
++ 	    p = getenv("PMI_ID");
++ 	    if (p) {
++ 		MPL_snprintf( filename, sizeof(filename), 
++ 			       "testclient-%s.out", p );
++ 		logfile = fopen( filename, "w" );
++ 	    }
++ 	    else {
++ 		logfile = fopen( "testserver.out", "w" );
++ 	    }
++ 	}
++ 	else 
++ 	    logfile = stderr;
++     }
++ 
++     if ( print_flag ) {
++ 	/* MPL_error_printf( "[%s]: ", PMIU_print_id ); */
++ 	/* FIXME: Decide what role PMIU_printf should have (if any) and
++ 	   select the appropriate MPIU routine */
++ 	fprintf( logfile, "[%s]: ", PMIU_print_id );
++ 	va_start( ap, fmt );
++ 	vfprintf( logfile, fmt, ap );
++ 	va_end( ap );
++ 	fflush( logfile );
++     }
++ }
++ 
++ #define MAX_READLINE 1024
++ /* 
++  * Return the next newline-terminated string of maximum length maxlen.
++  * This is a buffered version, and reads from fd as necessary.  A
++  */
++ int PMIU_readline( int fd, char *buf, int maxlen )
++ {
++     static char readbuf[MAX_READLINE];
++     static char *nextChar = 0, *lastChar = 0;  /* lastChar is really one past 
++ 						  last char */
++     static int lastfd = -1;
++     ssize_t n;
++     int     curlen;
++     char    *p, ch;
++ 
++     /* Note: On the client side, only one thread at a time should 
++        be calling this, and there should only be a single fd.  
++        Server side code should not use this routine (see the 
++        replacement version in src/pm/util/pmiserv.c) */
++     if (nextChar != lastChar && fd != lastfd) {
++ 	MPL_internal_error_printf( "Panic - buffer inconsistent\n" );
++ 	return -1;
++     }
++ 
++     p      = buf;
++     curlen = 1;    /* Make room for the null */
++     while (curlen < maxlen) {
++ 	if (nextChar == lastChar) {
++ 	    lastfd = fd;
++ 	    do {
++ 		n = read( fd, readbuf, sizeof(readbuf)-1 );
++ 	    } while (n == -1 && errno == EINTR);
++ 	    if (n == 0) {
++ 		/* EOF */
++ 		break;
++ 	    }
++ 	    else if (n < 0) {
++ 		/* Error.  Return a negative value if there is no
++ 		   data.  Save the errno in case we need to return it
++ 		   later. */
++ 		if (curlen == 1) {
++ 		    curlen = 0;
++ 		}
++ 		break;
++ 	    }
++ 	    nextChar = readbuf;
++ 	    lastChar = readbuf + n;
++ 	    /* Add a null at the end just to make it easier to print
++ 	       the read buffer */
++ 	    readbuf[n] = 0;
++ 	    /* FIXME: Make this an optional output */
++ 	    /* printf( "Readline %s\n", readbuf ); */
++ 	}
++ 	
++ 	ch   = *nextChar++;
++ 	*p++ = ch;
++ 	curlen++;
++ 	if (ch == '\n') break;
++     }
++ 
++     /* We null terminate the string for convenience in printing */
++     *p = 0;
++ 
++     /* Return the number of characters, not counting the null */
++     return curlen-1;
++ }
++ 
++ int PMIU_writeline( int fd, char *buf )	
++ {
++     ssize_t size, n;
++ 
++     size = strlen( buf );
++     if ( size > PMIU_MAXLINE ) {
++ 	buf[PMIU_MAXLINE-1] = '\0';
++ 	PMIU_printf( 1, "write_line: message string too big: :%s:\n", buf );
++     }
++     else if ( buf[strlen( buf ) - 1] != '\n' )  /* error:  no newline at end */
++ 	    PMIU_printf( 1, "write_line: message string doesn't end in newline: :%s:\n",
++ 		       buf );
++     else {
++ 	do {
++ 	    n = write( fd, buf, size );
++ 	} while (n == -1 && errno == EINTR);
++ 
++ 	if ( n < 0 ) {
++ 	    PMIU_printf( 1, "write_line error; fd=%d buf=:%s:\n", fd, buf );
++ 	    perror("system msg for write_line failure ");
++ 	    return(-1);
++ 	}
++ 	if ( n < size)
++ 	    PMIU_printf( 1, "write_line failed to write entire message\n" );
++     }
++     return 0;
++ }
++ 
++ /*
++  * Given an input string st, parse it into internal storage that can be
++  * queried by routines such as PMIU_getval.
++  */
++ int PMIU_parse_keyvals( char *st )
++ {
++     char *p, *keystart, *valstart;
++     int  offset;
++ 
++     if ( !st )
++ 	return( -1 );
++ 
++     PMIU_keyval_tab_idx = 0;
++     p = st;
++     while ( 1 ) {
++ 	while ( *p == ' ' )
++ 	    p++;
++ 	/* got non-blank */
++ 	if ( *p == '=' ) {
++ 	    PMIU_printf( 1, "PMIU_parse_keyvals:  unexpected = at character %d in %s\n",
++ 		       p - st, st );
++ 	    return( -1 );
++ 	}
++ 	if ( *p == '\n' || *p == '\0' )
++ 	    return( 0 );	/* normal exit */
++ 	/* got normal character */
++ 	keystart = p;		/* remember where key started */
++ 	while ( *p != ' ' && *p != '=' && *p != '\n' && *p != '\0' )
++ 	    p++;
++ 	if ( *p == ' ' || *p == '\n' || *p == '\0' ) {
++ 	    PMIU_printf( 1,
++        "PMIU_parse_keyvals: unexpected key delimiter at character %d in %s\n",
++ 		       p - st, st );
++ 	    return( -1 );
++ 	}
++ 	/* Null terminate the key */
++ 	*p = 0;
++ 	/* store key */
++         MPIU_Strncpy( PMIU_keyval_tab[PMIU_keyval_tab_idx].key, keystart, 
++ 		      MAXKEYLEN );
++ 
++ 	valstart = ++p;			/* start of value */
++ 	while ( *p != ' ' && *p != '\n' && *p != '\0' )
++ 	    p++;
++ 	/* store value */
++         MPIU_Strncpy( PMIU_keyval_tab[PMIU_keyval_tab_idx].value, valstart, 
++ 		      MAXVALLEN );
++ 	offset = (int)(p - valstart);
++ 	/* When compiled with -fPIC, the pgcc compiler generates incorrect
++ 	   code if "p - valstart" is used instead of using the 
++ 	   intermediate offset */
++ 	PMIU_keyval_tab[PMIU_keyval_tab_idx].value[offset] = '\0';  
++ 	PMIU_keyval_tab_idx++;
++ 	if ( *p == ' ' )
++ 	    continue;
++ 	if ( *p == '\n' || *p == '\0' )
++ 	    return( 0 );	/* value has been set to empty */
++     }
++ }
++ 
++ void PMIU_dump_keyvals( void )
++ {
++     int i;
++     for (i=0; i < PMIU_keyval_tab_idx; i++) 
++ 	PMIU_printf(1, "  %s=%s\n",PMIU_keyval_tab[i].key, PMIU_keyval_tab[i].value);
++ }
++ 
++ char *PMIU_getval( const char *keystr, char *valstr, int vallen )
++ {
++     int i, rc;
++     
++     for (i = 0; i < PMIU_keyval_tab_idx; i++) {
++ 	if ( strcmp( keystr, PMIU_keyval_tab[i].key ) == 0 ) { 
++ 	    rc = MPIU_Strncpy( valstr, PMIU_keyval_tab[i].value, vallen );
++ 	    if (rc != 0) {
++ 		PMIU_printf( 1, "MPIU_Strncpy failed in PMIU_getval\n" );
++ 		return NULL;
++ 	    }
++ 	    return valstr;
++        } 
++     }
++     valstr[0] = '\0';
++     return NULL;
++ }
++ 
++ void PMIU_chgval( const char *keystr, char *valstr )
++ {
++     int i;
++     
++     for ( i = 0; i < PMIU_keyval_tab_idx; i++ ) {
++ 	if ( strcmp( keystr, PMIU_keyval_tab[i].key ) == 0 ) {
++ 	    MPIU_Strncpy( PMIU_keyval_tab[i].value, valstr, MAXVALLEN - 1 );
++ 	    PMIU_keyval_tab[i].value[MAXVALLEN - 1] = '\0';
++ 	}
++     }
++ }
++ #endif
+diff -x 'mpich_cvars.*' -xsubsys_include.m4 -x unusederr.txt -x '*.in~' -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x 'osu_b*' -x 'limic*' -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1/src/pmi/vanadis/vanadis_pmiutil.h mvapich2-2.3.7-1-orig/src/pmi/vanadis/vanadis_pmiutil.h
+*** mvapich2-2.3.7-1/src/pmi/vanadis/vanadis_pmiutil.h	1969-12-31 17:00:00.000000000 -0700
+--- mvapich2-2.3.7-1-orig/src/pmi/vanadis/vanadis_pmiutil.h	2023-08-31 08:29:09.610781001 -0600
+***************
+*** 0 ****
+--- 1,37 ----
++ /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
++ /*
++  *  (C) 2001 by Argonne National Laboratory.
++  *      See COPYRIGHT in top-level directory.
++  */
++ 
++ #if 0
++ 
++ /* maximum sizes for arrays */
++ #define PMIU_MAXLINE 1024
++ #define PMIU_IDSIZE    32
++ 
++ /* we don't have access to MPIU_Assert and friends here in the PMI code */
++ #if defined(HAVE_ASSERT_H)
++ #  include <assert.h>
++ #  define PMIU_Assert(expr) assert(expr)
++ #else
++ #  define PMIU_Assert(expr)
++ #endif
++ 
++ #if defined HAVE_ARPA_INET_H
++ #include <arpa/inet.h>
++ #endif /* HAVE_ARPA_INET_H */
++ 
++ 
++ /* prototypes for PMIU routines */
++ void PMIU_Set_rank( int PMI_rank );
++ void PMIU_SetServer( void );
++ void PMIU_printf( int print_flag, const char *fmt, ... );
++ int  PMIU_readline( int fd, char *buf, int max );
++ int  PMIU_writeline( int fd, char *buf );
++ int  PMIU_parse_keyvals( char *st );
++ void PMIU_dump_keyvals( void );
++ char *PMIU_getval( const char *keystr, char *valstr, int vallen );
++ void PMIU_chgval( const char *keystr, char *valstr );
++ 
++ #endif

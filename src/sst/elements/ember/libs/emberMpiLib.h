@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
-
+// Copyright 2009-2025 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -21,6 +21,8 @@
 #include "libs/emberLib.h"
 
 #include "sst/elements/hermes/msgapi.h"
+
+#include "sst/core/output.h"
 
 #include "mpi/emberMPIEvent.h"
 #include "mpi/emberinitev.h"
@@ -58,6 +60,8 @@ using namespace SST::Statistics;
 
 namespace SST {
 namespace Ember {
+
+static SST::Output abort_output("EmberMpiLib: ", 5, -1, Output::STDERR);
 
 #undef FOREACH_ENUM
 #define FOREACH_ENUM(NAME) \
@@ -124,7 +128,7 @@ class EmberMpiLib : public EmberLib {
         "mpiLib",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        "SST::Ember::EmberMpiLib"
+        SST::Ember::EmberLib
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -171,6 +175,8 @@ class EmberMpiLib : public EmberLib {
 	}
     void isend( Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group,
         MessageRequest* req ) {
+        if (!req) abort_output.fatal(CALL_INFO, -1, "isend requires nonnull MessageRequest\n");
+
     	q.push( new EmberISendEvent( api(), m_output, m_Stats[Isend], payload, count, dtype, dest, tag, group, req ) );
 
 		size_t bytes = count*api().sizeofDataType(dtype);
@@ -377,6 +383,10 @@ class EmberMpiLib : public EmberLib {
 	void setBacked() {
 		m_backed = true;
 	}
+
+        void setNotBacked() {
+                m_backed = false;
+        }
 
 	void completed(const SST::Output* output, uint64_t time, std::string motifName, int motifNum );
 

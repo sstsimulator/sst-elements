@@ -1,0 +1,119 @@
+Configuring Ariel processor model (8 cores)...
+Configuring ring network...
+Configuring core and memory controller group 0...
+Creating active core 0 in group 0
+Creating active core 1 in group 0
+Creating L3 cache block: 0 in group: 0
+Creating L3 cache block: 1 in group: 0
+Creating L3 cache block: 2 in group: 0
+Creating L3 cache block: 3 in group: 0
+Creating L3 cache block: 4 in group: 0
+Configuring core and memory controller group 1...
+Creating active core 0 in group 1
+Creating active core 1 in group 1
+Creating L3 cache block: 0 in group: 1
+Creating L3 cache block: 1 in group: 1
+Creating L3 cache block: 2 in group: 1
+Creating L3 cache block: 3 in group: 1
+Creating L3 cache block: 4 in group: 1
+Configuring core and memory controller group 2...
+Creating active core 0 in group 2
+Creating active core 1 in group 2
+Creating L3 cache block: 0 in group: 2
+Creating L3 cache block: 1 in group: 2
+Creating L3 cache block: 2 in group: 2
+Creating L3 cache block: 3 in group: 2
+Creating L3 cache block: 4 in group: 2
+Configuring core and memory controller group 3...
+Creating active core 0 in group 3
+Creating active core 1 in group 3
+Creating L3 cache block: 0 in group: 3
+Creating L3 cache block: 1 in group: 3
+Creating L3 cache block: 2 in group: 3
+Creating L3 cache block: 3 in group: 3
+Creating L3 cache block: 4 in group: 3
+Completed configuring the SST Sandy Bridge model
+ArielComponent[arielcpu.cc:37:ArielCPU] Creating Ariel component...
+ArielComponent[arielcpu.cc:43:ArielCPU] Configuring for 8 cores...
+ArielComponent[arielcpu.cc:46:ArielCPU] Configuring for check addresses = no
+ArielComponent[arielcpu.cc:120:ArielCPU] Loaded memory manager: A0:memmgr
+ArielComponent[arielcpu.cc:134:ArielCPU] Memory manager construction is completed.
+Pin3Frontend[frontend/pin3/pin3frontend.cc:82:Pin3Frontend] Model specifies that there are 0 application arguments
+Pin3Frontend[frontend/pin3/pin3frontend.cc:92:Pin3Frontend] Interception and instrumentation of multi-level memory and malloc/free calls is ENABLED.
+Pin3Frontend[frontend/pin3/pin3frontend.cc:97:Pin3Frontend] Tracking the stack and dumping on malloc calls is DISABLED.
+Pin3Frontend[frontend/pin3/pin3frontend.cc:104:Pin3Frontend] Malloc map file is ENABLED, using file 'malloc.txt'
+Pin3Frontend[frontend/pin3/pin3frontend.cc:111:Pin3Frontend] Base pipe name: /tmp/sst_shmem_3017865-0-1804289383
+Pin3Frontend[frontend/pin3/pin3frontend.cc:200:Pin3Frontend] Processing application arguments...
+Pin3Frontend[frontend/pin3/pin3frontend.cc:335:Pin3Frontend] Completed processing application arguments.
+Pin3Frontend[frontend/pin3/pin3frontend.cc:340:Pin3Frontend] Completed initialization of the Ariel CPU.
+ArielComponent[arielcpu.cc:170:ArielCPU] Registering ArielCPU clock at 2660MHz
+ArielComponent[arielcpu.cc:174:ArielCPU] Clocks registered.
+ArielComponent[arielcpu.cc:176:ArielCPU] Creating core to cache links...
+ArielComponent[arielcpu.cc:178:ArielCPU] Creating processor cores and cache links...
+ArielComponent[arielcpu.cc:180:ArielCPU] Configuring cores and cache links...
+ArielComponent[arielcpu.cc:235:ArielCPU] Completed initialization of the Ariel RTL Link.
+ArielComponent[arielcpu.cc:235:ArielCPU] Completed initialization of the Ariel RTL Link.
+ArielComponent[arielcpu.cc:235:ArielCPU] Completed initialization of the Ariel RTL Link.
+ArielComponent[arielcpu.cc:235:ArielCPU] Completed initialization of the Ariel RTL Link.
+ArielComponent[arielcpu.cc:235:ArielCPU] Completed initialization of the Ariel RTL Link.
+ArielComponent[arielcpu.cc:235:ArielCPU] Completed initialization of the Ariel RTL Link.
+ArielComponent[arielcpu.cc:235:ArielCPU] Completed initialization of the Ariel RTL Link.
+ArielComponent[arielcpu.cc:235:ArielCPU] Completed initialization of the Ariel RTL Link.
+ArielComponent[arielcpu.cc:247:ArielCPU] Completed initialization of the Ariel CPU.
+SSTARIEL: Loading Ariel Tool to connect to SST on pipe: /tmp/sst_shmem_3017865-0-1804289383 max core count: 8
+SSTARIEL: Function profiling is disabled.
+Allocating arrays of size 2000 elements.
+Done allocating arrays.
+Perfoming the fast_c compute loop...
+Sum of arrays is: 6999500.000000
+Freeing arrays...
+Done.
+SSTARIEL: Execution completed, shutting down.
+Pin3Frontend[frontend/pin3/pin3frontend.cc:347:init] Launching PIN...
+Pin3Frontend[frontend/pin3/pin3frontend.cc:415:forkPINChild] Executing PIN command: /home/prlavin/projects/reference-paper-2024/pin-3.28/pin -follow_execv -ifeellucky -t /home/prlavin/projects/reference-paper-2024/install/libexec/fesimple.so -w 0 -E 1 -p /tmp/sst_shmem_3017865-0-1804289383 -v 1 -t 0 -c 8 -s 1 -m 1 -k 0 -u malloc.txt -d 0 -- /home/prlavin/projects/reference-paper-2024/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream_mlm
+Pin3Frontend[frontend/pin3/pin3frontend.cc:357:init] Returned from launching PIN.  Waiting for child to attach.
+Pin3Frontend[frontend/pin3/pin3frontend.cc:360:init] Child has attached!
+CORE ID: 0 PROCESSED AN EXIT EVENT
+ArielComponent[arielcpu.cc:265:finish] Ariel Processor Information:
+ArielComponent[arielcpu.cc:266:finish] Completed at: 4095815 nanoseconds.
+ArielComponent[arielcpu.cc:267:finish] Ariel Component Statistics (By Core)
+
+Ariel Memory Management Statistics:
+---------------------------------------------------------------------
+Page Table Sizes:
+- Demand map entries at level 0         466
+- Demand map entries at level 1         0
+Page Table Coverages:
+- Demand bytes at level 0              1908736
+- Demand bytes at level 1              0
+Simulation is complete, simulated time: 4.09582 ms
+ARIEL-SST: Did not find ARIEL_OVERRIDE_POOL in the environment, no override applies.
+ARIEL-SST PIN tool activating with 8 threads
+ARIEL: Default memory pool set to 0
+ARIEL: Tool is configured to begin with profiling immediately.
+ARIEL: Starting program.
+Identified routine: clock_gettime, replacing with Ariel equivalent...
+Replacement complete.
+Identified routine: ariel_enable, replacing with Ariel equivalent...
+Replacement complete.
+Identified routine: ariel_disable, replacing with Ariel equivalent...
+Replacement complete.
+Identified routine: ariel_fence, replacing with Ariel equivalent..
+Replacement complete
+Identified routine: ariel_cycles, replacing with Ariel equivalent..
+Replacement complete
+Identified routine: ariel_output_stats, replacing with Ariel equivalent..
+Replacement complete
+Identified routine: ariel_malloc_flag, replacing with Ariel equivalent..
+Replacing api_mpi_init with mapped_api_mpi_init.
+Replacement complete
+Identified routine: MPI_Init. Instrumenting.
+Instrumentation complete
+Identified routine: MPI_Init_thread. Instrumenting.
+Instrumentation complete
+Identified routine: malloc/_malloc, replacing with Ariel equivalent...
+Identified routine: free/_free, replacing with Ariel equivalent...
+Identified routine: clock_gettime, replacing with Ariel equivalent...
+Replacement complete.
+Identified routine: MPI_Init_thread. Instrumenting.
+Instrumentation complete

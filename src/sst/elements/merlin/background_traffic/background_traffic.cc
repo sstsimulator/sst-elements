@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -17,8 +17,6 @@
 #include "background_traffic/background_traffic.h"
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
-#include <sst/core/timeLord.h>
 
 using namespace SST::Merlin;
 using namespace SST::Interfaces;
@@ -31,12 +29,12 @@ BackgroundTraffic::BackgroundTraffic(ComponentId_t cid, Params& params) :
     bool found = false;
     offered_load = params.find<double>("offered_load",found);
     if ( !found ) {
-        Simulation::getSimulationOutput().fatal(CALL_INFO, -1, "BackgroundTraffic: offered_load must be set!\n");
+        getSimulationOutput().fatal(CALL_INFO, -1, "BackgroundTraffic: offered_load must be set!\n");
     }
 
     num_peers = params.find<int>("num_peers",-1);
     if ( num_peers == -1 ) {
-        Simulation::getSimulationOutput().fatal(CALL_INFO, -1, "BackgroundTraffic: num_peers must be set!\n");
+        getSimulationOutput().fatal(CALL_INFO, -1, "BackgroundTraffic: num_peers must be set!\n");
     }
 
     UnitAlgebra pkt_size = params.find<UnitAlgebra>("message_size","64b");
@@ -68,8 +66,8 @@ BackgroundTraffic::BackgroundTraffic(ComponentId_t cid, Params& params) :
 
 
     // Register functors for the SimpleNetwork IF
-    send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler<BackgroundTraffic>(this, &BackgroundTraffic::send_notify);
-    recv_notify_functor = new SST::Interfaces::SimpleNetwork::Handler<BackgroundTraffic>(this, &BackgroundTraffic::handle_receives);
+    send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler2<BackgroundTraffic,&BackgroundTraffic::send_notify>(this);
+    recv_notify_functor = new SST::Interfaces::SimpleNetwork::Handler2<BackgroundTraffic,&BackgroundTraffic::handle_receives>(this);
 
     // link_if->setNotifyOnSend(send_notify_functor);
     link_if->setNotifyOnReceive(recv_notify_functor);
@@ -78,7 +76,7 @@ BackgroundTraffic::BackgroundTraffic(ComponentId_t cid, Params& params) :
     // Set up the communication pattern generator
     std::string pattern = params.find<std::string>("pattern",found);
     if ( !found ) {
-        Simulation::getSimulationOutput().fatal(CALL_INFO, -1, "BackgroundTraffic: pattern must be set!\n");
+        getSimulationOutput().fatal(CALL_INFO, -1, "BackgroundTraffic: pattern must be set!\n");
     }
 
     pattern_params = new Params();
@@ -90,7 +88,7 @@ BackgroundTraffic::BackgroundTraffic(ComponentId_t cid, Params& params) :
     primaryComponentOKToEndSim();
 
     base_tc = registerTimeBase("1ps",false);
-    timing_link = configureSelfLink("timing_link", base_tc, new Event::Handler<BackgroundTraffic>(this, &BackgroundTraffic::output_timing));
+    timing_link = configureSelfLink("timing_link", base_tc, new Event::Handler2<BackgroundTraffic,&BackgroundTraffic::output_timing>(this));
 
 
 }

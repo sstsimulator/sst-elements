@@ -1,0 +1,3 @@
+main() open( 'lseek_test.txt' ) succeeded
+main() close 'lseek_test.txt' succeeded
+unlink 'lseek_test.txt' succeeded

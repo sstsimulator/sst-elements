@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -18,6 +18,9 @@
 
 #include <sst/core/stringize.h>
 #include <sst/core/params.h>
+
+#include <iomanip>
+#include <limits>
 #include <string>
 
 using namespace std;
@@ -27,13 +30,15 @@ namespace MemHierarchy {
 
 /* Debug macros */
 #ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
-#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
-#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
-#define is_debug true
+#define mem_h_is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
+#define mem_h_is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
+#define mem_h_is_debug true
+#define mem_h_debug_output(level, fmt, ... ) dbg.debug( level, fmt, ##__VA_ARGS__ )
 #else
-#define is_debug_addr(addr) false
-#define is_debug_event(ev) false
-#define is_debug false
+#define mem_h_is_debug_addr(addr) false
+#define mem_h_is_debug_event(ev) false
+#define mem_h_is_debug false
+#define mem_h_debug_output(level, fmt, ... )
 #endif
 
 #define _INFO_ CALL_INFO,1,0
@@ -45,19 +50,15 @@ namespace MemHierarchy {
 #define _L7_ CALL_INFO,7,0      //Additional detail
 #define _L8_ CALL_INFO,8,0      //Additional detail
 #define _L9_ CALL_INFO,9,0      //Additional detail
-#define _L10_ CALL_INFO,10,0    //Initialization phase
+#define _L10_ CALL_INFO,10,0    //Untimed phases
 #define _L11_ CALL_INFO,11,0    //Data values
 #define _L20_ CALL_INFO,20,0    //Debug at function call granularity
 
-// Type conversions - TODO are these used anywhere?
-const unsigned int kibi = 1024;
-const unsigned int mebi = kibi * 1024;
-const unsigned int gibi = mebi * 1024;
-const unsigned int tebi = gibi * 1024;
-const unsigned int pebi = tebi * 1024;
-const unsigned int exbi = pebi * 1024;
-
 typedef uint64_t Addr;
+#ifndef PRI_ADDR
+#define PRI_ADDR PRIx64
+#endif
+#define NO_ADDR std::numeric_limits<uint64_t>::max();
 
 // Event attributes
 /*
@@ -85,6 +86,15 @@ inline int log2Of(int x){
 
 inline bool isPowerOfTwo(unsigned int x) {
     return !(x & (x-1));
+}
+
+inline std::string getDataString(std::vector<uint8_t>* data) {
+    std::stringstream value;
+    value << std::hex << std::setfill('0');
+    for (unsigned int i = 0; i < data->size(); i++) {
+        value << std::hex << std::setw(2) << (int)data->at(i);
+    }
+    return value.str();
 }
 
 /*

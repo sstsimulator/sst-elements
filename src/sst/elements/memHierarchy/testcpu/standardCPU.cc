@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -17,7 +17,6 @@
 #include "testcpu/standardCPU.h"
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
 
 #include "util.h"
@@ -29,46 +28,49 @@ using namespace SST::Statistics;
 
 /* Constructor */
 standardCPU::standardCPU(ComponentId_t id, Params& params) :
-    Component(id), rng(id, 13)
+    Component(id), rng_(id, 13), rng_comm_(id, 13)
 {
     // Restart the RNG to ensure completely consistent results
     // Seed with user-provided seed
     uint32_t z_seed = params.find<uint32_t>("rngseed", 7);
-    rng.restart(z_seed, 13);
+    rng_.restart(z_seed, 13);
 
-    out.init("", params.find<unsigned int>("verbose", 1), 0, Output::STDOUT);
-    
+    z_seed = params.find<uint32_t>("rngseed_comm", 7);
+    rng_comm_.restart(z_seed, 13);
+
+    out_.init("", params.find<unsigned int>("verbose", 1), 0, Output::STDOUT);
+
     bool found;
 
     /* Required parameter - memFreq */
-    memFreq = params.find<int>("memFreq", 0, found);
+    mem_freq_ = params.find<int>("memFreq", 0, found);
     if (!found) {
-        out.fatal(CALL_INFO, -1,"%s, Error: parameter 'memFreq' was not provided\n", 
+        out_.fatal(CALL_INFO, -1,"%s, Error: parameter 'memFreq' was not provided\n",
                 getName().c_str());
     }
 
     /* Required parameter - memSize */
     UnitAlgebra memsize = params.find<UnitAlgebra>("memSize", UnitAlgebra("0B"), found);
     if ( !found ) {
-        out.fatal(CALL_INFO, -1, "%s, Error: parameter 'memSize' was not provided\n",
+        out_.fatal(CALL_INFO, -1, "%s, Error: parameter 'memSize' was not provided\n",
                 getName().c_str());
     }
     if (!(memsize.hasUnits("B"))) {
-        out.fatal(CALL_INFO, -1, "%s, Error: memSize parameter requires units of 'B' (SI OK). You provided '%s'\n",
+        out_.fatal(CALL_INFO, -1, "%s, Error: memSize parameter requires units of 'B' (SI OK). You provided '%s'\n",
             getName().c_str(), memsize.toString().c_str() );
     }
 
-    maxAddr = memsize.getRoundedValue() - 1;
+    max_addr_ = memsize.getRoundedValue() - 1;
 
-    mmioAddr = params.find<uint64_t>("mmio_addr", "0", found);
+    mmio_addr_ = params.find<uint64_t>("mmio_addr", "0", found);
     if (found) {
-        sst_assert(mmioAddr > maxAddr, CALL_INFO, -1, "incompatible parameters: mmio_addr must be >= memSize (mmio above physical memory addresses).\n");
+        sst_assert(mmio_addr_ > max_addr_, CALL_INFO, -1, "incompatible parameters: mmio_addr must be >= memSize (mmio above physical memory addresses).\n");
     }
 
-    maxOutstanding = params.find<uint64_t>("maxOutstanding", 10);
+    max_outstanding_ = params.find<uint64_t>("maxOutstanding", 10);
 
     /* Required parameter - opCount */
-    ops = params.find<uint64_t>("opCount", 0, found);
+    op_count_ = params.find<uint64_t>("opCount", 0, found);
     sst_assert(found, CALL_INFO, -1, "%s, Error: parameter 'opCount' was not provided\n", getName().c_str());
 
     /* Frequency of different ops */
@@ -76,32 +78,34 @@ standardCPU::standardCPU(ComponentId_t id, Params& params) :
     unsigned writef = params.find<unsigned>("write_freq", 75);
     unsigned flushf = params.find<unsigned>("flush_freq", 0);
     unsigned flushinvf = params.find<unsigned>("flushinv_freq", 0);
+    unsigned flushcachef = params.find<unsigned>("flushcache_freq", 0);
     unsigned customf = params.find<unsigned>("custom_freq", 0);
     unsigned llscf = params.find<unsigned>("llsc_freq", 0);
     unsigned mmiof = params.find<unsigned>("mmio_freq", 0);
 
-    if (mmiof != 0 && mmioAddr == 0) {
-        out.fatal(CALL_INFO, -1, "%s, Error: mmio_freq is > 0 but no mmio device has been specified via mmio_addr\n", getName().c_str());
+    if (mmiof != 0 && mmio_addr_ == 0) {
+        out_.fatal(CALL_INFO, -1, "%s, Error: mmio_freq is > 0 but no mmio device has been specified via mmio_addr\n", getName().c_str());
     }
 
-    high_mark = readf + writef + flushf + flushinvf + customf + llscf + mmiof; /* Numbers less than this and above other marks indicate read */
-    if (high_mark == 0) {
-        out.fatal(CALL_INFO, -1, "%s, Error: The input doesn't indicate a frequency for any command type.\n", getName().c_str());
+    high_mark_ = readf + writef + flushf + flushinvf + flushcachef + customf + llscf + mmiof; /* Numbers less than this and above other marks indicate read */
+    if (high_mark_ == 0) {
+        out_.fatal(CALL_INFO, -1, "%s, Error: The input doesn't indicate a frequency for any command type.\n", getName().c_str());
     }
-    write_mark = writef;    /* Numbers less than this indicate write */
-    flush_mark = write_mark + flushf; /* Numbers less than this indicate flush */
-    flushinv_mark = flush_mark + flushinvf; /* Numbers less than this indicate flush-inv */
-    custom_mark = flushinv_mark + customf; /* Numbers less than this indicate flush */
-    llsc_mark = custom_mark + llscf; /* Numbers less than this indicate LL-SC */
-    mmio_mark = llsc_mark + mmiof; /* Numbers less than this indicate MMIO read or write */
+    write_mark_ = writef;    /* Numbers less than this indicate write */
+    flush_mark_ = write_mark_ + flushf; /* Numbers less than this indicate flush */
+    flushinv_mark_ = flush_mark_ + flushinvf; /* Numbers less than this indicate flush-inv */
+    flushcache_mark_ = flushinv_mark_ + flushcachef; /* Numbers less than this indicate flush-cache */
+    custom_mark_ = flushcache_mark_ + customf; /* Numbers less than this indicate flush */
+    llsc_mark_ = custom_mark_ + llscf; /* Numbers less than this indicate LL-SC */
+    mmio_mark_ = llsc_mark_ + mmiof; /* Numbers less than this indicate MMIO read or write */
 
-    noncacheableRangeStart = params.find<uint64_t>("noncacheableRangeStart", 0);
-    noncacheableRangeEnd = params.find<uint64_t>("noncacheableRangeEnd", 0);
-    noncacheableSize = noncacheableRangeEnd - noncacheableRangeStart;
+    noncacheable_range_start_ = params.find<uint64_t>("noncacheableRangeStart", 0);
+    noncacheable_range_end_ = params.find<uint64_t>("noncacheableRangeEnd", 0);
+    noncacheable_size_ = noncacheable_range_end_ - noncacheable_range_start_;
 
-    maxReqsPerIssue = params.find<uint32_t>("reqsPerIssue", 1);
-    if (maxReqsPerIssue < 1) {
-        out.fatal(CALL_INFO, -1, "%s, Error: StandardCPU cannot issue less than one request at a time...fix your input deck\n", getName().c_str());
+    max_reqs_per_issue_ = params.find<uint32_t>("reqsPerIssue", 1);
+    if (max_reqs_per_issue_ < 1) {
+        out_.fatal(CALL_INFO, -1, "%s, Error: StandardCPU cannot issue less than one request at a time...fix your input deck\n", getName().c_str());
     }
 
     // Tell the simulator not to end until we OK it
@@ -110,49 +114,83 @@ standardCPU::standardCPU(ComponentId_t id, Params& params) :
 
     //set our clock
     std::string clockFreq = params.find<std::string>("clock", "1GHz");
-    clockHandler = new Clock::Handler<standardCPU>(this, &standardCPU::clockTic);
-    clockTC = registerClock( clockFreq, clockHandler );
+    clock_handler_ = new Clock::Handler2<standardCPU, &standardCPU::clockTic>(this);
+    clock_timeconverter_ = registerClock( clockFreq, clock_handler_ );
 
     /* Find the interface the user provided in the Python and load it*/
-    memory = loadUserSubComponent<StandardMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new StandardMem::Handler<standardCPU>(this, &standardCPU::handleEvent));
+    memory_ = loadUserSubComponent<StandardMem>("memory", ComponentInfo::SHARE_NONE, &clock_timeconverter_, new StandardMem::Handler2<standardCPU, &standardCPU::handleEvent>(this));
 
-    if (!memory) {
-        out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.standardInterface subcomponent; check that 'memory' slot is filled in input.\n");
+    if (!memory_) {
+        out_.fatal(CALL_INFO, -1, "Unable to load memHierarchy.standardInterface subcomponent; check that 'memory' slot is filled in input.\n");
     }
 
-    clock_ticks = 0;
-    requestsPendingCycle = registerStatistic<uint64_t>("pendCycle");
-    num_reads_issued = registerStatistic<uint64_t>("reads");
-    num_writes_issued = registerStatistic<uint64_t>("writes");
-    if (noncacheableSize != 0) {
-        noncacheableReads = registerStatistic<uint64_t>("readNoncache");
-        noncacheableWrites = registerStatistic<uint64_t>("writeNoncache");
+    clock_ticks_ = 0;
+    stat_requests_pending_per_cycle_ = registerStatistic<uint64_t>("pendCycle");
+    stat_num_reads_issued_ = registerStatistic<uint64_t>("reads");
+    stat_num_writes_issued_ = registerStatistic<uint64_t>("writes");
+    if (noncacheable_size_ != 0) {
+        stat_noncacheable_reads_ = registerStatistic<uint64_t>("readNoncache");
+        stat_noncacheable_writes_ = registerStatistic<uint64_t>("writeNoncache");
     }
     if (flushf != 0 ) {
-        num_flushes_issued = registerStatistic<uint64_t>("flushes");
+        stat_num_flushes_issued_ = registerStatistic<uint64_t>("flushes");
     }
     if (flushinvf != 0) {
-        num_flushinvs_issued = registerStatistic<uint64_t>("flushinvs");
+        stat_num_flushinvs_issued_ = registerStatistic<uint64_t>("flushinvs");
+    }
+    if (flushcachef != 0) {
+        stat_num_flushcache_issued_ = registerStatistic<uint64_t>("flushcaches");
     }
     if (customf != 0) {
-        num_custom_issued = registerStatistic<uint64_t>("customReqs");
+        stat_num_custom_issued_ = registerStatistic<uint64_t>("customReqs");
     }
 
     if (llscf != 0) {
-        num_llsc_issued = registerStatistic<uint64_t>("llsc");
-        num_llsc_success = registerStatistic<uint64_t>("llsc_success");
+        stat_num_llsc_issued_ = registerStatistic<uint64_t>("llsc");
+        stat_num_llsc_success_ = registerStatistic<uint64_t>("llsc_success");
     }
-    ll_issued = false;
+    ll_issued_ = false;
+
+    init_count_ = params.find<uint64_t>("test_init", 0);
 }
 
 void standardCPU::init(unsigned int phase)
 {
-    memory->init(phase);
+    memory_->init(phase);
+
+    while (init_count_ != 0) {
+        StandardMem::Addr addr = rng_.generateNextUInt64();
+        memory_->sendUntimedData( createWrite(addr) );
+        init_addr_.push(addr);
+        init_count_--;
+    }
+
+    if (phase > 0 && !init_addr_.empty()) {
+        Interfaces::StandardMem::Request* read = createRead(init_addr_.front());
+	    requests_[read->getID()] =  std::make_pair(0, "");
+        memory_->sendUntimedData(read);
+        init_addr_.pop();
+    }
+
+    while (Interfaces::StandardMem::Request* req = memory_->recvUntimedData()) {
+        auto it = requests_.find(req->getID());
+        if (it == requests_.end()) {
+            out_.fatal(CALL_INFO, -1, "%s, Error: Received a response but there is no record of the matching requests. Received: %s\n",
+                getName().c_str(), req->getString().c_str());
+        }
+        out_.output("U: InitRecv. %s\n", req->getString().c_str());
+        requests_.erase(req->getID());
+        delete req;
+    }
 }
 
 void standardCPU::setup() {
-    memory->setup();
-    lineSize = memory->getLineSize();
+    memory_->setup();
+    line_size_ = memory_->getLineSize();
+
+    if (!requests_.empty()) { // Must not have received a response for init reads
+        out_.fatal(CALL_INFO,-1, "%s, Error: requests buffer should be empty during setup()\n", getName().c_str());
+    }
 }
 
 void standardCPU::finish() { }
@@ -160,14 +198,17 @@ void standardCPU::finish() { }
 // incoming events are scanned and deleted
 void standardCPU::handleEvent(StandardMem::Request *req)
 {
-    std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = requests.find(req->getID());
-    if ( requests.end() == i ) {
-        out.fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", req->getID());
+    std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = requests_.find(req->getID());
+    if ( requests_.end() == i ) {
+        out_.output("%s, Error, Event (%" PRIu64 ") for request (%s) not found\n", getName().c_str(), req->getID(), req->getString().c_str());
+        for (const auto& [key, value] : requests_)
+            out_.output("\t%" PRIu64 " %s, %" PRIu64 "\n", key, value.second.c_str(), value.first);
+        out_.fatal(CALL_INFO, -1, "%s, Error: Event (%" PRIu64 ") not found!\n", getName().c_str(), req->getID());
     } else {
         SimTime_t et = getCurrentSimTime() - i->second.first;
         if (i->second.second == "StoreConditional" && req->getSuccess())
-            num_llsc_success->addData(1);
-        requests.erase(i);
+            stat_num_llsc_success_->addData(1);
+        requests_.erase(i);
     }
 
     delete req;
@@ -176,73 +217,77 @@ void standardCPU::handleEvent(StandardMem::Request *req)
 
 bool standardCPU::clockTic( Cycle_t )
 {
-    ++clock_ticks;
+    ++clock_ticks_;
 
     // Histogram bin the requests pending per cycle
-    requestsPendingCycle->addData((uint64_t) requests.size());
+    stat_requests_pending_per_cycle_->addData((uint64_t) requests_.size());
 
     // communicate?
-    if ((0 != ops) && (0 == (rng.generateNextUInt32() % memFreq))) {
-        if ( requests.size() < maxOutstanding ) {
+    if (requests_.size() < max_outstanding_ && 0 != op_count_ ) {
+        if (0 == (rng_comm_.generateNextUInt32() % mem_freq_)) {
             // yes, communicate
             // create event
             // x4 to prevent splitting blocks
             uint32_t reqsToSend = 1;
-            if (maxReqsPerIssue > 1) reqsToSend += rng.generateNextUInt32() % maxReqsPerIssue;
-            if (reqsToSend > (maxOutstanding - requests.size())) reqsToSend = maxOutstanding - requests.size();
-            if (reqsToSend > ops) reqsToSend = ops;
+            if (max_reqs_per_issue_ > 1) reqsToSend += rng_comm_.generateNextUInt32() % max_reqs_per_issue_;
+            if (reqsToSend > (max_outstanding_ - requests_.size())) reqsToSend = max_outstanding_ - requests_.size();
+            if (reqsToSend > op_count_) reqsToSend = op_count_;
 
             for (int i = 0; i < reqsToSend; i++) {
 
-                StandardMem::Addr addr = rng.generateNextUInt64();
+                StandardMem::Addr addr = rng_.generateNextUInt64();
 
-                std::vector<uint8_t> data;
-                data.resize(4);
-                data[0] = (addr >> 24) & 0xff;
-                data[1] = (addr >> 16) & 0xff;
-                data[2] = (addr >>  8) & 0xff;
-                data[3] = (addr >>  0) & 0xff;
-                
-                uint32_t instNum = rng.generateNextUInt32() % high_mark;
+                uint32_t instNum = rng_.generateNextUInt32() % high_mark_;
                 uint64_t size = 4;
                 std::string cmdString = "Read";
                 Interfaces::StandardMem::Request* req;
-                
-                if (ll_issued) {
+
+                if (ll_issued_) {
                     req = createSC();
-                }else if (instNum < write_mark) {
+                    cmdString = "StoreConditional";
+                } else if (instNum < write_mark_) {
                     req = createWrite(addr);
-                } else if (instNum < flush_mark) {
+                    cmdString = "Write";
+                } else if (instNum < flush_mark_) {
                     req = createFlush(addr);
-                } else if (instNum < flushinv_mark) {
+                    cmdString = "Flush";
+                } else if (instNum < flushinv_mark_) {
                     req = createFlushInv(addr);
-                } else if (instNum < custom_mark) {
-                } else if (instNum < llsc_mark) {
+                    cmdString = "FlushInv";
+                } else if (instNum < flushcache_mark_) {
+                    req = createFlushCache();
+                    cmdString = "FlushCache";
+                } else if (instNum < custom_mark_) {
+                } else if (instNum < llsc_mark_) {
                     req = createLL(addr);
-                } else if (instNum < mmio_mark) {
-                    bool opType = rng.generateNextUInt32() % 2;
+                    cmdString = "LoadLink";
+                } else if (instNum < mmio_mark_) {
+                    bool opType = rng_.generateNextUInt32() % 2;
                     if (opType) {
                         req = createMMIORead();
+                        cmdString = "ReadMMIO";
                     } else {
                         req = createMMIOWrite();
+                        cmdString = "WriteMMIO";
                     }
                 } else {
                     req = createRead(addr);
                 }
 
                 if (req->needsResponse()) {
-		            requests[req->getID()] =  std::make_pair(getCurrentSimTime(), cmdString);
+		    requests_[req->getID()] =  std::make_pair(getCurrentSimTime(), cmdString);
                 }
-		        memory->send(req);
 
-                ops--;
+                memory_->send(req);
+
+                op_count_--;
 	        }
         }
     }
 
     // Check whether to end the simulation
-    if ( 0 == ops && requests.empty() ) {
-        out.verbose(CALL_INFO, 1, 0, "StandardCPU: Test Completed Successfuly\n");
+    if ( 0 == op_count_ && requests_.empty() ) {
+        out_.verbose(CALL_INFO, 1, 0, "StandardCPU: Test Completed Successfuly\n");
         primaryComponentOKToEndSim();
         return true;    // Turn our clock off while we wait for any other CPUs to end
     }
@@ -251,9 +296,67 @@ bool standardCPU::clockTic( Cycle_t )
     return false;
 }
 
+/*
+ * Default constructor
+*/
+standardCPU::standardCPU() : Component() {}
+
+/*
+ * Serialization function
+*/
+void standardCPU::serialize_order(SST::Core::Serialization::serializer& ser) {
+    Component::serialize_order(ser);
+
+    SST_SER(out_);
+    SST_SER(op_count_);
+    SST_SER(mem_freq_);
+    SST_SER(max_addr_);
+    SST_SER(mmio_addr_);
+    SST_SER(line_size_);
+    SST_SER(max_outstanding_);
+    SST_SER(high_mark_);
+    SST_SER(write_mark_);
+    SST_SER(flush_mark_);
+    SST_SER(flushinv_mark_);
+    SST_SER(flushcache_mark_);
+    SST_SER(custom_mark_);
+    SST_SER(llsc_mark_);
+    SST_SER(mmio_mark_);
+    SST_SER(max_reqs_per_issue_);
+    SST_SER(noncacheable_range_start_);
+    SST_SER(noncacheable_range_end_);
+    SST_SER(noncacheable_size_);
+    SST_SER(clock_ticks_);
+    SST_SER(init_count_);
+    SST_SER(stat_requests_pending_per_cycle_);
+    SST_SER(stat_num_reads_issued_);
+    SST_SER(stat_num_writes_issued_);
+    SST_SER(stat_num_flushes_issued_);
+    SST_SER(stat_num_flushcache_issued_);
+    SST_SER(stat_num_flushinvs_issued_);
+    SST_SER(stat_num_custom_issued_);
+    SST_SER(stat_num_llsc_issued_);
+    SST_SER(stat_num_llsc_success_);
+    SST_SER(stat_noncacheable_reads_);
+    SST_SER(stat_noncacheable_writes_);
+
+    SST_SER(ll_issued_);
+    SST_SER(ll_addr_);
+
+    SST_SER(requests_);
+
+    SST_SER(memory_);
+
+    SST_SER(rng_);
+    SST_SER(rng_comm_);
+
+    SST_SER(clock_timeconverter_);
+    SST_SER(clock_handler_);
+}
+
 /* Methods for sending different kinds of requests */
 StandardMem::Request* standardCPU::createWrite(Addr addr) {
-    addr = ((addr % maxAddr)>>2) << 2;
+    addr = ((addr % max_addr_)>>2) << 2;
     // Dummy payload
     std::vector<uint8_t> data;
     data.resize(4);
@@ -263,85 +366,92 @@ StandardMem::Request* standardCPU::createWrite(Addr addr) {
     data[3] = (addr >>  0) & 0xff;
 
     StandardMem::Request* req = new Interfaces::StandardMem::Write(addr, data.size(), data);
-    num_writes_issued->addData(1);
-    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd) {
+    stat_num_writes_issued_->addData(1);
+    if (addr >= noncacheable_range_start_ && addr < noncacheable_range_end_) {
         req->setNoncacheable();
-        noncacheableWrites->addData(1);
+        stat_noncacheable_writes_->addData(1);
     }
-    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued %sWrite for address 0x%" PRIx64 "\n", getName().c_str(), ops, req->getNoncacheable() ? "Noncacheable " : "", addr);
+    out_.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued %sWrite for address 0x%" PRIx64 "\n", getName().c_str(), op_count_, req->getNoncacheable() ? "Noncacheable " : "", addr);
     return req;
 }
 
 StandardMem::Request* standardCPU::createRead(Addr addr) {
-    addr = ((addr % maxAddr)>>2) << 2;
+    addr = ((addr % max_addr_)>>2) << 2;
     StandardMem::Request* req = new Interfaces::StandardMem::Read(addr, 4);
-    num_reads_issued->addData(1);
-    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd) {
+    stat_num_reads_issued_->addData(1);
+    if (addr >= noncacheable_range_start_ && addr < noncacheable_range_end_) {
         req->setNoncacheable();
-        noncacheableReads->addData(1);
+        stat_noncacheable_reads_->addData(1);
     }
-    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued %sRead for address 0x%" PRIx64 "\n", getName().c_str(), ops, req->getNoncacheable() ? "Noncacheable " : "", addr);
+    out_.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued %sRead for address 0x%" PRIx64 "\n", getName().c_str(), op_count_, req->getNoncacheable() ? "Noncacheable " : "", addr);
     return req;
 }
 
 StandardMem::Request* standardCPU::createFlush(Addr addr) {
-    addr = ((addr % (maxAddr - noncacheableSize)>>2) << 2);
-    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd)
-        addr += noncacheableRangeEnd;
-    addr = addr - (addr % lineSize);
-    StandardMem::Request* req = new Interfaces::StandardMem::FlushAddr(addr, lineSize, false, 10);
-    num_flushes_issued->addData(1);
-    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued FlushAddr for address 0x%" PRIx64 "\n", getName().c_str(), ops,  addr);
+    addr = ((addr % (max_addr_ - noncacheable_size_)>>2) << 2);
+    if (addr >= noncacheable_range_start_ && addr < noncacheable_range_end_)
+        addr += noncacheable_range_end_;
+    addr = addr - (addr % line_size_);
+    StandardMem::Request* req = new Interfaces::StandardMem::FlushAddr(addr, line_size_, false, 10);
+    stat_num_flushes_issued_->addData(1);
+    out_.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued FlushAddr for address 0x%" PRIx64 "\n", getName().c_str(), op_count_,  addr);
     return req;
 }
 
 StandardMem::Request* standardCPU::createFlushInv(Addr addr) {
-    addr = ((addr % (maxAddr - noncacheableSize)>>2) << 2);
-    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd)
-        addr += noncacheableRangeEnd;
-    addr = addr - (addr % lineSize);
-    StandardMem::Request* req = new Interfaces::StandardMem::FlushAddr(addr, lineSize, true, 10);
-    num_flushinvs_issued->addData(1);
-    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued FlushAddrInv for address 0x%" PRIx64 "\n", getName().c_str(), ops,  addr);
+    addr = ((addr % (max_addr_ - noncacheable_size_)>>2) << 2);
+    if (addr >= noncacheable_range_start_ && addr < noncacheable_range_end_)
+        addr += noncacheable_range_end_;
+    addr = addr - (addr % line_size_);
+    StandardMem::Request* req = new Interfaces::StandardMem::FlushAddr(addr, line_size_, true, 10);
+    stat_num_flushinvs_issued_->addData(1);
+    out_.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued FlushAddrInv for address 0x%" PRIx64 "\n", getName().c_str(), op_count_,  addr);
+    return req;
+}
+
+StandardMem::Request* standardCPU::createFlushCache() {
+    StandardMem::Request* req = new Interfaces::StandardMem::FlushCache();
+    stat_num_flushcache_issued_->addData(1);
+    out_.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued FlushCache\n", getName().c_str(), op_count_);
     return req;
 }
 
 StandardMem::Request* standardCPU::createLL(Addr addr) {
     // Addr needs to be a cacheable range
-    Addr cacheableSize = maxAddr + 1 - noncacheableRangeEnd + noncacheableRangeStart;
+    Addr cacheableSize = max_addr_ + 1 - noncacheable_range_end_ + noncacheable_range_start_;
     addr = (addr % (cacheableSize >> 2)) << 2;
-    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd) {
-        addr += noncacheableRangeEnd;
+    if (addr >= noncacheable_range_start_ && addr < noncacheable_range_end_) {
+        addr += noncacheable_range_end_;
     }
     // Align addr
     addr = (addr >> 2) << 2;
 
     StandardMem::Request* req = new Interfaces::StandardMem::LoadLink(addr, 4);
-    // Set these so we issue a matching sc 
-    ll_addr = addr;
-    ll_issued = true;
+    // Set these so we issue a matching sc
+    ll_addr_ = addr;
+    ll_issued_ = true;
 
-    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued LoadLink for address 0x%" PRIx64 "\n", getName().c_str(), ops, addr);
+    out_.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued LoadLink for address 0x%" PRIx64 "\n", getName().c_str(), op_count_, addr);
     return req;
 }
 
 StandardMem::Request* standardCPU::createSC() {
     std::vector<uint8_t> data;
     data.resize(4);
-    data[0] = (ll_addr >> 24) & 0xff;
-    data[1] = (ll_addr >> 16) & 0xff;
-    data[2] = (ll_addr >>  8) & 0xff;
-    data[3] = (ll_addr >>  0) & 0xff;
-    StandardMem::Request* req = new Interfaces::StandardMem::StoreConditional(ll_addr, data.size(), data);
-    num_llsc_issued->addData(1);
-    ll_issued = false;
-    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued StoreConditional for address 0x%" PRIx64 "\n", getName().c_str(), ops, ll_addr);
+    data[0] = (ll_addr_ >> 24) & 0xff;
+    data[1] = (ll_addr_ >> 16) & 0xff;
+    data[2] = (ll_addr_ >>  8) & 0xff;
+    data[3] = (ll_addr_ >>  0) & 0xff;
+    StandardMem::Request* req = new Interfaces::StandardMem::StoreConditional(ll_addr_, data.size(), data);
+    stat_num_llsc_issued_->addData(1);
+    ll_issued_ = false;
+    out_.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued StoreConditional for address 0x%" PRIx64 "\n", getName().c_str(), op_count_, ll_addr_);
     return req;
 }
 
 StandardMem::Request* standardCPU::createMMIOWrite() {
-    bool posted = rng.generateNextUInt32() % 2;
-    int32_t payload = rng.generateNextInt32();
+    bool posted = rng_.generateNextUInt32() % 2;
+    int32_t payload = rng_.generateNextInt32();
     payload >>= 16; // Shrink the number a bit
     int32_t payload_cp = payload;
     std::vector<uint8_t> data;
@@ -349,24 +459,24 @@ StandardMem::Request* standardCPU::createMMIOWrite() {
         data.push_back(payload & 0xFF);
         payload >>=8;
     }
-    StandardMem::Request* req = new Interfaces::StandardMem::Write(mmioAddr, sizeof(int32_t), data, posted);
-    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued MMIO Write for address 0x%" PRIx64 " with payload %d\n", getName().c_str(), ops, mmioAddr, payload_cp);
+    StandardMem::Request* req = new Interfaces::StandardMem::Write(mmio_addr_, sizeof(int32_t), data, posted);
+    out_.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued MMIO Write for address 0x%" PRIx64 " with payload %d\n", getName().c_str(), op_count_, mmio_addr_, payload_cp);
     return req;
 }
 
 StandardMem::Request* standardCPU::createMMIORead() {
-    StandardMem::Request* req = new Interfaces::StandardMem::Read(mmioAddr, sizeof(int32_t));
-    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued MMIO Read for address 0x%" PRIx64 "\n", getName().c_str(), ops, mmioAddr);
+    StandardMem::Request* req = new Interfaces::StandardMem::Read(mmio_addr_, sizeof(int32_t));
+    out_.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued MMIO Read for address 0x%" PRIx64 "\n", getName().c_str(), op_count_, mmio_addr_);
     return req;
 }
 
 void standardCPU::emergencyShutdown() {
-    if (out.getVerboseLevel() > 1) {
-        if (out.getOutputLocation() == Output::STDOUT)
-            out.setOutputLocation(Output::STDERR);
-        
-        out.output("MemHierarchy::standardCPU %s\n", getName().c_str());
-        out.output("  Outstanding events: %zu\n", requests.size());
-        out.output("End MemHierarchy::standardCPU %s\n", getName().c_str());
+    if (out_.getVerboseLevel() > 1) {
+        if (out_.getOutputLocation() == Output::STDOUT)
+            out_.setOutputLocation(Output::STDERR);
+
+        out_.output("MemHierarchy::standardCPU %s\n", getName().c_str());
+        out_.output("  Outstanding events: %zu\n", requests_.size());
+        out_.output("End MemHierarchy::standardCPU %s\n", getName().c_str());
     }
 }

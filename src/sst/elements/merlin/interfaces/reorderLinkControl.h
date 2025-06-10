@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -79,7 +79,7 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         SST::Interfaces::SimpleNetwork::Request::serialize_order(ser);
-        ser & seq;
+        SST_SER(seq);
     }
 
 private:
@@ -114,16 +114,17 @@ struct ReorderInfo {
 class ReorderLinkControl : public SST::Interfaces::SimpleNetwork {
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         ReorderLinkControl,
         "merlin",
         "reorderlinkcontrol",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Link Control module that can handle out of order packet arrival. Events are sequenced and order is reconstructed on receive.",
-        SST::Interfaces::SimpleNetwork)
+        SST::Interfaces::SimpleNetwork
+    )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {"rlc:networkIF","SimpleNetwork subcomponent to be used for connecting to network", "merlin.linkcontrol"},
+        {"rlc.networkIF","SimpleNetwork subcomponent to be used for connecting to network", "merlin.linkcontrol"},
         {"networkIF","SimpleNetwork subcomponent to be used for connecting to network", "merlin.linkcontrol"}
     )
 
@@ -183,9 +184,6 @@ public:
     // Returns true if there is an event in the input buffer and false
     // otherwise.
     bool requestToReceive( int vn );
-
-    void sendInitData(SST::Interfaces::SimpleNetwork::Request* ev);
-    SST::Interfaces::SimpleNetwork::Request* recvInitData();
 
     void sendUntimedData(SST::Interfaces::SimpleNetwork::Request* ev);
     SST::Interfaces::SimpleNetwork::Request* recvUntimedData();

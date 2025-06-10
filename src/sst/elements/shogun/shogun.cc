@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -48,7 +48,7 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
     const int32_t verbosity = params.find<uint32_t>("verbose", 0);
 
     char prefix[256];
-    sprintf(prefix, "[t=@t][%s]: ", getName().c_str());
+    snprintf(prefix, 256, "[t=@t][%s]: ", getName().c_str());
     output = new SST::Output(prefix, verbosity, 0, Output::STDOUT);
     arb->setOutput(output);
 
@@ -57,7 +57,7 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
     output->verbose(CALL_INFO, 1, 0, "Creating Shogun crossbar at %s clock rate and %" PRIi32 " ports\n",
         clock_rate.c_str(), port_count);
 
-    clockTickHandler = new Clock::Handler<ShogunComponent>(this, &ShogunComponent::tick);
+    clockTickHandler = new Clock::Handler2<ShogunComponent,&ShogunComponent::tick>(this);
     tc = registerClock(clock_rate, clockTickHandler);
     handlerRegistered = true;
 
@@ -70,10 +70,10 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
     char* linkName = new char[256];
 
     for (int32_t i = 0; i < port_count; ++i) {
-        sprintf(linkName, "port%" PRIi32, i);
+        snprintf(linkName, 256, "port%" PRIi32, i);
         output->verbose(CALL_INFO, 1, 0, "Configuring port %s ...\n", linkName);
 
-        links[i] = configureLink(linkName, new Event::Handler<ShogunComponent>(this, &ShogunComponent::handleIncoming));
+        links[i] = configureLink(linkName, new Event::Handler2<ShogunComponent,&ShogunComponent::handleIncoming>(this));
 
         if (nullptr == links[i]) {
             output->fatal(CALL_INFO, -1, "Failed to configure link on port %" PRIi32 "\n", i);
@@ -288,7 +288,7 @@ void ShogunComponent::handleIncoming(SST::Event* event)
         const int src_port = incomingShogunEv->getPayload()->src;
 
         if (inputQueues[src_port]->full()) {
-            output->fatal(CALL_INFO, 4, 0, "Error: recv event for port %" PRIi32 " but queues are full\n", src_port);
+            output->fatal(CALL_INFO, -1, "Error: recv event for port %" PRIi32 " but queues are full\n", src_port);
         }
 
         output->verbose(CALL_INFO, 4, 0, "-> recv from %" PRIi32 " dest: %" PRId64 "\n",

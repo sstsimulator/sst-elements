@@ -1,0 +1,1 @@
+diff -x mpich_cvars.* -xsubsys_include.m4 -x unusederr.txt  -x *.in~ -xdefmsg.h -xopenpa -x build -x test -x Makefile -x .deps -x README.envvar -x maint -x binding -x osu_b* -x limic* -x configure -x .state-cache -x contrib -x pm -x confdb -x Makefile.in -x autom4te.cache -x aclocal.m4 -crBN mvapich2-2.3.7-1 mvapich2-2.3.7-1-orig > patch.foo

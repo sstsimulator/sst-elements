@@ -74,35 +74,12 @@ def gen_custom_name(testcase_func, param_num, param):
         parameterized.to_safe_name(str(param.args[1])))
     return testcasename
 
-################################################################################
-# Code to support a single instance module initialize, must be called setUp method
-
-def initializeTestModule_SingleInstance(class_inst):
-    global module_init
-    global module_sema
-
-    module_sema.acquire()
-    if module_init != 1:
-        try:
-            # Put your single instance Init Code Here
-            class_inst._setupESshmemTestFiles()
-        except:
-            pass
-        module_init = 1
-    module_sema.release()
-
-################################################################################
 
 class testcase_Ember_ESshmem(SSTTestCase):
 
-    def initializeClass(self, testName):
-        super(type(self), self).initializeClass(testName)
-        # Put test based setup code here. it is called before testing starts
-        # NOTE: This method is called once for every test
-
     def setUp(self):
         super(type(self), self).setUp()
-        initializeTestModule_SingleInstance(self)
+        self._setupESshmemTestFiles()
 
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test

@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -18,8 +18,7 @@
  */
 
 
-#include <sst_config.h>
-//#include <sst/core/simulation.h>
+#include <sst/core/sst_config.h>
 #include <sst/core/interfaces/stringEvent.h>
 
 #include "sieveController.h"
@@ -181,13 +180,15 @@ void Sieve::processEvent(SST::Event* ev, int link) {
 
 void Sieve::init(unsigned int phase) {
     if (!phase) {
+        MemRegion region;
+        region.setDefault();
         for (int i = 0; i < cpuLinkCount_; i++) {
-            cpuLinks_[i]->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
+            cpuLinks_[i]->sendUntimedData(new MemEventInitRegion(getName(), region , MemEventInitRegion::ReachableGroup::Dest));
         }
     }
 
     for (int i = 0; i < cpuLinkCount_; i++) {
-        while (SST::Event* ev = cpuLinks_[i]->recvInitData()) {
+        while (SST::Event* ev = cpuLinks_[i]->recvUntimedData()) {
             if (ev) delete ev;
         }
     }

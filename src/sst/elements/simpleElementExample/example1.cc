@@ -1,20 +1,20 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
 
-// This include is ***REQUIRED*** 
+// This include is ***REQUIRED***
 // for ALL SST implementation files
 #include "sst_config.h"
 
@@ -25,7 +25,7 @@
 using namespace SST;
 using namespace SST::simpleElementExample;
 
-/* 
+/*
  * During construction the example component should prepare for simulation
  * - Read parameters
  * - Configure link
@@ -36,7 +36,7 @@ using namespace SST::simpleElementExample;
 example1::example1(ComponentId_t id, Params& params) : Component(id) {
 
     // SST Output Object
-    // Initialize with 
+    // Initialize with
     // - no prefix ("")
     // - Verbose set to 1
     // - No mask
@@ -48,7 +48,7 @@ example1::example1(ComponentId_t id, Params& params) : Component(id) {
     eventsToSend = params.find<int64_t>("eventsToSend", 0, found);
 
     // If parameter wasn't found, end the simulation with exit code -1.
-    // Tell the user how to fix the error (set 'eventsToSend' parameter in the input) 
+    // Tell the user how to fix the error (set 'eventsToSend' parameter in the input)
     // and which component generated the error (getName())
     if (!found) {
         out->fatal(CALL_INFO, -1, "Error in %s: the input did not specify 'eventsToSend' parameter\n", getName().c_str());
@@ -64,14 +64,14 @@ example1::example1(ComponentId_t id, Params& params) : Component(id) {
 
     // configure our link with a callback function that will be called whenever an event arrives
     // Callback function is optional, if not provided then component must poll the link
-    link = configureLink("port", new Event::Handler<example1>(this, &example1::handleEvent));
+    link = configureLink("port", new Event::Handler2<example1, &example1::handleEvent>(this));
 
     // Make sure we successfully configured the links
     // Failure usually means the user didn't connect the port in the input file
     sst_assert(link, CALL_INFO, -1, "Error in %s: Link configuration failed\n", getName().c_str());
 
     //set our clock. The simulator will call 'clockTic' at a 1GHz frequency
-    registerClock("1GHz", new Clock::Handler<example1>(this, &example1::clockTic));
+    registerClock("1GHz", new Clock::Handler2<example1, &example1::clockTic>(this));
 
     // This simulation will end when we have sent 'eventsToSend' events and received a 'LAST' event
     lastEventReceived = false;
@@ -96,21 +96,21 @@ example1::~example1()
 
 /* Event handler
  * Incoming events are scanned and deleted
- * Record if the event received is the last one our neighbor will send 
+ * Record if the event received is the last one our neighbor will send
  */
 void example1::handleEvent(SST::Event *ev)
 {
     basicEvent *event = dynamic_cast<basicEvent*>(ev);
-    
+
     if (event) {
         // Record the size of the payload
         bytesReceived->addData(event->payload.size());
-        
+
         // Check if this is the last event our neighbor will send us
         if (event->last) {
             lastEventReceived = true;
         }
-        
+
         // Receiver has the responsiblity for deleting events
         delete event;
 
@@ -120,16 +120,16 @@ void example1::handleEvent(SST::Event *ev)
 }
 
 
-/* 
+/*
  * On each clock cycle we will send an event to our neighbor until we've sent our last event
  * Then we will check for the exit condition and notify the simulator when the simulation is done
  */
 bool example1::clockTic( Cycle_t cycleCount)
 {
-    // Send an event if we need to 
+    // Send an event if we need to
     if (eventsToSend > 0) {
         basicEvent *event = new basicEvent();
-        
+
         // Use the RNG to pick a payload size between 1 and eventSize
         uint32_t size = (rng->generateNextUInt32() % eventSize) + 1;
         // Create a dummy payload with of size bytes
@@ -141,7 +141,7 @@ bool example1::clockTic( Cycle_t cycleCount)
         if (eventsToSend == 1) {
             event->last = true;
         }
-        
+
         eventsToSend--;
 
         // Send the event
@@ -150,9 +150,9 @@ bool example1::clockTic( Cycle_t cycleCount)
 
     // Check if the exit conditions are met
     if (eventsToSend == 0 && lastEventReceived == true) {
-        
+
         // Tell SST that it's OK to end the simulation (once all primary components agree, simulation will end)
-        primaryComponentOKToEndSim(); 
+        primaryComponentOKToEndSim();
 
         // Retrun true to indicate that this clock handler should be disabled
         return true;
@@ -160,4 +160,24 @@ bool example1::clockTic( Cycle_t cycleCount)
 
     // Return false to indicate the clock handler should not be disabled
     return false;
+}
+
+/*
+ * Default constructor
+*/
+example1::example1() : Component() {}
+
+/*
+ * Serialization function
+*/
+void example1::serialize_order(SST::Core::Serialization::serializer& ser) {
+    Component::serialize_order(ser);
+
+    SST_SER(eventsToSend);
+    SST_SER(eventSize);
+    SST_SER(lastEventReceived);
+    SST_SER(bytesReceived);
+    SST_SER(rng);
+    SST_SER(out);
+    SST_SER(link);
 }

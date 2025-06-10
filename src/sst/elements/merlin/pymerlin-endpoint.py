@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2021 NTESS. Under the terms
+# Copyright 2009-2025 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2021, NTESS
+# Copyright (c) 2009-2025, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
 # See the file CONTRIBUTORS.TXT in the top level directory
-# the distribution for more information.
+# of the distribution for more information.
 #
 # This file is part of the SST software package. For license
 # information, see the LICENSE file in the top level directory of the
@@ -28,8 +28,8 @@ class TestJob(Job):
     def getName(self):
         return "TestJob"
 
-    def build(self, nID, extraKeys):
-        nic = sst.Component("testNic.%d"%nID, "merlin.test_nic")
+    def build(self, nID, extraKeys, link = None):
+        nic = sst.Component("testNic_%d"%nID, "merlin.test_nic")
         self._applyStatisticsSettings(nic)
         nic.addParams(self._getGroupParams("main"))
         nic.addParams(extraKeys)
@@ -38,9 +38,8 @@ class TestJob(Job):
         nic.addParam("id", id)
 
         #  Add the linkcontrol
-        networkif, port_name = self.network_interface.build(nic,"networkIF",0,self.job_id,self.size,id,True)
-
-        return (networkif,port_name)
+        return NetworkInterface._instanceNetworkInterfaceBackCompat(
+            self.network_interface,nic,"networkIF",0,self.job_id,self.size,id,True,link)
 
 
 class OfferedLoadJob(Job):
@@ -55,7 +54,7 @@ class OfferedLoadJob(Job):
         return "Offered Load Job"
 
     def build(self, nID, extraKeys):
-        nic = sst.Component("offered_load.%d"%nID, "merlin.offered_load")
+        nic = sst.Component("offered_load_%d"%nID, "merlin.offered_load")
         self._applyStatisticsSettings(nic)
         nic.addParams(self._getGroupParams("main"))
         nic.addParams(extraKeys)
@@ -82,7 +81,7 @@ class IncastJob(Job):
         return "Incast Job"
 
     def build(self, nID, extraKeys):
-        nic = sst.Component("incast.%d"%nID, "merlin.simple_patterns.incast")
+        nic = sst.Component("incast_%d"%nID, "merlin.simple_patterns.incast")
         self._applyStatisticsSettings(nic)
         nic.addParams(self._getGroupParams("main"))
         nic.addParams(extraKeys)

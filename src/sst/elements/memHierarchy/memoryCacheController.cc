@@ -1,21 +1,20 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <sst_config.h>
+#include <sst/core/sst_config.h>
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 
 #include "memoryCacheController.h"
 #include "util.h"
@@ -35,16 +34,7 @@ using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-// Debug macros
-#ifdef __SST_DEBUG_OUTPUT__
-#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
-#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
-#define Debug(level, fmt, ... ) dbg.debug( level, fmt, ##__VA_ARGS__  )
-#else
-#define is_debug_addr(addr) false
-#define is_debug_event(ev) false
-#define Debug(level, fmt, ... )
-#endif
+/* Debug macros included from util.h */
 /*
  *  Debug levels:
  *  3  - event receive/response
@@ -56,14 +46,12 @@ using namespace SST::MemHierarchy;
 /*************************** Memory Controller ********************/
 MemCacheController::MemCacheController(ComponentId_t id, Params &params) : Component(id), backing_(NULL) {
 
-    int debugLevel = params.find<int>("debug_level", 0);
+    dlevel = params.find<int>("debug_level", 0);
 
     lineSize_ = params.find<uint64_t>("cache_line_size", 64);
 
     // Output for debug
-    dbg.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
-    if (debugLevel < 0 || debugLevel > 10)
-        out.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
+    dbg.init("", dlevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
 
     // Debug address
     std::vector<Addr> addrArr;
@@ -81,7 +69,7 @@ MemCacheController::MemCacheController(ComponentId_t id, Params &params) : Compo
     if (!(clock_ua.hasUnits("Hz") || clock_ua.hasUnits("s")) || clock_ua.getRoundedValue() <= 0) {
         out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: clock. Must have units of Hz or s and be > 0. (SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
     }
-    clockHandler_ = new Clock::Handler<MemCacheController>(this, &MemCacheController::clock);
+    clockHandler_ = new Clock::Handler2<MemCacheController, &MemCacheController::clock>(this);
     clockTimeBase_ = registerClock(clockfreq, clockHandler_);
     clockOn_ = true;
 
@@ -129,14 +117,21 @@ MemCacheController::MemCacheController(ComponentId_t id, Params &params) : Compo
 
     bool found;
 
-    link_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, clockTimeBase_);
+
+    link_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, &clockTimeBase_);
+    if (!link_) {
+        link_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, &clockTimeBase_);
+        if (link_) {
+            out.output("%s, DEPRECATION WARNING: The 'cpulink' subcomponent slot has been renamed to 'highlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
+        }
+    }
 
     if (!link_) {
-        out.fatal(CALL_INFO,-1,"%s, Error: No link handler loaded into 'cpulink' subcomponent slot.\n", getName().c_str());
+        out.fatal(CALL_INFO,-1,"%s, Error: No link handler loaded into 'highlink' subcomponent slot.\n", getName().c_str());
     }
 
     clockLink_ = link_->isClocked();
-    link_->setRecvHandler( new Event::Handler<MemCacheController>(this, &MemCacheController::handleEvent));
+    link_->setRecvHandler( new Event::Handler2<MemCacheController, &MemCacheController::handleEvent>(this) );
 
     link_->setRegion(region_);
 
@@ -170,7 +165,8 @@ MemCacheController::MemCacheController(ComponentId_t id, Params &params) : Compo
             memoryFile.clear();
         }
         try {
-            backing_ = new Backend::BackingMMAP( memoryFile, memBackendConvertor_->getMemSize() );
+            // TODO update to match memoryController
+            backing_ = new Backend::BackingMMAP( memoryFile, memoryFile, memBackendConvertor_->getMemSize() );
         }
         catch ( int e) {
             if (e == 1)
@@ -212,8 +208,8 @@ void MemCacheController::handleEvent(SST::Event* event) {
 
     MemEventBase *meb = static_cast<MemEventBase*>(event);
 
-    if (is_debug_event(meb)) {
-        Debug(_L3_, "\n%" PRIu64 " (%s) Received: %s\n", getCurrentSimTimeNano(), getName().c_str(), meb->getVerboseString().c_str());
+    if (mem_h_is_debug_event(meb)) {
+        mem_h_debug_output(_L3_, "\n%" PRIu64 " (%s) Received: %s\n", getCurrentSimTimeNano(), getName().c_str(), meb->getVerboseString(dlevel).c_str());
     }
 
     Command cmd = meb->getCmd();
@@ -266,8 +262,8 @@ void MemCacheController::handleRead(MemEvent* event, bool replay) {
     Addr blockAddr = cache_[cacheIndex].addr;
     State blockState = cache_[cacheIndex].state;
 
-    if (is_debug_event(event)) {
-        Debug(_L3_, "%" PRIu64 " (%s) handleRead, Line: %" PRIu64 ", 0x%" PRIx64 ", %s\n",
+    if (mem_h_is_debug_event(event)) {
+        mem_h_debug_output(_L3_, "%" PRIu64 " (%s) handleRead, Line: %" PRIu64 ", 0x%" PRIx64 ", %s\n",
                 getCurrentSimTimeNano(),
                 getName().c_str(),
                 cacheIndex,
@@ -285,19 +281,19 @@ void MemCacheController::handleRead(MemEvent* event, bool replay) {
 
     if (mshr_.find(cacheIndex)->second.front() != event->getID()) {         // Transition
         it->second.status = AccessStatus::STALL;
-        if (is_debug_event(event))
-            Debug(_L3_, "%" PRIu64 " (%s) StateTransition %" PRIu64 ", STALL\n", getCurrentSimTimeNano(), getName().c_str(), event->getID().first);
+        if (mem_h_is_debug_event(event))
+            mem_h_debug_output(_L3_, "%" PRIu64 " (%s) StateTransition %" PRIu64 ", STALL\n", getCurrentSimTimeNano(), getName().c_str(), event->getID().first);
         return;
     } else if (blockState == I || blockAddr != event->getBaseAddr()) {      // MISS
         it->second.status = (blockState == M) ? AccessStatus::MISS_WB : AccessStatus::MISS;
         statReadMiss->addData(1);
-        if (is_debug_event(event))
-            Debug(_L3_, "%" PRIu64 " (%s) StateTransition %" PRIu64 ", %s\n", getCurrentSimTimeNano(), getName().c_str(), event->getID().first, (blockState == M) ? "MISS_WB" : "MISS");
+        if (mem_h_is_debug_event(event))
+            mem_h_debug_output(_L3_, "%" PRIu64 " (%s) StateTransition %" PRIu64 ", %s\n", getCurrentSimTimeNano(), getName().c_str(), event->getID().first, (blockState == M) ? "MISS_WB" : "MISS");
     } else {                                                                // HIT
         statReadHit->addData(1);
         it->second.status = AccessStatus::HIT;
-        if (is_debug_event(event))
-            Debug(_L3_, "%" PRIu64 " (%s) StateTransition %" PRIu64 ", HIT\n", getCurrentSimTimeNano(), getName().c_str(), event->getID().first);
+        if (mem_h_is_debug_event(event))
+            mem_h_debug_output(_L3_, "%" PRIu64 " (%s) StateTransition %" PRIu64 ", HIT\n", getCurrentSimTimeNano(), getName().c_str(), event->getID().first);
     }
 
     it->second.reqev = new MemEvent(*event);
@@ -313,8 +309,8 @@ void MemCacheController::handleWrite(MemEvent* event, bool replay) {
     Addr blockAddr = cache_[cacheIndex].addr;
     State blockState = cache_[cacheIndex].state;
 
-    if (is_debug_event(event))
-        Debug(_L3_, "\n%" PRIu64 " (%s) handleWrite, Line: %" PRIu64 ", 0x%" PRIx64 ", %s\n", getCurrentSimTimeNano(), getName().c_str(), cacheIndex, blockAddr, StateString[blockState]);
+    if (mem_h_is_debug_event(event))
+        mem_h_debug_output(_L3_, "\n%" PRIu64 " (%s) handleWrite, Line: %" PRIu64 ", 0x%" PRIx64 ", %s\n", getCurrentSimTimeNano(), getName().c_str(), cacheIndex, blockAddr, StateString[blockState]);
 
     if (!replay) {
         MemAccessRecord rec;
@@ -326,20 +322,20 @@ void MemCacheController::handleWrite(MemEvent* event, bool replay) {
 
     if (mshr_.find(cacheIndex)->second.front() != event->getID()) {         // Transition
         it->second.status = AccessStatus::STALL;
-        if (is_debug_event(event))
-            Debug(_L3_, "\n%" PRIu64 " (%s) StateTransition %" PRIu64 ", STALL\n", getCurrentSimTimeNano(), getName().c_str(), event->getID().first);
+        if (mem_h_is_debug_event(event))
+            mem_h_debug_output(_L3_, "\n%" PRIu64 " (%s) StateTransition %" PRIu64 ", STALL\n", getCurrentSimTimeNano(), getName().c_str(), event->getID().first);
         return;
     } else if (blockState == I || blockAddr != event->getBaseAddr()) {      // MISS
         // Do a read to time the state lookup
         statWriteMiss->addData(1);
         it->second.status = (blockState == M ) ? AccessStatus::MISS_WB : AccessStatus::MISS;
-        if (is_debug_event(event))
-            Debug(_L3_, "\n%" PRIu64 " (%s) StateTransition %" PRIu64 ", %s\n", getCurrentSimTimeNano(), getName().c_str(), event->getID().first, (blockState == M) ? "MISS_WB" : "MISS");
+        if (mem_h_is_debug_event(event))
+            mem_h_debug_output(_L3_, "\n%" PRIu64 " (%s) StateTransition %" PRIu64 ", %s\n", getCurrentSimTimeNano(), getName().c_str(), event->getID().first, (blockState == M) ? "MISS_WB" : "MISS");
     } else {                                                                // HIT
         statWriteHit->addData(1);
         it->second.status = AccessStatus::HIT_TAG;
-        if (is_debug_event(event))
-            Debug(_L3_, "\n%" PRIu64 " (%s) StateTransition %" PRIu64 ", HIT\n", getCurrentSimTimeNano(), getName().c_str(), event->getID().first);
+        if (mem_h_is_debug_event(event))
+            mem_h_debug_output(_L3_, "\n%" PRIu64 " (%s) StateTransition %" PRIu64 ", HIT\n", getCurrentSimTimeNano(), getName().c_str(), event->getID().first);
     }
 
     /* Lookup tag data -> required whether or not this is a hit */
@@ -355,7 +351,7 @@ void MemCacheController::handleWrite(MemEvent* event, bool replay) {
 
 void MemCacheController::handleFlush(MemEvent* event) {
     out.fatal(CALL_INFO, -1, "%s, MemoryCache encountered unhandled event: %s\n",
-            getName().c_str(), event->getVerboseString().c_str());
+            getName().c_str(), event->getVerboseString(dlevel).c_str());
 }
 
 /* Response from remote memory */
@@ -365,8 +361,8 @@ void MemCacheController::handleDataResponse(MemEvent* event) {
     Addr blockAddr = cache_[cacheIndex].addr;
     State blockState = cache_[cacheIndex].state;
 
-    if (is_debug_event(event))
-        Debug(_L3_, "\n%" PRIu64 " (%s) handleDataResponse, Line: %" PRIu64 ", 0x%" PRIx64 ", %s\n",
+    if (mem_h_is_debug_event(event))
+        mem_h_debug_output(_L3_, "\n%" PRIu64 " (%s) handleDataResponse, Line: %" PRIu64 ", 0x%" PRIx64 ", %s\n",
                 getCurrentSimTimeNano(), getName().c_str(), cacheIndex, blockAddr, StateString[blockState]);
 
     // update the backing store from the remote memory response
@@ -382,8 +378,8 @@ void MemCacheController::handleDataResponse(MemEvent* event) {
     it->second.reqev->clearFlag();
     it->second.reqev->setFlag(MemEvent::F_NORESPONSE);
     it->second.status = AccessStatus::FIN;
-    if (is_debug_event(event))
-        Debug(_L3_, "\n%" PRIu64 " (%s) StateTransition %" PRIu64 ", FIN\n", getCurrentSimTimeNano(), getName().c_str(), it->second.event->getID().first);
+    if (mem_h_is_debug_event(event))
+        mem_h_debug_output(_L3_, "\n%" PRIu64 " (%s) StateTransition %" PRIu64 ", FIN\n", getCurrentSimTimeNano(), getName().c_str(), it->second.event->getID().first);
     memBackendConvertor_->handleMemEvent(it->second.reqev);
 
     // Update backing store from the request that missed if it was a write
@@ -411,8 +407,8 @@ void MemCacheController::handleLocalMemResponse( Event::id_type id, uint32_t fla
     delete it->second.reqev;
     MemEventBase * evb = it->second.event;
 
-    if (is_debug_event(evb)) {
-        Debug(_L3_, "MemoryCache: %s - Response received to (%s)\n", getName().c_str(), evb->getVerboseString().c_str());
+    if (mem_h_is_debug_event(evb)) {
+        mem_h_debug_output(_L3_, "MemoryCache: %s - Response received to (%s)\n", getName().c_str(), evb->getVerboseString(dlevel).c_str());
     }
 
     /* Handle custom events */
@@ -432,8 +428,8 @@ void MemCacheController::handleLocalMemResponse( Event::id_type id, uint32_t fla
     Addr blockAddr = cache_[cacheIndex].addr;
     State blockState = cache_[cacheIndex].state;
 
-    if (is_debug_event(ev))
-        Debug(_L3_, "\n%" PRIu64 " (%s) handleLocalResponse, Line: %" PRIu64 ", 0x%" PRIx64 ", %s\n",
+    if (mem_h_is_debug_event(ev))
+        mem_h_debug_output(_L3_, "\n%" PRIu64 " (%s) handleLocalResponse, Line: %" PRIu64 ", 0x%" PRIx64 ", %s\n",
                 getCurrentSimTimeNano(), getName().c_str(), cacheIndex, blockAddr, StateString[blockState]);
 
     MemEvent * remoteRd, *remoteWr;
@@ -457,16 +453,16 @@ void MemCacheController::handleLocalMemResponse( Event::id_type id, uint32_t fla
             it->second.reqev = remoteRd;
             link_->send(remoteRd);
             it->second.status = AccessStatus::DATA; // We've request data, waiting for response
-            if (is_debug_event(it->second.event))
-                Debug(_L3_, "\n%" PRIu64 " (%s) StateTransition %" PRIu64 ", DATA\n", getCurrentSimTimeNano(), getName().c_str(), it->second.event->getID().first);
+            if (mem_h_is_debug_event(it->second.event))
+                mem_h_debug_output(_L3_, "\n%" PRIu64 " (%s) StateTransition %" PRIu64 ", DATA\n", getCurrentSimTimeNano(), getName().c_str(), it->second.event->getID().first);
             cache_[cacheIndex].addr = ev->getBaseAddr();
             cache_[cacheIndex].state = IM;
             break;
         case AccessStatus::HIT_TAG: // tag hit, issue write
             it->second.reqev = new MemEvent(*ev);
             it->second.status = AccessStatus::HIT;
-            if (is_debug_event(it->second.event))
-                Debug(_L3_, "\n%" PRIu64 " (%s) StateTransition %" PRIu64 ", HIT\n", getCurrentSimTimeNano(), getName().c_str(), it->second.event->getID().first);
+            if (mem_h_is_debug_event(it->second.event))
+                mem_h_debug_output(_L3_, "\n%" PRIu64 " (%s) StateTransition %" PRIu64 ", HIT\n", getCurrentSimTimeNano(), getName().c_str(), it->second.event->getID().first);
             memBackendConvertor_->handleMemEvent(ev);
             cache_[cacheIndex].state = M;
             break;
@@ -479,8 +475,8 @@ void MemCacheController::handleLocalMemResponse( Event::id_type id, uint32_t fla
                 sendResponse(ev, flags);
             }
         case AccessStatus::FIN: // Just finished updating the cache, ready for new requests now
-            if (is_debug_event(it->second.event))
-                Debug(_L3_, "\n%" PRIu64 " (%s) StateTransition %" PRIu64 ", ERASE\n", getCurrentSimTimeNano(), getName().c_str(), it->second.event->getID().first);
+            if (mem_h_is_debug_event(it->second.event))
+                mem_h_debug_output(_L3_, "\n%" PRIu64 " (%s) StateTransition %" PRIu64 ", ERASE\n", getCurrentSimTimeNano(), getName().c_str(), it->second.event->getID().first);
             delete ev;
             mshr_[cacheIndex].pop();
             outstandingEvents_.erase(it);
@@ -491,15 +487,15 @@ void MemCacheController::handleLocalMemResponse( Event::id_type id, uint32_t fla
             break;
         default:
             out.fatal(CALL_INFO, -1, "%s, MemoryCache encountered unhandled record status. Event is %s\n",
-                getName().c_str(), ev->getVerboseString().c_str());
+                getName().c_str(), ev->getVerboseString(dlevel).c_str());
     }
 }
 
 void MemCacheController::retry(uint64_t cacheIndex) {
     MemEvent* ev = outstandingEvents_.find(mshr_[cacheIndex].front())->second.event;
 
-    if (is_debug_event(ev)) {
-        Debug(_L3_, "\n%" PRIu64 " (%s) Retrying: %s\n", getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString().c_str());
+    if (mem_h_is_debug_event(ev)) {
+        mem_h_debug_output(_L3_, "\n%" PRIu64 " (%s) Retrying: %s\n", getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString(dlevel).c_str());
     }
     switch (ev->getCmd()) {
         case Command::GetS:
@@ -557,7 +553,7 @@ Cycle_t MemCacheController::turnClockOn() {
 
 void MemCacheController::handleCustomEvent(MemEventBase * ev) {
     out.fatal(CALL_INFO, -1, "%s, MemoryCache encountered unhandled event: %s\n",
-            getName().c_str(), ev->getVerboseString().c_str());
+            getName().c_str(), ev->getVerboseString(dlevel).c_str());
 }
 
 
@@ -567,10 +563,10 @@ void MemCacheController::init(unsigned int phase) {
     /* Inherit region from our source(s) */
     if (!phase) {
         /* Announce our presence on link */
-        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
+        link_->sendUntimedData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
     }
 
-    while (MemEventInit *ev = link_->recvInitData()) {
+    while (MemEventInit *ev = link_->recvUntimedData()) {
         processInitEvent(ev);
     }
 }
@@ -583,11 +579,8 @@ void MemCacheController::setup(void) {
 
 
 void MemCacheController::finish(void) {
-    if (!clockOn_) {
-        Cycle_t cycle = turnClockOn();
-        memBackendConvertor_->turnClockOn(cycle);
-    }
-    memBackendConvertor_->finish();
+    Cycle_t cycle = getNextClockCycle(clockTimeBase_);
+    memBackendConvertor_->finish(cycle);
     link_->finish();
 }
 
@@ -599,7 +592,7 @@ void MemCacheController::writeData(MemEvent* event) {
     addr = toLocalAddr(addr);
 
     if (event->getCmd() == Command::PutM) { /* Write request to memory */
-        if (is_debug_event(event)) { Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); }
+        if (mem_h_is_debug_event(event)) { mem_h_debug_output(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); }
 
         backing_->set(addr, event->getSize(), event->getPayload());
 
@@ -607,7 +600,7 @@ void MemCacheController::writeData(MemEvent* event) {
     }
 
     if (event->getCmd() == Command::Write) {
-        if (is_debug_event(event)) { Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); }
+        if (mem_h_is_debug_event(event)) { mem_h_debug_output(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); }
 
         backing_->set(addr, event->getSize(), event->getPayload());
 
@@ -661,7 +654,7 @@ Addr MemCacheController::toLocalAddr(Addr addr) {
     //Addr rAddr = (step * region_.interleaveSize) + offset;
     rAddr = rAddr % cache_.size();
 
-    if (is_debug_addr(addr)) { Debug(_L10_,"\tConverting global address 0x%" PRIx64 " to local index %" PRIu64 "\n", addr, rAddr); }
+    if (mem_h_is_debug_addr(addr)) { mem_h_debug_output(_L10_,"\tConverting global address 0x%" PRIx64 " to local index %" PRIu64 "\n", addr, rAddr); }
     return rAddr;
 }
 
@@ -670,13 +663,13 @@ Addr MemCacheController::toLocalAddr(Addr addr) {
 void MemCacheController::processInitEvent( MemEventInit* me ) {
     /* Forward data to remote memory */
     if (Command::NULLCMD == me->getCmd()) {
-        if (is_debug_event(me)) { Debug(_L9_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString().c_str()); }
+        if (mem_h_is_debug_event(me)) { mem_h_debug_output(_L9_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString(dlevel).c_str()); }
     } else {
-        if (is_debug_event(me)) { Debug(_L9_,"Memory init %s - Received Write for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
+        if (mem_h_is_debug_event(me)) { mem_h_debug_output(_L9_,"Memory init %s - Received Write for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
         MemEventInit * mEv = me->clone();
         mEv->setSrc(getName());
         mEv->setDst(link_->getTargetDestination(mEv->getRoutingAddress()));
-        link_->sendInitData(mEv);
+        link_->sendUntimedData(mEv);
     }
     delete me;
 }
@@ -686,7 +679,7 @@ void MemCacheController::printStatus(Output &statusOut) {
 
     statusOut.output("  Outstanding events: %zu\n", outstandingEvents_.size());
 /*    for (std::map<SST::Event::id_type, MemEventBase*>::iterator it = outstandingEvents_.begin(); it != outstandingEvents_.end(); it++) {
-        statusOut.output("    %s\n", it->second->getVerboseString().c_str());
+        statusOut.output("    %s\n", it->second->getVerboseString(dlevel).c_str());
     }
     */
 

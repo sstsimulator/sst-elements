@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -51,8 +51,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
             {"bus_frequency",       "(string) Bus clock frequency"},
             {"broadcast",           "(bool) If set, messages are broadcast to all other ports", "0"},
-            {"fanout",              "(bool) If set, messages from the high network are replicated and sent to all low network ports", "0"},
-            {"bus_latency_cycles",  "(uint) Bus latency in cycles", "0"},
             {"idle_max",            "(uint) Bus temporarily turns off clock after this number of idle cycles", "6"},
             {"drain_bus",           "(bool) Drain bus on every cycle", "0"},
             {"debug",               "(uint) Output location for debug statements. Requires core configuration flag '--enable-debug'. --0[None], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
@@ -60,17 +58,20 @@ public:
             {"debug_addr",          "(comma separated uints) Address(es) to be debugged. Leave empty for all, otherwise specify one or more comma separated values. Start and end string with brackets", ""} )
 
     SST_ELI_DOCUMENT_PORTS(
-            {"low_network_%(low_network_ports)d", "Ports connected to lower level caches (closer to main memory)", {"memHierarchy.MemEventBase"} },
-            {"high_network_%(high_network_ports)d", "Ports connected to higher level caches (closer to CPU)", {"memHierarchy.MemEventBase"} } )
+            {"low_network_%(low_network_ports)d", "DEPRECATED. Use 'lowlink\%d' instead. Ports connected to lower level caches (closer to main memory)", {"memHierarchy.MemEventBase"} },
+            {"high_network_%(high_network_ports)d", "DEPRECATED. Use 'highlink\%d' instead. Ports connected to higher level caches (closer to processor)", {"memHierarchy.MemEventBase"} },
+            {"lowlink%(lowlink_ports)d", "Ports connected to components on the lower/memory side of the bus (i.e., lower level caches, directories, memory, etc.)", {"memHierarchy.MemEventBase"} },
+            {"highlink%(highlink_ports)d", "Ports connected to components on the upper/processor side of the bus (i.e., upper level caches, processors, etc.)", {"memHierarchy.MemEventBase"} } )
 
 /* Class definition */
 
-    typedef MemEvent::id_type key_t;
-    static const key_t ANY_KEY;
-    static const char BUS_INFO_STR[];
-
     Bus(SST::ComponentId_t id, SST::Params& params);
-    virtual void init(unsigned int phase);
+    virtual void init(unsigned int phase) override;
+    virtual void complete(unsigned int phase) override;
+
+    Bus() {}
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::MemHierarchy::Bus);
 
 private:
 
@@ -90,31 +91,26 @@ private:
     void configureParameters(SST::Params&);
     void configureLinks();
 
-    void mapNodeEntry(const std::string&, LinkId_t);
-    LinkId_t lookupNode(const std::string&);
+    void mapNodeEntry(const std::string&, SST::Link*);
+    SST::Link* lookupNode(const std::string&);
 
 
-    Output                          dbg_;
-    std::set<Addr>                  DEBUG_ADDR;
-    int                             numHighNetPorts_;
-    int                             numLowNetPorts_;
-    uint64_t                        idleCount_;
-    uint64_t                        latency_;
-    uint64_t                        idleMax_;
-    bool                            fanout_;
-    bool                            broadcast_;
-    bool                            busOn_;
-    bool                            drain_;
-    Clock::Handler<Bus>*            clockHandler_;
-    TimeConverter*                  defaultTimeBase_;
+    Output                      dbg_;
+    std::set<Addr>              DEBUG_ADDR;
+    int                         numHighPorts_;
+    int                         numLowPorts_;
+    uint64_t                    idleCount_;
+    uint64_t                    idleMax_;
+    bool                        broadcast_;
+    bool                        busOn_;
+    bool                        drain_;
+    Clock::HandlerBase*         clockHandler_;
+    TimeConverter               defaultTimeBase_;
 
-    std::string                     busFrequency_;
-    std::string                     bus_latency_cycles_;
-    std::vector<SST::Link*>         highNetPorts_;
-    std::vector<SST::Link*>         lowNetPorts_;
-    std::map<string, LinkId_t>      nameMap_;
-    std::map<LinkId_t, SST::Link*>  linkIdMap_;
-    std::queue<SST::Event*>         eventQueue_;
+    std::vector<SST::Link*>     highNetPorts_;
+    std::vector<SST::Link*>     lowNetPorts_;
+    std::map<string,SST::Link*> nameMap_;
+    std::queue<SST::Event*>     eventQueue_;
 
 };
 

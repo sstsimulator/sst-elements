@@ -1,8 +1,10 @@
+# -*- Makefile -*-
+#
+#
 
-AM_CPPFLAGS = \
+AM_CPPFLAGS += \
 	-I$(top_srcdir)/src \
 	$(MPI_CPPFLAGS)
-
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libkingsley.la

@@ -1,7 +1,7 @@
 
 import sst
 from sst.merlin import *
- 
+
 import sys,getopt
 
 iterations = 1;
@@ -32,29 +32,29 @@ def main():
         elif o in ("--shape"):
             shape = a
         else:
-            assert False, "unhandle option" 
+            assert False, "unhandle option"
 
 main()
 
 
 def calcNumNodes( shape ):
-    tmp = shape.split( 'x' )  
+    tmp = shape.split( 'x' )
     num = 1
     for d in tmp:
         num = num * int(d)
-    return num 
+    return num
 
 def calcNumDim( shape ):
-    return len( shape.split( 'x' ) ) 
+    return len( shape.split( 'x' ) )
 
 def calcWidth( shape ):
     tmp = len( shape.split( 'x' ) ) - 1
     retval = "1"
     count = 0
     while ( count < tmp ):
-        retval += "x1" 
+        retval += "x1"
         count  += 1
-    return retval 
+    return retval
 
 numNodes = calcNumNodes( shape )
 numDim = calcNumDim( shape )
@@ -73,12 +73,12 @@ sst.merlin._params["input_buf_size"] = "1Kb"
 sst.merlin._params["output_buf_size"] = "1KB"
 sst.merlin._params["flit_size"] = netFlitSize
 
-sst.merlin._params["num_dims"] = numDim 
-sst.merlin._params["torus:shape"] = shape 
-sst.merlin._params["torus:width"] = width 
-sst.merlin._params["torus:local_ports"] = 1
+sst.merlin._params["num_dims"] = numDim
+sst.merlin._params["torus.shape"] = shape
+sst.merlin._params["torus.width"] = width
+sst.merlin._params["torus.local_ports"] = 1
 
-nicParams = ({ 
+nicParams = ({
 		"debug" : 0,
 		"verboseLevel": 2,
 		"module" : "merlin.linkcontrol",
@@ -186,13 +186,13 @@ class EmberEP(EndPoint):
 					key = key[len(prefix):]
 					proto.addParam( key,value)
 					process.addParam( key,value)
-            
+
 			nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
 
 			loopLink = sst.Link( "loop" + str(nodeID) + "nic0core" + str(x) + "_Link"  )
 
 			nicLink.connect( (virtNic,'nic','1ns' ),(nic,'core'+str(x),'150ns'))
-            
+
 			loopLink.connect( (process,'loop','1ns' ),(loopBack,'nic0core'+str(x),'1ns'))
 
 		return retval

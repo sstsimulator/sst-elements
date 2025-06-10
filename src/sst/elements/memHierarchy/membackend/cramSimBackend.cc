@@ -1,37 +1,38 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
 
-#include <sst_config.h>
+#include <sst/core/sst_config.h>
 #include <sst/core/link.h>
+
 #include "sst/elements/memHierarchy/util.h"
 #include "membackend/cramSimBackend.h"
-#include "sst/elements/CramSim/memReqEvent.hpp"
+#include "sst/elements/cramSim/memReqEvent.hpp"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::CramSim;
 
-CramSimMemory::CramSimMemory(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ 
+CramSimMemory::CramSimMemory(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){
     std::string access_time = params.find<std::string>("access_time", "100 ns");
     if (isPortConnected("cramsim_link"))
         cramsim_link = configureLink( "cramsim_link", access_time,
-                new Event::Handler<CramSimMemory>(this, &CramSimMemory::handleCramsimEvent));
+                new Event::Handler2<CramSimMemory, &CramSimMemory::handleCramsimEvent>(this));
     else
         cramsim_link = configureLink( "cube_link", access_time,
-                new Event::Handler<CramSimMemory>(this, &CramSimMemory::handleCramsimEvent));
+                new Event::Handler2<CramSimMemory, &CramSimMemory::handleCramsimEvent>(this));
 
     m_maxNumOutstandingReqs = params.find<int>("max_outstanding_requests",256);
     output= new Output("CramSimMemory[@p:@l]: ", 1, 0, Output::STDOUT);

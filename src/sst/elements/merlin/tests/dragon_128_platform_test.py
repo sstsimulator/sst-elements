@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2021 NTESS. Under the terms
+# Copyright 2009-2025 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2021, NTESS
+# Copyright (c) 2009-2025, NTESS
 # All rights reserved.
 #
 # This file is part of the SST software package. For license
@@ -29,11 +29,11 @@ if __name__ == "__main__":
 
     ### set up the endpoint
     ep = TestJob(0,system.topology.getNumNodes())
-        
+
     system.allocateNodes(ep,"linear")
 
     system.build()
-    
+
 
     # sst.setStatisticLoadLevel(9)
 

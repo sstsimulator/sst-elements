@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -46,15 +46,15 @@ public:
             getInstCode(), isa_int_regs_out[0], isa_int_regs_in[0], phys_int_regs_out[0], phys_int_regs_in[0]);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
-#ifdef VANADIS_BUILD_DEBUG
+        #ifdef VANADIS_BUILD_DEBUG
         output->verbose(
             CALL_INFO, 16, 0,
             "Execute: (addr=%p) %s phys: out=%" PRIu16 " in=%" PRIu16 ", isa: out=%" PRIu16 " / in=%" PRIu16 "\n",
             (void*)getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0],
             isa_int_regs_out[0], isa_int_regs_in[0]);
-#endif
+        #endif
         switch ( input_format ) {
         case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
         {

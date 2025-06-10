@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -233,12 +233,12 @@ void PalaPrefetcher::DispatchRequest(Addr targetAddress)
 
 PalaPrefetcher::PalaPrefetcher(ComponentId_t id, Params& params) : CacheListener(id, params)
 {
-    Simulation::getSimulation()->requireEvent("memHierarchy.MemEvent");
+    requireLibrary("memHierarchy");
 
     verbosity = params.find<int>("verbose", 0);
 
     char* new_prefix = (char*) malloc(sizeof(char) * 128);
-    sprintf(new_prefix, "PalaPrefetcher[%s | @f:@p:@l] ", getName().c_str());
+    snprintf(new_prefix, sizeof(char)*128, "PalaPrefetcher[%s | @f:@p:@l] ", getName().c_str());
     output = new Output(new_prefix, verbosity, 0, Output::STDOUT);
     free(new_prefix);
 
@@ -286,7 +286,7 @@ void PalaPrefetcher::registerResponseCallback(Event::HandlerBase* handler)
     registeredCallbacks.push_back(handler);
 }
 
-void PalaPrefetcher::printStats(Output &out)
+void PalaPrefetcher::printStats(Output& out)
 {
 }
 

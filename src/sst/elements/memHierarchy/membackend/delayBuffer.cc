@@ -1,20 +1,20 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
 
-#include <sst_config.h>
+#include <sst/core/sst_config.h>
 #include <sst/core/link.h>
 #include "membackend/delayBuffer.h"
 #include "sst/elements/memHierarchy/util.h"
@@ -23,7 +23,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
-DelayBuffer::DelayBuffer(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ 
+DelayBuffer::DelayBuffer(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){
     // Get parameters
     fixupParams( params, "clock", "backend.clock" );
 
@@ -48,7 +48,7 @@ DelayBuffer::DelayBuffer(ComponentId_t id, Params &params) : SimpleMemBackend(id
 
     // Set up self links
     if (delay.getValue() != 0) {
-        delay_self_link = configureSelfLink("DelaySelfLink", delay.toString(), new Event::Handler<DelayBuffer>(this, &DelayBuffer::handleNextRequest));
+        delay_self_link = configureSelfLink("DelaySelfLink", delay.toString(), new Event::Handler2<DelayBuffer, &DelayBuffer::handleNextRequest>(this));
     } else {
         delay_self_link = NULL;
     }

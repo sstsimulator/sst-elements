@@ -6,19 +6,26 @@ DEBUG_MEM = 0
 DEBUG_LEVEL = 10
 
 # Define the simulation components
-comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
+comp_cpu = sst.Component("core", "memHierarchy.standardCPU")
 comp_cpu.addParams({
-      "do_write" : "1",
-      "num_loadstore" : "1000",
-      "commFreq" : "100",
-      "memSize" : "0x1000"
+    "memFreq" : 4,
+    "memSize" : "2KiB",
+    "verbose" : 0,
+    "clock" : "2.7GHz",
+    "rngseed" : 48,
+    "maxOutstanding" : 16,
+    "opCount" : 2500,
+    "reqsPerIssue" : 3,
+    "write_freq" : 36, # 36% writes
+    "read_freq" : 60,  # 60% reads
+    "llsc_freq" : 4,   # 4% LLSC
 })
-iface = comp_cpu.setSubComponent("memory", "memHierarchy.memInterface")
+iface = comp_cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 
-l1cache = sst.Component("l1cache", "memHierarchy.Cache")
+l1cache = sst.Component("l1cache.msi", "memHierarchy.Cache")
 l1cache.addParams({
       "access_latency_cycles" : "4",
-      "cache_frequency" : "2 Ghz",
+      "cache_frequency" : "2.7Ghz",
       "coherence_protocol" : "MSI",
       "associativity" : "4",
       "cache_line_size" : "64",
@@ -28,11 +35,7 @@ l1cache.addParams({
       "cache_size" : "4KiB"
 })
 # Replacement policy - can declare here or as a parameter (only if part of memHierarchy's core set of policies and using default parameters)
-l1cache.setSubComponent("replacement", "memHierarchy.replacement.lru")
-
-# Links to core & mem
-l1toC = l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-l1toM = l1cache.setSubComponent("memlink", "memHierarchy.MemLink")
+l1cache.setSubComponent("replacement", "memHierarchy.replacement.mru")
 
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
@@ -41,7 +44,6 @@ memctrl.addParams({
     "request_width" : "64",
     "addr_range_end" : 512*1024*1024-1,
 })
-mtol1 = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
 
 memory = memctrl.setSubComponent("backend", "memHierarchy.timingDRAM")
 memory.addParams({
@@ -79,6 +81,6 @@ for a in componentlist:
 
 # Define the simulation links
 link_cpu_cache = sst.Link("link_cpu_cache")
-link_cpu_cache.connect( (iface, "port", "1000ps"), (l1toC, "port", "1000ps") )
-link_mem_bus = sst.Link("link_mem_bus")
-link_mem_bus.connect( (l1toM, "port", "50ps"), (mtol1, "port", "50ps") )
+link_cpu_cache.connect( (iface, "lowlink", "1000ps"), (l1cache, "highlink", "1000ps") )
+link_mem_cache = sst.Link("link_mem_cache")
+link_mem_cache.connect( (memctrl, "highlink", "50ps"), (l1cache, "lowlink", "50ps") )

@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 #include <vector>
+#include <deque>
 
 using namespace SST;
 
@@ -55,6 +56,12 @@ class ArielMemoryManager : public SubComponent {
 
         /** Return the physical address for the request virtual address */
         virtual uint64_t translateAddress(uint64_t virtAddr) = 0;
+
+        //Virtual Function to get Page info for RTL handle
+        virtual void get_page_info(std::unordered_map<uint64_t, uint64_t>*, std::deque<uint64_t>*, uint64_t&) { }
+
+        //Virtual Function to get TLB info
+        virtual void get_tlb_info(std::unordered_map<uint64_t, uint64_t>*, uint32_t&, bool&) { }
 
         /** Request to allocate a malloc, not supported by all memory managers */
         virtual bool allocateMalloc(const uint64_t size, const uint32_t level, const uint64_t virtualAddress, const uint64_t instructionPointer, const uint32_t thread) {

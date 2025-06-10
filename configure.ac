@@ -6,7 +6,7 @@
 AC_INIT([SST Elements Library],[-dev],[sst@sandia.gov])
 
 AC_PREREQ([2.59])
-AC_COPYRIGHT([Copyright Sandia National Laboratories, 2004-2021])
+AC_COPYRIGHT([Copyright National Technology and Engineering Solutions of Sandia (NTESS), 2004-2025])
 
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([config])
@@ -15,9 +15,18 @@ AM_INIT_AUTOMAKE([1.9.6 foreign dist-bzip2 subdir-objects no-define tar-pax])
 # If Automake supports silent rules, enable them.
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
+AH_TOP([
+#ifndef _SST_ELEMENT_CONFIG_H_
+#define _SST_ELEMENT_CONFIG_H_
+])
+AH_BOTTOM([
+#endif /* _SST_ELEMENT_CONFIG_H_ */
+])
 AC_CONFIG_HEADERS([src/sst_element_config.h])
 
 m4_include([config/sst_elements_include.m4])
+
+AM_PROG_AS
 
 AC_PROG_CC
 AM_PROG_CC_C_O
@@ -39,20 +48,36 @@ LTDL_INIT([recursive])
 
 AC_CACHE_SAVE
 
+SST_CHECK_ARIEL_MPI([], [AC_MSG_ERROR([Can't enable Ariel MPI])])
+
 SST_CORE_CHECK_INSTALL()
 
 SST_CHECK_OSX()
 
+SST_CHECK_SPINLOCK()
+
 SST_ELEMENT_CONFIG_OUTPUT()
+
+# Check if compiler is clang vs gcc for flags
+AC_LANG_PUSH([C++])
+AX_COMPILER_VENDOR
+AC_LANG_POP([C++])
+case "$ax_cv_cxx_compiler_vendor" in
+    clang) compile_clang=yes ;;
+    *)     compile_clang=no ;;
+esac
+AM_CONDITIONAL([COMPILE_CLANG], [test x$compile_clang = xtrue])
 
 # Compile flags come from SST-Core, add or remove extra warnings
 # depending on the use-picky flag
 SST_CHECK_PICKY
 AS_IF([test "x$use_picky" = "xyes"],
-      [WARNFLAGS="-Wall -Wextra"],
+      [WARNFLAGS="-Wall -Wextra -Wvla"],
       [WARNFLAGS=""])
-CFLAGS="$CFLAGS $WARNFLAGS"
-CXXFLAGS="$CXXFLAGS $WARNFLAGS"
+AM_CFLAGS="$AM_CFLAGS $WARNFLAGS"
+AM_CXXFLAGS="$AM_CXXFLAGS $WARNFLAGS"
+
+AM_EXTRA_RECURSIVE_TARGETS([snippets])
 
 AC_MSG_CHECKING([for SST-Elements Git Branch, Head SHA and Commit Count])
 if test -d ".git" ; then
@@ -120,19 +145,13 @@ printf "%38s : %s\n" "C++ Compiler" "$CXX"
 printf "%38s : %s\n" "C Compiler" "$CC"
 printf "%38s : %s\n" "Compiler Version" "$CC_VERSION"
 printf "%38s : %s\n" "Linker" "$LD"
-printf "%38s : %s\n" "Preprocessor Options" "$CPPFLAGS"
-printf "%38s : %s\n" "C Compiler Options" "$CFLAGS"
-printf "%38s : %s\n" "C++ Compiler Options" "$CXXFLAGS"
+printf "%38s : %s\n" "Preprocessor Options" "$AM_CPPFLAGS $CPPFLAGS"
+printf "%38s : %s\n" "C Compiler Options" "$AM_CFLAGS $CFLAGS"
+printf "%38s : %s\n" "C++ Compiler Options" "$AM_CXXFLAGS $CXXFLAGS"
 
-if test "x$found_cxx1y" = "xyes"; then
-printf "%38s : %s\n" "C++ Standard Compliance" "C++1Y/14"
-else
-printf "%38s : %s\n" "C++ Standard Compliance" "C++11"
-fi
+printf "%38s : %s\n" "C++ Standard Compliance" "C++17"
 
-printf "%38s : %s\n" "Linker Options" "$LDFLAGS"
-printf "%38s : %s\n" "Boost Library Preprocessor" "$BOOST_CPPFLAGS"
-printf "%38s : %s\n" "Boost Library Linker Options" "$BOOST_LDFLAGS"
+printf "%38s : %s\n" "Linker Options" "$AM_LDFLAGS $LDFLAGS"
 echo ""
 echo "-------------------------------------------------------"
 echo "Configuration Information (Found Dependencies):"

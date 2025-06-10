@@ -7,19 +7,19 @@ AC_DEFUN([SST_CHECK_NVDIMMSIM], [
   sst_check_nvdimmsim_happy="yes"
   AS_IF([test "$with_nvdimmsim" = "no"], [sst_check_nvdimmsim_happy="no"])
 
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"
-  CXXFLAGS_saved="$CXXFLAGS"
 
   AS_IF([test ! -z "$with_nvdimmsim" -a "$with_nvdimmsim" != "yes"],
     [NVDIMMSIM_CPPFLAGS="-I$with_nvdimmsim -I$with_nvdimmsim/include"
-     CPPFLAGS="$NVDIMMSIM_CPPFLAGS $CPPFLAGS"
-     CXXFLAGS="$SST_CXX0X_FLAGS $CXXFLAGS"
-     NVDIMMSIM_CXXFLAGS="$SST_CXX0X_FLAGS"
+     CPPFLAGS="$NVDIMMSIM_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
+     CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
+     NVDIMMSIM_CXXFLAGS="$CXXFLAGS"
      NVDIMMSIM_LDFLAGS="-L$with_nvdimmsim -L$with_nvdimmsim/lib"
      NVDIMMSIM_LIBDIR="$with_nvdimmsim"
-     LDFLAGS="$NVDIMMSIM_LDFLAGS $LDFLAGS"],
+     LDFLAGS="$NVDIMMSIM_LDFLAGS $AM_LDFLAGS $LDFLAGS"],
     [NVDIMMSIM_CPPFLAGS=
      NVDIMMSIM_LDFLAGS=
      NVDIMMSIM_LIBDIR=
@@ -31,10 +31,10 @@ AC_DEFUN([SST_CHECK_NVDIMMSIM], [
     [NVDIMMSIM_LIB="-lnvdsim"], [sst_check_nvdimmsim_happy="no"])
   AC_LANG_POP(C++)
 
+  CXXFLAGS="$CXXFLAGS_saved"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
   LIBS="$LIBS_saved"
-  CXXFLAGS="$CXXFLAGS_saved"
 
   AC_SUBST([NVDIMMSIM_CPPFLAGS])
   AC_SUBST([NVDIMMSIM_LDFLAGS])

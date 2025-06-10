@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -45,8 +45,8 @@ ProcessQueuesState::ProcessQueuesState( ComponentId_t id, Params& params ) :
     int mask = params.find<int32_t>("pqs.verboseMask",-1);
     m_nicsPerNode = params.find<int32_t>("nicsPerNode",1);
     m_maxUnexpectedMsg = params.find<int32_t>("pqs.maxUnexpectedMsg",32);
-    m_maxPostedShortBuffers = params.find<int32_t>("pqs.maxPostedShortBuffers",512); 
-    m_minPostedShortBuffers = params.find<int32_t>("pqs.minPostedShortBuffers",5); 
+    m_maxPostedShortBuffers = params.find<int32_t>("pqs.maxPostedShortBuffers",512);
+    m_minPostedShortBuffers = params.find<int32_t>("pqs.minPostedShortBuffers",5);
 
     m_dbg.init("", level, mask, Output::STDOUT );
 
@@ -60,11 +60,11 @@ ProcessQueuesState::ProcessQueuesState( ComponentId_t id, Params& params ) :
 
     m_delayLink = configureSelfLink(
                         "ProcessQueuesStateSelfLink." + ss.str(), "1 ns",
-                                new Event::Handler<ProcessQueuesState>(this,&ProcessQueuesState::delayHandler));
+                                new Event::Handler2<ProcessQueuesState,&ProcessQueuesState::delayHandler>(this));
 
     m_loopLink = configureLink(
             params.find<std::string>("loopBackPortName", "loop"), "1 ns",
-            new Event::Handler<ProcessQueuesState>(this,&ProcessQueuesState::loopHandler) );
+            new Event::Handler2<ProcessQueuesState,&ProcessQueuesState::eventLoopHandler>(this) );
     assert(m_loopLink);
 
     m_ackVN = params.find<int>( "ackVN", 0 );
@@ -839,7 +839,7 @@ void ProcessQueuesState::runInterruptCtx( )
 		return;
 	}
 
-	// we are now in interrupt context 
+	// we are now in interrupt context
 
     InterruptCtx* ctx = new InterruptCtx(
             std::bind( &ProcessQueuesState::leaveInterruptCtx, this, &m_intStack )
@@ -848,7 +848,7 @@ void ProcessQueuesState::runInterruptCtx( )
     m_intStack.push_back( ctx );
     dbg().debug(CALL_INFO,1,DBG_MSK_PQS_INT,"m_intStack.size()=%zu\n",m_intStack.size());
 
-	// clear the missed interrupt flag 
+	// clear the missed interrupt flag
 	m_missedInt = false;
     dbg().debug(CALL_INFO,1,DBG_MSK_PQS_INT,"call processQueues\n" );
 	processQueues( &m_intStack );
@@ -1028,7 +1028,7 @@ bool ProcessQueuesState::checkMatchHdr( MatchHdr& hdr, MatchHdr& wantHdr,
 
     dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"want count %d %d\n", wantHdr.count,
                                     hdr.count);
-    if ( wantHdr.count !=  hdr.count ) {
+    if ( wantHdr.count <  hdr.count ) {
         return false;
     }
 
@@ -1108,7 +1108,7 @@ void ProcessQueuesState::loopSendResp( int core, void* key )
     m_loopLink->send(0, new LoopBackEvent( core, key ) );
 }
 
-void ProcessQueuesState::loopHandler( Event* ev )
+void ProcessQueuesState::eventLoopHandler( Event* ev )
 {
     LoopBackEvent* event = static_cast< LoopBackEvent* >(ev);
     m_dbg.debug(CALL_INFO,1,DBG_MSK_PQS_LOOP,"%s core=%d key=%p\n",

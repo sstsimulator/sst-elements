@@ -1,0 +1,6 @@
+#  Golem
+
+Golem is an SST element designed for simulating processing using memory (PUM)/in situ computing components. Currently Golem supports analog matrix vector multiplication (MVM) arrays. These arrays can be simulated either through ideal operation emulation or optionally use Sandia's [CrossSim](https://github.com/sandialabs/cross-sim) analog MVM array simulator to incorporate analog non-idealities. For integrating these arrays with other SST components, Golem provides implementations of the RoCC co-processor interface which can be directly connected to a Vanadis cpu core.
+
+## Using CrossSim
+Golem searches the PYTHONPATH for CrossSim, by default this means CrossSim should be installed with the local python interpreter such that the command `python3 -c 'import simulator'` runs without error. The only officially supported configuration is when the same python interpreter that is used for the SST core is used for CrossSim, but other configurations may work so long as both python interpreters are the same version.

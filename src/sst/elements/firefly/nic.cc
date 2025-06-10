@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -93,6 +93,10 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     m_num_vNics = params.find<int>("num_vNics", 1 );
 
+    for ( unsigned i = 0; i < m_num_vNics; i++  ) {
+        m_sendStreamNum.push_back(0);
+    }
+
     m_tracedNode =     params.find<int>( "tracedNode", -1 );
     m_tracedPkt  =     params.find<int>( "tracedPkt", -1 );
     int maxSendMachineQsize = params.find<int>( "maxSendMachineQsize", 1 );
@@ -141,7 +145,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     assert( m_linkControl );
 
     m_recvNotifyFunctor =
-        new SimpleNetwork::Handler<Nic>(this,&Nic::recvNotify );
+        new SimpleNetwork::Handler2<Nic,&Nic::recvNotify>(this);
     assert( m_recvNotifyFunctor );
 
     m_linkRecvWidget = new LinkControlWidget( m_dbg,
@@ -152,7 +156,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     );
 
     m_sendNotifyFunctor =
-        new SimpleNetwork::Handler<Nic>(this,&Nic::sendNotify );
+        new SimpleNetwork::Handler2<Nic,&Nic::sendNotify>(this);
     assert( m_sendNotifyFunctor );
 
     m_linkSendWidget = new LinkControlWidget( m_dbg,
@@ -163,13 +167,13 @@ Nic::Nic(ComponentId_t id, Params &params) :
     );
 
     m_selfLink = configureSelfLink("Nic::selfLink", "1 ns",
-        new Event::Handler<Nic>(this,&Nic::handleSelfEvent));
+        new Event::Handler2<Nic,&Nic::handleSelfEvent>(this));
     assert( m_selfLink );
 
     m_dbg.verbose(CALL_INFO,2,1,"IdToNet()=%d\n", IdToNet( m_myNodeId ) );
 
     for ( int i = 0; i < m_num_vNics; i++ ) {
-        m_vNicV.push_back( new VirtNic( *this, i,
+        m_vNicV.push_back( new VirtNic( this, i,
 			params.find<std::string>("corePortName","core"), getDelay_ns() ) );
     }
 
@@ -456,7 +460,7 @@ void Nic::dmaSend( NicCmdEvent *e, int vNicNum )
 {
     std::function<void(void*)> callback = std::bind( &Nic::notifySendDmaDone, this, vNicNum, _1 );
 
-    CmdSendEntry* entry = new CmdSendEntry( vNicNum, e, callback );
+    CmdSendEntry* entry = new CmdSendEntry( vNicNum, getSendStreamNum(vNicNum), e, callback );
 
     m_dbg.debug(CALL_INFO,1,1,"dest=%#x tag=%#x vecLen=%lu totalBytes=%lu\n",
                     e->node, e->tag, e->iovec.size(), entry->totalBytes() );
@@ -468,7 +472,7 @@ void Nic::pioSend( NicCmdEvent *e, int vNicNum )
 {
     std::function<void(void*)> callback = std::bind( &Nic::notifySendPioDone, this, vNicNum, _1 );
 
-    CmdSendEntry* entry = new CmdSendEntry( vNicNum,  e, callback );
+    CmdSendEntry* entry = new CmdSendEntry( vNicNum, getSendStreamNum(vNicNum),  e, callback );
 
     m_dbg.debug(CALL_INFO,1,1,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
         "vecLen=%lu totalBytes=%lu vn=%d\n", vNicNum, e->node, e->dst_vNic,
@@ -501,7 +505,7 @@ void Nic::get( NicCmdEvent *e, int vNicNum )
     m_dbg.debug(CALL_INFO,1,1,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x vecLen=%lu totalBytes=%lu\n",
                 vNicNum, e->node, e->dst_vNic, e->tag, e->iovec.size(), entry->totalBytes() );
 
-    qSendEntry( new GetOrgnEntry( vNicNum, e->node, e->dst_vNic, e->tag, getKey, m_getHdrVN ) );
+    qSendEntry( new GetOrgnEntry( vNicNum, getSendStreamNum(vNicNum), e->node, e->dst_vNic, e->tag, getKey, m_getHdrVN ) );
 }
 
 void Nic::put( NicCmdEvent *e, int vNicNum )
@@ -509,7 +513,7 @@ void Nic::put( NicCmdEvent *e, int vNicNum )
     assert(0);
 
     std::function<void(void*)> callback = std::bind(  &Nic::notifyPutDone, this, vNicNum, _1 );
-    CmdSendEntry* entry = new CmdSendEntry( vNicNum, e, callback );
+    CmdSendEntry* entry = new CmdSendEntry( vNicNum, getSendStreamNum(vNicNum), e, callback );
     m_dbg.debug(CALL_INFO,1,1,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
                         "vecLen=%lu totalBytes=%lu\n",
                 vNicNum, e->node, e->dst_vNic, e->tag, e->iovec.size(),
@@ -584,9 +588,9 @@ void Nic::feedTheNetwork( int vn )
             schedCallback(
                 [=](){
                     m_linkSendWidget->setNotify( [=]() {
-						SimTime_t curTime = Simulation::getSimulation()->getCurrentSimCycle();
+						SimTime_t curTime = getCurrentSimCycle();
 						if ( curTime > m_predNetIdleTime ) {
-							m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"network stalled latency=%lld\n",
+							m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"network stalled latency=%" PRI_SIMTIME "\n",
 								curTime -  m_predNetIdleTime);
 							m_networkStall->addData( curTime - m_predNetIdleTime );
 						}
@@ -597,7 +601,7 @@ void Nic::feedTheNetwork( int vn )
 			return;
 		} else {
 
-			SimTime_t curTime = Simulation::getSimulation()->getCurrentSimCycle();
+			SimTime_t curTime = getCurrentSimCycle();
 			SimTime_t latPS = ( (double) x.pkt->payloadSize() / (double) m_linkBytesPerSec ) * 1000000000000;
 
 			if ( curTime > m_predNetIdleTime ) {
@@ -605,8 +609,8 @@ void Nic::feedTheNetwork( int vn )
 			}
 			m_predNetIdleTime += latPS;
 
-			m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"predNetIdleTime=%lld\n",m_predNetIdleTime );
-			m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"p1=%" PRIu64 " p2=%d\n", entry->p1(), entry->p2() );
+			m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"predNetIdleTime=%" PRI_SIMTIME "\n",m_predNetIdleTime );
+			m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"p1=%" PRI_SIMTIME " p2=%d\n", entry->p1(), entry->p2() );
 
 			sendPkt( x.pkt, x.dest, vn );
 

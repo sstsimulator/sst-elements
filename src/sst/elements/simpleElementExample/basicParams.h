@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -39,7 +39,7 @@ class basicParams : public SST::Component
 public:
 
 /*
- *  SST Registration macros register Components with the SST Core and 
+ *  SST Registration macros register Components with the SST Core and
  *  document their parameters, ports, etc.
  *  SST_ELI_REGISTER_COMPONENT is required, the documentation macros
  *  are only required if relevant
@@ -60,7 +60,7 @@ public:
     // Run 'sst-info simpleElementExample.basicParams' at the command line
     // to see how these are reported to users
     //
-    // The default provided is just a string. It is for communicating to the user 
+    // The default provided is just a string. It is for communicating to the user
     // what will happen if they don't provide a value.
     // Thus, in cases where the default is not simple you can provide whatever makes sense.
     // Example: param0's default is 3*param1, then you could provide a default of "3 * param1" or "3 times param1".
@@ -68,7 +68,7 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
         { "int_param",      "Integer parameter",    NULL },     // Required parameter
         { "bool_param",     "Boolean parameter",    "false"},   // Optional parameter
-        { "string_param",   "String parameter",     "hello"},   
+        { "string_param",   "String parameter",     "hello"},
         { "uint32_param",   "uint32_t parameter",   "400"},
         { "double_param",   "double parameter",     "12.5"},
         { "ua_param",       "UnitAlgebra parameter","2TB/s"},
@@ -78,7 +78,7 @@ public:
 
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_PORTS()
-    
+
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_STATISTICS()
 
@@ -89,11 +89,11 @@ public:
 
     // Constructor. Components receive a unique ID and the set of parameters that were assigned in the Python input.
     basicParams(SST::ComponentId_t id, SST::Params& params);
-    
+
     // Destructor
     ~basicParams();
 
-    /* 
+    /*
      * Define the 'ExampleType' which is a key,value pair where
      * the key is a string and the value is an integer.
      *
@@ -125,14 +125,19 @@ public:
             int value;
     };
 
+// Serialization
+    basicParams();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::simpleElementExample::basicParams)
+
 private:
-   
+
     // Clock handler
     bool tick(SST::Cycle_t cycles);
 
     // SST Output object, for printing, error messages, etc.
     SST::Output* out;
-     
+
 };
 
 } // namespace simpleElementExample

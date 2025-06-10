@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -24,7 +24,7 @@ namespace Vanadis {
 
 enum VanadisStoreRegisterType { STORE_INT_REGISTER, STORE_FP_REGISTER };
 
-class VanadisStoreInstruction : public VanadisInstruction
+class VanadisStoreInstruction : public virtual VanadisInstruction
 {
 
 public:
@@ -33,9 +33,17 @@ public:
         const int64_t offst, const uint16_t valueReg, const uint16_t store_bytes, VanadisMemoryTransaction accessT,
         VanadisStoreRegisterType regT) :
         VanadisInstruction(
-            addr, hw_thr, isa_opts, regT == STORE_INT_REGISTER ? 2 : 1, accessT == MEM_TRANSACTION_LLSC_STORE ? 1 : 0,
+            addr, hw_thr, isa_opts,
+            /*
+            const uint16_t c_phys_int_reg_in, const uint16_t c_phys_int_reg_out,
+            const uint16_t c_isa_int_reg_in, const uint16_t c_isa_int_reg_out,
+            const uint16_t c_phys_fp_reg_in, const uint16_t c_phys_fp_reg_out,
+            const uint16_t c_isa_fp_reg_in, const uint16_t c_isa_fp_reg_out
+            */
             regT == STORE_INT_REGISTER ? 2 : 1, accessT == MEM_TRANSACTION_LLSC_STORE ? 1 : 0,
-            regT == STORE_FP_REGISTER ? 1 : 0, 0, regT == STORE_FP_REGISTER ? 1 : 0, 0),
+            regT == STORE_INT_REGISTER ? 2 : 1, accessT == MEM_TRANSACTION_LLSC_STORE ? 1 : 0,
+            regT == STORE_FP_REGISTER ? 1 : 0, 0,
+            regT == STORE_FP_REGISTER ? 1 : 0, 0),
         store_width(store_bytes),
         offset(offst),
         memAccessType(accessT),
@@ -59,17 +67,18 @@ public:
             if ( MEM_TRANSACTION_LLSC_STORE == accessT ) { isa_fp_regs_out[0] = valueReg; }
         } break;
         }
+
     }
 
-    VanadisStoreInstruction* clone() { return new VanadisStoreInstruction(*this); }
+    VanadisStoreInstruction* clone() override { return new VanadisStoreInstruction(*this); }
 
     virtual bool isPartialStore() { return false; }
 
-    virtual VanadisMemoryTransaction getTransactionType() const { return memAccessType; }
+    VanadisMemoryTransaction getTransactionType() const  { return memAccessType; }
 
-    virtual VanadisFunctionalUnitType getInstFuncType() const { return INST_STORE; }
+    virtual VanadisFunctionalUnitType getInstFuncType() const override { return INST_STORE; }
 
-    virtual const char* getInstCode() const
+    virtual const char* getInstCode() const override
     {
         switch ( memAccessType ) {
         case MEM_TRANSACTION_LLSC_STORE:
@@ -93,7 +102,7 @@ public:
         return "STOREUNK";
     }
 
-    virtual void printToBuffer(char* buffer, size_t buffer_size)
+    virtual void printToBuffer(char* buffer, size_t buffer_size) override
     {
         switch ( regType ) {
         case STORE_INT_REGISTER:
@@ -117,15 +126,18 @@ public:
         }
     }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile)
+    virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
         if ( memAccessType != MEM_TRANSACTION_LLSC_STORE ) { markExecuted(); }
     }
 
-    virtual void
-    computeStoreAddress(SST::Output* output, VanadisRegisterFile* reg, uint64_t* store_addr, uint16_t* op_width)
+    virtual void computeStoreAddress(SST::Output* output, VanadisRegisterFile* reg, uint64_t* store_addr, uint16_t* op_width)
     {
-        const int64_t reg_tmp = reg->getIntReg<int64_t>(phys_int_regs_in[0]);
+        int64_t reg_tmp;
+        uint16_t target_tid = 0;
+
+
+        reg_tmp = reg->getIntReg<int64_t>(phys_int_regs_in[0]);
 
         (*store_addr) = (uint64_t)(reg_tmp + offset);
         (*op_width)   = store_width;
@@ -135,8 +147,8 @@ public:
         {
             output->verbose(
                 CALL_INFO, 16, 0,
-                "Execute: (addr=0x%llx) STORE addr-reg: %" PRIu16 " / val-reg: %" PRIu16 " / offset: %" PRId64
-                " / width: %" PRIu16 " / store-addr: %" PRIu64 " (0x%llx)\n",
+                "Execute: (addr=0x%" PRI_ADDR ") STORE addr-reg: %" PRIu16 " / val-reg: %" PRIu16 " / offset: %" PRId64
+                " / width: %" PRIu16 " / store-addr: %" PRIu64 " (0x%" PRI_ADDR ")\n",
                 getInstructionAddress(), phys_int_regs_in[0], phys_int_regs_in[1], offset, store_width, (*store_addr),
                 (*store_addr));
         } break;
@@ -144,8 +156,8 @@ public:
         {
             output->verbose(
                 CALL_INFO, 16, 0,
-                "Execute: (addr=0x%llx) STOREFP addr-reg: %" PRIu16 " / val-reg: %" PRIu16 " / offset: %" PRId64
-                " / width: %" PRIu16 " / store-addr: %" PRIu64 " (0x%llx)\n",
+                "Execute: (addr=0x%" PRI_ADDR ") STOREFP addr-reg: %" PRIu16 " / val-reg: %" PRIu16 " / offset: %" PRId64
+                " / width: %" PRIu16 " / store-addr: %" PRIu64 " (0x%" PRI_ADDR ")\n",
                 getInstructionAddress(), phys_int_regs_in[0], phys_fp_regs_in[0], offset, store_width, (*store_addr),
                 (*store_addr));
         } break;
@@ -165,7 +177,14 @@ public:
         case STORE_FP_REGISTER:
             return phys_fp_regs_in[0];
         }
+        assert(0); // stop compiler "warning: control reaches end of non-void function [-Wreturn-type]"
     }
+
+    virtual void markExecuted() override
+    {
+        hasExecuted = true;
+    }
+
 
     VanadisStoreRegisterType getValueRegisterType() const { return regType; }
 

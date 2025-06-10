@@ -17,7 +17,7 @@ component0 = sst.Component("c0", "simpleElementExample.example1")
 component1 = sst.Component("c1", "simpleElementExample.example1")
 
 ### Parameterize the components.
-# Run 'sst-info simpleElementExample.example0' at the command line 
+# Run 'sst-info simpleElementExample.example0' at the command line
 # to see parameter documentation
 params = {
         "eventsToSend" : 50,    # Required parameter, error if not provided
@@ -35,7 +35,7 @@ link.connect( (component0, "port", "1ns"), (component1, "port", "1ns") )
 sst.setStatisticLoadLevel(7)
 
 # Determine where statistics should be sent
-sst.setStatisticOutput("sst.statOutputConsole") 
+sst.setStatisticOutput("sst.statOutputConsole")
 
 # Enable statistics on both components
 sst.enableAllStatisticsForComponentType("simpleElementExample.example1")

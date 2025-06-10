@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 from mhlib import componentlist
 
@@ -13,7 +12,7 @@ debug_params = { "debug" : 0, "debug_level" : 10 }
 # On network: (Core, L1), MMIO device, (dir, memory)
 # Logical communication: Core->L1->dir->memory
 #                        Core->(L1)->MMIO
-#                        MMIO->dir->memory    
+#                        MMIO->dir->memory
 l1_group = 1
 mmio_group = 2
 dir_group = 3
@@ -30,7 +29,7 @@ mmio_addr = 1024
 
 
 # Define the simulation components
-cpu = sst.Component("cpu", "memHierarchy.standardCPU")
+cpu = sst.Component("core", "memHierarchy.standardCPU")
 cpu.addParams({
       "opCount" : "1000",
       "memFreq" : "4",
@@ -56,9 +55,8 @@ l1cache.addParams({
       "debug" : DEBUG_L1,
       "debug_level" : DEBUG_LEVEL
 })
-l1_link = l1cache.setSubComponent("cpulink", "memHierarchy.MemLink") # Non-network link
-l1_nic = l1cache.setSubComponent("memlink", "memHierarchy.MemNIC")   # Network link
-l1_nic.addParams({ "group" : l1_group, 
+l1_nic = l1cache.setSubComponent("lowlink", "memHierarchy.MemNIC")   # Network link
+l1_nic.addParams({ "group" : l1_group,
                    "destinations" : l1_dst,
                    "network_bw" : network_bw})
 #l1_nic.addParams(debug_params)
@@ -73,8 +71,8 @@ mmio.addParams({
 })
 mmio_iface = mmio.setSubComponent("iface", "memHierarchy.standardInterface")
 mmio_iface.addParams(debug_params)
-mmio_nic = mmio_iface.setSubComponent("memlink", "memHierarchy.MemNIC")
-mmio_nic.addParams({"group" : mmio_group, 
+mmio_nic = mmio_iface.setSubComponent("lowlink", "memHierarchy.MemNIC")
+mmio_nic.addParams({"group" : mmio_group,
                     "sources" : mmio_src,
                     "destinations" : mmio_dst,
                     "network_bw" : network_bw })
@@ -91,8 +89,7 @@ dirctrl.addParams({
       "debug_level" : 10,
 })
 
-dir_link = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
-dir_nic = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+dir_nic = dirctrl.setSubComponent("highlink", "memHierarchy.MemNIC")
 dir_nic.addParams({
       "group" : dir_group,
       "sources" : dir_src,
@@ -141,7 +138,7 @@ for a in componentlist:
 #  mmio/mmio_nic - chiprtr - dir_nic/dir/mem
 #
 link_cpu_l1 = sst.Link("link_cpu")
-link_cpu_l1.connect( (iface, "port", "1000ps"), (l1_link, "port", "1000ps") )
+link_cpu_l1.connect( (iface, "lowlink", "1000ps"), (l1cache, "highlink", "1000ps") )
 
 link_l1_rtr = sst.Link("link_l1")
 link_l1_rtr.connect( (l1_nic, "port", '1000ps'), (chiprtr, "port0", "1000ps") )
@@ -153,4 +150,4 @@ link_dir_rtr = sst.Link("link_dir")
 link_dir_rtr.connect( (dir_nic, "port", "1000ps"), (chiprtr, "port2", "1000ps"))
 
 link_dir_mem = sst.Link("link_mem")
-link_dir_mem.connect( (dir_link, "port", "1000ps"), (memctrl, "direct_link", "1000ps") )
+link_dir_mem.connect( (dirctrl, "lowlink", "1000ps"), (memctrl, "highlink", "1000ps") )

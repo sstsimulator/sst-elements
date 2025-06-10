@@ -1,13 +1,13 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2021, NTESS
+// Copyright (c) 2013-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -57,7 +57,7 @@ public:
         { "network_link_control",        "Deprecated. Specify link control type by using named subcomponents", "merlin.linkcontrol" }
 
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemNIC, "memHierarchy", "MemNIC", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(MemNIC, "memHierarchy", "MemNIC", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Memory-oriented network interface", SST::MemHierarchy::MemLinkBase)
 
     SST_ELI_DOCUMENT_PARAMS( MEMNIC_ELI_PARAMS )
@@ -81,7 +81,7 @@ public:
     /* Callback to notify when link_control receives a message */
     bool recvNotify(int);
 
-    /* Internal clock function to send events that we weren't able 
+    /* Internal clock function to send events that we weren't able
      * to send immediately */
     bool clock(SimTime_t cycle);
 
@@ -90,8 +90,10 @@ public:
 
     /* Initialization and finish */
     void init(unsigned int phase) override;
-    void finish() override { link_control->finish(); }
     void setup() override { link_control->setup(); MemNICBase::setup(); }
+    void complete(unsigned int phase) override;
+    void finish() override { link_control->finish(); }
+    void sendUntimedData(MemEventInit* ev, bool broadcast, bool lookup_dst) override;
 
     /* Debug */
     void printStatus(Output &out) override;
@@ -109,8 +111,8 @@ private:
     std::queue<SST::Interfaces::SimpleNetwork::Request*> sendQueue; // Queue of events waiting to be sent (sent on clock)
 
     // Clocks
-    Clock::Handler<MemNIC>* clockHandler;
-    TimeConverter* clockTC;
+    Clock::HandlerBase* clockHandler;
+    TimeConverter clockTC;
 };
 
 } //namespace memHierarchy

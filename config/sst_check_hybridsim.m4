@@ -7,15 +7,17 @@ AC_DEFUN([SST_CHECK_HYBRIDSIM], [
   sst_check_hybridsim_happy="yes"
   AS_IF([test "$with_hybridsim" = "no"], [sst_check_hybridsim_happy="no"])
 
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"
 
   AS_IF([test ! -z "$with_hybridsim" -a "$with_hybridsim" != "yes"],
     [HYBRIDSIM_CPPFLAGS="-I$with_hybridsim"
-     CPPFLAGS="$HYBRIDSIM_CPPFLAGS $CPPFLAGS"
+     CPPFLAGS="$HYBRIDSIM_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
+     CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
      HYBRIDSIM_LDFLAGS="-L$with_hybridsim"
-     LDFLAGS="$HYBRIDSIM_LDFLAGS $LDFLAGS"
+     LDFLAGS="$HYBRIDSIM_LDFLAGS $AM_LDFLAGS $LDFLAGS"
      HYBRIDSIM_LIBDIR="$with_hybridsim"],
     [HYRBRIDSIM_CPPFLAGS=
      HYBRIDSIM_LDFLAGS=
@@ -27,6 +29,7 @@ AC_DEFUN([SST_CHECK_HYBRIDSIM], [
     [HYBRIDSIM_LIB="-lhybridsim"], [sst_check_hybridsim_happy="no"])
   AC_LANG_POP(C++)
 
+  CXXFLAGS="$CXXFLAGS_saved"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
   LIBS="$LIBS_saved"

@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 from mhlib import componentlist
 
@@ -14,9 +13,9 @@ core_clock = "2GHz"
 #######################################################################################################################
 # Define the simulation components
 #######################################################################################################################
-# CPU0 
+# CPU0
 # ---------------------------------------------------------------------------------------------------------------------
-comp_cpu0 = sst.Component("cpu0", "memHierarchy.ScratchCPU")
+comp_cpu0 = sst.Component("core0", "memHierarchy.ScratchCPU")
 comp_cpu0.addParams({
     "scratchSize" : 65536,   # 64K scratch
     "maxAddr" : 2097152,       # 2M mem
@@ -30,16 +29,15 @@ comp_cpu0.addParams({
     "rngseed" : 11
 })
 
-# CPU0 uses the scratchInterface to interface to the memory hierarchy
-iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.scratchInterface")
-iface0.addParams({
-    "scratchpad_size" : "64KB"
-})
+# CPU0 uses the standardInterface to interface to the memory hierarchy
+iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
+iface0.addParams({"debug" : 0, "debug_level" : 10})
+
 #######################################################################################################################
 
 
 #######################################################################################################################
-# CPU0 
+# CPU0
 # ---------------------------------------------------------------------------------------------------------------------
 comp_l1_0 = sst.Component("l1_0", "memHierarchy.Cache")
 comp_l1_0.addParams({
@@ -54,12 +52,10 @@ comp_l1_0.addParams({
     "associativity" : 4,
     "replacement_policy" : "lru",
 })
-# The L1 uses default (direct) links to the CPU and scratchpad, so we don't explicitly specify their type
-# (e.g., MemLink or MemNIC)
 #######################################################################################################################
 
 #######################################################################################################################
-# Scratchpad0 
+# Scratchpad0
 # ---------------------------------------------------------------------------------------------------------------------
 comp_scratch0 = sst.Component("scratch0", "memHierarchy.Scratchpad")
 comp_scratch0.addParams({
@@ -77,14 +73,11 @@ scratch0_conv = comp_scratch0.setSubComponent("backendConvertor", "memHierarchy.
 scratch0_backend = scratch0_conv.setSubComponent("backend", "memHierarchy.simpleMem")
 scratch0_backend.addParam("access_time", "10ns")
 
-# Scratchpad0 uses a MemLink on its link towards the CPU
-scratch0_link_cpu = comp_scratch0.setSubComponent("cpulink", "memHierarchy.MemLink")
-
 # Scratchpad0 uses a MemNIC on its link towards the lower memory system
-scratch0_link_mem = comp_scratch0.setSubComponent("memlink", "memHierarchy.MemNIC")
+scratch0_link_mem = comp_scratch0.setSubComponent("lowlink", "memHierarchy.MemNIC")
 scratch0_link_mem.addParam("network_bw", "50GB/s")
 # We put scratchpads in group 0 and memories in group 1 so that routing is (scratchpads -> memories)
-scratch0_link_mem.addParam("group", "0") # Sources are 'group - 1' and destinations are 'group + 1' 
+scratch0_link_mem.addParam("group", "0") # Sources are 'group - 1' and destinations are 'group + 1'
 scratch0_link_mem.addParam("debug", debugNIC)
 scratch0_link_mem.addParam("debug_level", 10)
 #######################################################################################################################
@@ -93,7 +86,7 @@ scratch0_link_mem.addParam("debug_level", 10)
 #######################################################################################################################
 # CPU1
 # ---------------------------------------------------------------------------------------------------------------------
-comp_cpu1 = sst.Component("cpu1", "memHierarchy.ScratchCPU")
+comp_cpu1 = sst.Component("core1", "memHierarchy.ScratchCPU")
 comp_cpu1.addParams({
     "scratchSize" : 65536,   # 64K scratch
     "maxAddr" : 2097152,       # 2M mem
@@ -107,11 +100,8 @@ comp_cpu1.addParams({
     "rngseed" : 1
 })
 
-# CPU1 uses the scratchInterface to interface to the memory hierarchy
-iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.scratchInterface")
-iface1.addParams({
-    "scratchpad_size" : "64KB"
-})
+# CPU1 uses the standardInterface to interface to the memory hierarchy
+iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
 #######################################################################################################################
 
 
@@ -153,14 +143,11 @@ scratch1_conv = comp_scratch1.setSubComponent("backendConvertor", "memHierarchy.
 scratch1_backend = scratch1_conv.setSubComponent("backend", "memHierarchy.simpleMem")
 scratch1_backend.addParam("access_time", "10ns")
 
-# Scratchpad1 uses a MemLink on its link towards the CPU
-scratch1_link_cpu = comp_scratch1.setSubComponent("cpulink", "memHierarchy.MemLink")
-
 # Scratchpad1 uses a MemNIC on its link towards the lower memory system
-scratch1_link_mem = comp_scratch1.setSubComponent("memlink", "memHierarchy.MemNIC")
+scratch1_link_mem = comp_scratch1.setSubComponent("lowlink", "memHierarchy.MemNIC")
 scratch1_link_mem.addParam("network_bw", "50GB/s")
 # We put scratchpads in group 0 and memories in group 1 so that routing is (scratchpads -> memories)
-scratch1_link_mem.addParam("group", "0") # Sources are 'group - 1' and destinations are 'group + 1' 
+scratch1_link_mem.addParam("group", "0") # Sources are 'group - 1' and destinations are 'group + 1'
 scratch1_link_mem.addParam("debug", debugNIC)
 scratch1_link_mem.addParam("debug_level", 10)
 #######################################################################################################################
@@ -208,10 +195,10 @@ memory0.addParams({
 })
 
 # The memory sits directly on the NoC so it uses a MemNIC on its link
-memNIC0 = memctrl0.setSubComponent("cpulink", "memHierarchy.MemNIC")
+memNIC0 = memctrl0.setSubComponent("highlink", "memHierarchy.MemNIC")
 memNIC0.addParam("network_bw", "50GB/s")
 # The source for the memory is the scratchpads (group 0) so we are group 0 + 1 = 1
-memNIC0.addParam("group", "1") # Sources are 'group - 1' and destinations are 'group + 1' 
+memNIC0.addParam("group", "1") # Sources are 'group - 1' and destinations are 'group + 1'
 memNIC0.addParam("debug", debugNIC)
 memNIC0.addParam("debug_level", 10)
 #######################################################################################################################
@@ -239,10 +226,10 @@ memory1.addParams({
 })
 
 # The memory sits directly on the NoC so it uses a MemNIC on its link
-memNIC1 = memctrl1.setSubComponent("cpulink", "memHierarchy.MemNIC")
+memNIC1 = memctrl1.setSubComponent("highlink", "memHierarchy.MemNIC")
 memNIC1.addParam("network_bw", "50GB/s")
 # The source for the memory is the scratchpads (group 0) so we are group 0 + 1 = 1
-memNIC1.addParam("group", "1") # Sources are 'group - 1' and destinations are 'group + 1' 
+memNIC1.addParam("group", "1") # Sources are 'group - 1' and destinations are 'group + 1'
 memNIC1.addParam("debug", debugNIC)
 memNIC1.addParam("debug_level", 10)
 #######################################################################################################################
@@ -262,16 +249,16 @@ for a in componentlist:
 #######################################################################################################################
 # Connect CPU0 to L1_0
 link_cpu0_l1 = sst.Link("link_cpu0_l1")
-link_cpu0_l1.connect( (iface0, "port", "100ps"), (comp_l1_0, "high_network_0", "100ps") )
+link_cpu0_l1.connect( (iface0, "lowlink", "100ps"), (comp_l1_0, "highlink", "100ps") )
 # Connect CPU1 to L1_1
 link_cpu1_l1 = sst.Link("link_cpu1_l1")
-link_cpu1_l1.connect( (iface1, "port", "100ps"), (comp_l1_1, "high_network_0", "100ps") )
+link_cpu1_l1.connect( (iface1, "lowlink", "100ps"), (comp_l1_1, "highlink", "100ps") )
 # Connect L1_0 to Scratchpad0
 link_l1_scratch0 = sst.Link("link_cpu0_scratch0")
-link_l1_scratch0.connect( (comp_l1_0, "low_network_0", "100ps"), (scratch0_link_cpu, "port", "100ps") )
+link_l1_scratch0.connect( (comp_l1_0, "lowlink", "100ps"), (comp_scratch0, "highlink", "100ps") )
 # Connect L1_1 to Scratchpad1
 link_l1_scratch1 = sst.Link("link_cpu1_scratch1")
-link_l1_scratch1.connect( (comp_l1_1, "low_network_0", "100ps"), (scratch1_link_cpu, "port", "100ps") )
+link_l1_scratch1.connect( (comp_l1_1, "lowlink", "100ps"), (comp_scratch1, "highlink", "100ps") )
 # Connect Scratch0's MemNIC to network
 link_scratch0_net = sst.Link("link_scratch0_net")
 link_scratch0_net.connect( (scratch0_link_mem, "port", "100ps"), (comp_net, "port0", "100ps") )

@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -21,18 +21,22 @@
 
 #include <cstdint>
 
+#ifndef PRI_ADDR
+#define PRI_ADDR PRIx64
+#endif
+
 namespace SST {
 namespace Vanadis {
 
 class VanadisISATable
 {
 public:
-    VanadisISATable(const VanadisDecoderOptions* decoder_o, const uint16_t int_reg, const uint16_t fp_reg) :
+    VanadisISATable( const std::string& name, const VanadisDecoderOptions* decoder_o, const uint16_t int_reg, const uint16_t fp_reg) :
         decoder_opts(decoder_o),
         count_int_reg(int_reg),
-        count_fp_reg(fp_reg)
+        count_fp_reg(fp_reg),
+        tblName(name)
     {
-
         int_reg_ptr = new uint16_t[int_reg];
         fp_reg_ptr  = new uint16_t[fp_reg];
 
@@ -42,14 +46,18 @@ public:
         int_reg_pending_write = new uint32_t[int_reg];
         fp_reg_pending_write  = new uint32_t[fp_reg];
 
-        for ( uint16_t i = 0; i < int_reg; ++i ) {
-            int_reg_ptr[i]           = 0;
+        for ( uint16_t i = 0; i < count_int_reg; ++i ) { int_reg_ptr[i] = 0; }
+        for ( uint16_t i = 0; i < count_fp_reg; ++i )  { fp_reg_ptr[i]  = 0; }
+        resetPendingCnts();
+    }
+
+    void resetPendingCnts() {
+        for ( uint16_t i = 0; i < count_int_reg; ++i ) {
             int_reg_pending_read[i]  = 0;
             int_reg_pending_write[i] = 0;
         }
 
-        for ( uint16_t i = 0; i < fp_reg; ++i ) {
-            fp_reg_ptr[i]           = 0;
+        for ( uint16_t i = 0; i < count_fp_reg; ++i ) {
             fp_reg_pending_read[i]  = 0;
             fp_reg_pending_write[i] = 0;
         }
@@ -64,6 +72,9 @@ public:
         delete fp_reg_pending_read;
         delete fp_reg_pending_write;
     }
+
+    int getNumIntRegs() { return count_int_reg; }
+    int getNumFpRegs() { return count_fp_reg; }
 
     bool pendingIntReads(const uint16_t int_reg) { return int_reg_pending_read[int_reg] > 0; }
 
@@ -105,9 +116,9 @@ public:
 
     void setFPPhysReg(const uint16_t fp_reg, const uint16_t phys_reg) { fp_reg_ptr[fp_reg] = phys_reg; }
 
-    uint16_t getIntPhysReg(const uint16_t int_reg) { return int_reg_ptr[int_reg]; }
+    uint16_t getIntPhysReg(const uint16_t int_reg) { assert(int_reg < count_int_reg); return int_reg_ptr[int_reg]; }
 
-    uint16_t getFPPhysReg(const uint16_t fp_reg) { return fp_reg_ptr[fp_reg]; }
+    uint16_t getFPPhysReg(const uint16_t fp_reg) { assert(fp_reg < count_fp_reg); return fp_reg_ptr[fp_reg]; }
 
     void reset(VanadisISATable* tbl)
     {
@@ -131,10 +142,9 @@ public:
 
     void print(SST::Output* output, VanadisRegisterFile* regFile, bool print_int, bool print_fp, uint32_t output_v)
     {
-        // char* reg_bin_str = new char[65];
-
         if ( print_int ) {
-            output->verbose(CALL_INFO, output_v, 0, "Integer Registers (Count=%" PRIu16 ")\n", count_int_reg);
+            output->verbose(CALL_INFO, output_v, 0, "[Thread: %d]: %s: Integer Registers (Count=%" PRIu16 ")\n",
+                regFile ? regFile->getHWThread() : -1, tblName.c_str(), count_int_reg);
             for ( uint16_t i = 0; i < count_int_reg; ++i ) {
                 if ( nullptr == regFile ) {
                     output->verbose(
@@ -143,14 +153,11 @@ public:
                         int_reg_ptr[i], int_reg_pending_read[i], int_reg_pending_write[i]);
                 }
                 else {
-                    int64_t* val = (int64_t*)regFile->getIntReg(i);
-                    // toBinaryString(reg_bin_str, *val);
-
                     output->verbose(
                         CALL_INFO, output_v, 0,
-                        "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32
-                        " | v: 0x%016llx | v: %" PRIu64 " / %" PRId64 "\n",
-                        i, int_reg_ptr[i], int_reg_pending_read[i], int_reg_pending_write[i],
+                        "[Thread: %d]: | isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32
+                        " | v: 0x%016" PRI_ADDR " | v: %" PRIu64 " / %" PRId64 "\n",
+                        regFile-> getHWThread(), i, int_reg_ptr[i], int_reg_pending_read[i], int_reg_pending_write[i],
                         regFile->getIntReg<int64_t>(int_reg_ptr[i]), regFile->getIntReg<uint64_t>(int_reg_ptr[i]),
                         regFile->getIntReg<int64_t>(int_reg_ptr[i]));
                 }
@@ -172,15 +179,15 @@ public:
                         output->verbose(
                             CALL_INFO, output_v, 0,
                             "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32
-                            " | v: 0x%016llx |\n",
+                            " | v: 0x%08x |\n",
                             i, fp_reg_ptr[i], fp_reg_pending_read[i], fp_reg_pending_write[i],
-                            (uint64_t)regFile->getFPReg<uint32_t>(fp_reg_ptr[i]));
+                            regFile->getFPReg<uint32_t>(fp_reg_ptr[i]));
                     }
                     else {
                         output->verbose(
                             CALL_INFO, output_v, 0,
                             "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32
-                            " | v: 0x%016llx |\n",
+                            " | v: 0x%016" PRI_ADDR " |\n",
                             i, fp_reg_ptr[i], fp_reg_pending_read[i], fp_reg_pending_write[i],
                             regFile->getFPReg<uint64_t>(fp_reg_ptr[i]));
                     }
@@ -205,7 +212,6 @@ public:
     }
 
     bool physIntRegInUse(const uint16_t reg) { return findInRegSet(reg, int_reg_ptr, count_int_reg); }
-
     bool physFPRegInUse(const uint16_t reg) { return findInRegSet(reg, fp_reg_ptr, count_fp_reg); }
 
 protected:
@@ -233,6 +239,8 @@ protected:
     uint32_t* fp_reg_pending_write;
 
     const VanadisDecoderOptions* decoder_opts;
+
+    std::string tblName;
 };
 
 } // namespace Vanadis

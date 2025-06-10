@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -31,10 +31,14 @@ enum VanadisFunctionalUnitType {
     INST_SYSCALL,
     INST_FENCE,
     INST_NOOP,
-    INST_FAULT
+    INST_FAULT,
+    INST_ROCC0,
+    INST_ROCC1,
+    INST_ROCC2,
+    INST_ROCC3
 };
 
-const char*
+inline const char*
 funcTypeToString(VanadisFunctionalUnitType unit_type)
 {
     switch ( unit_type ) {

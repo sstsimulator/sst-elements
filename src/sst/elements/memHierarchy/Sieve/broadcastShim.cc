@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -18,7 +18,7 @@
  */
 
 
-#include <sst_config.h>
+#include <sst/core/sst_config.h>
 
 #include "broadcastShim.h"
 
@@ -35,7 +35,7 @@ BroadcastShim::BroadcastShim(ComponentId_t id, Params &params) : Component(id) {
 
     while (true) {
         std::string linkName = "cpu_alloc_link_" + std::to_string(linkCPU);
-        link = configureLink(linkName, "100 ps", new Event::Handler<BroadcastShim>(this, &BroadcastShim::processCoreEvent));
+        link = configureLink(linkName, "100 ps", new Event::Handler2<BroadcastShim, &BroadcastShim::processCoreEvent>(this));
         if (link) {
             cpuAllocLinks_.push_back(link);
             output_->output(CALL_INFO, "Port %d = Link %d\n", link->getId(), linkCPU);
@@ -47,7 +47,7 @@ BroadcastShim::BroadcastShim(ComponentId_t id, Params &params) : Component(id) {
 
     while (true) {
         std::string linkName = "sieve_alloc_link_" + std::to_string(linkSieve);
-        link = configureLink(linkName, "100 ps", new Event::Handler<BroadcastShim>(this, &BroadcastShim::processSieveEvent));
+        link = configureLink(linkName, "100 ps", new Event::Handler2<BroadcastShim, &BroadcastShim::processSieveEvent>(this));
         if (link) {
             sieveAllocLinks_.push_back(link);
             output_->output(CALL_INFO, "Port %d = Link %d\n", link->getId(), linkSieve);

@@ -6,5 +6,5 @@ AC_DEFUN([SST_CHECK_PICKY], [
       [Enable the use of compiler flags -Wall -Wextra within SST Elements.])])
 
   AS_IF([test "x$enable_picky_warnings" = "xyes"], [use_picky="yes"])
- 
+
 ])

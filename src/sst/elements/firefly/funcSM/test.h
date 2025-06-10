@@ -1,13 +1,13 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2021, NTESS
+// Copyright (c) 2013-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -32,7 +32,7 @@ class TestFuncSM :  public FunctionSMInterface
         "Test",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        ""
+        SST::Firefly::FunctionSMInterface
     )
   public:
     TestFuncSM( SST::Params& params );

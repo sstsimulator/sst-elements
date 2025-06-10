@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -19,7 +19,7 @@
 #include <iostream>
 #include <array>
 
-#include "sst/elements/memHierarchy/coherencemgr/coherenceController.h"
+#include "coherencemgr/coherenceController.h"
 #include "sst/elements/memHierarchy/memTypes.h"
 #include "sst/elements/memHierarchy/lineTypes.h"
 #include "sst/elements/memHierarchy/cacheArray.h"
@@ -30,7 +30,7 @@ namespace SST { namespace MemHierarchy {
 class MESIL1 : public CoherenceController {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MESIL1, "memHierarchy", "coherence.mesi_l1", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(MESIL1, "memHierarchy", "coherence.mesi_l1", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Implements MESI or MSI coherence for an L1 cache", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -66,7 +66,10 @@ public:
         {"eventSent_NACK",          "Number of NACKs sent ", "events", 2},
         {"eventSent_FlushLine",     "Number of FlushLine requests sent", "events", 2},
         {"eventSent_FlushLineInv",  "Number of FlushLineInv requests sent", "events", 2},
+        {"eventSent_FlushAll",      "Number of FlushAll requests sent", "events", 2},
         {"eventSent_FlushLineResp", "Number of FlushLineResp responses sent", "events", 2},
+        {"eventSent_FlushAllResp",  "Number of FlushAllResp responses sent", "events", 2},
+        {"eventSent_AckFlush",      "Number of AckFlush responses sent", "events", 2},
         {"eventSent_Put",           "Number of Put requests sent", "events", 6},
         {"eventSent_Get",           "Number of Get requests sent", "events", 6},
         {"eventSent_AckMove",       "Number of AckMove responses sent", "events", 6},
@@ -164,6 +167,7 @@ public:
         {"latency_FlushLine_fail",      "Latency for Flush requests that failed (e.g., line was locked)", "cycles", 2},
         {"latency_FlushLineInv",        "Latency for Flush and Invalidate requests", "cycles", 2},
         {"latency_FlushLineInv_fail",   "Latency for Flush and Invalidate requests that failed (e.g., line was locked)", "cycles", 2},
+        {"latency_FlushAll",            "Latency for FlushAll (full cache) requests", "cycles", 2},
         /* Track what happens to prefetched blocks */
         {"prefetch_useful",         "Prefetched block had a subsequent hit (useful prefetch)", "count", 2},
         {"prefetch_evict",          "Prefetched block was evicted/flushed before being accessed", "count", 2},
@@ -183,16 +187,27 @@ public:
 
     MESIL1(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
-        debug->debug(_INFO_,"--------------------------- Initializing [L1Controller] ... \n\n");
 
         snoopL1Invs_ = params.find<bool>("snoop_l1_invalidations", false);
         bool MESI = params.find<bool>("protocol", true);
+        llscBlockCycles_ = params.find<Cycle_t>("llsc_block_cycles", 0);
 
-        // State to transition to on a GetXResp/clean to a read (GetS)
-        if (MESI)
-            protocolState_ = E;
-        else
-            protocolState_ = S;
+        std::string frequency = params.find<std::string>("cache_frequency", "");
+
+        llscTimeoutSelfLink_ = configureSelfLink("llscTimeoutLink", frequency, new Event::Handler2<MESIL1, &MESIL1::handleLoadLinkExpiration>(this));
+
+        // Coherence protocol transition states
+        if (MESI) {
+            protocolReadState_ = E;
+            protocolExclState_ = E;
+        } else {
+            protocolReadState_ = S; // State to transition to when a GetXResp/clean is received in response to a read (GetS)
+            protocolExclState_ = M; // State to transition to on a Read-exclusive/read-for-ownership
+        }
+
+        isFlushing_ = false;
+        flushDrain_ = false;
+        flush_complete_timestamp_ = 0;
 
         // Cache Array
         uint64_t lines = params.find<uint64_t>("lines", 0);
@@ -270,13 +285,16 @@ public:
         stat_eventSent[(int)Command::NACK] =            registerStatistic<uint64_t>("eventSent_NACK");
         stat_eventSent[(int)Command::FlushLine] =       registerStatistic<uint64_t>("eventSent_FlushLine");
         stat_eventSent[(int)Command::FlushLineInv] =    registerStatistic<uint64_t>("eventSent_FlushLineInv");
+        stat_eventSent[(int)Command::FlushAll] =         registerStatistic<uint64_t>("eventSent_FlushAll");
         stat_eventSent[(int)Command::FetchResp] =       registerStatistic<uint64_t>("eventSent_FetchResp");
         stat_eventSent[(int)Command::FetchXResp] =      registerStatistic<uint64_t>("eventSent_FetchXResp");
         stat_eventSent[(int)Command::AckInv] =          registerStatistic<uint64_t>("eventSent_AckInv");
+        stat_eventSent[(int)Command::AckFlush] =        registerStatistic<uint64_t>("eventSent_AckFlush");
         stat_eventSent[(int)Command::GetSResp] =        registerStatistic<uint64_t>("eventSent_GetSResp");
         stat_eventSent[(int)Command::GetXResp] =        registerStatistic<uint64_t>("eventSent_GetXResp");
         stat_eventSent[(int)Command::WriteResp] =       registerStatistic<uint64_t>("eventSent_WriteResp");
         stat_eventSent[(int)Command::FlushLineResp] =   registerStatistic<uint64_t>("eventSent_FlushLineResp");
+        stat_eventSent[(int)Command::FlushAllResp] =    registerStatistic<uint64_t>("eventSent_FlushAllResp");
         stat_eventSent[(int)Command::Put]           = registerStatistic<uint64_t>("eventSent_Put");
         stat_eventSent[(int)Command::Get]           = registerStatistic<uint64_t>("eventSent_Get");
         stat_eventSent[(int)Command::AckMove]       = registerStatistic<uint64_t>("eventSent_AckMove");
@@ -304,6 +322,7 @@ public:
         stat_latencyFlushLine[LatType::MISS]    = registerStatistic<uint64_t>("latency_FlushLine_fail");
         stat_latencyFlushLineInv[LatType::HIT]  = registerStatistic<uint64_t>("latency_FlushLineInv");
         stat_latencyFlushLineInv[LatType::MISS] = registerStatistic<uint64_t>("latency_FlushLineInv_fail");
+        stat_latencyFlushAll                    = registerStatistic<uint64_t>("latency_FlushAll");
         stat_hit[0][0] = registerStatistic<uint64_t>("GetSHit_Arrival");
         stat_hit[1][0] = registerStatistic<uint64_t>("GetXHit_Arrival");
         stat_hit[2][0] = registerStatistic<uint64_t>("GetSXHit_Arrival");
@@ -354,65 +373,94 @@ public:
         }
     }
 
-    ~MESIL1() {}
+    ~MESIL1() {
+        delete cacheArray_;
+    }
 
     /** Event handlers - called by controller */
-    bool handleGetS(MemEvent * event, bool inMSHR);
-    bool handleWrite(MemEvent * event, bool inMSHR);
-    bool handleGetX(MemEvent * event, bool inMSHR);
-    bool handleGetSX(MemEvent * event, bool inMSHR);
-    bool handleFlushLine(MemEvent * event, bool inMSHR);
-    bool handleFlushLineInv(MemEvent * event, bool inMSHR);
-    bool handleFetch(MemEvent * event, bool inMSHR);
-    bool handleInv(MemEvent * event, bool inMSHR);
-    bool handleForceInv(MemEvent * event, bool inMSHR);
-    bool handleFetchInv(MemEvent * event, bool inMSHR);
-    bool handleFetchInvX(MemEvent * event, bool inMSHR);
-    bool handleGetSResp(MemEvent * event, bool inMSHR);
-    bool handleGetXResp(MemEvent * event, bool inMSHR);
-    bool handleFlushLineResp(MemEvent * event, bool inMSHR);
-    bool handleAckPut(MemEvent * event, bool inMSHR);
-    bool handleNULLCMD(MemEvent * event, bool inMSHR);
-    bool handleNACK(MemEvent * event, bool inMSHR);
+    bool handleGetS(MemEvent * event, bool inMSHR) override;
+    bool handleWrite(MemEvent * event, bool inMSHR) override;
+    bool handleGetX(MemEvent * event, bool inMSHR) override;
+    bool handleGetSX(MemEvent * event, bool inMSHR) override;
+    bool handleFlushLine(MemEvent * event, bool inMSHR) override;
+    bool handleFlushLineInv(MemEvent * event, bool inMSHR) override;
+    bool handleFlushAll(MemEvent * event, bool inMSHR) override;
+    bool handleForwardFlush(MemEvent * event, bool inMSHR) override;
+    bool handleFetch(MemEvent * event, bool inMSHR) override;
+    bool handleInv(MemEvent * event, bool inMSHR) override;
+    bool handleForceInv(MemEvent * event, bool inMSHR) override;
+    bool handleFetchInv(MemEvent * event, bool inMSHR) override;
+    bool handleFetchInvX(MemEvent * event, bool inMSHR) override;
+    bool handleGetSResp(MemEvent * event, bool inMSHR) override;
+    bool handleGetXResp(MemEvent * event, bool inMSHR) override;
+    bool handleFlushLineResp(MemEvent * event, bool inMSHR) override;
+    bool handleFlushAllResp(MemEvent * event, bool inMSHR) override;
+    bool handleUnblockFlush(MemEvent * event, bool inMSHR) override;
+    bool handleAckPut(MemEvent * event, bool inMSHR) override;
+    bool handleNULLCMD(MemEvent * event, bool inMSHR) override;
+    bool handleNACK(MemEvent * event, bool inMSHR) override;
 
     /** Configuration */
-    MemEventInitCoherence* getInitCoherenceEvent();
-    virtual std::set<Command> getValidReceiveEvents();
-    void setSliceAware(uint64_t interleaveSize, uint64_t interleaveStep);
+    MemEventInitCoherence* getInitCoherenceEvent() override;
+    virtual std::set<Command> getValidReceiveEvents() override;
+    void setSliceAware(uint64_t interleaveSize, uint64_t interleaveStep) override;
 
-    void printStatus(Output& out);
+    void printStatus(Output& out) override;
 
-    Addr getBank(Addr addr);
+    Addr getBank(Addr addr) override;
+
+    /* LoadLink wakeup event - not serializable since it only goes over a self link */
+    class LoadLinkWakeup : public SST::Event {
+        public:
+            LoadLinkWakeup(Addr addr, id_type id) : SST::Event(), addr_(addr), id_(id) { }
+            ~LoadLinkWakeup() { }
+
+            Addr addr_;  // Address that was locked
+            id_type id_; // id of event that stalled for the locked address
+
+            NotSerializable(LoadLinkWakeup); // Will never traverse a remote link
+    };
 
 private:
 
     /** Cache and MSHR management */
     MemEventStatus processCacheMiss(MemEvent * event, L1CacheLine * line, bool inMSHR);
+    MemEventStatus checkMSHRCollision(MemEvent* event, bool inMSHR);
     L1CacheLine* allocateLine(MemEvent * event, L1CacheLine * line);
-    bool handleEviction(Addr addr, L1CacheLine *& line);
+    bool handleEviction(Addr addr, L1CacheLine *& line, bool flush);
     void cleanUpAfterRequest(MemEvent * event, bool inMSHR);
     void cleanUpAfterResponse(MemEvent * event, bool inMSHR);
+    void cleanUpAfterFlush(MemEvent * req, MemEvent * resp = nullptr, bool inMSHR = true);
     void retry(Addr addr);
+    void handleLoadLinkExpiration(SST::Event* ev);
 
     /** Event send */
-    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t time, bool success = true);
+    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t time, bool success = true) override;
     void sendResponseDown(MemEvent * event, L1CacheLine * line, bool data);
     void forwardFlush(MemEvent * event, L1CacheLine * line, bool evict);
-    void sendWriteback(Command cmd, L1CacheLine * line, bool dirty);
+    void sendWriteback(Command cmd, L1CacheLine * line, bool dirty, bool flush);
     void snoopInvalidation(MemEvent * event, L1CacheLine * line);
-    void forwardByAddress(MemEventBase* ev, Cycle_t timestamp);
-    void forwardByDestination(MemEventBase* ev, Cycle_t timestamp);
+    void forwardByAddress(MemEventBase* ev, Cycle_t timestamp) override;
+    void forwardByDestination(MemEventBase* ev, Cycle_t timestamp) override;
 
     /** Statistics/Listeners */
     inline void recordPrefetchResult(L1CacheLine * line, Statistic<uint64_t>* stat);
-    void recordLatency(Command cmd, int type, uint64_t latency);
+    void recordLatency(Command cmd, int type, uint64_t latency) override;
     void eventProfileAndNotify(MemEvent * event, State state, NotifyAccessType type, NotifyResultType result, bool inMSHR);
 
     /** Miscellaneous */
     void printLine(Addr addr);
+    void beginCompleteStage() override;
+    void processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) override;
 
+    bool isFlushing_;
+    bool flushDrain_;
+    Cycle_t flush_complete_timestamp_;
     bool snoopL1Invs_;
-    State protocolState_; // E for MESI, S for MSI
+    State protocolReadState_;   // E for MESI, S for MSI
+    State protocolExclState_;   // E for MESI, M for MSI
+    Cycle_t llscBlockCycles_;
+    Link* llscTimeoutSelfLink_; // A self-link to trigger waiting requests when a LoadLink times out
 
     CacheArray<L1CacheLine>* cacheArray_;
 
@@ -423,6 +471,7 @@ private:
     Statistic<uint64_t>* stat_latencyGetSX[4];
     Statistic<uint64_t>* stat_latencyFlushLine[2];
     Statistic<uint64_t>* stat_latencyFlushLineInv[2];
+    Statistic<uint64_t>* stat_latencyFlushAll;
     Statistic<uint64_t>* stat_hit[3][2];
     Statistic<uint64_t>* stat_miss[3][2];
     Statistic<uint64_t>* stat_hits;

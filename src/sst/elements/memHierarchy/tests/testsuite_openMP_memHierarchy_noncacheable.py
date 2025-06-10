@@ -6,35 +6,11 @@ from sst_unittest_support import *
 module_init = 0
 module_sema = threading.Semaphore()
 
-################################################################################
-# Code to support a single instance module initialize, must be called setUp method
-
-def initializeTestModule_SingleInstance(class_inst):
-    global module_init
-    global module_sema
-
-    module_sema.acquire()
-    if module_init != 1:
-        try:
-            # Put your single instance Init Code Here
-            pass
-        except:
-            pass
-        module_init = 1
-    module_sema.release()
-
-################################################################################
 
 class testcase_memH_openMP_noncacheable(SSTTestCase):
 
-    def initializeClass(self, testName):
-        super(type(self), self).initializeClass(testName)
-        # Put test based setup code here. it is called before testing starts
-        # NOTE: This method is called once for every test
-
     def setUp(self):
         super(type(self), self).setUp()
-        initializeTestModule_SingleInstance(self)
 
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test
@@ -132,7 +108,7 @@ class testcase_memH_openMP_noncacheable(SSTTestCase):
                     # Grep the ref file for the count of this line occuring
                     cmd = 'grep -c "{0}" {1}'.format(testline, reffile)
                     rtn = OSCommand(cmd).run()
-                    self.assertEquals(rtn.result(), 0, "openMP noncacheable Test failed running cmdline {0} - grepping reffile {1}".format(cmd, reffile))
+                    self.assertEqual(rtn.result(), 0, "openMP noncacheable Test failed running cmdline {0} - grepping reffile {1}".format(cmd, reffile))
                     refcount = int(rtn.output())
 
                     # Grep the out file for the count of this line occuring
@@ -146,7 +122,7 @@ class testcase_memH_openMP_noncacheable(SSTTestCase):
                     log_debug("Testline='{0}'; refcount={1}; outcount={2}".format(testline, refcount, outcount))
 
                     # Compare the count
-                    self.assertEquals(outcount, refcount, "openMP noncacheable testing line '{0}': outfile count = {1} does not match reffile count = {2}".format(testline, outcount, refcount))
+                    self.assertEqual(outcount, refcount, "openMP noncacheable testing line '{0}': outfile count = {1} does not match reffile count = {2}".format(testline, outcount, refcount))
 
 ###############################################
 

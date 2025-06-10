@@ -62,70 +62,70 @@
 1032:  61 Finished sending packets (total of 10)
 1032:  62 Finished sending packets (total of 10)
 1032:  63 Finished sending packets (total of 10)
-1808: NIC 52 received all packets (total of 640)!
-1814: NIC 48 received all packets (total of 640)!
-1820: NIC 4 received all packets (total of 640)!
-1820: NIC 24 received all packets (total of 640)!
-1822: NIC 20 received all packets (total of 640)!
-1822: NIC 36 received all packets (total of 640)!
-1824: NIC 33 received all packets (total of 640)!
-1828: NIC 32 received all packets (total of 640)!
-1830: NIC 35 received all packets (total of 640)!
-1830: NIC 38 received all packets (total of 640)!
-1832: NIC 16 received all packets (total of 640)!
-1834: NIC 8 received all packets (total of 640)!
-1836: NIC 9 received all packets (total of 640)!
-1836: NIC 21 received all packets (total of 640)!
-1836: NIC 23 received all packets (total of 640)!
-1836: NIC 50 received all packets (total of 640)!
-1838: NIC 34 received all packets (total of 640)!
-1838: NIC 42 received all packets (total of 640)!
-1842: NIC 18 received all packets (total of 640)!
-1844: NIC 22 received all packets (total of 640)!
-1848: NIC 10 received all packets (total of 640)!
-1848: NIC 29 received all packets (total of 640)!
-1848: NIC 41 received all packets (total of 640)!
-1848: NIC 62 received all packets (total of 640)!
-1850: NIC 0 received all packets (total of 640)!
-1850: NIC 40 received all packets (total of 640)!
-1852: NIC 37 received all packets (total of 640)!
-1852: NIC 49 received all packets (total of 640)!
-1854: NIC 28 received all packets (total of 640)!
-1854: NIC 44 received all packets (total of 640)!
-1854: NIC 46 received all packets (total of 640)!
-1854: NIC 54 received all packets (total of 640)!
-1856: NIC 56 received all packets (total of 640)!
+1802: NIC 36 received all packets (total of 640)!
+1818: NIC 18 received all packets (total of 640)!
+1818: NIC 53 received all packets (total of 640)!
+1818: NIC 54 received all packets (total of 640)!
+1822: NIC 49 received all packets (total of 640)!
+1826: NIC 4 received all packets (total of 640)!
+1826: NIC 52 received all packets (total of 640)!
+1828: NIC 0 received all packets (total of 640)!
+1830: NIC 56 received all packets (total of 640)!
+1836: NIC 22 received all packets (total of 640)!
+1838: NIC 21 received all packets (total of 640)!
+1840: NIC 32 received all packets (total of 640)!
+1840: NIC 37 received all packets (total of 640)!
+1840: NIC 57 received all packets (total of 640)!
+1842: NIC 50 received all packets (total of 640)!
+1844: NIC 16 received all packets (total of 640)!
+1846: NIC 10 received all packets (total of 640)!
+1846: NIC 34 received all packets (total of 640)!
+1848: NIC 25 received all packets (total of 640)!
+1850: NIC 8 received all packets (total of 640)!
+1850: NIC 33 received all packets (total of 640)!
+1850: NIC 44 received all packets (total of 640)!
+1852: NIC 38 received all packets (total of 640)!
+1856: NIC 41 received all packets (total of 640)!
 1856: NIC 58 received all packets (total of 640)!
-1858: NIC 51 received all packets (total of 640)!
-1858: NIC 57 received all packets (total of 640)!
-1858: NIC 60 received all packets (total of 640)!
-1860: NIC 45 received all packets (total of 640)!
+1858: NIC 29 received all packets (total of 640)!
+1858: NIC 40 received all packets (total of 640)!
+1858: NIC 45 received all packets (total of 640)!
+1860: NIC 48 received all packets (total of 640)!
 1862: NIC 6 received all packets (total of 640)!
-1862: NIC 14 received all packets (total of 640)!
-1862: NIC 19 received all packets (total of 640)!
-1864: NIC 7 received all packets (total of 640)!
-1864: NIC 17 received all packets (total of 640)!
-1864: NIC 25 received all packets (total of 640)!
-1866: NIC 27 received all packets (total of 640)!
-1866: NIC 55 received all packets (total of 640)!
-1868: NIC 30 received all packets (total of 640)!
-1870: NIC 15 received all packets (total of 640)!
-1870: NIC 26 received all packets (total of 640)!
+1864: NIC 26 received all packets (total of 640)!
+1864: NIC 39 received all packets (total of 640)!
+1864: NIC 55 received all packets (total of 640)!
+1866: NIC 2 received all packets (total of 640)!
+1866: NIC 9 received all packets (total of 640)!
+1866: NIC 35 received all packets (total of 640)!
+1868: NIC 7 received all packets (total of 640)!
+1868: NIC 23 received all packets (total of 640)!
+1870: NIC 12 received all packets (total of 640)!
+1870: NIC 24 received all packets (total of 640)!
+1870: NIC 28 received all packets (total of 640)!
 1870: NIC 61 received all packets (total of 640)!
-1872: NIC 39 received all packets (total of 640)!
-1872: NIC 53 received all packets (total of 640)!
-1874: NIC 12 received all packets (total of 640)!
-1882: NIC 63 received all packets (total of 640)!
-1886: NIC 11 received all packets (total of 640)!
-1890: NIC 1 received all packets (total of 640)!
-1890: NIC 2 received all packets (total of 640)!
-1890: NIC 5 received all packets (total of 640)!
-1890: NIC 43 received all packets (total of 640)!
-1892: NIC 59 received all packets (total of 640)!
-1896: NIC 13 received all packets (total of 640)!
-1896: NIC 47 received all packets (total of 640)!
-1898: NIC 3 received all packets (total of 640)!
-1900: NIC 31 received all packets (total of 640)!
+1872: NIC 14 received all packets (total of 640)!
+1874: NIC 19 received all packets (total of 640)!
+1874: NIC 27 received all packets (total of 640)!
+1876: NIC 20 received all packets (total of 640)!
+1876: NIC 42 received all packets (total of 640)!
+1878: NIC 5 received all packets (total of 640)!
+1880: NIC 13 received all packets (total of 640)!
+1880: NIC 30 received all packets (total of 640)!
+1880: NIC 46 received all packets (total of 640)!
+1882: NIC 17 received all packets (total of 640)!
+1886: NIC 1 received all packets (total of 640)!
+1890: NIC 60 received all packets (total of 640)!
+1892: NIC 47 received all packets (total of 640)!
+1894: NIC 11 received all packets (total of 640)!
+1896: NIC 59 received all packets (total of 640)!
+1898: NIC 51 received all packets (total of 640)!
+1904: NIC 62 received all packets (total of 640)!
+1910: NIC 3 received all packets (total of 640)!
+1910: NIC 31 received all packets (total of 640)!
+1914: NIC 15 received all packets (total of 640)!
+1922: NIC 43 received all packets (total of 640)!
+1936: NIC 63 received all packets (total of 640)!
 Nic 63 had 392 stalled cycles.
 Nic 62 had 392 stalled cycles.
 Nic 61 had 392 stalled cycles.
@@ -190,4 +190,4 @@ Nic 3 had 392 stalled cycles.
 Nic 2 had 392 stalled cycles.
 Nic 1 had 392 stalled cycles.
 Nic 0 had 392 stalled cycles.
-Simulation is complete, simulated time: 1.9 us
+Simulation is complete, simulated time: 1.936 us

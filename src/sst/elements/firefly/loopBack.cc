@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -39,8 +39,8 @@ LoopBack::LoopBack(ComponentId_t id, Params& params ) :
 			std::ostringstream core;
 			core <<  i;
 
-			Event::Handler<LoopBack,int>* handler =
-                new Event::Handler<LoopBack,int>( this, &LoopBack::handleCoreEvent, j*numCores + i );
+			Event::HandlerBase* handler =
+                new Event::Handler2<LoopBack,&LoopBack::handleCoreEvent,int>( this, j*numCores + i );
 
 			Link* link = configureLink("nic"+ nic.str() + "core" + core.str(), "1 ns", handler );
 			assert(link);

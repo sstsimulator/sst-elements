@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -42,6 +42,7 @@ class ReplacementInfo {
         State getState() { return state; }
         void setState(State s) { state = s; }
 
+        virtual void reset() { state = I; }
     protected:
         unsigned int index;
         State state;
@@ -56,6 +57,11 @@ class CoherenceReplacementInfo : public ReplacementInfo {
         bool getShared() { return shared; }
         void setOwned(bool o) { owned = o; }
         void setShared(bool s) { shared = s; }
+        void reset() override {
+            ReplacementInfo::reset();
+            owned = false;
+            shared = false;
+        }
     protected:
         bool owned;
         bool shared;
@@ -87,7 +93,7 @@ class ReplacementPolicy : public SubComponent{
  * ------------------------------------------------------------------------------------------*/
 class LRU : public ReplacementPolicy {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(LRU, "memHierarchy", "replacement.lru", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(LRU, "memHierarchy", "replacement.lru", SST_ELI_ELEMENT_VERSION(1,0,0),
             "least-recently-used replacement policy", SST::MemHierarchy::ReplacementPolicy);
 
 
@@ -147,7 +153,7 @@ private:
 
 class LRUOpt : public ReplacementPolicy {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(LRUOpt, "memHierarchy", "replacement.lru-opt", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(LRUOpt, "memHierarchy", "replacement.lru-opt", SST_ELI_ELEMENT_VERSION(1,0,0),
             "least-recently-used replacement policy with consideration for coherence state", SST::MemHierarchy::ReplacementPolicy);
 
 
@@ -242,7 +248,7 @@ private:
  * ------------------------------------------------------------------------------------------*/
 class LFU : public ReplacementPolicy {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(LFU, "memHierarchy", "replacement.lfu", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(LFU, "memHierarchy", "replacement.lfu", SST_ELI_ELEMENT_VERSION(1,0,0),
             "least-frequently-used replacement policy, recently used accesses are more heavily weighted", SST::MemHierarchy::ReplacementPolicy);
 
 
@@ -316,7 +322,7 @@ private:
 
 class LFUOpt : public ReplacementPolicy {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(LFUOpt, "memHierarchy", "replacement.lfu-opt", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(LFUOpt, "memHierarchy", "replacement.lfu-opt", SST_ELI_ELEMENT_VERSION(1,0,0),
             "least-frequently-used replacement policy, recently used accesses are more heavily weighted. Also considers coherence state in replacement decision", SST::MemHierarchy::ReplacementPolicy);
 
 
@@ -451,7 +457,7 @@ private:
     };
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MRU, "memHierarchy", "replacement.mru", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(MRU, "memHierarchy", "replacement.mru", SST_ELI_ELEMENT_VERSION(1,0,0),
             "most-recently-used replacement policy", SST::MemHierarchy::ReplacementPolicy);
 
 
@@ -529,7 +535,7 @@ private:
     };
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MRUOpt, "memHierarchy", "replacement.mru-opt", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(MRUOpt, "memHierarchy", "replacement.mru-opt", SST_ELI_ELEMENT_VERSION(1,0,0),
             "most-recently-used replacement policy, with consideration for coherence state", SST::MemHierarchy::ReplacementPolicy);
 
 
@@ -590,7 +596,7 @@ public:
  * ------------------------------------------------------------------------------------------*/
 class Random : public ReplacementPolicy {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(Random, "memHierarchy", "replacement.random", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(Random, "memHierarchy", "replacement.random", SST_ELI_ELEMENT_VERSION(1,0,0),
             "random replacement policy", SST::MemHierarchy::ReplacementPolicy);
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -652,7 +658,7 @@ private:
     SST::RNG::MarsagliaRNG* gen;
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(NMRU, "memHierarchy", "replacement.nmru", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(NMRU, "memHierarchy", "replacement.nmru", SST_ELI_ELEMENT_VERSION(1,0,0),
             "not-most-recently-used, random replacement among all but the most recently used line in a set", SST::MemHierarchy::ReplacementPolicy);
 
     SST_ELI_DOCUMENT_PARAMS(

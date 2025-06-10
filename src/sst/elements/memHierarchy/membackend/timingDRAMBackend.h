@@ -1,8 +1,8 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -26,12 +26,14 @@
 namespace SST {
 namespace MemHierarchy {
 
+/* Debug macros included from util.h */
+
 using namespace  TimingDRAM_NS;
 
 class TimingDRAM : public SimpleMemBackend {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(TimingDRAM, "memHierarchy", "timingDRAM", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(TimingDRAM, "memHierarchy", "timingDRAM", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Moderately-detailed timing model for DRAM", SST::MemHierarchy::SimpleMemBackend)
 
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
@@ -145,7 +147,7 @@ private:
                 m_name = "COL";
                 break;
             }
-            if (is_debug)
+            if (mem_h_is_debug)
                 m_bank->verbose(__LINE__,__FUNCTION__,"new %s for rank=%d bank=%d row=%d\n",
                         getName().c_str(), getRank(), getBank(), getRow());
         }
@@ -195,7 +197,7 @@ private:
                 m_finiTime += m_dataCycles;
                 m_dataBusAvailCycle = m_finiTime;
                 ret = true;
-            } else if (is_debug) {
+            } else if (mem_h_is_debug) {
                 m_bank->verbose(__LINE__,__FUNCTION__,"bus not ready\n");
             }
 
@@ -204,7 +206,7 @@ private:
 
         bool isDone( SimTime_t now ) {
 
-            if (is_debug)
+            if (mem_h_is_debug)
                 m_bank->verbose(__LINE__,__FUNCTION__,"%lu %lu\n",now,m_finiTime);
             return ( now >= m_finiTime );
         }
@@ -243,7 +245,7 @@ private:
         void pushTrans( Transaction* trans ) {
             unsigned bank = m_mapper->getBank( trans->addr);
 
-            if (is_debug)
+            if (mem_h_is_debug)
                 m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK,"bank=%d addr=%#" PRIx64 "\n",
                     bank,trans->addr);
 
@@ -285,7 +287,7 @@ private:
 
             unsigned rank = m_mapper->getRank( addr);
 
-            if (is_debug)
+            if (mem_h_is_debug)
                 m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK,"reqId=%" PRIu64 " rank=%d addr=%#" PRIx64 ", createTime=%" PRIu64 "\n", id, rank, addr, createTime );
 
             Transaction* trans = new Transaction( createTime, id, addr, isWrite, numBytes, m_mapper->getBank(addr),

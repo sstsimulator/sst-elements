@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -22,8 +22,8 @@ using namespace SST::Firefly;
 
 void Nic::RecvMachine::processPkt( FireflyNetworkEvent* ev ) {
 
-	m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE," got a network pkt from node=%d pid=%d for pid=%d size=%zu\n",
-                        ev->getSrcNode(),ev->getSrcPid(), ev->getDestPid(), ev->bufSize() );
+	m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE," got a network pkt from node=%d pid=%d for pid=%d stream=%d size=%zu\n",
+                        ev->getSrcNode(),ev->getSrcPid(), ev->getDestPid(), ev->getSrcStream(), ev->bufSize() );
 
     if ( ev->isCtrl() ) {
 		m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"got a control message\n");
@@ -35,7 +35,7 @@ void Nic::RecvMachine::processPkt( FireflyNetworkEvent* ev ) {
 
 void Nic::RecvMachine::processStdPkt( FireflyNetworkEvent* ev ) {
     bool blocked = false;
-    ProcessPairId id = getPPI( ev );
+    StreamKey id = getStreamKey( ev );
 
     StreamBase* stream;
     int pid = ev->getDestPid();

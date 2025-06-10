@@ -7,16 +7,18 @@ AC_DEFUN([SST_CHECK_HBMDRAMSIM], [
   sst_check_hbmdramsim_happy="yes"
   AS_IF([test "$with_hbmdramsim" = "no"], [sst_check_hbmdramsim_happy="no"])
 
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"
 
   AS_IF([test ! -z "$with_hbmdramsim" -a "$with_hbmdramsim" != "yes"],
     [HBMDRAMSIM_CPPFLAGS="-I$with_hbmdramsim -DHAVE_HBMDRAMSIM"
-     CPPFLAGS="$HBMDRAMSIM_CPPFLAGS $CPPFLAGS"
+     CPPFLAGS="$HBMDRAMSIM_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
+     CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
      HBMDRAMSIM_LDFLAGS="-L$with_hbmdramsim"
      HBMDRAMSIM_LIBDIR="$with_hbmdramsim"
-     LDFLAGS="$HBMDRAMSIM_LDFLAGS $LDFLAGS"],
+     LDFLAGS="$HBMDRAMSIM_LDFLAGS $AM_LDFLAGS $LDFLAGS"],
     [HBMDRAMSIM_CPPFLAGS=
      HBMDRAMSIM_LDFLAGS=
      HBMDRAMSIM_LIBDIR=])
@@ -27,6 +29,7 @@ AC_DEFUN([SST_CHECK_HBMDRAMSIM], [
     [HBMDRAMSIM_LIB="-lhbmdramsim"], [sst_check_hbmdramsim_happy="no"])
   AC_LANG_POP(C++)
 
+  CXXFLAGS="$CXXFLAGS_saved"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
   LIBS="$LIBS_saved"

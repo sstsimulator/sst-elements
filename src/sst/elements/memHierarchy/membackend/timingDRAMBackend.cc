@@ -1,8 +1,8 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -17,12 +17,14 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
+/* Debug macros included from util.h */
+
 bool TimingDRAM::m_printConfig = true;
 bool TimingDRAM::Channel::m_printConfig = true;
 bool TimingDRAM::Rank::m_printConfig = true;
 bool TimingDRAM::Bank::m_printConfig = true;
 
-TimingDRAM::TimingDRAM(ComponentId_t id, Params &params) : SimpleMemBackend(id, params), m_cycle(0) { 
+TimingDRAM::TimingDRAM(ComponentId_t id, Params &params) : SimpleMemBackend(id, params), m_cycle(0) {
 
     int dram_id = params.find<int>("id", -1);
     assert( dram_id != -1 );
@@ -37,7 +39,7 @@ TimingDRAM::TimingDRAM(ComponentId_t id, Params &params) : SimpleMemBackend(id, 
     std::string addrMapper = params.find<std::string>("addrMapper","memHierarchy.simpleAddrMapper");
 
     Params tmpParams = params.get_scoped_params("addrMapper" );
-    m_mapper = dynamic_cast<AddrMapper*>(loadModule( addrMapper, tmpParams ) );
+    m_mapper = loadModule<AddrMapper>( addrMapper, tmpParams );
 
     if ( ! m_mapper ) {
         output->fatal(CALL_INFO, -1, "Invalid param(%s): addrMapper,  '%s'.\n",
@@ -121,7 +123,7 @@ TimingDRAM::Channel::Channel( ComponentId_t id, std::function<void(ReqId)> handl
 
 void TimingDRAM::Channel::clock( SimTime_t cycle )
 {
-    if (is_debug)
+    if (mem_h_is_debug)
         m_output->verbosePrefix(prefix(),CALL_INFO, 5, DBG_MASK, "cycle %" PRIu64 "\n",cycle);
 
     std::list<Cmd*>::iterator iter = m_issuedCmds.begin();
@@ -131,7 +133,7 @@ void TimingDRAM::Channel::clock( SimTime_t cycle )
         if ( (*iter)->isDone(cycle) ) {
             Cmd* cmd = (*iter);
 
-            if (is_debug)
+            if (mem_h_is_debug)
                 m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "cycle=%" PRIu64 " retire %s for rank=%d bank=%d row=%d\n",
                         cycle, cmd->getName().c_str(), cmd->getRank(), cmd->getBank(), cmd->getRow());
 
@@ -148,7 +150,7 @@ void TimingDRAM::Channel::clock( SimTime_t cycle )
 
     /* Return a response if possible */
     if ( ! m_retiredTrans.empty() ) {
-        if (is_debug)
+        if (mem_h_is_debug)
             m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK, "send response: reqId=%" PRIu64 " bank=%d addr=%#" PRIx64 ", createTime=%" PRIu64 "\n",
                     m_retiredTrans.front()->id, m_retiredTrans.front()->bank, m_retiredTrans.front()->addr, m_retiredTrans.front()->createTime);
 
@@ -162,7 +164,7 @@ void TimingDRAM::Channel::clock( SimTime_t cycle )
     /* For each rank, check if there's a command to issue */
     Cmd* cmd = popCmd( cycle, m_dataBusAvailCycle );
     if ( cmd ) {
-        if (is_debug)
+        if (mem_h_is_debug)
             m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "cycle=%" PRIu64 " issue %s for rank=%d bank=%d row=%d\n",
                     cycle, cmd->getName().c_str(), cmd->getRank(), cmd->getBank(), cmd->getRow());
 
@@ -186,7 +188,7 @@ TimingDRAM::Cmd* TimingDRAM::Channel::popCmd( SimTime_t cycle, SimTime_t dataBus
                 if ( current == m_nextRankUp ) {
                     ++m_nextRankUp;
                     m_nextRankUp %= m_ranks.size();
-                    if (is_debug)
+                    if (mem_h_is_debug)
                         m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK, "rank %d next up\n",m_nextRankUp);
                 }
 
@@ -230,7 +232,7 @@ TimingDRAM::Rank::Rank( ComponentId_t id, Params& params, unsigned mc, unsigned 
 
 TimingDRAM::Cmd* TimingDRAM::Rank::popCmd( SimTime_t cycle, SimTime_t dataBusAvailCycle )
 {
-    if (is_debug)
+    if (mem_h_is_debug)
         m_output->verbosePrefix(prefix(),CALL_INFO, 5, DBG_MASK, "\n" );
 
     unsigned current = m_nextBankUp;
@@ -245,7 +247,7 @@ TimingDRAM::Cmd* TimingDRAM::Rank::popCmd( SimTime_t cycle, SimTime_t dataBusAva
                 if ( current == m_nextBankUp ) {
                     ++m_nextBankUp;
                     m_nextBankUp %= m_banks.size();
-                    if (is_debug)
+                    if (mem_h_is_debug)
                         m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK, "rank %d next up\n",m_nextBankUp);
                 }
                 return cmd;
@@ -300,14 +302,14 @@ TimingDRAM::Bank::Bank( ComponentId_t id, Params& params, unsigned mc, unsigned 
 
 TimingDRAM::Cmd* TimingDRAM::Bank::popCmd( SimTime_t cycle, SimTime_t dataBusAvailCycle )
 {
-    if (is_debug)
+    if (mem_h_is_debug)
         m_output->verbosePrefix(prefix(),CALL_INFO, 4, DBG_MASK, "numCmds=%zu\n", m_cmdQ.size() );
     update( cycle );
 
     Cmd* cmd = nullptr;
     if ( ! m_cmdQ.empty() && m_cmdQ.front()->canIssue( cycle, dataBusAvailCycle ) ) {
         cmd = m_cmdQ.front();
-        if (is_debug)
+        if (mem_h_is_debug)
             m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "%s row=%d\n",cmd->getName().c_str(), cmd->getRow() );
         m_cmdQ.pop_front();
     }
@@ -329,7 +331,7 @@ void TimingDRAM::Bank::update( SimTime_t current )
         return;
     }
 
-    if (is_debug)
+    if (mem_h_is_debug)
         m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "addr=%#" PRIx64 " current row=%d trans row=%d, time=%" PRIu64 "\n",
                 trans->addr, m_row, trans->row, trans->createTime );
 

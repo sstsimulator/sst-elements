@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -16,7 +16,7 @@
 #include "hr_router/hr_router.h"
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
+#include <sst/core/output.h>
 #include <sst/core/timeLord.h>
 #include <sst/core/unitAlgebra.h>
 
@@ -121,7 +121,7 @@ hr_router::~hr_router()
 hr_router::hr_router(ComponentId_t cid, Params& params) :
     Router(cid),
     num_vcs(-1),
-    output(Simulation::getSimulation()->getSimulationOutput())
+    output(getSimulationOutput())
 {
 
     // Get the options for the router
@@ -283,7 +283,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     arb =
         loadAnonymousSubComponent<XbarArbitration>(xbar_arb, "XbarArb", 0, ComponentInfo::INSERT_STATS, empty_params);
 
-    my_clock_handler = new Clock::Handler<hr_router>(this,&hr_router::clock_handler);
+    my_clock_handler = new Clock::Handler2<hr_router,&hr_router::clock_handler>(this);
     xbar_tc = registerClock( xbar_clock, my_clock_handler);
     num_routers++;
 
@@ -465,13 +465,13 @@ hr_router::init(unsigned int phase)
     for ( int i = 0; i < num_ports; i++ ) {
         ports[i]->init(phase);
         Event *ev = NULL;
-        while ( (ev = ports[i]->recvInitData()) != NULL ) {
+        while ( (ev = ports[i]->recvUntimedData()) != NULL ) {
             internal_router_event *ire = dynamic_cast<internal_router_event*>(ev);
             if ( ire == NULL ) {
-                ire = topo->process_InitData_input(static_cast<RtrEvent*>(ev));
+                ire = topo->process_UntimedData_input(static_cast<RtrEvent*>(ev));
             }
             std::vector<int> outPorts;
-            topo->routeInitData(i, ire, outPorts);
+            topo->routeUntimedData(i, ire, outPorts);
             for ( std::vector<int>::iterator j = outPorts.begin() ; j != outPorts.end() ; ++j ) {
                 /* Little tricky here.  Need to clone both the event, and the
                  * encapsulated event.
@@ -515,13 +515,13 @@ hr_router::complete(unsigned int phase)
     for ( int i = 0; i < num_ports; i++ ) {
         ports[i]->complete(phase);
         Event *ev = NULL;
-        while ( (ev = ports[i]->recvInitData()) != NULL ) {
+        while ( (ev = ports[i]->recvUntimedData()) != NULL ) {
             internal_router_event *ire = dynamic_cast<internal_router_event*>(ev);
             if ( ire == NULL ) {
-                ire = topo->process_InitData_input(static_cast<RtrEvent*>(ev));
+                ire = topo->process_UntimedData_input(static_cast<RtrEvent*>(ev));
             }
             std::vector<int> outPorts;
-            topo->routeInitData(i, ire, outPorts);
+            topo->routeUntimedData(i, ire, outPorts);
             for ( std::vector<int>::iterator j = outPorts.begin() ; j != outPorts.end() ; ++j ) {
                 /* Little tricky here.  Need to clone both the event, and the
                  * encapsulated event.

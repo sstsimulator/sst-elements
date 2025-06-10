@@ -1,15 +1,15 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -41,7 +41,7 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & type;
+        SST_SER(type);
     }
 
 protected:
@@ -96,17 +96,17 @@ public:
     inline int getSizeInFlits() { return size_in_flits; }
 
     virtual void print(const std::string& header, Output &out) const  override {
-        out.output("%s RtrEvent to be delivered at %" PRIu64 " with priority %d. src = %lld, dest = %lld\n",
+        out.output("%s RtrEvent to be delivered at %" PRI_SIMTIME " with priority %d. src = %" PRI_NID ", dest = %" PRI_NID "\n",
                    header.c_str(), getDeliveryTime(), getPriority(), request->src, request->dest);
         if ( request->inspectPayload() != NULL) request->inspectPayload()->print("  -> ", out);
     }
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseNocEvent::serialize_order(ser);
-        ser & request;
-        ser & vn;
-        ser & size_in_flits;
-        ser & injectionTime;
+        SST_SER(request);
+        SST_SER(vn);
+        SST_SER(size_in_flits);
+        SST_SER(injectionTime);
     }
 
 private:
@@ -139,8 +139,8 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseNocEvent::serialize_order(ser);
-        ser & vn;
-        ser & credits;
+        SST_SER(vn);
+        SST_SER(credits);
     }
 
 private:
@@ -178,9 +178,9 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseNocEvent::serialize_order(ser);
-        ser & command;
-        ser & int_value;
-        ser & ua_value;
+        SST_SER(command);
+        SST_SER(int_value);
+        SST_SER(ua_value);
     }
 
 
@@ -248,11 +248,11 @@ private:
 
 //     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
 //         BaseNocEvent::serialize_order(ser);
-//         ser & next_port;
-//         ser & next_vc;
-//         ser & vc;
-//         ser & credit_return_vc;
-//         ser & encap_ev;
+//         SST_SER(next_port);
+//         SST_SER(next_vc);
+//         SST_SER(vc);
+//         SST_SER(credit_return_vc);
+//         SST_SER(encap_ev);
 //     }
 
 // private:

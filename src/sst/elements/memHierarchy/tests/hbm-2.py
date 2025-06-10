@@ -1,8 +1,7 @@
-# Automatically generated SST Python input
 import sst
 
 # Define the simulation components
-comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
+comp_cpu = sst.Component("core", "memHierarchy.trivialCPU")
 comp_cpu.addParams({
       "do_write" : "1",
       "num_loadstore" : "1000",
@@ -44,7 +43,6 @@ sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
 
 # Define the simulation links
 link_cpu_cache_link = sst.Link("link_cpu_cache_link")
-link_cpu_cache_link.connect( (iface, "port", "1000ps"), (comp_l1cache, "high_network_0", "1000ps") )
+link_cpu_cache_link.connect( (iface, "lowlink", "1000ps"), (comp_l1cache, "highlink", "1000ps") )
 link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memory, "direct_link", "50ps") )
-# End of generated output.
+link_mem_bus_link.connect( (comp_l1cache, "lowlink", "50ps"), (comp_memory, "highlink", "50ps") )

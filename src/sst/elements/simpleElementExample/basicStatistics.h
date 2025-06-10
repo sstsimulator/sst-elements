@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -45,7 +45,7 @@ class basicStatistics : public SST::Component
 public:
 
 /*
- *  SST Registration macros register Components with the SST Core and 
+ *  SST Registration macros register Components with the SST Core and
  *  document their parameters, ports, etc.
  *  SST_ELI_REGISTER_COMPONENT is required, the documentation macros
  *  are only required if relevant
@@ -72,10 +72,10 @@ public:
 
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_PORTS( )
-    
+
     // Document the statistic that this component provides
     // { "statistic_name", "description", "units", enable_level }
-    SST_ELI_DOCUMENT_STATISTICS( 
+    SST_ELI_DOCUMENT_STATISTICS(
         {"UINT32_statistic", "Statistic that records unsigned 32-bit values", "unitless", 1},
         {"UINT32_statistic_duplicate", "Statistic that records unsigned 32-bit values. Multiple stats record values to this statistic.", "unitless", 1},
         {"UINT64_statistic", "Statistic that records unsigned 64-bit values", "unitless", 2},
@@ -91,9 +91,14 @@ public:
 
     // Constructor. Components receive a unique ID and the set of parameters that were assigned in the Python input.
     basicStatistics(SST::ComponentId_t id, SST::Params& params);
-    
+
     // Destructor
     ~basicStatistics();
+
+// Serialization
+    basicStatistics();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::simpleElementExample::basicStatistics)
 
 private:
     // Clock handler, called on each clock cycle
@@ -108,7 +113,7 @@ private:
     Statistic<uint64_t>* stat_U64;
     Statistic<int32_t>* stat_I32;
     Statistic<int64_t>* stat_I64;
-    
+
     // These statistics illustrate multiple references to the same statistic
     Statistic<uint32_t>* stat_U32;              // Reference to UINT32_statistic_duplicate
     Statistic<uint32_t>* stat_U32_duplicate;    // Another reference to UINT32_statistic_duplicate, but counts different values

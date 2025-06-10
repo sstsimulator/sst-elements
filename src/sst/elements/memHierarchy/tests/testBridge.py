@@ -52,7 +52,7 @@ def buildCPU(num, network):
         "memSize": mem_size - 1,
         "num_loadstore": niter,
         })
-    iface = cpu.setSubComponent("memory", "memHierarchy.memInterface")
+    iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 
     l1 = sst.Component("l1_%d"%num, "memHierarchy.Cache")
     l1.addParams({
@@ -64,14 +64,16 @@ def buildCPU(num, network):
         "associativity" : 4,
         "cache_line_size": 64,
         "L1": 1,
-        "network_bw" : netBW,
         })
+    l1_lowlink = l1.setSubComponent("lowlink", "memHierarchy.MemNIC")
+    l1_lowlink.addParam("network_bw", netBW)
+    l1_lowlink.addParam("group", 1)
 
-    cpuLink = sst.Link("cpu-cache-%d"%num)
-    cpuLink.connect( (iface, "port", "500ps"), (l1, "high_network_0", "500ps"))
+    highlink = sst.Link("cpu_cache_%d"%num)
+    highlink.connect( (iface, "lowlink", "500ps"), (l1, "highlink", "500ps"))
 
-    rtrLink = sst.Link("L1-net-%d"%num)
-    rtrLink.connect( (l1, "directory", "500ps"), (network.rtr, "port%d"%netPort, "500ps") )
+    rtrLink = sst.Link("L1_net_%d"%num)
+    rtrLink.connect( (l1_lowlink, "port", "500ps"), (network.rtr, "port%d"%netPort, "500ps") )
 
 
 def buildMem(num, network):
@@ -81,7 +83,9 @@ def buildMem(num, network):
     mem.addParams({
         "debug": debug,
         "debug_level" : debug_level,
-        "clock" : "1GHz"
+        "clock" : "1GHz",
+        "addr_range_start" : num * (mem_size // num_mem),
+        "addr_range_end" : (num+1) * (mem_size // num_mem) -1,
         })
     memback = mem.setSubComponent("backend", "memHierarchy.simpleMem")
     memback.addParams({
@@ -98,11 +102,14 @@ def buildMem(num, network):
         "addr_range_start" : num * (mem_size // num_mem),
         "addr_range_end" : (num+1) * (mem_size // num_mem) -1,
         })
+    dc_highlink = dc.setSubComponent("highlink", "memHierarchy.MemNIC")
+    dc_highlink.addParam("network_bw", netBW)
+    dc_highlink.addParam("group", 2)
 
-    memLink = sst.Link("MemDir_%d"%num)
-    memLink.connect( (dc, "memory", "500ps"), (mem, "direct_link", "500ps") )
+    lowlink = sst.Link("MemDir_%d"%num)
+    lowlink.connect( (dc, "lowlink", "500ps"), (mem, "highlink", "500ps") )
     dcLink = sst.Link("DCNet%d"%num)
-    dcLink.connect( (dc, "network", "500ps"), (network.rtr, "port%d"%netPort, "500ps") )
+    dcLink.connect( (dc_highlink, "port", "500ps"), (network.rtr, "port%d"%netPort, "500ps") )
 
 
 
@@ -110,17 +117,17 @@ def buildMem(num, network):
 def bridge(net0, net1):
     net0port = net0.getNextPort()
     net1port = net1.getNextPort()
-    name = "%s-%s"%(net0.name, net1.name)
-    bridge = sst.Component("Bridge:%s"%name, "merlin.Bridge")
+    name = "%s_%s"%(net0.name, net1.name)
+    bridge = sst.Component("Bridge.%s"%name, "merlin.Bridge")
     bridge.addParams({
         "translator": "memHierarchy.MemNetBridge",
         "debug": debug,
         "debug_level" : debug_level,
         "network_bw" : netBW,
     })
-    link = sst.Link("B0-%s"%name)
+    link = sst.Link("B0_%s"%name)
     link.connect( (bridge, "network0", "500ps"), (net0.rtr, "port%d"%net0port, "500ps") )
-    link = sst.Link("B1-%s"%name)
+    link = sst.Link("B1_%s"%name)
     link.connect( (bridge, "network1", "500ps"), (net1.rtr, "port%d"%net1port, "500ps") )
 
 

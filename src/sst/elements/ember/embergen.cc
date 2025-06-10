@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -40,7 +40,7 @@ EmberGenerator::EmberGenerator( ComponentId_t id, Params& params, std::string na
     Params distribParams = params.get_scoped_params("distribParams");
     std::string distribModule = params.find<std::string>("distribModule", "ember.ConstDistrib");
 
-	m_computeDistrib = dynamic_cast<EmberComputeDistribution*>( loadModule(distribModule, distribParams) );
+	m_computeDistrib = loadModule<EmberComputeDistribution>(distribModule, distribParams);
 
     if(NULL == m_computeDistrib) {
         std::cerr << "Error: Unable to load compute distribution: \'"
@@ -78,7 +78,7 @@ void EmberGenerator::fatal(uint32_t line, const char* file, const char* func,
 	va_start(arg, format);
 	vsnprintf( buf, 500, format, arg);
     va_end(arg);
-	m_output->fatal( line, file, func, exit_code, buf );
+	m_output->fatal( line, file, func, exit_code, "%s", buf );
 }
 
 void EmberGenerator::output(const char* format, ...) const
@@ -88,7 +88,7 @@ void EmberGenerator::output(const char* format, ...) const
 	va_start(arg, format);
 	vsnprintf( buf, 500, format, arg);
     va_end(arg);
-	m_output->output( buf );
+	m_output->output( "%s", buf );
 }
 
 void EmberGenerator::verbose(uint32_t line, const char* file, const char* func,
@@ -101,7 +101,7 @@ void EmberGenerator::verbose(uint32_t line, const char* file, const char* func,
 	vsnprintf( buf, 500, format, arg);
     va_end(arg);
 	m_output->verbosePrefix( m_verbosePrefix.str().c_str(), line, file, func,
-											output_level, output_bits, buf );
+											output_level, output_bits, "%s", buf );
 }
 
 #if defined(__clang__)

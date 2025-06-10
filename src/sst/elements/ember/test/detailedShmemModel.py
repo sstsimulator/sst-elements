@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2021 NTESS. Under the terms
+# Copyright 2009-2025 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2021, NTESS
+# Copyright (c) 2009-2025, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
 # See the file CONTRIBUTORS.TXT in the top level directory
-# the distribution for more information.
+# of the distribution for more information.
 #
 # This file is part of the SST software package. For license
 # information, see the LICENSE file in the top level directory of the
@@ -42,12 +42,12 @@ class BasicDetailedModel(DetailedModel):
 
             link = sst.Link( name + "cpu_l1_link")
             link.setNoCut();
-            link.connect( ( cpu, "cache_link", "100ps" ) , (l1,"high_network_0","1000ps") )
+            link.connect( ( cpu, "cache_link", "100ps" ) , (l1,"highlink","1000ps") )
 
             link = sst.Link( name + "l1_bus_link")
             link.setNoCut();
-            portName =  "high_network_" + str(offset+i)
-            link.connect( ( l1, "low_network_0", "50ps" ) , ( bus, portName, "1000ps" ) )
+            portName =  "highlink" + str(offset+i)
+            link.connect( ( l1, "lowlink", "50ps" ) , ( bus, portName, "1000ps" ) )
 
             link = sst.Link( name + "src_link" )
             link.setNoCut();
@@ -65,12 +65,12 @@ class BasicDetailedModel(DetailedModel):
 
         link = sst.Link( name + "l1_bus_link")
         link.setNoCut();
-        link.connect( ( l1, "low_network_0", "50ps" ) , (bus,"high_network_0","1000ps") )
+        link.connect( ( l1, "lowlink0", "50ps" ) , (bus,"highlink0","1000ps") )
 
         link = sst.Link( name + "cpu_l1_link")
         link.setNoCut();
 
-        l1.addLink( link, "high_network_0", "1000ps" );
+        l1.addLink( link, "highlink", "1000ps" );
 
         return link
 
@@ -94,7 +94,7 @@ class BasicDetailedModel(DetailedModel):
 
         link = sst.Link( prefix + "bus_l2_link")
         link.setNoCut();
-        link.connect( (bus, "low_network_0", "50ps"), (l2, "high_network_0", "50ps") )
+        link.connect( (bus, "lowlink0", "50ps"), (l2, "highlink", "50ps") )
 
         memory = sst.Component( prefix + "memory", "memHierarchy.MemController")
         memory.addParams( self.params['memory_params'])
@@ -132,7 +132,7 @@ class BasicDetailedModel(DetailedModel):
 
         link = sst.Link( prefix + "l2_mem_link")
         link.setNoCut();
-        link.connect( (l2, "low_network_0", "50ps"), (memory, "direct_link", "50ps") )
+        link.connect( (l2, "lowlink", "50ps"), (memory, "highlink", "50ps") )
 
         numThreads = int(self.params['numThreads'])
         for i in range(numCores):

@@ -1,15 +1,15 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -48,13 +48,14 @@ class LinkControl : public SST::Interfaces::SimpleNetwork {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         LinkControl,
         "merlin",
         "linkcontrol",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Link Control module for building Merlin-enabled NICs",
-        SST::Interfaces::SimpleNetwork)
+        SST::Interfaces::SimpleNetwork
+    )
 
     SST_ELI_DOCUMENT_PARAMS(
         {"port_name",          "Port name to connect to.  Only used when loaded anonymously",""},
@@ -63,7 +64,7 @@ public:
         {"output_buf_size",    "Size of output buffers specified in b or B (can include SI prefix)."},
         // {"network_inspectors", "Comma separated list of network inspectors to put on output ports.", ""},
         {"job_id",             "ID of the job this enpoint is part of.", "" },
-        {"Job_size",           "Number of nodes in the job this endpoint is part of.",""},
+        {"job_size",           "Number of nodes in the job this endpoint is part of.",""},
         {"logical_nid",        "My logical NID", "" },
         {"use_nid_remap",      "If true, will remap logical nids in job to physical ids", "false" },
         {"nid_map_name",       "Base name of shared region where my NID map will be located.  If empty, no NID map will be used.",""},
@@ -240,9 +241,6 @@ public:
     // Returns true if there is an event in the input buffer and false
     // otherwise.
     bool requestToReceive( int vn ) { return ! input_queues[vn].empty(); }
-
-    void sendInitData(SST::Interfaces::SimpleNetwork::Request* ev);
-    SST::Interfaces::SimpleNetwork::Request* recvInitData();
 
     void sendUntimedData(SST::Interfaces::SimpleNetwork::Request* ev);
     SST::Interfaces::SimpleNetwork::Request* recvUntimedData();

@@ -2,7 +2,6 @@ import sst
 
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
-sst.setProgramOption("stopAtCycle", "0 ns")
 
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
@@ -58,18 +57,18 @@ memory.addParams({
       "capacity_per_device" : "4",
       "xbar_depth" : "128",
       "max_req_size" : "128",
-      "trace-banks" : "1",
-      "trace-queue" : "1",
-      "trace-cmds" : "1",
-      "trace-latency" : "1",
-      "trace-stalls" : "1"
+      "trace_banks" : "1",
+      "trace_queue" : "1",
+      "trace_cmds" : "1",
+      "trace_latency" : "1",
+      "trace_stalls" : "1"
 })
 
 
 # Define the simulation links
 link_cpu_cache_link = sst.Link("link_cpu_cache_link")
-link_cpu_cache_link.connect( (comp_cpu, "cache_link", "1000ps"), (comp_l1cache, "high_network_0", "1000ps") )
+link_cpu_cache_link.connect( (comp_cpu, "cache_link", "1000ps"), (comp_l1cache, "highlink", "1000ps") )
 link_cpu_cache_link.setNoCut()
 
 link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memctrl, "direct_link", "50ps") )
+link_mem_bus_link.connect( (comp_l1cache, "lowlink", "50ps"), (comp_memctrl, "highlink", "50ps") )

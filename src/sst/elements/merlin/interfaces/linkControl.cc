@@ -1,13 +1,13 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2021, NTESS
+// Copyright (c) 2013-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -18,8 +18,7 @@
 
 #include "linkControl.h"
 
-#include <sst/core/simulation.h>
-#include <sst/core/timeLord.h>
+#include <sst/core/output.h>
 
 #include "merlin.h"
 
@@ -39,7 +38,7 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     idle_start(0), is_idle(true),
     receiveFunctor(nullptr), sendFunctor(nullptr),
     network_initialized(false),
-    output(Simulation::getSimulation()->getSimulationOutput()),
+    output(getSimulationOutput()),
     sent(0)
 {
     // Get the link bandwidth
@@ -76,13 +75,13 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
         port_name = params.find<std::string>("port_name");
     }
 
-    rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
+    rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler2<LinkControl,&LinkControl::handle_input>(this));
 
     output_timing = configureSelfLink(port_name + "_output_timing", "1GHz",
-            new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
+            new Event::Handler2<LinkControl,&LinkControl::handle_output>(this));
 
-    congestion_timing = configureSelfLink(port_name = "_congestion_timing", Simulation::getTimeLord()->getTimeBase().toString(),
-            new Event::Handler<LinkControl>(this,&LinkControl::handle_congestion));
+    congestion_timing = configureSelfLink(port_name = "_congestion_timing", getCoreTimeBase().toString(),
+            new Event::Handler2<LinkControl,&LinkControl::handle_congestion>(this));
 
     // Input and output buffers.  Not all of them can be set up now.
     // Only those that are sized based on req_vns can be intialized
@@ -122,8 +121,6 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
             if ( logical_nid == -1 ) {
                 merlin_abort.fatal(CALL_INFO,1,"LinkControl: logical_nid must be set\n");
             }
-            // nid_map_shm = Simulation::getSharedRegionManager()->
-            //     getGlobalSharedRegion(nid_map_name, job_size * sizeof(nid_t), new SharedRegionMerger());
             nid_map.initialize(nid_map_name, job_size * sizeof(nid_t));
         }
     }
@@ -231,7 +228,7 @@ void LinkControl::init(unsigned int phase)
 
         // Need to reset the time base of the output link
         UnitAlgebra link_clock = link_bw / flit_size_ua;
-        TimeConverter* tc = getTimeConverter(link_clock);
+        TimeConverter tc = getTimeConverter(link_clock);
         output_timing->setDefaultTimeBase(tc);
 
         // Initialize links
@@ -370,7 +367,7 @@ void LinkControl::init(unsigned int phase)
         break;
     }
     // Need to start the timer for links that never send data
-    idle_start = Simulation::getSimulation()->getCurrentSimCycle();
+    idle_start = getCurrentSimCycle();
     is_idle = true;
 }
 
@@ -401,7 +398,7 @@ void LinkControl::complete(unsigned int phase)
 void LinkControl::finish(void)
 {
     if (is_idle) {
-        idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
+        idle_time->addData(getCurrentSimCycle() - idle_start);
         is_idle = false;
     }
 
@@ -446,7 +443,11 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
     int flits = ev->getSizeInFlits();
 
     // Check to see if there are enough credits to send
-    if ( out_handle.credits < flits ) return false;
+    if ( out_handle.credits < flits ) {
+        ev->takeRequest();
+        delete ev;
+        return false;
+    }
 
     // Update the credits
     out_handle.credits -= flits;
@@ -512,7 +513,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
 
 void LinkControl::sendUntimedData(SST::Interfaces::SimpleNetwork::Request* req)
 {
-    if ( use_nid_map ) {
+    if ( use_nid_map && req->dest != SimpleNetwork::INIT_BROADCAST_ADDR ) {
         req->dest = nid_map[req->dest];
     }
     rtr_link->sendUntimedData(new RtrEvent(req,id,0));
@@ -529,14 +530,6 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recvUntimedData()
     } else {
         return nullptr;
     }
-}
-
-void LinkControl::sendInitData(SST::Interfaces::SimpleNetwork::Request* req) {
-    sendUntimedData(req);
-}
-
-SST::Interfaces::SimpleNetwork::Request* LinkControl::recvInitData() {
-    return recvUntimedData();
 }
 
 
@@ -559,7 +552,7 @@ void LinkControl::handle_input(Event* ev)
             // If we were stalled waiting for credits and we had
             // packets, we need to add stall time
             if ( have_packets) {
-                output_port_stalls->addData(Simulation::getSimulation()->getCurrentSimCycle() - start_block);
+                output_port_stalls->addData(getCurrentSimCycle() - start_block);
             }
         }
     }
@@ -613,7 +606,7 @@ void LinkControl::handle_input(Event* ev)
 
         input_queues[vn].push(event);
         if (is_idle) {
-            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
+            idle_time->addData(getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
         if ( event->getTraceType() == SimpleNetwork::Request::FULL ) {
@@ -735,7 +728,7 @@ void LinkControl::handle_output(Event* ev)
         router_credits[output_queues[vn_to_send].vn] -= size;
 
 		if (is_idle){
-            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
+            idle_time->addData(getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
 
@@ -766,16 +759,16 @@ void LinkControl::handle_output(Event* ev)
         // we either get something new in the output buffers or
         // receive credits back from the router.  However, we need
         // to know that we got to this state.
-        start_block = Simulation::getSimulation()->getCurrentSimCycle();
+        start_block = getCurrentSimCycle();
         waiting = true;
         // Begin counting the amount of time this port was idle
         if (!have_packets && !is_idle) {
-            idle_start = Simulation::getSimulation()->getCurrentSimCycle();
+            idle_start = getCurrentSimCycle();
             is_idle = true;
         }
 		// Should be in a stalled state rather than idle
 		if (have_packets && is_idle){
-            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
+            idle_time->addData(getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
         if ( block_throttle != 0 ) {

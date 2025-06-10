@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -21,6 +21,7 @@
 #include <sst/core/subcomponent.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
+#include <sst/core/interfaces/stdMem.h>
 
 #include <queue>
 
@@ -179,12 +180,13 @@ public:
 		const uint64_t cLength,
 		const ReqOperation cOpType) :
 		GeneratorRequest(),
-		addr(cAddr), length(cLength), op(cOpType) {}
+		addr(cAddr), length(cLength), op(cOpType)
+	{ assert (op == READ || op == WRITE); }
+
 	~MemoryOpRequest() {}
 	ReqOperation getOperation() const { return op; }
 	bool isRead() const { return op == READ; }
 	bool isWrite() const { return op == WRITE; }
-        bool isCustom() const { return op == CUSTOM; }
 	uint64_t getAddress() const { return addr; }
 	uint64_t getLength() const { return length; }
 
@@ -194,19 +196,17 @@ protected:
 	ReqOperation op;
 };
 
-class CustomOpRequest : public MemoryOpRequest {
+class CustomOpRequest : public GeneratorRequest {
 public:
-    CustomOpRequest(const uint64_t cAddr,
-            const uint64_t cLength,
-            const uint32_t cOpcode) :
-        MemoryOpRequest(cAddr, cLength, CUSTOM) {
-            opcode = cOpcode;
-        }
+    CustomOpRequest(Interfaces::StandardMem::CustomData* cData) :
+        GeneratorRequest(), data(cData) {}
     ~CustomOpRequest() {}
-    uint32_t getOpcode() const { return opcode; }
+
+    ReqOperation getOperation() const { return CUSTOM; }
+    Interfaces::StandardMem::CustomData* getPayload() { return data; }
 
 protected:
-    uint32_t opcode;
+    Interfaces::StandardMem::CustomData* data;
 };
 
 class FenceOpRequest : public GeneratorRequest {

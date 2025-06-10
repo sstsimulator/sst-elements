@@ -1,13 +1,13 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2021, NTESS
+// Copyright (c) 2013-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -43,7 +43,7 @@ VirtNic::VirtNic( ComponentId_t id, Params& params ) :
     m_latPerSend_ns = params.find<int>("latPerSend_ns",2);
 
     m_toNicLink = configureLink( params.find<std::string>("portName","nic"),
-			"1 ns", new Event::Handler<VirtNic>(this,&VirtNic::handleEvent) );
+			"1 ns", new Event::Handler2<VirtNic,&VirtNic::handleEvent>(this) );
 
     assert( m_toNicLink );
 }
@@ -62,7 +62,7 @@ void VirtNic::init( unsigned int phase )
 
     if ( 1 == phase ) {
         NicInitEvent* ev =
-                        static_cast<NicInitEvent*>(m_toNicLink->recvInitData());
+                        static_cast<NicInitEvent*>(m_toNicLink->recvUntimedData());
         assert( ev );
         m_realNicId = ev->node;
         m_coreId = ev->vNic;

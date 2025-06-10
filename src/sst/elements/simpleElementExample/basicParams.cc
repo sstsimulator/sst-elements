@@ -1,20 +1,20 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
 
-// This include is ***REQUIRED*** 
+// This include is ***REQUIRED***
 // for ALL SST implementation files
 #include "sst_config.h"
 
@@ -24,7 +24,7 @@
 using namespace SST;
 using namespace SST::simpleElementExample;
 
-/* 
+/*
  * During construction the basicParams component should prepare for simulation
  * - Read parameters
  * - Register clocks
@@ -60,7 +60,7 @@ basicParams::basicParams(ComponentId_t id, Params& params) : Component(id) {
     // Example 2: discover whether a parameter was passed in from the python or not
     bool found;
     int param4 = params.find<int>("int_param", 0, found);
-    
+
     if (!found) {
         out->fatal(CALL_INFO, -1, "Uh oh, in '%s', int_param is a required parameter, but it wasn't found in the parameter set.\n",
                 getName().c_str());
@@ -79,7 +79,7 @@ basicParams::basicParams(ComponentId_t id, Params& params) : Component(id) {
     // The formatting is based on Python lists, see params.h/.cc in sst-core for a detailed description
     std::vector<int> intArray;
     params.find_array<int>("array_param", intArray);
-    
+
     out->output("Read an array from array_param. Elements are: \n");
     for (std::vector<int>::iterator it = intArray.begin(); it != intArray.end(); it++) {
         out->output("%d, ", *it);
@@ -91,7 +91,7 @@ basicParams::basicParams(ComponentId_t id, Params& params) : Component(id) {
     primaryComponentDoNotEndSim();
 
     // Register a clock
-    registerClock("1MHz", new Clock::Handler<basicParams>(this, &basicParams::tick));
+    registerClock("1MHz", new Clock::Handler2<basicParams, &basicParams::tick>(this));
 
 }
 
@@ -105,7 +105,7 @@ basicParams::~basicParams()
 }
 
 
-/* 
+/*
  * This example is about parameters so the clock doesn't do anything useful
  * Just exits after 20 cycles
  */
@@ -115,7 +115,20 @@ bool basicParams::tick( Cycle_t cycles)
         primaryComponentOKToEndSim();
         return true;
     }
-    
+
     return false;
 }
 
+/*
+ * Default constructor
+*/
+basicParams::basicParams() : Component() {}
+
+/*
+ * Serialization function
+*/
+void basicParams::serialize_order(SST::Core::Serialization::serializer& ser) {
+    Component::serialize_order(ser);
+
+    SST_SER(out);
+}

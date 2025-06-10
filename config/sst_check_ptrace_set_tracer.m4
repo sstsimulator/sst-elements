@@ -2,6 +2,7 @@ AC_DEFUN([SST_CHECK_PTRACE_SET_TRACER],
 [
   sst_check_ptrace_set_tracer_happy="yes"
 
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
 
@@ -15,9 +16,10 @@ AC_DEFUN([SST_CHECK_PTRACE_SET_TRACER],
         ]])],
         [],
         [sst_check_ptrace_set_tracer_happy="no"])
-  
+
   AC_LANG_POP([C++])
 
+  CXXFLAGS="$CXXFLAGS_saved"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
 

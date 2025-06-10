@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -95,7 +95,7 @@ registerCompareValues(VanadisRegisterCompareType compareType, VanadisRegisterFil
                         (compare_result ? "true" : "false"));
     } break;
     default: {
-        output->verbose(CALL_INFO, 16, 0, "-----> Unknown comparison operation at instruction: 0x%llx\n",
+        output->verbose(CALL_INFO, 16, 0, "-----> Unknown comparison operation at instruction: 0x%" PRI_ADDR "\n",
                         ins->getInstructionAddress());
         ins->flagError();
     } break;
@@ -145,7 +145,7 @@ registerCompareValues(VanadisRegisterFile* regFile, VanadisInstruction* ins,
                         (compare_result ? "true" : "false"));
     } break;
     default: {
-        output->verbose(CALL_INFO, 16, 0, "-----> Unknown comparison operation at instruction: 0x%llx\n",
+        output->verbose(CALL_INFO, 16, 0, "-----> Unknown comparison operation at instruction: 0x%" PRI_ADDR "\n",
                         ins->getInstructionAddress());
         ins->flagError();
     } break;
@@ -191,7 +191,6 @@ template <VanadisRegisterCompareType compareType, typename T>
 bool
 registerCompareImm(VanadisRegisterFile* regFile, VanadisInstruction* ins,
                    SST::Output* output, uint16_t left, T right_value) {
-
     const T left_value = regFile->getIntReg<T>(left);
 
     return registerCompareValues<compareType, T>(regFile, ins, output, left_value, right_value);

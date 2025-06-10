@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 from mhlib import componentlist
 
@@ -8,18 +7,25 @@ DEBUG_MEM = 0
 verbose = 2
 
 # Define the simulation components
-cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
+cpu = sst.Component("core", "memHierarchy.standardCPU")
 cpu.addParams({
-      "memSize" : "0x1000",
-      "num_loadstore" : "1000",
-      "commFreq" : "100",
-      "do_write" : "1"
+    "memFreq" : 2,
+    "memSize" : "1KiB",
+    "verbose" : 0,
+    "clock" : "3.5GHz",
+    "rngseed" : 111,
+    "maxOutstanding" : 16,
+    "opCount" : 2500,
+    "reqsPerIssue" : 3,
+    "write_freq" : 36, # 36% writes
+    "read_freq" : 60,  # 60% reads
+    "llsc_freq" : 4,   # 4% LLSC
 })
-iface = cpu.setSubComponent("memory", "memHierarchy.memInterface")
-l1cache = sst.Component("l1cache", "memHierarchy.Cache")
+iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
+l1cache = sst.Component("l1cache.msi", "memHierarchy.Cache")
 l1cache.addParams({
     "access_latency_cycles" : "4",
-    "cache_frequency" : "2 Ghz",
+    "cache_frequency" : "3Ghz",
     "replacement_policy" : "lru",
     "coherence_protocol" : "MSI",
     "associativity" : "4",
@@ -30,7 +36,7 @@ l1cache.addParams({
     "debug" : DEBUG_L1,
     "debug_level" : "10"
 })
-l2cache = sst.Component("l2cache", "memHierarchy.Cache")
+l2cache = sst.Component("l2cache.msi.inclus", "memHierarchy.Cache")
 l2cache.addParams({
     "access_latency_cycles" : "10",
     "cache_frequency" : "2 Ghz",
@@ -52,7 +58,7 @@ memctrl.addParams({
     "debug_level" : "10",
     "addr_range_end" : 512*1024*1024-1,
 })
-    
+
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
 memory.addParams({
     "access_time" : "100 ns",
@@ -68,9 +74,8 @@ for a in componentlist:
 
 # Define the simulation links
 link_cpu_l1cache = sst.Link("link_cpu_l1cache_link")
-link_cpu_l1cache.connect( (iface, "port", "1000ps"), (l1cache, "high_network_0", "1000ps") )
+link_cpu_l1cache.connect( (iface, "lowlink", "1000ps"), (l1cache, "highlink", "1000ps") )
 link_l1cache_l2cache = sst.Link("link_l1cache_l2cache_link")
-link_l1cache_l2cache.connect( (l1cache, "low_network_0", "10000ps"), (l2cache, "high_network_0", "1000ps") )
-link_mem_bus = sst.Link("link_mem_bus_link")
-link_mem_bus.connect( (l2cache, "low_network_0", "10000ps"), (memctrl, "direct_link", "10000ps") )
-# End of generated output.
+link_l1cache_l2cache.connect( (l1cache, "lowlink", "10000ps"), (l2cache, "highlink", "1000ps") )
+link_mem_cache = sst.Link("link_mem_cache_link")
+link_mem_cache.connect( (l2cache, "lowlink", "10000ps"), (memctrl, "highlink", "10000ps") )

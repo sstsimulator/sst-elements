@@ -1,10 +1,49 @@
 import sst
 import os
+import argparse
 try:
     import ConfigParser
 except ImportError:
     import configparser as ConfigParser
 
+# Balar argument parser
+# Overwrite by env variables
+balarTestParser = argparse.ArgumentParser()
+balarTestParser.add_argument(
+    "-c", "--config", help="Specify balar memory system configuration file", required=True)
+balarTestParser.add_argument("-s", "--statfile",
+                    help="Statistics file output path", default="./stats.out")
+balarTestParser.add_argument("-l", "--statlevel",
+                    help="Statistics level", type=int, default=16)
+
+balarTestParser.add_argument(
+    "-x", "--cuda-binary", help="Balar CUDA binary path. Should be ignored if the path in __cudaRegisterFatBinary is correct, otherwise need to provide it.", default="")
+
+# Trace testcpu related configuration
+balarTestParser.add_argument(
+    "-t", "--trace", help="CUDA api calls trace file path", default="cuda_calls.trace")
+
+# Vanadis related configuration
+balarTestParser.add_argument(
+    "--vanadis-binary", help="Vanadis binary path", default="")
+balarTestParser.add_argument("--vanadis-args",
+                    help="Vanadis binary arguments", default="")
+
+# Verbosity config
+balarTestParser.add_argument("-v", "--balar-verbosity",
+                    help="Specify verbosity of balar", type=int, default=0)
+balarTestParser.add_argument("--dma-verbosity",
+                    help="Specify verbosity of dmaEngine", type=int, default=0)
+
+def get_opt(args, envname, argname:dict, env_default=""):
+    env = os.getenv(envname, env_default)
+    if not env:
+        return args.get(argname, "")
+    else:
+        return env
+
+
+# GPU Memory system config
 ddr4 = 2666 # Alternative is 2400
 ddr_clock = "1333MHz" if ddr4 == 2666 else "1200MHz"
 ddr_tCL = 19 if ddr4 == 2666 else 17
@@ -32,35 +71,7 @@ class Config:
         self.verbose = "verbose" in kwargs and kwargs["verbose"]
 
         self.default_link_latency = default_link_latency
-        self.clock = cp.get('CPU', 'clock')
-        self.cpu_cores = cp.getint('CPU', 'num_cores')
-        self.max_reqs_cycle = cp.get('CPU', 'max_reqs_cycle')
 
-        self.memory_clock = cp.get('Memory', 'clock')
-        self.memory_network_bandwidth = cp.get('Memory', 'network_bw')
-        self.memory_capacity = cp.get('Memory', 'capacity')
-        self.coherence_protocol = "MESI"
-
-        self.num_ring_stops = self.cpu_cores + 2
-
-        self.xbar_clk_freq = cp.get('Network', 'frequency')
-        self.xbar_queue_depth = cp.get('Network', 'buffer_depth')
-        self.xbar_input_slots = cp.get('Network', 'input_ports')
-        self.xbar_output_slots = cp.get('Network', 'output_ports')
-        self.ring_latency = cp.get('Network', 'latency')
-        self.ring_bandwidth = cp.get('Network', 'bandwidth')
-        self.ring_flit_size = cp.get('Network', 'flit_size')
-
-        self.app = cp.get('CPU', 'application')
-        self.coreConfigParams = dict(cp.items(self.app))
-        if self.app == 'miranda.STREAMBenchGenerator':
-            self.coreConfig = self._streamCoreConfig
-        elif 'ariel' in self.app:
-            self.coreConfig = self._arielCoreConfig
-        else:
-            raise Exception("Unknown application '%s'"%app)
-
-        self.executable = cp.get('ariel', 'executable')
         self.gpuclock = cp.get('GPU', 'clock')
         self.gpu_cores = cp.getint('GPU', 'gpu_cores')
         self.gpu_l2_parts = cp.getint('GPU', 'gpu_l2_parts')
@@ -89,98 +100,16 @@ class Config:
         self.gpu_xbar_linkbandwidth = cp.get('GPUNetwork', 'linkbandwidth')
         self.gpu_xbar_flit_size = cp.get('GPUNetwork', 'flit_size')
 
-
-    def getCoreConfig(self, core_id):
-        params = dict({
-                'clock': self.clock,
-                'verbose': int(self.verbose)
-                })
-        params.update(self.coreConfig(core_id))
-        return params
-
     def getGPUConfig(self):
         params = dict({
                 'clock': self.gpuclock,
-                'verbose': int(self.verbose),
-                'cpu_cores': int(self.cpu_cores),
+                # 'verbose': int(self.verbose),
                 'gpu_cores': int(self.gpu_cores),
                 'maxtranscore': 1,
                 # esnure that maxcachetrans is equal to GPU l1 mshr entries
                 'maxcachetrans': 2048,
                 })
         return params
-
-    def _arielCoreConfig(self, core_id):
-        params = dict({
-            "launcher"            : "%s/intel64/bin/pinbin"%(os.getenv("INTEL_PIN_DIRECTORY", "/dev/null")),
-            "maxcorequeue"        : 256,
-            "maxtranscore"        : 16,
-            "maxissuepercycle"    : self.max_reqs_cycle,
-            "pipetimeout"         : 0,
-            "appargcount"         : 0,
-            "memorylevels"        : 1,
-            "arielinterceptcalls" : 1,
-            "arielmode"           : 1,
-            "pagecount0"          : 1048576,
-            "corecount"           : self.cpu_cores,
-            "launchparamcount"    : 1,
-            "launchparam0"        : "-ifeellucky",
-            "defaultlevel"        : 0,
-            "verbose"             : 1,
-            })
-        params.update(self.coreConfigParams)
-        return params
-
-    def _streamCoreConfig(self, core_id):
-        streamN = int(self.coreConfigParams['total_streamn'])
-        params = dict()
-        params['max_reqs_cycle'] =  self.max_reqs_cycle
-        params['generator'] = 'miranda.STREAMBenchGenerator'
-        params['generatorParams.n'] = streamN / self.cpu_cores
-        params['generatorParams.start_a'] = ( (streamN * 32) / self.cpu_cores ) * core_id
-        params['generatorParams.start_b'] = ( (streamN * 32) / self.cpu_cores ) * core_id + (streamN * 32)
-        params['generatorParams.start_c'] = ( (streamN * 32) / self.cpu_cores ) * core_id + (2 * streamN * 32)
-        params['generatorParams.operandwidth'] = 32
-        params['generatorParams.verbose'] = int(self.verbose)
-        return params
-
-    def getL1Params(self):
-        return dict({
-            "prefetcher": "cassini.StridePrefetcher",
-            "prefetcher.reach": 4,
-            "prefetcher.detect_range" : 1,
-            "cache_frequency": self.clock,
-            "cache_size": "32KB",
-            "cache_line_size": 64,
-            "associativity": 8,
-            "access_latency_cycles": 4,
-            "L1": 1,
-            # Default params
-            # "cache_line_size": 64,
-            # "coherence_protocol": self.coherence_protocol,
-            # "replacement_policy": "lru",
-            # Not neccessary for simple cases:
-            #"maxRequestDelay" : "1000000",
-            })
-
-    def getL2Params(self):
-        return dict({
-            "prefetcher": "cassini.StridePrefetcher",
-            "prefetcher.reach": 16,
-            "prefetcher.detect_range" : 1,
-            "cache_frequency": self.clock,
-            "cache_size": "256KB",
-            "cache_line_size": 64,
-            "associativity": 8,
-            "access_latency_cycles": 6,
-            "mshr_num_entries" : 16,
-            "network_bw": self.ring_bandwidth,
-            "memNIC.network_link_control" : "shogun.ShogunNIC",
-            # Default params
-            #"cache_line_size": 64,
-            #"coherence_protocol": self.coherence_protocol,
-            #"replacement_policy": "lru",
-            })
 
     def getGPUL1Params(self):
         return dict({
@@ -198,37 +127,12 @@ class Config:
             "coherence_protocol": "mesi",
             #"coherence_protocol": "none",
             #"max_requests_per_cycle" : 6,
-            "memNIC.network_link_control" : "shogun.ShogunNIC",
-            "memNIC.group" : 1,
-            "memNIC.network_bw" : self.gpu_xbar_linkbandwidth,
             # Default params
             # "coherence_protocol": none,
             # "replacement_policy": "lru",
             # Not neccessary for simple cases:
             #"maxRequestDelay" : "1000000",
             })
-
-    #def getGPUL2Params(self, memID):
-        #return dict({
-            #"cache_frequency": self.gpuclock,
-            #"cache_size": "192KB",
-            #"associativity": 96,
-            #"access_latency_cycles": 100,
-            #"cache_line_size": 32,
-            #"mshr_num_entries" : 2048,
-            #"coherence_protocol": "none",
-            #"cache_type": "noninclusive",
-            #"memNIC.group" : 2,
-            #"memNIC.network_bw" : self.gpu_xbar_linkbandwidth,
-            #"memNIC.addr_range_start" : memID * 256,
-            #"memNIC.addr_range_end" : self.gpu_memory_capacity_inB - (256 * memID) - 1,
-            #"memNIC.interleave_size" : "256B",
-            #"memNIC.interleave_step" : str(self.gpu_l2_parts * 256) + "B",
-            ## Default params
-            ## "replacement_policy": "lru",
-            ## Not neccessary for simple cases:
-            ##"maxRequestDelay" : "1000000",
-            #})
 
     def getGPUL2Params(self, startAddr, endAddr):
         return dict({
@@ -244,45 +148,25 @@ class Config:
             "mshr_num_entries" : 2048,
             "coherence_protocol": "mesi",
             "cache_type": "inclusive",
+            "addr_range_end" : endAddr,
+            "addr_range_start" : startAddr,
+            "interleave_size": "256B",
+            "interleave_step": str(self.gpu_l2_parts * 256) + "B",
             #"coherence_protocol": "none",
             #"cache_type": "noninclusive",
             #"max_requests_per_cycle" : 6,
-            "memNIC.network_link_control" : "shogun.ShogunNIC",
-            "memNIC.group" : 2,
-            "memNIC.network_bw" : self.gpu_xbar_linkbandwidth,
-            "memNIC.addr_range_start" : startAddr,
-            "memNIC.addr_range_end" : endAddr,
-            "memNIC.interleave_size" : "256B",
-            "memNIC.interleave_step" : str(self.gpu_l2_parts * 256) + "B",
             # Default params
             # "replacement_policy": "lru",
             # Not neccessary for simple cases:
             #"maxRequestDelay" : "1000000",
             })
 
-    def getMemCtrlParams(self):
-        return dict({
-            "verbose" : 0,
-            "debug" : 0,
-            "debug_level" : 10,
-            "max_requests_per_cycle": "4",
-            "addr_range_start" : 0,
-            "clock" : self.memory_clock,
-            "backing" : "none"
-            })
-
-    def getMemBkParams(self):
-        return dict({
-            "access_time" : "50ns",
-            "mem_size" : self.memory_capacity,
-            })
-    
     def get_GPU_mem_params(self, numParts, startAddr, endAddr):
         return dict({
             "verbose" : 0,
             "debug" : 0,
             "debug_level" : 10,
-            "clock" : self.memory_clock,
+            "clock" : self.gpu_memory_clock,
             "backing" : "none",
             "max_requests_per_cycle": "100",
             "addr_range_start" : startAddr,
@@ -290,7 +174,7 @@ class Config:
             "interleave_size" : "256B",
             "interleave_step" : str(numParts * 256) + "B",
             })
-    
+
     def get_GPU_simple_mem_params(self):
         return dict({
             "access_time" : "45ns",
@@ -342,39 +226,6 @@ class Config:
             "channel.rank.bank.pagePolicy.close" : 0,
             "mem_size" : str(self.gpu_memory_capacity_per_part_inB)+ "B"
          })
-
-    def getDCParams(self, dc_id):
-        return dict({
-            "entry_cache_size": 256*1024*1024, #Entry cache size of mem/blocksize
-            "clock": self.memory_clock,
-            "network_bw": self.ring_bandwidth,
-            "addr_range_start" : 0,
-            "addr_range_end" : (int(''.join(filter(str.isdigit, self.memory_capacity))) * 1024 * 1024),
-            "memNIC.network_link_control" : "shogun.ShogunNIC",
-            # Default params
-            # "coherence_protocol": coherence_protocol,
-            })
-
-    def getRouterParams(self):
-        return dict({
-            "output_latency" : "25ps",
-            "xbar_bw" : self.ring_bandwidth,
-            "input_buf_size" : "2KB",
-            "input_latency" : "25ps",
-            "num_ports" : self.cpu_cores + 2,
-            "flit_size" : self.ring_flit_size,
-            "output_buf_size" : "2KB",
-            "link_bw" : self.ring_bandwidth,
-            "topology" : "merlin.singlerouter"
-        })
-
-    def getXBarParams(self):
-        return dict({
-            "clock" : self.xbar_clk_freq,
-            "buffer_depth" : self.xbar_queue_depth,
-            "in_msg_per_cycle" : self.xbar_input_slots,
-            "out_msg_per_cycle" : self.xbar_output_slots,
-        })
 
     def getGPURouterParams(self):
         return dict({

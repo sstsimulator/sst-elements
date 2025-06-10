@@ -7,46 +7,18 @@ import glob
 
 USE_PIN_TRACES = True
 USE_TAR_TRACES = False
-WITH_DRAMSIM = True
-NO_DRAMSIM = False
+WITH_TIMINGDRAM = True
+NO_TIMINGDRAM = False
 
-################################################################################
-# Code to support a single instance module initialize, must be called setUp method
-
-module_init = 0
-module_sema = threading.Semaphore()
-
-def initializeTestModule_SingleInstance(class_inst):
-    global module_init
-    global module_sema
-
-    module_sema.acquire()
-    if module_init != 1:
-        try:
-            # Put your single instance Init Code Here
-            class_inst._setup_prospero_test_dirs()
-            class_inst._create_prospero_PIN_trace_files()
-            class_inst._download_prospero_TAR_trace_files()
-        except:
-            pass
-        module_init = 1
-    module_sema.release()
-
-################################################################################
-################################################################################
-################################################################################
 
 class testcase_prospero(SSTTestCase):
 
-    def initializeClass(self, testName):
-        super(type(self), self).initializeClass(testName)
-        # Put test based setup code here. it is called before testing starts
-        # NOTE: This method is called once for every test
-
     def setUp(self):
         super(type(self), self).setUp()
-        initializeTestModule_SingleInstance(self)
         # Put test based setup code here. it is called once before every test
+        self._setup_prospero_test_dirs()
+        self._create_prospero_PIN_trace_files()
+        self._download_prospero_TAR_trace_files()
 
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test
@@ -55,64 +27,52 @@ class testcase_prospero(SSTTestCase):
 #####
     pin_loaded = testing_is_PIN_loaded()
     pin3_used = testing_is_PIN3_used()
-    libz_missing = not sst_elements_config_include_file_get_value_int("HAVE_LIBZ", default=0, disable_warning=True)
+    libz_missing = not sst_elements_config_include_file_get_value("HAVE_LIBZ", type=int, default=0, disable_warning=True)
 
     @unittest.skipIf(libz_missing, "test_prospero_compressed_using_TAR_traces test: Requires LIBZ, but LIBZ is not found in build configuration.")
+    @unittest.skipIf(not testing_check_is_nightly(), "test_prospero_compressed_using_TAR_traces only runs on Nightly builds.")
     def test_prospero_compressed_using_TAR_traces(self):
-        self.prospero_test_template("compressed", NO_DRAMSIM, USE_TAR_TRACES)
+        self.prospero_test_template("compressed", NO_TIMINGDRAM, USE_TAR_TRACES)
 
-    @unittest.skipIf(libz_missing, "test_prospero_compressed_withdramsim_using_TAR_traces test: Requires LIBZ, but LIBZ is not found in build configuration.")
-    @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
-    def test_prospero_compressed_withdramsim_using_TAR_traces(self):
-        self.prospero_test_template("compressed", WITH_DRAMSIM, USE_TAR_TRACES)
+    @unittest.skipIf(libz_missing, "test_prospero_compressed_withtimingdram_using_TAR_traces test: Requires LIBZ, but LIBZ is not found in build configuration.")
+    def test_prospero_compressed_withtimingdram_using_TAR_traces(self):
+        self.prospero_test_template("compressed", WITH_TIMINGDRAM, USE_TAR_TRACES)
 
+    @unittest.skipIf(not testing_check_is_nightly(), "test_prospero_text_using_TAR_traces only runs on Nightly builds.")
     def test_prospero_text_using_TAR_traces(self):
-        self.prospero_test_template("text", NO_DRAMSIM, USE_TAR_TRACES)
+        self.prospero_test_template("text", NO_TIMINGDRAM, USE_TAR_TRACES)
 
+    @unittest.skipIf(not testing_check_is_nightly(), "test_prospero_binary_using_TAR_traces only runs on Nightly builds.")
     def test_prospero_binary_using_TAR_traces(self):
-        self.prospero_test_template("binary", NO_DRAMSIM, USE_TAR_TRACES)
+        self.prospero_test_template("binary", NO_TIMINGDRAM, USE_TAR_TRACES)
 
-    @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
-    def test_prospero_text_withdramsim_using_TAR_traces(self):
-        self.prospero_test_template("text", WITH_DRAMSIM, USE_TAR_TRACES)
+    def test_prospero_text_withtimingdram_using_TAR_traces(self):
+        self.prospero_test_template("text", WITH_TIMINGDRAM, USE_TAR_TRACES)
 
-    @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
-    def test_prospero_binary_withdramsim_using_TAR_traces(self):
-        self.prospero_test_template("binary", WITH_DRAMSIM, USE_TAR_TRACES)
-
-    @unittest.skipIf(libz_missing, "test_prospero_compressed_using_PIN_traces test: Requires LIBZ, but LIBZ is not found in build configuration.")
-    @unittest.skipIf(not pin_loaded, "test_prospero_compressed_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
-    @unittest.skipIf(pin3_used, "test_prospero_compressed_using_PIN_traces test: Requires PIN2, but PIN3 is COMPILED.")
-    def test_prospero_compressed_using_PIN_traces(self):
-        self.prospero_test_template("compressed", NO_DRAMSIM, USE_PIN_TRACES)
-
-    @unittest.skipIf(libz_missing, "test_prospero_compressed_withdramsim_using_PIN_traces test: Requires LIBZ, but LIBZ is not found in build configuration.")
-    @unittest.skipIf(not pin_loaded, "test_prospero_compressed_withdramsim_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
-    @unittest.skipIf(pin3_used, "test_prospero_compressed_withdramsim_using_PIN_traces test: Requires PIN2, but PIN3 is COMPILED.")
-    def test_prospero_compressed_withdramsim_using_PIN_traces(self):
-        self.prospero_test_template("compressed", WITH_DRAMSIM, USE_PIN_TRACES)
+    def test_prospero_binary_withtimingdram_using_TAR_traces(self):
+        self.prospero_test_template("binary", WITH_TIMINGDRAM, USE_TAR_TRACES)
 
     @unittest.skipIf(not pin_loaded, "test_prospero_text_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
+    @unittest.skipIf(not testing_check_is_nightly(), "test_prospero_text_using_PIN_traces only runs on Nightly builds.")
     def test_prospero_text_using_PIN_traces(self):
-        self.prospero_test_template("text", NO_DRAMSIM, USE_PIN_TRACES)
+        self.prospero_test_template("text", NO_TIMINGDRAM, USE_PIN_TRACES)
 
     @unittest.skipIf(not pin_loaded, "test_prospero_binary_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
+    @unittest.skipIf(not testing_check_is_nightly(), "test_prospero_binary_using_PIN_traces only runs on Nightly builds.")
     def test_prospero_binary_using_PIN_traces(self):
-        self.prospero_test_template("binary", NO_DRAMSIM, USE_PIN_TRACES)
+        self.prospero_test_template("binary", NO_TIMINGDRAM, USE_PIN_TRACES)
 
-    @unittest.skipIf(not pin_loaded, "test_prospero_text_withdramsim_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
-    @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
-    def test_prospero_text_withdramsim_using_PIN_traces(self):
-        self.prospero_test_template("text", WITH_DRAMSIM, USE_PIN_TRACES)
+    @unittest.skipIf(not pin_loaded, "test_prospero_text_withtimingdram_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
+    def test_prospero_text_withtimingdram_using_PIN_traces(self):
+        self.prospero_test_template("text", WITH_TIMINGDRAM, USE_PIN_TRACES)
 
-    @unittest.skipIf(not pin_loaded, "test_prospero_binary_withdramsim_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
-    @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
-    def test_prospero_binary_withdramsim_using_PIN_traces(self):
-        self.prospero_test_template("binary", WITH_DRAMSIM, USE_PIN_TRACES)
+    @unittest.skipIf(not pin_loaded, "test_prospero_binary_withtimingdram_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
+    def test_prospero_binary_withtimingdram_using_PIN_traces(self):
+        self.prospero_test_template("binary", WITH_TIMINGDRAM, USE_PIN_TRACES)
 
 #####
 
-    def prospero_test_template(self, trace_name, with_dramsim, use_pin_traces, testtimeout=240):
+    def prospero_test_template(self, trace_name, with_timingdram, use_pin_traces, testtimeout=240):
         pass
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
@@ -124,22 +84,22 @@ class testcase_prospero(SSTTestCase):
         self.testProsperoTARTracesDir = "{0}/testProsperoTARTraces".format(tmpdir)
 
         if use_pin_traces:
-            propero_trace_dir = self.testProsperoPINTracesDir
+            prospero_trace_dir = self.testProsperoPINTracesDir
         else:
-            propero_trace_dir = self.testProsperoTARTracesDir
+            prospero_trace_dir = self.testProsperoTARTracesDir
 
         # Verify that some trace files exist
-        wildcard_filepath = "{0}/*.trace".format(propero_trace_dir)
+        wildcard_filepath = "{0}/*.trace".format(prospero_trace_dir)
         trace_files_list = glob.glob(wildcard_filepath)
-        self.assertTrue(len(trace_files_list) > 0, "Prosepro - No Trace files found in dir {0}".format(propero_trace_dir))
+        self.assertTrue(len(trace_files_list) > 0, "Prospero - No Trace files found in dir {0}".format(prospero_trace_dir))
 
         # Set the various file paths
-        if with_dramsim:
-            testDataFileName = ("test_prospero_with_dramsim_{0}".format(trace_name))
-            otherargs = '--model-options=\"--TraceType={0} --UseDramSim=yes\"'.format(trace_name)
+        if with_timingdram:
+            testDataFileName = ("test_prospero_with_timingdram_{0}".format(trace_name))
+            otherargs = '--model-options=\"--TraceType={0} --UseTimingDram=yes --TraceDir={1}\"'.format(trace_name, prospero_trace_dir)
         else:
-            testDataFileName = ("test_prospero_wo_dramsim_{0}".format(trace_name))
-            otherargs = '--model-options=\"--TraceType={0} --UseDramSim=no\"'.format(trace_name)
+            testDataFileName = ("test_prospero_wo_timingdram_{0}".format(trace_name))
+            otherargs = '--model-options=\"--TraceType={0} --UseTimingDram=no --TraceDir={1}\"'.format(trace_name, prospero_trace_dir)
 
         if use_pin_traces:
             tracetype = "pin"
@@ -161,29 +121,45 @@ class testcase_prospero(SSTTestCase):
 
         # Run SST in the tests directory
         self.run_sst(sdlfile, outfile, errfile, other_args = otherargs,
-                     set_cwd=propero_trace_dir, mpi_out_files=mpioutfiles,
+                     set_cwd=prospero_trace_dir, mpi_out_files=mpioutfiles,
                      timeout_sec=testtimeout)
-
-        testing_remove_component_warning_from_file(outfile)
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
         #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
         #       TESTS & RESULT FILES ARE STILL VALID
 
-        cmp_result = testing_compare_diff(testDataFileName, outfile, reffile)
-        if cmp_result:
-            log_debug(" -- Output file {0} is an exact match to Reference File {1}".format(outfile, reffile))
-        else:
-            wc_out_data = os_wc(outfile, [0, 1])
-            log_debug("{0} : wc_out_data = {1}".format(outfile, wc_out_data))
-            wc_ref_data = os_wc(reffile, [0, 1])
-            log_debug("{0} : wc_ref_data = {1}".format(reffile, wc_ref_data))
+        ### Check for success ###
 
-            wc_line_word_count_diff = wc_out_data == wc_ref_data
-            if wc_line_word_count_diff:
-                log_debug("Line Word Count Match\n")
-            self.assertTrue(wc_line_word_count_diff, "Line & Word count between file {0} does not match Reference File {1}".format(outfile, reffile))
+        # Lines to ignore during diff
+        ## This is generated by SST when the number of ranks/threads > # of components
+        ignore_lines = ["WARNING: No components are assigned to"]
+        ## These are warnings/info generated by SST/memH in debug mode
+        ignore_lines.append("Notice: memory controller's region is larger than the backend's mem_size")
+        ignore_lines.append("Region: start=")
+
+        filesAreTheSame, statDiffs, othDiffs = testing_stat_output_diff(outfile, reffile, ignore_lines, {}, True)
+
+        # Perform the tests
+
+        if filesAreTheSame:
+            log_debug(" -- Output file {0} passed check against the Reference File {1}".format(outfile, reffile))
+        elif use_pin_traces: ## PIN traces are generated dynamically and may diff, but the line count should match
+            # Use processed diffs so that ignore lines are still ignored
+            stat_lc = sum(1 for x in statDiffs if x[0] == "<")
+            oth_lc = sum(1 for x  in othDiffs if x[0] == "<")
+            if stat_lc*2 == len(statDiffs) and oth_lc*2 == len(othDiffs):
+                log_debug(" -- Output file {0} pass line count check against the Reference File {1}".format(outfile, reffile))
+            else:
+                diffdata = self._prettyPrintDiffs(statDiffs, othDiffs)
+                log_failure(diffdata)
+                self.assertTrue(filesAreTheSame, "Output file {0} does not pass line count check against the Reference File {1} ".format(outfile, reffile))
+
+        else:
+            diffdata = self._prettyPrintDiffs(statDiffs, othDiffs)
+            log_failure(diffdata)
+            self.assertTrue(filesAreTheSame, "Output file {0} does not pass check against the Reference File {1} ".format(outfile, reffile))
+
 
 #######################
 
@@ -254,7 +230,7 @@ class testcase_prospero(SSTTestCase):
         self.assertTrue(rtn.result() == 0, "array.c failed to compile")
 
         # Make sure we have access to the sst-prospero-trace binary
-        elem_bin_dir = sstsimulator_conf_get_value_str("SST_ELEMENT_LIBRARY", "SST_ELEMENT_LIBRARY_BINDIR", "BINDIR_UNDEFINED")
+        elem_bin_dir = sstsimulator_conf_get_value("SST_ELEMENT_LIBRARY", "SST_ELEMENT_LIBRARY_BINDIR", str, "BINDIR_UNDEFINED")
         log_debug("Elements bin_dir = {0}".format(elem_bin_dir))
         filepath_sst_prospero_trace_app = "{0}/sst-prospero-trace".format(elem_bin_dir)
         if os.path.isfile(filepath_sst_prospero_trace_app):
@@ -272,14 +248,6 @@ class testcase_prospero(SSTTestCase):
             rtn = OSCommand(cmd, set_cwd=targetdir).run()
             log_debug("Prospero build binary Traces result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
             self.assertTrue(rtn.result() == 0, "Binary Traces failed to compile")
-
-            # Now build the Compressed traces (ONLY ON PIN2)
-            if testing_is_PIN2_used():
-                cmd = "{0} -ifeellucky -t 1 -f compressed -o sstprospero -- ./array".format(filepath_sst_prospero_trace_app)
-                log_debug("Prospero compressed Traces build cmd = {0}".format(cmd))
-                rtn = OSCommand(cmd, set_cwd=targetdir).run()
-                log_debug("Prospero build compressed Traces result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
-                self.assertTrue(rtn.result() == 0, "Compressed Traces failed to compile")
 
 ####
 
@@ -301,5 +269,18 @@ class testcase_prospero(SSTTestCase):
         os_extract_tar(filename, self.testProsperoTARTracesDir)
 
 
+    def _prettyPrintDiffs(self, stat_diff, oth_diff):
+        out = ""
+        if len(stat_diff) != 0:
+            out = "Statistic diffs:\n"
+            for x in stat_diff:
+                out += (x[0] + " " + ",".join(str(y) for y in x[1:]) + "\n")
+
+        if len(oth_diff) != 0:
+            out += "Non-statistic diffs:\n"
+            for x in oth_diff:
+                out += x[0] + " " + x[1] + "\n"
+
+        return out
 
 

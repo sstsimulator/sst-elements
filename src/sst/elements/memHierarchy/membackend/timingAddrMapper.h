@@ -1,8 +1,8 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -22,6 +22,9 @@ namespace TimingDRAM_NS {
 
 class AddrMapper : public SST::Module {
   public:
+
+    SST_ELI_REGISTER_MODULE_API(SST::MemHierarchy::TimingDRAM_NS::AddrMapper)
+
     AddrMapper( ) : m_numChannels(1), m_numRanks(1), m_numBanks(8)
     { }
 
@@ -52,7 +55,7 @@ class SimpleAddrMapper : public AddrMapper {
   public:
 /* Element Library Info */
     SST_ELI_REGISTER_MODULE(SimpleAddrMapper, "memHierarchy", "simpleAddrMapper", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Simple address mapper", "SST::MemHierarchy::AddrMapper")
+                            "Simple address mapper", SST::MemHierarchy::TimingDRAM_NS::AddrMapper)
 
 /* Begin class definition */
     SimpleAddrMapper( Params &params ) :
@@ -124,7 +127,7 @@ class RoundRobinAddrMapper: public AddrMapper {
 public:
     /* Element Library Info */
     SST_ELI_REGISTER_MODULE(RoundRobinAddrMapper, "memHierarchy", "roundRobinAddrMapper", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Round-robin address mapper", "SST::MemHierarchy::AddrMapper")
+                            "Round-robin address mapper", SST::MemHierarchy::TimingDRAM_NS::AddrMapper)
 
     SST_ELI_DOCUMENT_PARAMS(
             {"interleave_size", "(string) Granularity of interleaving in bytes (B). SI ok.", "64B"},
@@ -200,7 +203,7 @@ class SandyBridgeAddrMapper : public AddrMapper {
   public:
 /* Element Library Info */
     SST_ELI_REGISTER_MODULE(SandyBridgeAddrMapper, "memHierarchy", "sandyBridgeAddrMapper", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Sandy Bridge address mapper", "SST::MemHierarchy::AddrMapper")
+                            "Sandy Bridge address mapper", SST::MemHierarchy::TimingDRAM_NS::AddrMapper)
 
 /* Begin class definition */
     SandyBridgeAddrMapper( Params &params ) : AddrMapper()

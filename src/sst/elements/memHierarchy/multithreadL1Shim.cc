@@ -1,23 +1,22 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright(c) 2013-2021, NTESS
+// Copyright (c) 2013-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <sst_config.h>
+#include <sst/core/sst_config.h>
 #include "multithreadL1Shim.h"
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
 
 using namespace SST;
@@ -38,7 +37,7 @@ MultiThreadL1::MultiThreadL1(ComponentId_t id, Params &params) : Component(id) {
         DEBUG_ADDR.insert(*it);
 
     /* Setup clock */
-    clockHandler = new Clock::Handler<MultiThreadL1>(this, &MultiThreadL1::tick);
+    clockHandler = new Clock::Handler2<MultiThreadL1, &MultiThreadL1::tick>(this);
     clock = registerClock(params.find<std::string>("clock", "1GHz"), clockHandler);
     clockOn = true;
     timestamp = 0;
@@ -46,7 +45,7 @@ MultiThreadL1::MultiThreadL1(ComponentId_t id, Params &params) : Component(id) {
 
     /* Setup links */
     if (isPortConnected("cache")) {
-        cacheLink = configureLink("cache", "50ps", new Event::Handler<MultiThreadL1>(this, &MultiThreadL1::handleResponse));
+        cacheLink = configureLink("cache", "50ps", new Event::Handler2<MultiThreadL1, &MultiThreadL1::handleResponse>(this));
         if (!cacheLink)
             output.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port 'cache'\n", getName().c_str());
     } else {
@@ -57,7 +56,7 @@ MultiThreadL1::MultiThreadL1(ComponentId_t id, Params &params) : Component(id) {
     std::string linkname = "thread0";
     int linkid = 0;
     while (isPortConnected(linkname)) {
-        SST::Link * link = configureLink(linkname, "50ps", new Event::Handler<MultiThreadL1, unsigned int>(this, &MultiThreadL1::handleRequest, linkid));
+        SST::Link * link = configureLink(linkname, "50ps", new Event::Handler2<MultiThreadL1, &MultiThreadL1::handleRequest, unsigned int>(this, linkid));
         if (!link)
             output.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), linkname.c_str());
         threadLinks.push_back(link);
@@ -151,21 +150,21 @@ void MultiThreadL1::init(unsigned int phase) {
 
     // Pass CPU events to memory hierarchy, generally these are memory initialization
     for (int i = 0; i < threadLinks.size(); i++) {
-        while ((ev = threadLinks[i]->recvInitData()) != NULL) {
+        while ((ev = threadLinks[i]->recvUntimedData()) != NULL) {
             MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
             if (memEvent) {
-                cacheLink->sendInitData(memEvent->clone());
+                cacheLink->sendUntimedData(memEvent->clone());
             }
             delete ev;
         }
     }
 
     // Broadcast L1 events to connected CPUs
-    while ((ev = cacheLink->recvInitData()) != NULL) {
+    while ((ev = cacheLink->recvUntimedData()) != NULL) {
         MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
         if (memEvent) {
             for (int i = 0; i < threadLinks.size(); i++) {
-                threadLinks[i]->sendInitData(memEvent->clone());
+                threadLinks[i]->sendUntimedData(memEvent->clone());
             }
         }
         delete ev;

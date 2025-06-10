@@ -1,15 +1,15 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -54,7 +54,7 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & start_time;
+        SST_SER(start_time);
     }
 
 private:
@@ -93,13 +93,13 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & generation;
-        ser & sum;
-        ser & sum_of_squares;
-        ser & min;
-        ser & max;
-        ser & count;
-        ser & backup;
+        SST_SER(generation);
+        SST_SER(sum);
+        SST_SER(sum_of_squares);
+        SST_SER(min);
+        SST_SER(max);
+        SST_SER(count);
+        SST_SER(backup);
     }
 
 private:
@@ -168,11 +168,11 @@ private:
 
     int generation;
 
-    TimeConverter* base_tc;
+    TimeConverter base_tc;
 
     SST::Interfaces::SimpleNetwork* link_if;
-    SST::Interfaces::SimpleNetwork::Handler<OfferedLoad>* send_notify_functor;
-    SST::Interfaces::SimpleNetwork::Handler<OfferedLoad>* recv_notify_functor;
+    SST::Interfaces::SimpleNetwork::HandlerBase* send_notify_functor;
+    SST::Interfaces::SimpleNetwork::HandlerBase* recv_notify_functor;
 
 
     TargetGenerator *packetDestGen;

@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -21,7 +21,7 @@
 using namespace SST;
 using namespace SST::Interfaces;
 using namespace SST::MemHierarchy;
- 
+
 /* Example MMIO device */
 StandardMMIO::StandardMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
 
@@ -42,11 +42,11 @@ StandardMMIO::StandardMMIO(ComponentId_t id, Params &params) : SST::Component(id
         out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: clock. Must have units of Hz or s and be > 0. "
                 "(SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
     }
-    TimeConverter* tc = getTimeConverter(clockfreq);
+    TimeConverter tc = getTimeConverter(clockfreq);
 
-    iface = loadUserSubComponent<SST::Interfaces::StandardMem>("iface", ComponentInfo::SHARE_NONE, tc, 
-            new StandardMem::Handler<StandardMMIO>(this, &StandardMMIO::handleEvent));
-    
+    iface = loadUserSubComponent<SST::Interfaces::StandardMem>("iface", ComponentInfo::SHARE_NONE, &tc,
+            new StandardMem::Handler2<StandardMMIO, &StandardMMIO::handleEvent>(this));
+
     if (!iface) {
         out.fatal(CALL_INFO, -1, "%s, Error: No interface found loaded into 'iface' subcomponent slot. Please check input file\n", getName().c_str());
     }
@@ -64,7 +64,7 @@ StandardMMIO::StandardMMIO(ComponentId_t id, Params &params) : SST::Component(id
         rng = *(new SST::RNG::MarsagliaRNG(21, 101));
 
         // Need a clock so that we can decide whether to issue requests on each clock
-        registerClock(tc, new Clock::Handler<StandardMMIO>(this, &StandardMMIO::clockTic));
+        registerClock(tc, new Clock::Handler2<StandardMMIO, &StandardMMIO::clockTic>(this));
 
         // Don't end simulation until we've finished sending requests & receiving responses
         primaryComponentDoNotEndSim();
@@ -73,7 +73,7 @@ StandardMMIO::StandardMMIO(ComponentId_t id, Params &params) : SST::Component(id
         bool found;
         max_addr = params.find<Addr>("max_addr", 0, found);
         if (!found) {
-            out.fatal(CALL_INFO, -1, "%s, Error: Invalid param, 'max_addr' must be specified if mem_accesses > 0\n", 
+            out.fatal(CALL_INFO, -1, "%s, Error: Invalid param, 'max_addr' must be specified if mem_accesses > 0\n",
                     getName().c_str());
         }
 
@@ -100,7 +100,7 @@ bool StandardMMIO::clockTic(Cycle_t cycle) {
             Addr addr = ((rng.generateNextUInt64() % max_addr)>>2) << 2;
             StandardMem::Request* req = new Interfaces::StandardMem::Read(addr, 4);
             out.verbose(CALL_INFO, 2, 0, "%s: %d Issued Read for address 0x%" PRIx64 "\n", getName().c_str(), mem_access, addr);
-        
+
             requests.insert(std::make_pair(req->getID(), std::make_pair(getCurrentSimTime(), "Read")));
             iface->send(req);
             mem_access--;
@@ -113,13 +113,13 @@ bool StandardMMIO::clockTic(Cycle_t cycle) {
             payload.resize(iface->getLineSize(), 0);
             StandardMem::Request* req = new Interfaces::StandardMem::Write(addr, iface->getLineSize(), payload);
             out.verbose(CALL_INFO, 2, 0, "%s: %d Issued Write for address 0x%" PRIx64 "\n", getName().c_str(), mem_access, addr);
-            
+
             requests.insert(std::make_pair(req->getID(), std::make_pair(getCurrentSimTime(), "Read")));
             iface->send(req);
             mem_access--;
         }
     }
-    if (mem_access == 0) { 
+    if (mem_access == 0) {
         return true; // Stop clock
     }
     return false; // Do not stop clock
@@ -171,7 +171,7 @@ void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* 
         mmio->statReadLatency->addData(et);
         mmio->requests.erase(i);
     }
-    
+
     if (mmio->mem_access == 0 && mmio->requests.empty())
         mmio->primaryComponentOKToEndSim();
 }
@@ -186,7 +186,7 @@ void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::WriteResp*
         mmio->statWriteLatency->addData(et);
         mmio->requests.erase(i);
     }
-    
+
     if (mmio->mem_access == 0 && mmio->requests.empty())
         mmio->primaryComponentOKToEndSim();
 }

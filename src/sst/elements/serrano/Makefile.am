@@ -2,7 +2,7 @@
 #
 #
 
-AM_CPPFLAGS = \
+AM_CPPFLAGS += \
 	$(MPI_CPPFLAGS)
 
 compdir = $(pkglibdir)
@@ -15,7 +15,7 @@ libserrano_la_SOURCES = \
 	serrano.cc \
 	serrano.h \
 	serstdunit.h \
-	smsg.h	
+	smsg.h
 
 EXTRA_DIST = \
 	tests/test_serrano.py \

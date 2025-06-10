@@ -39,18 +39,18 @@ l2_prefetch_params = {
 }
 
 ringstop_params = {
-    "torus:shape" : groups * (cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group),
+    "torus.shape" : groups * (cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group),
     "output_latency" : "100ps",
     "xbar_bw" : ring_bandwidth,
     "input_buf_size" : "2KB",
     "input_latency" : "100ps",
     "num_ports" : "3",
     "debug" : "0",
-    "torus:local_ports" : "1",
+    "torus.local_ports" : "1",
     "flit_size" : ring_flit_size,
     "output_buf_size" : "2KB",
     "link_bw" : ring_bandwidth,
-    "torus:width" : "1",
+    "torus.width" : "1",
     "topology" : "merlin.torus"
 }
 
@@ -103,28 +103,35 @@ l3_params = {
 }
 
 mem_params = {
-    "coherence_protocol" : coherence_protocol,
     "backing" : "none",
-    "backend.access_time" : "30ns",
-    "backend.mem_size" : str(memory_capacity // (groups * memory_controllers_per_group)) + "MiB",
+    "interleave_size": str(mem_interleave_size) + "B",
+    "interleave_step": str((groups * memory_controllers_per_group) * mem_interleave_size) + "B",
     "clock" : memory_clock,
+}
+
+simplemem_params = {
+    "access_time" : "30ns",
+    "mem_size" : str(memory_capacity // (groups * memory_controllers_per_group)) + "MiB",
 }
 
 dc_params = {
     "coherence_protocol": coherence_protocol,
-    "memNIC.network_bw": memory_network_bandwidth,
-    "memNIC.interleave_size": str(mem_interleave_size) + "B",
-    "memNIC.interleave_step": str((groups * memory_controllers_per_group) * mem_interleave_size) + "B",
+    "interleave_size": str(mem_interleave_size) + "B",
+    "interleave_step": str((groups * memory_controllers_per_group) * mem_interleave_size) + "B",
     "entry_cache_size": 256*1024*1024, #Entry cache size of mem/blocksize
     "clock": memory_clock,
     "debug": 1,
 }
 
+nic_params = {
+    "network_bw": memory_network_bandwidth,
+    }
+
 print("Configuring Ariel processor model (" + str(groups * cores_per_group) + " cores)...")
 
 ariel = sst.Component("A0", "ariel.ariel")
 ariel.addParams({
-    "verbose"             : "2",
+    "verbose"             : "1",
     "maxcorequeue"        : "256",
     "maxtranscore"        : "16",
     "maxissuepercycle"    : "2",
@@ -142,10 +149,10 @@ ariel.addParams({
 
 memmgr = ariel.setSubComponent("memmgr", "ariel.MemoryManagerMalloc")
 memmgr.addParams({
-    "memmgr.memorylevels" : "2",
-    "memmgr.defaultlevel" : 0,
-    "memmgr.pagecount0"   : "524288",
-    "memmgr.pagecount1"   : "524288",
+    "memorylevels" : "2",
+    "defaultlevel" : 0,
+    "pagecount0"   : "524288",
+    "pagecount1"   : "524288",
 })
 
 router_map = {}
@@ -153,22 +160,22 @@ router_map = {}
 print("Configuring ring network...")
 
 for next_ring_stop in range((cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group) * groups):
-    ring_rtr = sst.Component("rtr." + str(next_ring_stop), "merlin.hr_router")
+    ring_rtr = sst.Component("rtr_" + str(next_ring_stop), "merlin.hr_router")
     ring_rtr.addParams(ringstop_params)
     ring_rtr.addParams({
         "id" : next_ring_stop
     })
     topo = ring_rtr.setSubComponent("topology","merlin.torus")
     topo.addParams(topology_params)
-    router_map["rtr." + str(next_ring_stop)] = ring_rtr
+    router_map["rtr_" + str(next_ring_stop)] = ring_rtr
 
 for next_ring_stop in range((cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group) * groups):
     if next_ring_stop == ((cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group) * groups) - 1:
         rtr_link = sst.Link("rtr_" + str(next_ring_stop))
-        rtr_link.connect( (router_map["rtr." + str(next_ring_stop)], "port0", ring_latency), (router_map["rtr.0"], "port1", ring_latency) )
+        rtr_link.connect( (router_map["rtr_" + str(next_ring_stop)], "port0", ring_latency), (router_map["rtr_0"], "port1", ring_latency) )
     else:
         rtr_link = sst.Link("rtr_" + str(next_ring_stop))
-        rtr_link.connect( (router_map["rtr." + str(next_ring_stop)], "port0", ring_latency), (router_map["rtr." + str(next_ring_stop+1)], "port1", ring_latency) )
+        rtr_link.connect( (router_map["rtr_" + str(next_ring_stop)], "port0", ring_latency), (router_map["rtr_" + str(next_ring_stop+1)], "port1", ring_latency) )
 
 for next_group in range(groups):
     print("Configuring core and memory controller group " + str(next_group) + "...")
@@ -183,15 +190,18 @@ for next_group in range(groups):
         l2 = sst.Component("l2cache_" + str(next_core_id), "memHierarchy.Cache")
         l2.addParams(l2_params)
         l2.addParams(l1_prefetch_params)
+        l2_nic = l2.setSubComponent("lowlink", "memHierarchy.MemNIC")
+        l2_nic.addParams(nic_params)
+        l2_nic.addParam("group", 1)
 
         ariel_cache_link = sst.Link("ariel_cache_link_" + str(next_core_id))
-        ariel_cache_link.connect( (ariel, "cache_link_" + str(next_core_id), ring_latency), (l1, "high_network_0", ring_latency) )
+        ariel_cache_link.connect( (ariel, "cache_link_" + str(next_core_id), ring_latency), (l1, "highlink", ring_latency) )
 
         l2_core_link = sst.Link("l2cache_" + str(next_core_id) + "_link")
-        l2_core_link.connect((l1, "low_network_0", ring_latency), (l2, "high_network_0", ring_latency))
+        l2_core_link.connect((l1, "lowlink", ring_latency), (l2, "highlink", ring_latency))
 
         l2_ring_link = sst.Link("l2_ring_link_" + str(next_core_id))
-        l2_ring_link.connect((l2, "cache", ring_latency), (router_map["rtr." + str(next_network_id)], "port2", ring_latency))
+        l2_ring_link.connect((l2_nic, "port", ring_latency), (router_map["rtr_" + str(next_network_id)], "port2", ring_latency))
 
         next_network_id = next_network_id + 1
         next_core_id = next_core_id + 1
@@ -206,15 +216,18 @@ for next_group in range(groups):
         l2 = sst.Component("l2cache_" + str(next_core_id), "memHierarchy.Cache")
         l2.addParams(l2_params)
         l2.addParams(l2_prefetch_params)
+        l2_nic = l2.setSubComponent("lowlink", "memHierarchy.MemNIC")
+        l2_nic.addParams(nic_params)
+        l2_nic.addParam("group", 1)
 
         ariel_cache_link = sst.Link("ariel_cache_link_" + str(next_core_id))
-        ariel_cache_link.connect( (ariel, "cache_link_" + str(next_core_id), ring_latency), (l1, "high_network_0", ring_latency) )
+        ariel_cache_link.connect( (ariel, "cache_link_" + str(next_core_id), ring_latency), (l1, "highlink", ring_latency) )
 
         l2_core_link = sst.Link("l2cache_" + str(next_core_id) + "_link")
-        l2_core_link.connect((l1, "low_network_0", ring_latency), (l2, "high_network_0", ring_latency))
+        l2_core_link.connect((l1, "lowlink", ring_latency), (l2, "highlink", ring_latency))
 
         l2_ring_link = sst.Link("l2_ring_link_" + str(next_core_id))
-        l2_ring_link.connect((l2, "cache", ring_latency), (router_map["rtr." + str(next_network_id)], "port2", ring_latency))
+        l2_ring_link.connect((l2_nic, "port", ring_latency), (router_map["rtr_" + str(next_network_id)], "port2", ring_latency))
 
         next_network_id = next_network_id + 1
         next_core_id = next_core_id + 1
@@ -228,9 +241,12 @@ for next_group in range(groups):
         l3cache.addParams({
             "slice_id" : str((next_group * l3cache_blocks_per_group) + next_l3_cache_block)
         })
+        l3_nic = l3cache.setSubComponent("highlink", "memHierarchy.MemNIC")
+        l3_nic.addParams(nic_params)
+        l3_nic.addParam("group", 2)
 
         l3_ring_link = sst.Link("l3_ring_link_" + str((next_group * l3cache_blocks_per_group) + next_l3_cache_block))
-        l3_ring_link.connect( (l3cache, "directory", ring_latency), (router_map["rtr." + str(next_network_id)], "port2", ring_latency) )
+        l3_ring_link.connect( (l3_nic, "port", ring_latency), (router_map["rtr_" + str(next_network_id)], "port2", ring_latency) )
 
         next_network_id = next_network_id + 1
 
@@ -239,19 +255,29 @@ for next_group in range(groups):
 
         mem = sst.Component("memory_" + str(next_memory_ctrl_id), "memHierarchy.MemController")
         mem.addParams(mem_params)
+        mem.addParams({
+            "addr_range_start" : next_memory_ctrl_id * mem_interleave_size,
+            "addr_range_end" : (memory_capacity * 1024 * 1024) - (groups * memory_controllers_per_group * mem_interleave_size) + (next_memory_ctrl_id * mem_interleave_size)
+        })
+
+        simplemem = mem.setSubComponent("backend", "memHierarchy.simpleMem")
+        simplemem.addParams(simplemem_params)
 
         dc = sst.Component("dc_" + str(next_memory_ctrl_id), "memHierarchy.DirectoryController")
         dc.addParams({
-            "memNIC.addr_range_start" : next_memory_ctrl_id * mem_interleave_size,
-            "memNIC.addr_range_end" : (memory_capacity * 1024 * 1024) - (groups * memory_controllers_per_group * mem_interleave_size) + (next_memory_ctrl_id * mem_interleave_size)
+            "addr_range_start" : next_memory_ctrl_id * mem_interleave_size,
+            "addr_range_end" : (memory_capacity * 1024 * 1024) - (groups * memory_controllers_per_group * mem_interleave_size) + (next_memory_ctrl_id * mem_interleave_size)
         })
         dc.addParams(dc_params)
+        dc_nic = dc.setSubComponent("highlink", "memHierarchy.MemNIC")
+        dc_nic.addParams(nic_params)
+        dc_nic.addParam("group", 3)
 
         memLink = sst.Link("mem_link_" + str(next_memory_ctrl_id))
-        memLink.connect((mem, "direct_link", ring_latency), (dc, "memory", ring_latency))
+        memLink.connect((mem, "highlink", ring_latency), (dc, "lowlink", ring_latency))
 
         netLink = sst.Link("dc_link_" + str(next_memory_ctrl_id))
-        netLink.connect((dc, "network", ring_latency), (router_map["rtr." + str(next_network_id)], "port2", ring_latency))
+        netLink.connect((dc_nic, "port", ring_latency), (router_map["rtr_" + str(next_network_id)], "port2", ring_latency))
 
         next_network_id = next_network_id + 1
         next_memory_ctrl_id = next_memory_ctrl_id + 1

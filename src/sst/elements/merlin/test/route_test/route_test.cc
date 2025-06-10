@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -20,8 +20,6 @@
 
 #include <sst/core/event.h>
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
-#include <sst/core/timeLord.h>
 #include <sst/core/unitAlgebra.h>
 
 #include <sst/core/interfaces/simpleNetwork.h>
@@ -67,12 +65,12 @@ route_test::route_test(ComponentId_t cid, Params& params) :
 
 
     // // Register a clock
-    // registerClock( "1GHz", new Clock::Handler<route_test>(this,&route_test::clock_handler), false);
+    // registerClock( "1GHz", new Clock::Handler2<route_test,&route_test::clock_handler>(this), false);
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
-    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler<route_test>(this,&route_test::handle_event));
+    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler2<route_test,&route_test::handle_event>(this));
 }
 
 
@@ -96,11 +94,11 @@ route_test::init(unsigned int phase) {
             SimpleNetwork::Request* req =
                 new SimpleNetwork::Request(SimpleNetwork::INIT_BROADCAST_ADDR, id,
                                            0, true, true);
-            link_control->sendInitData(req);
+            link_control->sendUntimedData(req);
         }
     }
     else {
-        SimpleNetwork::Request* req = link_control->recvInitData();
+        SimpleNetwork::Request* req = link_control->recvUntimedData();
         if ( req != NULL ) {
             // std::cout << "ROUTE_TEST " << id << " Received an init event in phase " << phase << "!" << std::endl;
             delete req;

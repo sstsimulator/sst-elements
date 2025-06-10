@@ -2,13 +2,8 @@
 #
 #
 
-AM_CPPFLAGS = \
+AM_CPPFLAGS += \
 	$(MPI_CPPFLAGS) \
-	-I$(top_srcdir)/src
-
-libzodiac_la_CPPFLAGS = \
-	$(MPI_CPPFLAGS) \
-	$(DUMPI_CPPFLAGS) \
 	-I$(top_srcdir)/src
 
 compdir = $(pkglibdir)
@@ -64,10 +59,10 @@ libzodiac_la_SOURCES += \
 	zotf.h \
 	zotf.cc
 
-libzodiac_la_CPPFLAGS +=
+AM_CPPFLAGS += \
 	$(shell $(OTF_CONFIG_TOOL) --includes)
 
-libzodiac_la_LDFLAGS +=
+libzodiac_la_LDFLAGS += \
 	$(shell $(OTF_CONFIG_TOOL) --libs)
 endif
 
@@ -79,9 +74,10 @@ libzodiac_la_SOURCES += \
 	dumpireader.cc \
 	dumpifunc.h
 
-libzodiac_la_CPPFLAGS +=
+AM_CPPFLAGS += \
 	$(DUMPI_CPPFLAGS)
-libzodiac_la_LDFLAGS +=
+
+libzodiac_la_LDFLAGS += \
 	$(DUMPI_LDFLAGS)
 endif
 

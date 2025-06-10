@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -19,6 +19,8 @@
 
 using namespace SST;
 using namespace SST::MemHierarchy;
+
+/* Debug macros included from util.h */
 
 /*----------------------------------------------------------------------------------------------------------------------
  * L1 Incoherent Controller
@@ -44,7 +46,10 @@ bool IncoherentL1::handleGetS(MemEvent* event, bool inMSHR){
     MemEventStatus status = MemEventStatus::OK;
     vector<uint8_t> data;
 
-    printLine(addr);
+    if (mem_h_is_debug_addr(addr)) {
+        eventDI.prefill(event->getID(), Command::GetS, (localPrefetch ? "-pref" : ""), addr, state);
+        eventDI.reason = "hit";
+    }
 
     switch (state) {
         case I:
@@ -52,17 +57,33 @@ bool IncoherentL1::handleGetS(MemEvent* event, bool inMSHR){
 
             if (status == MemEventStatus::OK) { // Both MSHR insert & cache line allocation succeeded
                 line = cacheArray_->lookup(addr, false);
-                recordLatencyType(event->getID(), LatType::MISS);
-                eventProfileAndNotify(event, I, NotifyAccessType::READ, NotifyResultType::MISS, true, inMSHR);
-                sendTime = forwardMessage(event, lineSize_, 0, NULL);
+                if (!mshr_->getProfiled(addr)) {
+                    recordLatencyType(event->getID(), LatType::MISS);
+                    stat_eventState[(int)Command::GetS][I]->addData(1);
+                    stat_miss[0][inMSHR]->addData(1);
+                    stat_misses->addData(1);
+                    notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
+                    mshr_->setProfiled(addr);
+                }
+                sendTime = forwardMessage(event, lineSize_, 0, nullptr);
                 line->setState(IM);
                 line->setTimestamp(sendTime);
+                if (mem_h_is_debug_addr(addr))
+                    eventDI.reason = "miss";
                 mshr_->setInProgress(addr);
+            } else {
+                recordMiss(event->getID());
             }
             break;
         case E:
         case M:
-            eventProfileAndNotify(event, state, NotifyAccessType::READ, NotifyResultType::HIT, inMSHR, inMSHR);
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                recordLatencyType(event->getID(), LatType::HIT);
+                stat_eventState[(int)Command::GetS][state]->addData(1);
+                stat_hit[0][inMSHR]->addData(1);
+                stat_hits->addData(1);
+                notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
+            }
             if (localPrefetch) {
                 recordPrefetchResult(line, statPrefetchRedundant);
                 cleanUpAfterRequest(event, inMSHR);
@@ -73,7 +94,7 @@ bool IncoherentL1::handleGetS(MemEvent* event, bool inMSHR){
             recordLatencyType(event->getID(), LatType::HIT);
 
             if (event->isLoadLink())
-                line->atomicStart();
+                line->atomicStart(timestamp_ + llscBlockCycles_, event->getThreadID());
 
             data.assign(line->getData()->begin() + (event->getAddr() - event->getBaseAddr()), line->getData()->begin() + (event->getAddr() - event->getBaseAddr() + event->getSize()));
             sendTime = sendResponseUp(event, &data, inMSHR, line->getTimestamp());
@@ -83,18 +104,22 @@ bool IncoherentL1::handleGetS(MemEvent* event, bool inMSHR){
         default:
             if (!inMSHR) {
                 status = allocateMSHR(event, false);
+            } else if (mem_h_is_debug_event(event)) {
+                eventDI.action = "Stall";
             }
             break;
     }
 
-    printLine(addr);
+    if (mem_h_is_debug_addr(addr) && line) {
+        eventDI.newst = line->getState();
+        eventDI.verboseline = line->getString();
+    }
 
     return ((status == MemEventStatus::Reject) ? false : true);
 }
 
 /* Handle cacheable GetX requests */
 bool IncoherentL1::handleWrite(MemEvent* event, bool inMSHR) {
-    event->setCmd(Command::GetX);
     return handleGetX(event, inMSHR);
 }
 
@@ -106,18 +131,15 @@ bool IncoherentL1::handleGetX(MemEvent* event, bool inMSHR) {
     L1CacheLine * line = cacheArray_->lookup(addr, true);
     State state = line ? line->getState() : I;
 
-    /* Special case - if this is the last coherence level (e.g., just mem below),
-     * can upgrade without forwarding request */
-    if (state == S && lastLevel_) {
-        state = M;
-        line->setState(M);
-    }
+    if (mem_h_is_debug_addr(addr))
+        eventDI.prefill(event->getID(), Command::GetX, (event->isStoreConditional() ? "-SC" : ""), addr, state);
 
     MemEventStatus status = MemEventStatus::OK;
     bool success = true;
     uint64_t sendTime = 0;
 
-    printLine(addr);
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
 
     switch (state) {
         case I:
@@ -126,27 +148,45 @@ bool IncoherentL1::handleGetX(MemEvent* event, bool inMSHR) {
                 line = cacheArray_->lookup(addr, false);
 
                 // Profile
-                eventProfileAndNotify(event, I, NotifyAccessType::WRITE, NotifyResultType::MISS, true, inMSHR);
+               if (!mshr_->getProfiled(addr)) {
+                    notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
+                    stat_eventState[(int)Command::GetX][I]->addData(1);
+                    stat_miss[1][inMSHR]->addData(1);
+                    stat_misses->addData(1);
+                    recordLatencyType(event->getID(), LatType::MISS);
+                    mshr_->setProfiled(addr);
+                }
 
                 // Handle
-                recordLatencyType(event->getID(), LatType::MISS);
-                sendTime = forwardMessage(event, lineSize_, 0, nullptr);
+                sendTime = forwardMessage(event, lineSize_, 0, nullptr, Command::GetX);
                 line->setState(IM);
                 line->setTimestamp(sendTime);
+                if (mem_h_is_debug_addr(addr))
+                    eventDI.reason = "miss";
                 mshr_->setInProgress(addr);
+            } else {
+                recordMiss(event->getID());
             }
             break;
         case E:
             line->setState(M);
         case M:
             // Profile
-            eventProfileAndNotify(event, state, NotifyAccessType::WRITE, NotifyResultType::HIT, inMSHR, inMSHR);
             recordPrefetchResult(line, statPrefetchHit);
-            recordLatencyType(event->getID(), LatType::HIT);
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
+                recordLatencyType(event->getID(), LatType::HIT);
+                stat_eventState[(int)Command::GetX][state]->addData(1);
+                stat_hit[1][inMSHR]->addData(1);
+                stat_hits->addData(1);
+            }
+
             // Handle
-            if (!event->isStoreConditional() || line->isAtomic()) { /* Don't write on a non-atomic SC */
+            if (!event->isStoreConditional() || line->isAtomic(event->getThreadID())) { /* Don't write on a non-atomic SC */
                 line->setData(event->getPayload(), event->getAddr() - event->getBaseAddr());
                 line->atomicEnd();
+                if (mem_h_is_debug_addr(addr))
+                    printDataValue(addr, line->getData(), true);
             } else {
                 success = false;
             }
@@ -156,16 +196,23 @@ bool IncoherentL1::handleGetX(MemEvent* event, bool inMSHR) {
 
             sendTime = sendResponseUp(event, nullptr, inMSHR, line->getTimestamp(), success);
             line->setTimestamp(sendTime-1);
+            if (mem_h_is_debug_addr(addr))
+                eventDI.reason = "hit";
             cleanUpAfterRequest(event, inMSHR);
             break;
         default:
             if (!inMSHR) {
                 status = allocateMSHR(event, false);
+            } else if (mem_h_is_debug_addr(addr)) {
+                eventDI.action = "Stall";
             }
             break;
     }
 
-    printLine(addr);
+    if (mem_h_is_debug_addr(addr) && line) {
+        eventDI.newst = line->getState();
+        eventDI.verboseline = line->getString();
+    }
 
     return (status == MemEventStatus::Reject) ? false : true;
 }
@@ -180,7 +227,8 @@ bool IncoherentL1::handleGetSX(MemEvent* event, bool inMSHR) {
     uint64_t sendTime = 0;
     std::vector<uint8_t> data;
 
-    printLine(addr);
+    if (mem_h_is_debug_addr(addr))
+        eventDI.prefill(event->getID(), Command::GetSX, (event->isLoadLink() ? "-LL" : ""), addr, state);
 
     switch (state) {
         case I:
@@ -188,37 +236,59 @@ bool IncoherentL1::handleGetSX(MemEvent* event, bool inMSHR) {
             if (status == MemEventStatus::OK) { // Both MSHR insert & cache line allocation succeeded
                 line = cacheArray_->lookup(addr, false);
                 // Profile
-                eventProfileAndNotify(event, I, NotifyAccessType::READ, NotifyResultType::MISS, true, inMSHR);
-                recordLatencyType(event->getID(), LatType::MISS);
+                if (!mshr_->getProfiled(addr)) {
+                    notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
+                    stat_eventState[(int)Command::GetSX][I]->addData(1);
+                    stat_miss[2][inMSHR]->addData(1);
+                    stat_misses->addData(1);
+                    recordLatencyType(event->getID(), LatType::MISS);
+                    mshr_->setProfiled(addr);
+                }
                 // Handle
                 sendTime = forwardMessage(event, lineSize_, 0, nullptr);
                 line->setState(IM);
                 line->setTimestamp(sendTime);
+                if (mem_h_is_debug_addr(addr))
+                    eventDI.reason = "miss";
                 mshr_->setInProgress(addr);
+            } else {
+                recordMiss(event->getID());
             }
             break;
         case E:
             line->setState(M);
         case M:
             // Profile
-            eventProfileAndNotify(event, state, NotifyAccessType::READ, NotifyResultType::HIT, inMSHR, inMSHR);
             recordPrefetchResult(line, statPrefetchHit);
-            recordLatencyType(event->getID(), LatType::HIT);
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
+                recordLatencyType(event->getID(), LatType::HIT);
+                stat_eventState[(int)Command::GetSX][state]->addData(1);
+                stat_hit[2][inMSHR]->addData(1);
+                stat_hits->addData(1);
+            }
             // Handle
             line->incLock();
             std::copy(line->getData()->begin() + (event->getAddr() - event->getBaseAddr()), line->getData()->begin() + (event->getAddr() - event->getBaseAddr())  + event->getSize(), data.begin());
             sendTime = sendResponseUp(event, &data, inMSHR, line->getTimestamp());
             line->setTimestamp(sendTime-1);
+            if (mem_h_is_debug_addr(addr))
+                    eventDI.reason = "hit";
             cleanUpAfterRequest(event, inMSHR);
             break;
         default:
             if (!inMSHR) {
                 status = allocateMSHR(event, false);
+            } else if (mem_h_is_debug_addr(addr)) {
+                eventDI.action = "Stall";
             }
             break;
     }
 
-    printLine(addr);
+    if (mem_h_is_debug_addr(addr) && line) {
+        eventDI.newst = line->getState();
+        eventDI.verboseline = line->getString();
+    }
 
     return (status == MemEventStatus::Reject) ? false : true;
 }
@@ -229,7 +299,8 @@ bool IncoherentL1::handleFlushLine(MemEvent* event, bool inMSHR) {
     L1CacheLine * line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
 
-    printLine(addr);
+    if (mem_h_is_debug_addr(addr))
+        eventDI.prefill(event->getID(), Command::FlushLine, "", addr, state);
 
     if (!inMSHR && mshr_->exists(addr)) {
         return (allocateMSHR(event, false) == MemEventStatus::Reject) ? false : true;
@@ -238,13 +309,20 @@ bool IncoherentL1::handleFlushLine(MemEvent* event, bool inMSHR) {
     // At this point, state must be stable
 
     /* Flush fails if line is locked */
-    if (state != I && line->isLocked()) {
+    if (state != I && line->isLocked(timestamp_)) {
         if (!inMSHR || !mshr_->getProfiled(addr)) {
             stat_eventState[(int)Command::FlushLine][state]->addData(1);
         }
         sendResponseUp(event, nullptr, inMSHR, line->getTimestamp(), false);
         recordLatencyType(event->getID(), LatType::MISS);
         cleanUpAfterRequest(event, inMSHR);
+
+        if (mem_h_is_debug_addr(addr)) {
+            if (line)
+                eventDI.verboseline = line->getString();
+            eventDI.reason = "fail, line locked";
+        }
+
         return true;
     }
 
@@ -265,7 +343,10 @@ bool IncoherentL1::handleFlushLine(MemEvent* event, bool inMSHR) {
     if (line && state != I)
         line->setState(E_B);
 
-    printLine(addr);
+    if (mem_h_is_debug_addr(addr) && line) {
+        eventDI.newst = line->getState();
+        eventDI.verboseline = line->getString();
+    }
 
     return true;
 }
@@ -277,18 +358,24 @@ bool IncoherentL1::handleFlushLineInv(MemEvent* event, bool inMSHR) {
     L1CacheLine * line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
 
-    printLine(addr);
+    if (mem_h_is_debug_addr(addr))
+        eventDI.prefill(event->getID(), Command::FlushLineInv, "", addr, state);
 
     if (!inMSHR && mshr_->exists(addr)) {
         return (allocateMSHR(event, false) == MemEventStatus::Reject) ? false : true;
     }
 
     /* Flush fails if line is locked */
-    if (state != I && line->isLocked()) {
+    if (state != I && line->isLocked(timestamp_)) {
         stat_eventState[(int)Command::FlushLineInv][state]->addData(1);
         sendResponseUp(event, nullptr, inMSHR, line->getTimestamp(), false);
         recordLatencyType(event->getID(), LatType::MISS);
         cleanUpAfterRequest(event, inMSHR);
+        if (mem_h_is_debug_addr(addr)) {
+            if (line)
+                eventDI.verboseline = line->getString();
+            eventDI.reason = "fail, line locked";
+        }
         return true;
     }
 
@@ -309,33 +396,46 @@ bool IncoherentL1::handleFlushLineInv(MemEvent* event, bool inMSHR) {
     if (state != I)
         line->setState(I_B);
 
-    printLine(addr);
+    if (mem_h_is_debug_addr(addr) && line) {
+        eventDI.newst = line->getState();
+        eventDI.verboseline = line->getString();
+    }
 
     return true;
 }
 
 
 bool IncoherentL1::handleGetSResp(MemEvent * event, bool inMSHR) {
-    L1CacheLine * line = cacheArray_->lookup(event->getBaseAddr(), false);
+    Addr addr = event->getBaseAddr();
+    L1CacheLine * line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
-    printLine(event->getBaseAddr());
 
     stat_eventState[(int)(event->getCmd())][state]->addData(1);
 
-    MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(event->getBaseAddr()));
+    MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
     bool localPrefetch = req->isPrefetch() && (req->getRqstr() == cachename_);
+
+   if (mem_h_is_debug_addr(addr))
+        eventDI.prefill(event->getID(), Command::GetSResp, (localPrefetch ? "-pref" : ""), addr, state);
 
     // Update line
     line->setData(event->getPayload(), 0);
     line->setState(E);
-    if (is_debug_addr(line->getAddr()))
-        printDataValue(line->getAddr(), line->getData(), true);
+    if (mem_h_is_debug_addr(addr))
+        printDataValue(addr, line->getData(), false);
+
     if (req->isLoadLink())
-        line->atomicStart();
+        line->atomicStart(timestamp_ + llscBlockCycles_, req->getThreadID());
+
+    if (mem_h_is_debug_addr(addr))
+        printDataValue(addr, line->getData(), true);
 
     // Notify processor or set prefetch so we can track prefetch results
     if (localPrefetch) {
         line->setPrefetch(true);
+        recordPrefetchLatency(req->getID(), LatType::MISS);
+        if (mem_h_is_debug_addr(addr))
+            eventDI.action = "Done";
     } else {
         req->setMemFlags(event->getMemFlags());
         Addr offset = req->getAddr() - req->getBaseAddr();
@@ -343,7 +443,11 @@ bool IncoherentL1::handleGetSResp(MemEvent * event, bool inMSHR) {
         uint64_t sendTime = sendResponseUp(req, &data, true, line->getTimestamp());
         line->setTimestamp(sendTime-1);
     }
-    printLine(event->getBaseAddr());
+
+    if (mem_h_is_debug_addr(addr)) {
+        eventDI.newst = line->getState();
+        eventDI.verboseline = line->getString();
+    }
 
     cleanUpAfterResponse(event, inMSHR);
     return true;
@@ -351,7 +455,8 @@ bool IncoherentL1::handleGetSResp(MemEvent * event, bool inMSHR) {
 
 
 bool IncoherentL1::handleGetXResp(MemEvent * event, bool inMSHR) {
-    L1CacheLine * line = cacheArray_->lookup(event->getBaseAddr(), false);
+    Addr addr = event->getBaseAddr();
+    L1CacheLine * line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
 
     MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(event->getBaseAddr()));
@@ -359,16 +464,14 @@ bool IncoherentL1::handleGetXResp(MemEvent * event, bool inMSHR) {
         return handleGetSResp(event, inMSHR);
     }
 
-    printLine(event->getBaseAddr());
-
-    if (is_debug_event(event))
-        debug->debug(_L5_, "    Request: %s\n", req->getBriefString().c_str());
+    if (mem_h_is_debug_addr(addr))
+        eventDI.prefill(event->getID(), Command::GetXResp, "", addr, state);
 
     req->setMemFlags(event->getMemFlags());
 
     // Set line data
     line->setData(event->getPayload(), 0);
-    if (is_debug_addr(line->getAddr()))
+    if (mem_h_is_debug_addr(line->getAddr()))
         printDataValue(line->getAddr(), line->getData(), true);
 
 
@@ -379,9 +482,9 @@ bool IncoherentL1::handleGetXResp(MemEvent * event, bool inMSHR) {
     std::vector<uint8_t> data;
     bool success = true;
     if (req->getCmd() == Command::GetX || req->getCmd() == Command::Write) {
-        if (!req->isStoreConditional() || line->isAtomic()) {
+        if (!req->isStoreConditional() || line->isAtomic(req->getThreadID())) {
             line->setData(req->getPayload(), offset);
-            if (is_debug_addr(line->getAddr()))
+            if (mem_h_is_debug_addr(line->getAddr()))
                 printDataValue(line->getAddr(), line->getData(), true);
             line->atomicEnd();
         } else {
@@ -402,20 +505,26 @@ bool IncoherentL1::handleGetXResp(MemEvent * event, bool inMSHR) {
     line->setTimestamp(sendTime-1);
 
     stat_eventState[(int)Command::GetXResp][state]->addData(1);
-    printLine(event->getBaseAddr());
+    if (mem_h_is_debug_addr(addr)) {
+        eventDI.newst = line->getState();
+        eventDI.verboseline = line->getString();
+    }
     cleanUpAfterResponse(event, inMSHR);
     return true;
 }
 
 
 bool IncoherentL1::handleFlushLineResp(MemEvent * event, bool inMSHR) {
-    L1CacheLine * line = cacheArray_->lookup(event->getBaseAddr(), false);
+    Addr addr = event->getBaseAddr();
+    L1CacheLine * line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
-    printLine(event->getBaseAddr());
 
     stat_eventState[(int)Command::FlushLineResp][state]->addData(1);
 
-    MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(event->getBaseAddr()));
+    if (mem_h_is_debug_addr(addr))
+        eventDI.prefill(event->getID(), Command::FlushLineResp, "", addr, state);
+
+    MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
 
     switch (state) {
         case I:
@@ -434,7 +543,14 @@ bool IncoherentL1::handleFlushLineResp(MemEvent * event, bool inMSHR) {
 
     sendResponseUp(req, nullptr, timestamp_, event->success());
 
-    printLine(event->getBaseAddr());
+    if (mem_h_is_debug_event(event)) {
+        eventDI.action = "Respond";
+        if (line) {
+            eventDI.verboseline = line->getString();
+            eventDI.newst = line->getState();
+        }
+    }
+
     cleanUpAfterResponse(event, inMSHR);
     return true;
 }
@@ -445,25 +561,45 @@ bool IncoherentL1::handleNULLCMD(MemEvent* event, bool inMSHR) {
     Addr newAddr = event->getBaseAddr();
 
     L1CacheLine * line = cacheArray_->lookup(oldAddr, false);
-    printLine(event->getBaseAddr());
     bool evicted = handleEviction(newAddr, line);
+
+    if (mem_h_is_debug_addr(newAddr)) {
+        eventDI.prefill(event->getID(), Command::NULLCMD, "", line->getAddr(), evictDI.oldst);
+        eventDI.newst = line->getState();
+        eventDI.verboseline = line->getString();
+    }
+
     if (evicted) {
         notifyListenerOfEvict(line->getAddr(), lineSize_, event->getInstructionPointer());
         retryBuffer_.push_back(mshr_->getFrontEvent(newAddr));
         if (mshr_->removeEvictPointer(oldAddr, newAddr))
             retry(oldAddr);
+        if (mem_h_is_debug_addr(newAddr)) {
+            eventDI.action = "Retry";
+            std::stringstream reason;
+            reason << "0x" << std::hex << newAddr;
+            eventDI.reason = reason.str();
+        }
     } else { // Could be stalling for a new address or locked line
+        if (mem_h_is_debug_addr(newAddr)) {
+            eventDI.action = "Stall";
+            std::stringstream reason;
+            reason << "0x" << std::hex << newAddr << ", evict failed";
+                eventDI.reason = reason.str();
+        }
         if (oldAddr != line ->getAddr()) { // We're waiting for a new line now...
-            if (is_debug_addr(oldAddr) || is_debug_addr(line->getAddr()) || is_debug_addr(newAddr))
-                debug->debug(_L8_, "\tAddr 0x%" PRIx64 " now waiting for 0x%" PRIx64 " instead of 0x%" PRIx64 "\n",
-                        oldAddr, line->getAddr(), newAddr);
+            if (mem_h_is_debug_addr(line->getAddr()) || mem_h_is_debug_event(event)) {
+                eventDI.action = "Stall";
+                std::stringstream st;
+                st << "0x" << std::hex << newAddr << ", new targ";
+                eventDI.reason = st.str();
+            }
             mshr_->insertEviction(line->getAddr(), newAddr);
             if (mshr_->removeEvictPointer(oldAddr, newAddr))
                 retry(oldAddr);
         }
     }
 
-    printLine(event->getBaseAddr());
     delete event;
     return true;
 }
@@ -473,8 +609,8 @@ bool IncoherentL1::handleNACK(MemEvent* event, bool inMSHR) {
     L1CacheLine * line = cacheArray_->lookup(event->getBaseAddr(), false);
     State state = line ? line->getState() : I;
 
-    if (is_debug_event(nackedEvent))
-        debug->debug(_L5_, "\tNACK received for: %s\n", nackedEvent->getBriefString().c_str());
+    if (mem_h_is_debug_addr(event->getBaseAddr()))
+        eventDI.prefill(event->getID(), Command::NACK, "", event->getBaseAddr(), state);
 
     delete event;
     resendEvent(nackedEvent, false); // resend this down (since we're an L1)
@@ -490,8 +626,6 @@ bool IncoherentL1::handleNACK(MemEvent* event, bool inMSHR) {
  * Handle a cache miss
  */
 MemEventStatus IncoherentL1::processCacheMiss(MemEvent * event, L1CacheLine * line, bool inMSHR) {
-    if (is_debug_event(event))
-        debug->debug(_L5_, "\tMiss\n");
     MemEventStatus status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false); // Miss means we need an MSHR entry
     if (status == MemEventStatus::OK && !line) { // Need a cache line too
         line = allocateLine(event, line);
@@ -505,13 +639,31 @@ MemEventStatus IncoherentL1::processCacheMiss(MemEvent * event, L1CacheLine * li
  * Allocate a new MSHR entry
  */
 MemEventStatus IncoherentL1::allocateMSHR(MemEvent * event, bool fwdReq, int pos) {
+    // Screen prefetches first to ensure limits are not exceeeded:
+    //      - Maximum number of outstanding prefetches
+    //      - MSHR too full to accept prefetches
+    if (event->isPrefetch() && event->getRqstr() == cachename_) {
+        if (dropPrefetchLevel_ <= mshr_->getSize()) {
+            eventDI.action = "Reject";
+            eventDI.reason = "Prefetch drop level";
+            return MemEventStatus::Reject;
+        }
+        if (maxOutstandingPrefetch_ <= outstandingPrefetches_) {
+            eventDI.action = "Reject";
+            eventDI.reason = "Max outstanding prefetches";
+            return MemEventStatus::Reject;
+        }
+    }
+
     int insert_pos = mshr_->insertEvent(event->getBaseAddr(), event, pos, fwdReq, false);
-    if (is_debug_event(event))
-        debug->debug(_L5_, "\tAllocating MSHR, entry position is %d\n", insert_pos);
     if (insert_pos == -1)
         return MemEventStatus::Reject; // MSHR is full
-    else if (insert_pos != 0)
+    else if (insert_pos != 0) {
+        if (event->isPrefetch()) outstandingPrefetches_++;
         return MemEventStatus::Stall;
+    }
+
+    if (event->isPrefetch()) outstandingPrefetches_++;
 
     return MemEventStatus::OK;
 }
@@ -523,14 +675,18 @@ MemEventStatus IncoherentL1::allocateMSHR(MemEvent * event, bool fwdReq, int pos
 L1CacheLine* IncoherentL1::allocateLine(MemEvent * event, L1CacheLine * line) {
     bool evicted = handleEviction(event->getBaseAddr(), line);
     if (evicted) {
-        if (is_debug_event(event) || is_debug_addr(line->getAddr()))
-            debug->debug(_L5_, "    Successful eviction\n");
+        if (mem_h_is_debug_event(event) || mem_h_is_debug_addr(event->getBaseAddr()))
+            printDebugAlloc(true, event->getBaseAddr(), "");
         notifyListenerOfEvict(line->getAddr(), lineSize_, event->getInstructionPointer());
         cacheArray_->replace(event->getBaseAddr(), line);
         return line;
     } else {
-        if (is_debug_event(event) || is_debug_addr(line->getAddr()))
-            debug->debug(_L5_, "    Unsuccessful eviction\n");
+        if (mem_h_is_debug_event(event) || mem_h_is_debug_addr(line->getAddr())) {
+            eventDI.action = "Stall";
+            std::stringstream st;
+            st << "evict 0x" << std::hex << line->getAddr() << ", ";
+            eventDI.reason = st.str();
+        }
         mshr_->insertEviction(line->getAddr(), event->getBaseAddr());
         return nullptr;
     }
@@ -541,11 +697,13 @@ bool IncoherentL1::handleEviction(Addr addr, L1CacheLine*& line) {
         line = cacheArray_->findReplacementCandidate(addr);
     State state = line->getState();
 
-    if (is_debug_addr(addr) || is_debug_addr(line->getAddr()))
-        debug->debug(_L5_, "    Evicting line (0x%" PRIx64 ", %s)\n", line->getAddr(), StateString[state]);
+    if (mem_h_is_debug_addr(addr))
+        evictDI.oldst = line->getState();
 
     /* L1s can have locked cache lines */
-    if (line->isLocked()) {
+    if (line->isLocked(timestamp_)) {
+        if (mem_h_is_debug_addr(line->getAddr()))
+            printDebugAlloc(false, line->getAddr(), "InProg, line locked");
         return false;
     }
 
@@ -553,16 +711,31 @@ bool IncoherentL1::handleEviction(Addr addr, L1CacheLine*& line) {
 
     switch (state) {
         case I:
+            if (mem_h_is_debug_addr(line->getAddr()))
+                printDebugAlloc(false, line->getAddr(), "Drop");
             return true;
         case E:
+            if (mem_h_is_debug_addr(line->getAddr()))
+                printDebugAlloc(false, line->getAddr(), "Drop");
             line->setState(I);
             break;
         case M:
+            if (mem_h_is_debug_addr(line->getAddr()))
+                printDebugAlloc(false, line->getAddr(), "Writeback");
             sendWriteback(Command::PutM, line, true);
             cacheArray_->deallocate(line);
             line->setState(I);
             break;
         default:
+            if (mem_h_is_debug_addr(line->getAddr())) {
+                stringstream note;
+                if (mshr_->getPendingRetries(addr) != 0) {
+                    note << "PendRetry, " << StateString[state];
+                } else {
+                    note << "InProg, " << StateString[state];
+                }
+                printDebugAlloc(false, line->getAddr(), note.str());
+            }
             return false;
     }
 
@@ -587,30 +760,17 @@ void IncoherentL1::cleanUpAfterRequest(MemEvent* event, bool inMSHR) {
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             if (!mshr_->getInProgress(addr)) {
-                if (is_debug_addr(addr))
-                    debug->debug(_L5_, "    CleanUpAfterRequest: Waiting Event exists in MSHR and is ready to retry\n");
                 retryBuffer_.push_back(mshr_->getFrontEvent(addr));
-            } else {
-                if (is_debug_addr(addr))
-                    debug->debug(_L5_, "    CleanUpAfterRequest: Waiting Event exists in MSHR but is already in progress\n");
             }
         } else { // Pointer -> either we're waiting for a writeback ACK or another address is waiting for this one
             if (mshr_->getFrontType(addr) == MSHREntryType::Evict) {
-                if (is_debug_addr(addr))
-                    debug->debug(_L5_, "    CleanUpAfterRequest: Waiting Evict in MSHR, retrying eviction(s)\n");
                 std::list<Addr>* evictPointers = mshr_->getEvictPointers(addr);
                 for (std::list<Addr>::iterator it = evictPointers->begin(); it != evictPointers->end(); it++) {
                     MemEvent * ev = new MemEvent(cachename_, addr, *it, Command::NULLCMD, getCurrentSimTimeNano());
                     retryBuffer_.push_back(ev);
                 }
-            } else {
-                if (is_debug_addr(addr))
-                    debug->debug(_L5_, "    CleanUpAfterRequest: Waiting Writeback in MSHR, stalling\n");
             }
         }
-    } else {
-        if (is_debug_addr(addr))
-            debug->debug(_L5_, "    CleanUpAfterRequest: MSHR is now empty for this address\n");
     }
 }
 
@@ -629,25 +789,15 @@ void IncoherentL1::cleanUpAfterResponse(MemEvent* event, bool inMSHR) {
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             if (!mshr_->getInProgress(addr)) {
-                if (is_debug_addr(addr))
-                    debug->debug(_L5_, "    CleanUpAfterResponse: Waiting Event in MSHR and is ready to retry\n");
                 retryBuffer_.push_back(mshr_->getFrontEvent(addr));
-            } else {
-                if (is_debug_addr(addr))
-                    debug->debug(_L5_, "    CleanUpAfterResponse: Waiting Event in MSHR but is already in progress\n");
             }
         } else {
-            if (is_debug_addr(addr))
-                debug->debug(_L5_, "    CleanUpAfterResponse: Waiting Evict in MSHR, retrying eviction\n");
             std::list<Addr>* evictPointers = mshr_->getEvictPointers(addr);
             for (std::list<Addr>::iterator it = evictPointers->begin(); it != evictPointers->end(); it++) {
                 MemEvent * ev = new MemEvent(cachename_, addr, *it, Command::NULLCMD, getCurrentSimTimeNano());
                 retryBuffer_.push_back(ev);
             }
         }
-    } else {
-        if (is_debug_addr(addr))
-            debug->debug(_L5_, "    CleanUpAfterResponse: MSHR is now empty for this address\n");
     }
 }
 
@@ -678,7 +828,7 @@ uint64_t IncoherentL1::sendResponseUp(MemEvent * event, vector<uint8_t> * data, 
     if (data) {
         responseEvent->setPayload(*data);
         responseEvent->setSize(data->size()); // Return size that was written
-        if (is_debug_event(event)) {
+        if (mem_h_is_debug_event(event)) {
             printDataValue(event->getAddr(), data, false);
         }
     }
@@ -692,10 +842,8 @@ uint64_t IncoherentL1::sendResponseUp(MemEvent * event, vector<uint8_t> * data, 
     forwardByDestination(responseEvent, deliveryTime);
 
     // Debugging
-    if (is_debug_event(responseEvent)) {
-        debug->debug(_L3_, "Sending response at cycle %" PRIu64 ". Current time = %" PRIu64 ". Response = (%s)\n",
-                deliveryTime, timestamp_, responseEvent->getBriefString().c_str());
-    }
+    if (mem_h_is_debug_event(responseEvent))
+        eventDI.action = "Respond";
 
     return deliveryTime;
 }
@@ -714,9 +862,8 @@ void IncoherentL1::sendResponseDown(MemEvent * event, L1CacheLine * line, bool d
     uint64_t deliverTime = timestamp_ + (data ? accessLatency_ : tagLatency_);
     forwardByDestination(responseEvent, deliverTime);
 
-    if (is_debug_event(responseEvent)) {
-        debug->debug(_L3_, "Sending response at cycle %" PRIu64 ". Current time = %" PRIu64 ". Response = (%s)\n",
-                deliverTime, timestamp_, responseEvent->getBriefString().c_str());
+    if (mem_h_is_debug_event(responseEvent)) {
+        eventDI.action = "Respond";
     }
 }
 
@@ -742,10 +889,8 @@ void IncoherentL1::forwardFlush(MemEvent * event, L1CacheLine * line, bool evict
     forwardByAddress(flush, deliveryTime);
     if (line)
         line->setTimestamp(deliveryTime-1);
-
-    if (is_debug_addr(event->getBaseAddr())) {
-        debug->debug(_L3_,"Forwarding Flush at cycle = %" PRIu64 ", Cmd = %s, Src = %s, %s\n", deliveryTime, CommandString[(int)flush->getCmd()], flush->getSrc().c_str(), evict ? "with data" : "without data");
-    }
+    if (mem_h_is_debug_addr(event->getBaseAddr()))
+        eventDI.action = "forward";
 }
 
 /*---------------------------------------------------------------------------------------------------
@@ -771,7 +916,7 @@ void IncoherentL1::sendWriteback(Command cmd, L1CacheLine* line, bool dirty) {
         writeback->setPayload(*line->getData());
         writeback->setDirty(dirty);
 
-        if (is_debug_addr(line->getAddr())) {
+        if (mem_h_is_debug_addr(line->getAddr())) {
             printDataValue(line->getAddr(), line->getData(), false);
         }
 
@@ -785,7 +930,7 @@ void IncoherentL1::sendWriteback(Command cmd, L1CacheLine* line, bool dirty) {
     forwardByAddress(writeback, deliveryTime);
     line->setTimestamp(deliveryTime-1);
 
-    if (is_debug_addr(line->getAddr()))
+    if (mem_h_is_debug_addr(line->getAddr()))
         debug->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s. With%s data.\n", deliveryTime, CommandString[(int)cmd], ((cmd == Command::PutM || writebackCleanBlocks_) ? "" : "out"));
 }
 
@@ -812,10 +957,10 @@ MemEventInitCoherence* IncoherentL1::getInitCoherenceEvent() {
 }
 
 void IncoherentL1::printLine(Addr addr) {
-    if (!is_debug_addr(addr)) return;
+    /*if (!mem_h_is_debug_addr(addr)) return;
     L1CacheLine * line = cacheArray_->lookup(addr, false);
     std::string state = (line == nullptr) ? "NP" : line->getString();
-    debug->debug(_L8_, "  Line 0x%" PRIx64 ": %s\n", addr, state.c_str());
+    debug->debug(_L8_, "  Line 0x%" PRIx64 ": %s\n", addr, state.c_str());*/
 }
 
 /* Record the result of a prefetch. important: assumes line is not null */
@@ -823,22 +968,6 @@ void IncoherentL1::recordPrefetchResult(L1CacheLine * line, Statistic<uint64_t> 
     if (line->getPrefetch()) {
         stat->addData(1);
         line->setPrefetch(false);
-    }
-}
-
-void IncoherentL1::eventProfileAndNotify(MemEvent * event, State state, NotifyAccessType type, NotifyResultType result, bool inMSHR, bool stalled) {
-    if (!inMSHR || !mshr_->getProfiled(event->getBaseAddr())) {
-        stat_eventState[(int)event->getCmd()][state]->addData(1); // profile
-        if (result == NotifyResultType::MISS) {
-            stat_misses->addData(1);
-            stat_miss[(int)event->getCmd()][(int)stalled]->addData(1);
-        } else {
-            stat_hits->addData(1);
-            stat_hit[(int)event->getCmd()][(int)stalled]->addData(1);
-        }
-        notifyListenerOfAccess(event, type, result);
-        if (inMSHR)
-            mshr_->setProfiled(event->getBaseAddr());
     }
 }
 

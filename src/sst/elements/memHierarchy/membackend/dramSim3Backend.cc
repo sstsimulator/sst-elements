@@ -1,19 +1,19 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <sst_config.h>
+#include <sst/core/sst_config.h>
 #include "sst/elements/memHierarchy/util.h"
 #include "membackend/dramSim3Backend.h"
 
@@ -71,7 +71,7 @@ void DRAMSim3Memory::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockc
 #ifdef __SST_DEBUG_OUTPUT__
     output->debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", (Addr)addr, reqs.size());
 #endif
-    if (reqs.size() == 0) 
+    if (reqs.size() == 0)
         output->fatal(CALL_INFO, -1, "Error: reqs.size() is 0 at DRAMSim3Memory done\n");
     ReqId reqId = reqs.front();
     reqs.pop_front();

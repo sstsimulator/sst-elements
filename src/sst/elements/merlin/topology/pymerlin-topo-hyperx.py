@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2021 NTESS. Under the terms
+# Copyright 2009-2025 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2021, NTESS
+# Copyright (c) 2009-2025, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
 # See the file CONTRIBUTORS.TXT in the top level directory
-# the distribution for more information.
+# of the distribution for more information.
 #
 # This file is part of the SST software package. For license
 # information, see the LICENSE file in the top level directory of the
@@ -20,7 +20,7 @@ from sst.merlin.base import *
 
 
 class topoHyperX(Topology):
-        
+
 
     def __init__(self):
         Topology.__init__(self)
@@ -35,7 +35,7 @@ class topoHyperX(Topology):
         self._lockVariable(variable_name)
         if variable_name == "local_ports":
             return
-        
+
         if not self._areVariablesLocked(["shape","width"]):
             return
 
@@ -45,7 +45,7 @@ class topoHyperX(Topology):
         else:
             shape = self.shape
             width = value
-            
+
         # Get the size in dimension
         self._dim_size = [int(x) for x in shape.split('x')]
 
@@ -58,7 +58,7 @@ class topoHyperX(Topology):
         if len(self._dim_size) != len(self._dim_width):
             print("topoHyperX:  Incompatible number of dimensions set for shape (%s) and width (%s)."%(shape,width))
             exit(1)
-        
+
     def getName(self):
         return "HyperX"
 
@@ -79,7 +79,7 @@ class topoHyperX(Topology):
         this.width = width
         this.local_ports = local_ports
 
-        
+
     def _formatShape(self, arr):
         return 'x'.join([str(x) for x in arr])
 
@@ -99,23 +99,23 @@ class topoHyperX(Topology):
 
     def getRouterNameForId(self,rtr_id):
         return self.getRouterNameForLocation(self._idToLoc(rtr_id))
-        
+
     def getRouterNameForLocation(self,location):
-        return "%srtr.%s"%(self._prefix,self._formatShape(location))
-    
+        return "rtr_%s"%(self._formatShape(location))
+
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location))
-        
-    
-    def build(self, endpoint):
+
+
+    def _build_impl(self, endpoint):
         if self.host_link_latency is None:
             self.host_link_latency = self.link_latency
 
         # get some local variables from the parameters
         local_ports = int(self.local_ports)
         num_dims = len(self._dim_size)
-        
-        
+
+
         # Calculate number of routers and endpoints
         num_routers = 1
         for x in self._dim_size:
@@ -126,14 +126,14 @@ class topoHyperX(Topology):
         radix = local_ports
         for x in range(num_dims):
             radix += (self._dim_width[x] * (self._dim_size[x]-1))
-        
+
         links = dict()
         def getLink(name1, name2, num):
             # Sort name1 and name2 so order doesn't matter
             if str(name1) < str(name2):
-                name = "link.%s:%s:%d"%(name1, name2, num)
+                name = "link_%s_%s_%d"%(name1, name2, num)
             else:
-                name = "link.%s:%s:%d"%(name2, name1, num)
+                name = "link_%s_%s_%d"%(name2, name1, num)
             if name not in links:
                 links[name] = sst.Link(name)
             #print("Getting link with name: %s"%name)
@@ -174,7 +174,7 @@ class topoHyperX(Topology):
                 nodeID = local_ports * i + n
                 (ep, port_name) = endpoint.build(nodeID, {})
                 if ep:
-                    nicLink = sst.Link("nic.%d:%d"%(i, n))
+                    nicLink = sst.Link("nic_%d_%d"%(i, n))
                     if self.bundleEndpoints:
                        nicLink.setNoCut()
                     nicLink.connect( (ep, port_name, self.host_link_latency), (rtr, "port%d"%port, self.host_link_latency) )

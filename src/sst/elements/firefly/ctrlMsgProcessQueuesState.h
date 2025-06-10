@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -58,7 +58,7 @@ class ProcessQueuesState : public SubComponent
 {
   public:
     SST_ELI_REGISTER_SUBCOMPONENT_API( SST::Firefly::CtrlMsg::ProcessQueuesState )
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         ProcessQueuesState,
         "firefly",
         "ctrlMsg",
@@ -97,7 +97,7 @@ class ProcessQueuesState : public SubComponent
     SST_ELI_DOCUMENT_PORTS(
         {"loop", "loopback port", {}}
     )
-    
+
     SST_ELI_DOCUMENT_STATISTICS(
         { "posted_receive_list", "", "count", 1 },
         { "received_msg_list", "", "count", 1 }
@@ -161,7 +161,7 @@ class ProcessQueuesState : public SubComponent
 
   private:
 
-    void loopHandler( Event* );
+    void eventLoopHandler( Event* );
     void delayHandler( Event* );
 
     struct CtrlHdr {
@@ -457,7 +457,7 @@ class ProcessQueuesState : public SubComponent
     const char* recvdMsgQsize() {
 		static char m_stringBuf[100];
 		snprintf( m_stringBuf, 100, "%d:%zu,%zu",m_recvdMsgQpos, m_recvdMsgQ[0].size(), m_recvdMsgQ[1].size() );
-        return m_stringBuf; 
+        return m_stringBuf;
     }
 
     void loopHandler( int, std::vector<IoVec>&, void* );

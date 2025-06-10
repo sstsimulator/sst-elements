@@ -11,7 +11,7 @@ L2_0     L2_1     L2_2     L2_3     L2_4     L2_5     L2_6     L2_7
                                 BUS
                              Shared L3
                            MemoryController
-                         Main Memory (DRAMSIM)
+                         Main Memory (TimingDRAM)
 """
 
 import sst
@@ -24,7 +24,6 @@ coherenceProtocol = "MESI"
 rplPolicy = "lru"
 busLat = "50 ps"
 cacheFrequency = "2 Ghz"
-defaultLevel = 0
 cacheLineSize = 64
 
 corecount = 8
@@ -70,7 +69,6 @@ ariel.addParams({
    "launchparam0"        : "-ifeellucky",
    "arielmode"           : "1",
    "corecount"           : corecount,
-   "defaultlevel"        : defaultLevel,
 })
 
 ariel.setSubComponent("memmgr", "ariel.MemoryManagerSimple")
@@ -150,11 +148,11 @@ def genMemHierarchy(cores):
        ## SST Links
        # Ariel -> L1(PRIVATE) -> L2(PRIVATE)  -> L3 (SHARED) -> DRAM
        ArielL1Link = sst.Link("cpu_cache_%d"%core)
-       ArielL1Link.connect((ariel, "cache_link_%d"%core, busLat), (l1, "high_network_0", busLat))
+       ArielL1Link.connect((ariel, "cache_link_%d"%core, busLat), (l1, "highlink", busLat))
        L1L2Link = sst.Link("l1_l2_%d"%core)
-       L1L2Link.connect((l1, "low_network_0", busLat), (l2, "high_network_0", busLat))
+       L1L2Link.connect((l1, "lowlink", busLat), (l2, "highlink", busLat))
        L2MembusLink = sst.Link("l2_membus_%d"%core)
-       L2MembusLink.connect((l2, "low_network_0", busLat), (membus, "high_network_%d"%core, busLat))
+       L2MembusLink.connect((l2, "lowlink", busLat), (membus, "highlink%d"%core, busLat))
 
 
    l3 = sst.Component("L3cache", "memHierarchy.Cache")
@@ -176,9 +174,9 @@ def genMemHierarchy(cores):
 
    # Bus to L3 and L3 <-> MM
    BusL3Link = sst.Link("bus_L3")
-   BusL3Link.connect((membus, "low_network_0", busLat), (l3, "high_network_0", busLat))
+   BusL3Link.connect((membus, "lowlink0", busLat), (l3, "highlink", busLat))
    L3MemCtrlLink = sst.Link("L3MemCtrl")
-   L3MemCtrlLink.connect((l3, "low_network_0", busLat), (memctrl, "direct_link", busLat))
+   L3MemCtrlLink.connect((l3, "lowlink", busLat), (memctrl, "highlink", busLat))
 
 genMemHierarchy(corecount)
 

@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -25,7 +25,7 @@ namespace MemHierarchy {
 class SimpleDRAM : public SimpleMemBackend {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(SimpleDRAM, "memHierarchy", "simpleDRAM", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(SimpleDRAM, "memHierarchy", "simpleDRAM", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Simplified timing model for DRAM", SST::MemHierarchy::SimpleMemBackend)
 
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
@@ -93,9 +93,9 @@ public:
     public:
         void serialize_order(SST::Core::Serialization::serializer &ser)  override {
             Event::serialize_order(ser);
-            ser & reqId;  // Cannot serialize pointers unless they are a serializable object
-            ser & bank;
-            ser & close;
+            SST_SER(reqId);
+            SST_SER(bank);
+            SST_SER(close);
         }
         ImplementSerializable(SST::MemHierarchy::SimpleDRAM::MemCtrlEvent);
     };

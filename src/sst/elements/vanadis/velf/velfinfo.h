@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -18,6 +18,7 @@
 
 #include <cinttypes>
 #include <cstdio>
+#include "os/vosDbgFlags.h"
 
 namespace SST {
 namespace Vanadis {
@@ -60,7 +61,7 @@ enum VanadisELFSectionHeaderType {
     SECTION_HEADER_DEFINED_TYPES
 };
 
-const char*
+static const char*
 getELFSectionHeaderTypeString(VanadisELFSectionHeaderType sec_type) {
     switch (sec_type) {
     case SECTION_HEADER_NOT_USED:
@@ -102,7 +103,7 @@ getELFSectionHeaderTypeString(VanadisELFSectionHeaderType sec_type) {
     }
 };
 
-const char*
+static const char*
 getELFProgramHeaderTypeString(VanadisELFProgramHeaderType hdr) {
     switch (hdr) {
     case PROG_HEADER_NOT_USED:
@@ -124,7 +125,7 @@ getELFProgramHeaderTypeString(VanadisELFProgramHeaderType hdr) {
     }
 };
 
-const char*
+static const char*
 getELFObjectTypeString(VanadisELFObjectType obj) {
     switch (obj) {
     case OBJ_TYPE_NONE:
@@ -141,7 +142,7 @@ getELFObjectTypeString(VanadisELFObjectType obj) {
     }
 };
 
-const char*
+static const char*
 getELFISAString(VanadisELFISA isa) {
     switch (isa) {
     case ISA_X86:
@@ -157,7 +158,7 @@ getELFISAString(VanadisELFISA isa) {
     }
 };
 
-const char*
+static const char*
 getELFOSABIString(VanadisELFOSABI abi) {
     switch (abi) {
     case OS_ABI_LINUX:
@@ -173,7 +174,7 @@ enum VanadisSymbolType { SYMBOL_NO_TYPE, SYMBOL_OBJECT, SYMBOL_FUNCTION, SYMBOL_
 
 enum VanadisSymbolBindType { SYMBOL_BIND_LOCAL, SYMBOL_BIND_GLOBAL, SYMBOL_BIND_WEAK, SYMBOL_BIND_UNKNOWN };
 
-const char*
+static const char*
 getSymbolBindTypeString(VanadisSymbolBindType bindT) {
     switch (bindT) {
     case SYMBOL_BIND_LOCAL:
@@ -187,7 +188,7 @@ getSymbolBindTypeString(VanadisSymbolBindType bindT) {
     }
 };
 
-const char*
+static const char*
 getSymbolTypeString(VanadisSymbolType symT) {
     switch (symT) {
     case SYMBOL_NO_TYPE:
@@ -213,8 +214,8 @@ public:
     }
 
     void print(SST::Output* output, uint32_t index) {
-        output->verbose(CALL_INFO, 16, 0,
-                        "Relocation (index: %" PRIu32 " / address: %" PRIu64 " (0x%0llx) / info: %" PRIu64 "\n", index,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF,
+                        "Relocation (index: %" PRIu32 " / address: %" PRIu64 " (0x%0" PRI_ADDR ") / info: %" PRIu64 "\n", index,
                         rel_address, rel_address, symbol_info);
     }
 
@@ -260,8 +261,8 @@ public:
     uint64_t getSymbolSection() const { return sym_sndx; }
 
     void print(SST::Output* output, size_t index) {
-        output->verbose(CALL_INFO, 32, 0,
-                        "Symbol (index: %" PRIu32 " / name: %s / offset: %" PRIu64 " / address: 0x%0llx / sz: %" PRIu64
+        output->verbose(CALL_INFO, 32, VANADIS_OS_DBG_READ_ELF,
+                        "Symbol (index: %" PRIu32 " / name: %s / offset: %" PRIu64 " / address: 0x%0" PRI_ADDR " / sz: %" PRIu64
                         ", type: %s / bind: %s / sndx: %" PRIu64 ")\n",
                         (uint32_t)index, symbolName.c_str(), sym_name_offset, sym_address, sym_size,
                         getSymbolTypeString(sym_type), getSymbolBindTypeString(sym_bind), sym_sndx);
@@ -307,21 +308,21 @@ public:
     uint64_t getSegmentFlags() const { return segment_flags; }
 
     void print(SST::Output* output, uint64_t index) {
-        output->verbose(CALL_INFO, 16, 0, ">> Program Header Entry:    %" PRIu64 "\n", index);
-        output->verbose(CALL_INFO, 16, 0, "---> Header Type:           %" PRIu64 " / 0x%llx / %s\n", hdr_type_num,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, ">> Program Header Entry:    %" PRIu64 "\n", index);
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Header Type:           %" PRIu64 " / 0x%" PRI_ADDR " / %s\n", hdr_type_num,
                         hdr_type_num, getELFProgramHeaderTypeString(hdr_type));
-        output->verbose(CALL_INFO, 16, 0, "---> Image Offset:          %" PRIu64 "\n", imgOffset);
-        output->verbose(CALL_INFO, 16, 0, "---> Virtual Memory Start:  %" PRIu64 " / %p\n", virtMemAddrStart,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Image Offset:          %" PRIu64 "\n", imgOffset);
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Virtual Memory Start:  %" PRIu64 " / %p\n", virtMemAddrStart,
                         (void*)virtMemAddrStart);
-        output->verbose(CALL_INFO, 16, 0, "---> Phys. Memory Start:    %" PRIu64 " / %p\n", physMemAddrStart,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Phys. Memory Start:    %" PRIu64 " / %p\n", physMemAddrStart,
                         (void*)physMemAddrStart);
-        output->verbose(CALL_INFO, 16, 0, "---> Image Data Length:     %" PRIu64 " / %p\n", imgDataLen,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Image Data Length:     %" PRIu64 " / %p\n", imgDataLen,
                         (void*)imgDataLen);
-        output->verbose(CALL_INFO, 16, 0, "---> Image Mem Length:      %" PRIu64 " / %p\n", memDataLen,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Image Mem Length:      %" PRIu64 " / %p\n", memDataLen,
                         (void*)memDataLen);
-        output->verbose(CALL_INFO, 16, 0, "---> Flags:                 %" PRIu64 " / 0x%0llx\n", segment_flags,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Flags:                 %" PRIu64 " / 0x%0" PRI_ADDR "\n", segment_flags,
                         segment_flags);
-        output->verbose(CALL_INFO, 16, 0, "---> Alignment:             %" PRIu64 " / %p\n", alignment,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Alignment:             %" PRIu64 " / %p\n", alignment,
                         (void*)alignment);
     }
 
@@ -383,26 +384,26 @@ public:
     uint64_t getAlignment() const { return alignment; }
 
     void print(SST::Output* output, uint64_t index) {
-        output->verbose(CALL_INFO, 16, 0, ">> Section Entry %" PRIu64 " (id: %" PRIu64 ")\n", index, id);
-        output->verbose(CALL_INFO, 16, 0, "---> Header Type:                 %s\n",
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, ">> Section Entry %" PRIu64 " (id: %" PRIu64 ")\n", index, id);
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Header Type:                 %s\n",
                         getELFSectionHeaderTypeString(sec_type));
-        output->verbose(CALL_INFO, 16, 0, "---> Section Flags:               %" PRIu64 " / %p\n", sec_flags,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Section Flags:               %" PRIu64 " / %p\n", sec_flags,
                         (void*)sec_flags);
-        output->verbose(CALL_INFO, 16, 0, "-----> isWriteable():             %s\n", isWriteable() ? "yes" : "no");
-        output->verbose(CALL_INFO, 16, 0, "-----> isAllocated():             %s\n", isAllocated() ? "yes" : "no");
-        output->verbose(CALL_INFO, 16, 0, "-----> isExecutable():            %s\n", isExecutable() ? "yes" : "no");
-        output->verbose(CALL_INFO, 16, 0, "-----> isMergeable():             %s\n", isMergable() ? "yes" : "no");
-        output->verbose(CALL_INFO, 16, 0, "-----> isNullTermStrings():       %s\n",
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-----> isWriteable():             %s\n", isWriteable() ? "yes" : "no");
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-----> isAllocated():             %s\n", isAllocated() ? "yes" : "no");
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-----> isExecutable():            %s\n", isExecutable() ? "yes" : "no");
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-----> isMergeable():             %s\n", isMergable() ? "yes" : "no");
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-----> isNullTermStrings():       %s\n",
                         isNullTerminatedStrings() ? "yes" : "no");
-        output->verbose(CALL_INFO, 16, 0, "-----> SHT-Index():               %s\n", containsSHTIndex() ? "yes" : "no");
-        output->verbose(CALL_INFO, 16, 0, "-----> TLS-Data():                %s\n", containsTLSData() ? "yes" : "no");
-        output->verbose(CALL_INFO, 16, 0, "---> Virtual Address:             %" PRIu64 " / %p\n", virtMemAddrStart,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-----> SHT-Index():               %s\n", containsSHTIndex() ? "yes" : "no");
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-----> TLS-Data():                %s\n", containsTLSData() ? "yes" : "no");
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Virtual Address:             %" PRIu64 " / %p\n", virtMemAddrStart,
                         (void*)virtMemAddrStart);
-        output->verbose(CALL_INFO, 16, 0, "---> Image Offset:                %" PRIu64 " / %p\n", imgOffset,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Image Offset:                %" PRIu64 " / %p\n", imgOffset,
                         (void*)imgOffset);
-        output->verbose(CALL_INFO, 16, 0, "---> Image Data Length:           %" PRIu64 " / %p\n", imgDataLen,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Image Data Length:           %" PRIu64 " / %p\n", imgDataLen,
                         (void*)imgDataLen);
-        output->verbose(CALL_INFO, 16, 0, "---> Alignment:                   %" PRIu64 " / %p\n", alignment,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Alignment:                   %" PRIu64 " / %p\n", alignment,
                         (void*)alignment);
     }
 
@@ -447,39 +448,39 @@ public:
     }
 
     void print(SST::Output* output) {
-        output->verbose(CALL_INFO, 2, 0, "-------------------------------------------------------\n");
-        output->verbose(CALL_INFO, 2, 0, "ELF Information [%s]\n", (nullptr == bin_path) ? "Not set" : bin_path);
-        output->verbose(CALL_INFO, 2, 0, "-------------------------------------------------------\n");
-        output->verbose(CALL_INFO, 2, 0, "Class:                %s\n",
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "-------------------------------------------------------\n");
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "ELF Information [%s]\n", (nullptr == bin_path) ? "Not set" : bin_path);
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "-------------------------------------------------------\n");
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Class:                %s\n",
                         isELF64()   ? "64-bit"
                         : isELF32() ? "32-bit"
                                     : "Unknown");
-        output->verbose(CALL_INFO, 2, 0, "Instruction-Set:      %" PRIu16 " / %s\n", elf_isa,
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Instruction-Set:      %" PRIu16 " / %s\n", elf_isa,
                         getELFISAString(getISA()));
-	output->verbose(CALL_INFO, 2, 0, "Endian:               %s\n", elf_endian == VANADIS_LITTLE_ENDIAN ? "Little Endian" : "Big Endian");
-        output->verbose(CALL_INFO, 2, 0, "Object Type:          %s\n", getELFObjectTypeString(getObjectType()));
-        output->verbose(CALL_INFO, 2, 0, "OS-ABI:               %" PRIu8 " / %s\n", elf_os_abi,
+	output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Endian:               %s\n", elf_endian == VANADIS_LITTLE_ENDIAN ? "Little Endian" : "Big Endian");
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Object Type:          %s\n", getELFObjectTypeString(getObjectType()));
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "OS-ABI:               %" PRIu8 " / %s\n", elf_os_abi,
                         getELFOSABIString(getOSABI()));
-        output->verbose(CALL_INFO, 2, 0, "Entry-Point:          %p\n", (void*)getEntryPoint());
-        output->verbose(CALL_INFO, 2, 0, "Prog-Hdr Offset:      %p\n", (void*)getProgramHeaderOffset());
-        output->verbose(CALL_INFO, 2, 0, "Prog-Hdr Entry Size:  %" PRIu16 "\n", getProgramHeaderEntrySize());
-        output->verbose(CALL_INFO, 2, 0, "Prog-Hdr Entry Count: %" PRIu16 "\n", getProgramHeaderEntryCount());
-        output->verbose(CALL_INFO, 2, 0, "Sect-hdr Offset:      %p\n", (void*)getSectionHeaderOffset());
-        output->verbose(CALL_INFO, 2, 0, "Sect-Hdr Entry Size:  %" PRIu16 "\n", getSectionHeaderEntrySize());
-        output->verbose(CALL_INFO, 2, 0, "Sect-Hdr Entry Count: %" PRIu16 "\n", getSectionHeaderEntryCount());
-        output->verbose(CALL_INFO, 2, 0, "Sect-Hdr Strings Loc: %" PRIu16 "\n", getSectionHeaderNameEntryOffset());
-        output->verbose(CALL_INFO, 2, 0, "Symbols Found:        %" PRIu32 "\n", (uint32_t)progSymbols.size());
-        output->verbose(CALL_INFO, 2, 0, "Relocation Entries:   %" PRIu32 "\n", (uint32_t)progRelDyn.size());
-        output->verbose(CALL_INFO, 2, 0, "-------------------------------------------------------\n");
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Entry-Point:          %p\n", (void*)getEntryPoint());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Prog-Hdr Offset:      %p\n", (void*)getProgramHeaderOffset());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Prog-Hdr Entry Size:  %" PRIu16 "\n", getProgramHeaderEntrySize());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Prog-Hdr Entry Count: %" PRIu16 "\n", getProgramHeaderEntryCount());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Sect-hdr Offset:      %p\n", (void*)getSectionHeaderOffset());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Sect-Hdr Entry Size:  %" PRIu16 "\n", getSectionHeaderEntrySize());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Sect-Hdr Entry Count: %" PRIu16 "\n", getSectionHeaderEntryCount());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Sect-Hdr Strings Loc: %" PRIu16 "\n", getSectionHeaderNameEntryOffset());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Symbols Found:        %" PRIu32 "\n", (uint32_t)progSymbols.size());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Relocation Entries:   %" PRIu32 "\n", (uint32_t)progRelDyn.size());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "-------------------------------------------------------\n");
 
         for (int i = 0; i < progHeaders.size(); ++i) {
             progHeaders[i]->print(output, i);
-            output->verbose(CALL_INFO, 16, 0, "-------------------------------------------------------\n");
+            output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-------------------------------------------------------\n");
         }
 
         for (int i = 0; i < progSections.size(); ++i) {
             progSections[i]->print(output, i);
-            output->verbose(CALL_INFO, 16, 0, "-------------------------------------------------------\n");
+            output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-------------------------------------------------------\n");
         }
 
         for (int i = 0; i < progSymbols.size(); ++i) {
@@ -490,7 +491,7 @@ public:
             progRelDyn[i]->print(output, i);
         }
 
-        output->verbose(CALL_INFO, 16, 0, "-------------------------------------------------------\n");
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-------------------------------------------------------\n");
     }
 
     void setClass(const uint8_t new_class) { elf_class = new_class; }
@@ -555,11 +556,19 @@ public:
     }
 
     void setBinaryPath(const char* new_path) {
-        bin_path = new char[strlen(new_path) + 1];
-        sprintf(bin_path, "%s", new_path);
+        bin_path_short = bin_path = new char[strlen(new_path) + 1];
+        snprintf(bin_path, strlen(new_path) + 1, "%s", new_path);
+
+        for ( auto i = strlen(bin_path); i > 0; i-- ) {
+            if ( '/' == bin_path[i-1] ) {
+                bin_path_short = bin_path + i;
+                break;
+            }
+        }
     }
 
     const char* getBinaryPath() const { return bin_path; }
+    const char* getBinaryPathShort() const { return bin_path_short; }
 
     uint64_t getEntryPoint() const { return elf_entry_point; }
     VanadisELFEndianness getEndian() const { return elf_endian; }
@@ -574,6 +583,20 @@ public:
 
     size_t countProgramHeaders() const { return progHeaders.size(); }
     const VanadisELFProgramHeaderEntry* getProgramHeader(const size_t index) { return progHeaders[index]; }
+    const VanadisELFProgramHeaderEntry* findProgramHeader( uint64_t virtAddr ) {
+        for ( size_t i = 0; i < countProgramHeaders(); ++i ) {
+
+            const VanadisELFProgramHeaderEntry* hdr = getProgramHeader(i);
+            if ( PROG_HEADER_LOAD == hdr->getHeaderType() ) {
+                uint64_t hdrAddr = hdr->getVirtualMemoryStart() & ~(4096-1);
+                uint64_t endAddr = hdr->getVirtualMemoryStart() + hdr->getHeaderMemoryLength();
+                if ( virtAddr >= hdrAddr && virtAddr < endAddr ) {
+                    return hdr;
+                }
+            }
+        }
+        return nullptr;
+    }
 
     size_t countProgramSections() const { return progSections.size(); }
     const VanadisELFProgramSectionEntry* getProgramSection(const size_t index) { return progSections[index]; }
@@ -629,6 +652,7 @@ public:
 
 protected:
     char* bin_path;
+    char* bin_path_short;
     uint8_t elf_class;
     VanadisELFEndianness elf_endian;
     uint8_t elf_os_abi;
@@ -652,7 +676,7 @@ protected:
     std::vector<VanadisELFRelocationEntry*> progRelDyn;
 };
 
-void
+static void
 readString(FILE* bin_file, uint64_t stringTableStart, uint64_t stringTableOffset, std::vector<char>& nameBuffer) {
     uint64_t current_file_pos = (uint64_t)ftell(bin_file);
 
@@ -678,7 +702,7 @@ readString(FILE* bin_file, uint64_t stringTableStart, uint64_t stringTableOffset
     fseek(bin_file, current_file_pos, SEEK_SET);
 }
 
-void
+static void
 readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf_info,
                       const VanadisELFProgramSectionEntry* symbolSection,
                       const VanadisELFProgramSectionEntry* stringTableEntry) {
@@ -691,7 +715,7 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
 
     const bool binary_is_32 = elf_info->isELF32();
 
-    output->verbose(CALL_INFO, 16, 0, "Symbol Table located at %" PRIu64 " / 0x%0llx in executable (is 32bit? %s).\n",
+    output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Symbol Table located at %" PRIu64 " / 0x%0" PRI_ADDR " in executable (is 32bit? %s).\n",
                     symbolSection->getImageOffset(), symbolSection->getImageOffset(), binary_is_32 ? "yes" : "no");
 
     // Wind forward to the symbol table entries
@@ -699,7 +723,7 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
     uint64_t symbol_size = binary_is_32 ? (4 + 4 + 4 + 2 + 2) : (4 + 2 + 2 + 8 + 8);
 
     output->verbose(
-        CALL_INFO, 16, 0,
+        CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF,
         "Symbol entry is %" PRIu64 " bytes in size, expecting %" PRIu64 " symbols (remainder: %" PRIu64 ")\n",
         symbol_size, (symbolSection->getImageLength() / symbol_size), symbolSection->getImageLength() % symbol_size);
 
@@ -711,11 +735,11 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
     std::vector<char> name_buffer;
 
 	if(elf_info->isELF32()) {
-		output->verbose(CALL_INFO, 16, 0, "Binary is marked as 32bit\n");
+		output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Binary is marked as 32bit\n");
 	}
 
 	if(elf_info->isELF64()) {
-		output->verbose(CALL_INFO, 16, 0, "Binary is marked as 64bit\n");
+		output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Binary is marked as 64bit\n");
 	}
 
     for (uint64_t i = symbolSection->getImageOffset();
@@ -724,17 +748,17 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
         VanadisSymbolTableEntry* new_symbol = new VanadisSymbolTableEntry();
 
         if (elf_info->isELF32()) {
-            fread(&tmp_u32, 4, 1, bin_file);
+            (void) !fread(&tmp_u32, 4, 1, bin_file);
             new_symbol->setNameOffset(tmp_u32);
 
-            fread(&tmp_u32, 4, 1, bin_file);
+            (void) !fread(&tmp_u32, 4, 1, bin_file);
             new_symbol->setAddress(tmp_u32);
 
-            fread(&tmp_u32, 4, 1, bin_file);
+            (void) !fread(&tmp_u32, 4, 1, bin_file);
             new_symbol->setSize(tmp_u32);
 
-            fread(&tmp_u8, 1, 1, bin_file);
-            // output->verbose(CALL_INFO, 16, 0, "Symbol info >> 4 = %" PRIu64 "\n", (tmp_u8 >> 4));
+            (void) !fread(&tmp_u8, 1, 1, bin_file);
+            // output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Symbol info >> 4 = %" PRIu64 "\n", (tmp_u8 >> 4));
 
             switch ((tmp_u8 >> 4)) {
             case 0:
@@ -750,7 +774,7 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
                 break;
             }
 
-            // output->verbose(CALL_INFO, 16, 0, "Symbol type = %" PRIu64 "\n", (tmp_u8 & 0xf) );
+            // output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Symbol type = %" PRIu64 "\n", (tmp_u8 & 0xf) );
             switch ((tmp_u8 & 0xf)) {
             case 0:
                 new_symbol->setType(SYMBOL_NO_TYPE);
@@ -771,8 +795,8 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
                 break;
             }
 
-            fread(&tmp_u8, 1, 1, bin_file);
-            fread(&tmp_u16, 2, 1, bin_file);
+            (void) !fread(&tmp_u8, 1, 1, bin_file);
+            (void) !fread(&tmp_u16, 2, 1, bin_file);
 
             new_symbol->setSymbolSection(tmp_u16);
 
@@ -788,11 +812,11 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
 
             elf_info->addSymbolTableEntry(new_symbol);
         } else if(elf_info->isELF64()) {
-            fread(&tmp_u64, 8, 1, bin_file);
+            (void) !fread(&tmp_u64, 8, 1, bin_file);
             new_symbol->setNameOffset(tmp_u32);
 
-            fread(&tmp_u8, 1, 1, bin_file);
-            // output->verbose(CALL_INFO, 16, 0, "Symbol info >> 4 = %" PRIu64 "\n", (tmp_u8 >> 4));
+            (void) !fread(&tmp_u8, 1, 1, bin_file);
+            // output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Symbol info >> 4 = %" PRIu64 "\n", (tmp_u8 >> 4));
 
             switch ((tmp_u8 >> 4)) {
             case 0:
@@ -808,7 +832,7 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
                 break;
             }
 
-            // output->verbose(CALL_INFO, 16, 0, "Symbol type = %" PRIu64 "\n", (tmp_u8 & 0xf) );
+            // output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Symbol type = %" PRIu64 "\n", (tmp_u8 & 0xf) );
             switch ((tmp_u8 & 0xf)) {
             case 0:
                 new_symbol->setType(SYMBOL_NO_TYPE);
@@ -829,15 +853,15 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
                 break;
             }
 
-            fread(&tmp_u8, 1, 1, bin_file);
-            fread(&tmp_u16, 2, 1, bin_file);
+            (void) !fread(&tmp_u8, 1, 1, bin_file);
+            (void) !fread(&tmp_u16, 2, 1, bin_file);
 
             new_symbol->setSymbolSection(tmp_u16);
 
-            fread(&tmp_u64, 8, 1, bin_file);
+            (void) !fread(&tmp_u64, 8, 1, bin_file);
             new_symbol->setAddress(tmp_u32);
 
-            fread(&tmp_u64, 8, 1, bin_file);
+            (void) !fread(&tmp_u64, 8, 1, bin_file);
             new_symbol->setSize(tmp_u32);
 
             if (nullptr != stringTableEntry) {
@@ -859,7 +883,7 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
     fclose(bin_file);
 }
 
-void
+static void
 readELFRelocationInformation(SST::Output* output, const char* path, VanadisELFInfo* elf_info,
                              const VanadisELFProgramSectionEntry* relocationEntry) {
 
@@ -879,10 +903,10 @@ readELFRelocationInformation(SST::Output* output, const char* path, VanadisELFIn
 
             VanadisELFRelocationEntry* new_reloc = new VanadisELFRelocationEntry();
 
-            fread(&u32_tmp, 4, 1, bin_file);
+            (void) !fread(&u32_tmp, 4, 1, bin_file);
             new_reloc->setAddress(u32_tmp);
 
-            fread(&u32_tmp, 4, 1, bin_file);
+            (void) !fread(&u32_tmp, 4, 1, bin_file);
             new_reloc->setInfo(u32_tmp);
 
             elf_info->addRelocationEntry(new_reloc);
@@ -895,10 +919,10 @@ readELFRelocationInformation(SST::Output* output, const char* path, VanadisELFIn
 
             VanadisELFRelocationEntry* new_reloc = new VanadisELFRelocationEntry();
 
-            fread(&u64_tmp, 8, 1, bin_file);
+            (void) !fread(&u64_tmp, 8, 1, bin_file);
             new_reloc->setAddress(u64_tmp);
 
-            fread(&u64_tmp, 8, 1, bin_file);
+            (void) !fread(&u64_tmp, 8, 1, bin_file);
             new_reloc->setInfo(u64_tmp);
 
             elf_info->addRelocationEntry(new_reloc);
@@ -910,17 +934,23 @@ readELFRelocationInformation(SST::Output* output, const char* path, VanadisELFIn
     fclose(bin_file);
 }
 
-VanadisELFInfo*
+static VanadisELFInfo*
 readBinaryELFInfo(SST::Output* output, const char* path) {
 
     FILE* bin_file = fopen(path, "rb");
 
     if (nullptr == bin_file) {
-        output->fatal(CALL_INFO, -1, "Error: unable to open \'%s\', cannot read ELF table.\n", path);
+        bin_file = fopen(path, "r");
+        if ( nullptr != bin_file) {
+            fclose(bin_file);
+            output->fatal(CALL_INFO, -1, "Error: unable to open \'%s\', cannot read ELF table.\n", path);
+        } else {
+            output->fatal(CALL_INFO, -1, "Error: unable to open \'%s\', is this path correct?\n", path);
+        }
     }
 
     uint8_t* elf_magic = new uint8_t[4];
-    fread(elf_magic, 1, 4, bin_file);
+    (void) !fread(elf_magic, 1, 4, bin_file);
 
     if (!(elf_magic[0] == 0x7F && elf_magic[1] == 0x45 && elf_magic[2] == 0x4c && elf_magic[3] == 0x46)) {
         output->fatal(CALL_INFO, -1, "Error: opened %s, but the ELF magic header is not correct.\n", path);
@@ -935,10 +965,10 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
     uint32_t tmp_4byte = 0;
     uint64_t tmp_8byte = 0;
 
-    fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
     elf_info->setClass(tmp_byte);
 
-    fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
     switch( tmp_byte ) {
 	case 1:
 		elf_info->setEndian(VANADIS_LITTLE_ENDIAN);
@@ -951,90 +981,90 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
 		break;
     }
 
-    fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
     // Discard this read, it is set to 1 for modern ELF
 
-    fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
     elf_info->setOSABI(tmp_byte);
 
-    fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
     elf_info->setOSABIVersion(tmp_byte);
 
     // Discard the next 7 bytes, these pad the header
-    fread(&tmp_byte, 1, 1, bin_file);
-    fread(&tmp_byte, 1, 1, bin_file);
-    fread(&tmp_byte, 1, 1, bin_file);
-    fread(&tmp_byte, 1, 1, bin_file);
-    fread(&tmp_byte, 1, 1, bin_file);
-    fread(&tmp_byte, 1, 1, bin_file);
-    fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
 
-    fread(&tmp_2byte, 2, 1, bin_file);
+    (void) !fread(&tmp_2byte, 2, 1, bin_file);
     elf_info->setObjectType(tmp_2byte);
 
-    fread(&tmp_2byte, 2, 1, bin_file);
+    (void) !fread(&tmp_2byte, 2, 1, bin_file);
     elf_info->setISA(tmp_2byte);
 
     // Discard the next 4 bytes, these just set to 1 to pad
-    fread(&tmp_byte, 1, 1, bin_file);
-    fread(&tmp_byte, 1, 1, bin_file);
-    fread(&tmp_byte, 1, 1, bin_file);
-    fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
 
     if (elf_info->isELF64()) {
-        fread(&tmp_8byte, 8, 1, bin_file);
+        (void) !fread(&tmp_8byte, 8, 1, bin_file);
         elf_info->setEntryPoint(tmp_8byte);
 
-        fread(&tmp_8byte, 8, 1, bin_file);
+        (void) !fread(&tmp_8byte, 8, 1, bin_file);
         elf_info->setProgramHeaderOffset(tmp_8byte);
 
-        fread(&tmp_8byte, 8, 1, bin_file);
+        (void) !fread(&tmp_8byte, 8, 1, bin_file);
         elf_info->setSectionHeaderOffset(tmp_8byte);
     } else if (elf_info->isELF32()) {
-        fread(&tmp_4byte, 4, 1, bin_file);
+        (void) !fread(&tmp_4byte, 4, 1, bin_file);
         elf_info->setEntryPoint((uint64_t)tmp_4byte);
 
-        fread(&tmp_4byte, 4, 1, bin_file);
+        (void) !fread(&tmp_4byte, 4, 1, bin_file);
         elf_info->setProgramHeaderOffset((uint64_t)tmp_4byte);
 
-        fread(&tmp_4byte, 4, 1, bin_file);
+        (void) !fread(&tmp_4byte, 4, 1, bin_file);
         elf_info->setSectionHeaderOffset((uint64_t)tmp_4byte);
     } else {
         output->fatal(CALL_INFO, -1, "Error: unable to determine if binary is 32/64 bits during ELF read.\n");
     }
 
     // Discard, ISA specific, need to understand whether we need this.
-    fread(&tmp_4byte, 4, 1, bin_file);
+    (void) !fread(&tmp_4byte, 4, 1, bin_file);
 
     // Discard, is just a size read for ELF header info
-    fread(&tmp_2byte, 2, 1, bin_file);
+    (void) !fread(&tmp_2byte, 2, 1, bin_file);
 
-    fread(&tmp_2byte, 2, 1, bin_file);
+    (void) !fread(&tmp_2byte, 2, 1, bin_file);
     elf_info->setProgramHeaderEntrySize(tmp_2byte);
 
-    fread(&tmp_2byte, 2, 1, bin_file);
+    (void) !fread(&tmp_2byte, 2, 1, bin_file);
     elf_info->setProgramHeaderEntryCount(tmp_2byte);
 
     const uint32_t prog_header_count = (uint32_t)tmp_2byte;
 
-    fread(&tmp_2byte, 2, 1, bin_file);
+    (void) !fread(&tmp_2byte, 2, 1, bin_file);
     elf_info->setSectionHeaderEntrySize(tmp_2byte);
 
-    fread(&tmp_2byte, 2, 1, bin_file);
+    (void) !fread(&tmp_2byte, 2, 1, bin_file);
     elf_info->setSectionHeaderEntryCount(tmp_2byte);
 
-    fread(&tmp_2byte, 2, 1, bin_file);
+    (void) !fread(&tmp_2byte, 2, 1, bin_file);
     elf_info->setSectionEntryIndexForNames(tmp_2byte);
 
     // Wind the file pointer to the program header offset
     fseek(bin_file, elf_info->getProgramHeaderOffset(), SEEK_SET);
 
     for (uint32_t i = 0; i < prog_header_count; ++i) {
-        output->verbose(CALL_INFO, 4, 0, "Reading Program Header %" PRIu32 "...\n", i);
+        output->verbose(CALL_INFO, 4, VANADIS_OS_DBG_READ_ELF, "Reading Program Header %" PRIu32 "...\n", i);
         VanadisELFProgramHeaderEntry* new_prg_hdr = new VanadisELFProgramHeaderEntry();
 
         // Header type
-        fread(&tmp_4byte, 4, 1, bin_file);
+        (void) !fread(&tmp_4byte, 4, 1, bin_file);
 
         VanadisELFProgramHeaderType prg_hdr_type = PROG_HEADER_NOT_USED;
 
@@ -1063,54 +1093,53 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
             prg_hdr_type = PROG_HEADER_THREAD_LOCAL;
             break;
         default:
-            output->verbose(CALL_INFO, 4, 0, "Unknown program header type in ELF: %" PRIu32 "\n", tmp_4byte);
+            output->verbose(CALL_INFO, 4, VANADIS_OS_DBG_READ_ELF, "Unknown program header type in ELF: %" PRIu32 "\n", tmp_4byte);
         }
 
         new_prg_hdr->setHeaderTypeNum(tmp_4byte);
         new_prg_hdr->setHeaderType(prg_hdr_type);
 
         if (elf_info->isELF64()) {
-            // Discard segment-dependent flags
-            fread(&tmp_4byte, 4, 1, bin_file);
-
-            fread(&tmp_8byte, 8, 1, bin_file);
-            new_prg_hdr->setImageOffset(tmp_8byte);
-
-            fread(&tmp_8byte, 8, 1, bin_file);
-            new_prg_hdr->setVirtualMemoryStart(tmp_8byte);
-
-            fread(&tmp_8byte, 8, 1, bin_file);
-            new_prg_hdr->setPhysicalMemoryStart(tmp_8byte);
-
-            fread(&tmp_8byte, 8, 1, bin_file);
-            new_prg_hdr->setHeaderImageLength(tmp_8byte);
-
-            fread(&tmp_8byte, 8, 1, bin_file);
-            new_prg_hdr->setHeaderMemoryLength(tmp_8byte);
-
-            fread(&tmp_8byte, 8, 1, bin_file);
-            new_prg_hdr->setAlignment(tmp_8byte);
-        } else if (elf_info->isELF32()) {
-            fread(&tmp_4byte, 4, 1, bin_file);
-            new_prg_hdr->setImageOffset(tmp_4byte);
-
-            fread(&tmp_4byte, 4, 1, bin_file);
-            new_prg_hdr->setVirtualMemoryStart(tmp_4byte);
-
-            fread(&tmp_4byte, 4, 1, bin_file);
-            new_prg_hdr->setPhysicalMemoryStart(tmp_4byte);
-
-            fread(&tmp_4byte, 4, 1, bin_file);
-            new_prg_hdr->setHeaderImageLength(tmp_4byte);
-
-            fread(&tmp_4byte, 4, 1, bin_file);
-            new_prg_hdr->setHeaderMemoryLength(tmp_4byte);
-
-            // Segment dependent flags - ignore?
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_prg_hdr->setSegmentFlags(tmp_4byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
+            new_prg_hdr->setImageOffset(tmp_8byte);
+
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
+            new_prg_hdr->setVirtualMemoryStart(tmp_8byte);
+
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
+            new_prg_hdr->setPhysicalMemoryStart(tmp_8byte);
+
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
+            new_prg_hdr->setHeaderImageLength(tmp_8byte);
+
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
+            new_prg_hdr->setHeaderMemoryLength(tmp_8byte);
+
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
+            new_prg_hdr->setAlignment(tmp_8byte);
+        } else if (elf_info->isELF32()) {
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
+            new_prg_hdr->setImageOffset(tmp_4byte);
+
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
+            new_prg_hdr->setVirtualMemoryStart(tmp_4byte);
+
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
+            new_prg_hdr->setPhysicalMemoryStart(tmp_4byte);
+
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
+            new_prg_hdr->setHeaderImageLength(tmp_4byte);
+
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
+            new_prg_hdr->setHeaderMemoryLength(tmp_4byte);
+
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
+            new_prg_hdr->setSegmentFlags(tmp_4byte);
+
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_prg_hdr->setAlignment(tmp_4byte);
         } else {
             output->fatal(CALL_INFO, -1, "Error: neither 32 or 64 bit test passed ELF read.\n");
@@ -1122,14 +1151,14 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
     fseek(bin_file, elf_info->getSectionHeaderOffset(), SEEK_SET);
 
     for (uint32_t i = 0; i < elf_info->getSectionHeaderEntryCount(); ++i) {
-        output->verbose(CALL_INFO, 4, 0, "Reading Section Header %" PRIu32 "...\n", i);
+        output->verbose(CALL_INFO, 4, VANADIS_OS_DBG_READ_ELF, "Reading Section Header %" PRIu32 "...\n", i);
         VanadisELFProgramSectionEntry* new_sec = new VanadisELFProgramSectionEntry();
         new_sec->setID(i);
 
         // Offset for section name
-        fread(&tmp_4byte, 4, 1, bin_file);
+        (void) !fread(&tmp_4byte, 4, 1, bin_file);
 
-        fread(&tmp_4byte, 4, 1, bin_file);
+        (void) !fread(&tmp_4byte, 4, 1, bin_file);
         VanadisELFSectionHeaderType sec_type = SECTION_HEADER_NOT_USED;
 
         switch (tmp_4byte) {
@@ -1185,52 +1214,52 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
             sec_type = SECTION_HEADER_DEFINED_TYPES;
             break;
         default:
-            output->verbose(CALL_INFO, 4, 0, "Unknown Section type: %" PRIu32 "\n", tmp_4byte);
+            output->verbose(CALL_INFO, 4, VANADIS_OS_DBG_READ_ELF, "Unknown Section type: %" PRIu32 "\n", tmp_4byte);
             break;
         }
 
         new_sec->setSectionType(sec_type);
 
         if (elf_info->isELF64()) {
-            fread(&tmp_8byte, 8, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
             new_sec->setSectionFlags(tmp_8byte);
 
-            fread(&tmp_8byte, 8, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
             new_sec->setVirtualMemoryStart(tmp_8byte);
 
-            fread(&tmp_8byte, 8, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
             new_sec->setImageOffset(tmp_8byte);
 
-            fread(&tmp_8byte, 8, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
             new_sec->setImageLength(tmp_8byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
 
-            fread(&tmp_8byte, 8, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
             new_sec->setAlignment(tmp_8byte);
 
-            fread(&tmp_8byte, 8, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
         } else if (elf_info->isELF32()) {
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_sec->setSectionFlags(tmp_4byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_sec->setVirtualMemoryStart(tmp_4byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_sec->setImageOffset(tmp_4byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_sec->setImageLength(tmp_4byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_sec->setAlignment(tmp_4byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
         } else {
             output->fatal(CALL_INFO, -1, "Error: not 32 or 64-bit type ELF info. Not sure what to do.\n");
         }
@@ -1255,19 +1284,19 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
         const VanadisELFProgramSectionEntry* next_entry = elf_info->getProgramSection(i);
 
         if (next_entry->getSectionType() == SECTION_HEADER_SYMBOL_TABLE) {
-            output->verbose(CALL_INFO, 16, 0, "Reading in symbol table (Section %" PRIu64 ")...\n",
+            output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Reading in symbol table (Section %" PRIu64 ")...\n",
                             next_entry->getID());
 
             readBinarySymbolTable(output, path, elf_info, next_entry, string_table_entry);
 
-            output->verbose(CALL_INFO, 16, 0, "Read of section completed.\n");
+            output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Read of section completed.\n");
         } else if (next_entry->getSectionType() == SECTION_HEADER_REL) {
-            output->verbose(CALL_INFO, 16, 0, "Reading in relocation table (Section %" PRIu64 ")...\n",
+            output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Reading in relocation table (Section %" PRIu64 ")...\n",
                             next_entry->getID());
 
             readELFRelocationInformation(output, path, elf_info, next_entry);
 
-            output->verbose(CALL_INFO, 16, 0, "Read of relocation entry completed\n");
+            output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Read of relocation entry completed\n");
         }
     }
 

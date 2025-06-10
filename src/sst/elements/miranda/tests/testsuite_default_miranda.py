@@ -3,38 +3,11 @@
 from sst_unittest import *
 from sst_unittest_support import *
 
-################################################################################
-# Code to support a single instance module initialize, must be called setUp method
-
-module_init = 0
-module_sema = threading.Semaphore()
-
-def initializeTestModule_SingleInstance(class_inst):
-    global module_init
-    global module_sema
-
-    module_sema.acquire()
-    if module_init != 1:
-        try:
-            # Put your single instance Init Code Here
-            pass
-        except:
-            pass
-        module_init = 1
-    module_sema.release()
-
-################################################################################
 
 class testcase_miranda_Component(SSTTestCase):
 
-    def initializeClass(self, testName):
-        super(type(self), self).initializeClass(testName)
-        # Put test based setup code here. it is called before testing starts
-        # NOTE: This method is called once for every test
-
     def setUp(self):
         super(type(self), self).setUp()
-        initializeTestModule_SingleInstance(self)
         # Put test based setup code here. it is called once before every test
 
     def tearDown(self):
@@ -53,9 +26,11 @@ class testcase_miranda_Component(SSTTestCase):
 
     @unittest.skipIf(testing_check_get_num_ranks() > 1, "miranda: test_miranda_randomgen skipped if ranks > 1")
     @unittest.skipIf(testing_check_get_num_threads() > 1, "miranda: test_miranda_randomgen skipped if threads > 1")
+    @unittest.skipIf(not testing_check_is_nightly(), "miranda_randomgen only runs on Nightly builds.")
     def test_miranda_randomgen(self):
         self.miranda_test_template("randomgen", testtimeout=360)
 
+    @unittest.skipIf(not testing_check_is_nightly(), "miranda_stencil3dbench only runs on Nightly builds.")
     def test_miranda_stencil3dbench(self):
         self.miranda_test_template("stencil3dbench")
 

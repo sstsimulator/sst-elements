@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -49,7 +49,7 @@ public:
         {"memSize",                 "(UnitAlgebra/string) Size of physical memory with units."},
         {"verbose",                 "(uint) Determine how verbose the output from the CPU is", "1"},
         {"clock",                   "(UnitAlgebra/string) Clock frequency", "1GHz"},
-        {"rngseed",                 "(int) Set a seed for the random generation of addresses", "7"},
+        {"rngseed",                 "(int) Set a seed for the random generation of requests", "7"},
         {"maxOutstanding",          "(uint) Maximum number of outstanding memory requests at a time.", "10"},
         {"opCount",                 "(uint) Number of operations to issue."},
         {"reqsPerIssue",            "(uint) Maximum number of requests to issue at a time", "1"},
@@ -57,19 +57,22 @@ public:
         {"read_freq",               "(uint) Relative read frequency", "75"},
         {"flush_freq",              "(uint) Relative flush frequency", "0"},
         {"flushinv_freq",           "(uint) Relative flush-inv frequency", "0"},
+        {"flushcache_freq",         "(uint) Relative frequency to flush the entire cache", "0"},
         {"custom_freq",             "(uint) Relative custom op frequency", "0"},
         {"llsc_freq",               "(uint) Relative LLSC frequency", "0"},
         {"mmio_addr",               "(uint) Base address of the test MMIO component. 0 means not present.", "0"},
         {"noncacheableRangeStart",  "(uint) Beginning of range of addresses that are noncacheable.", "0x0"},
         {"noncacheableRangeEnd",    "(uint) End of range of addresses that are noncacheable.", "0x0"},
-        {"addressoffset",           "(uint) Apply an offset to a calculated address to check for non-alignment issues", "0"} )
+        {"addressoffset",           "(uint) Apply an offset to a calculated address to check for non-alignment issues", "0"},
+        {"test_init",               "(uint) Number of write messages to initialize memory with", "0"} )
 
-    SST_ELI_DOCUMENT_STATISTICS( 
+    SST_ELI_DOCUMENT_STATISTICS(
         {"pendCycle", "Number of pending requests per cycle", "count", 1},
         {"reads", "Number of reads issued (including noncacheable)", "count", 1},
         {"writes", "Number of writes issued (including noncacheable)", "count", 1},
-        {"flushes", "Number of flushes issued", "count", 1},
-        {"flushinvs", "Number of flush-invs issued", "count", 1},
+        {"flushes", "Number of line flushes issued", "count", 1},
+        {"flushinvs", "Number of line flush-invs issued", "count", 1},
+        {"flushcaches", "Number of cache flushes issued", "count", 1},
         {"customReqs", "Number of custom requests issued", "count", 1},
         {"llsc", "Number of LL-SC pairs issued", "count", 1},
         {"llsc_success", "Number of successful LLSC pairs issued", "count", 1},
@@ -87,55 +90,66 @@ public:
     void finish() override;
     void emergencyShutdown() override;
 
+    // Serialization
+    standardCPU();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::MemHierarchy::standardCPU)
+
 private:
     void handleEvent( Interfaces::StandardMem::Request *ev );
     virtual bool clockTic( SST::Cycle_t );
 
-    Output out;
-    uint64_t ops;
-    uint64_t memFreq;
-    uint64_t maxAddr;
-    uint64_t mmioAddr;
-    uint64_t lineSize;
-    uint64_t maxOutstanding;
-    unsigned high_mark;
-    unsigned write_mark;
-    unsigned flush_mark;
-    unsigned flushinv_mark;
-    unsigned custom_mark;
-    unsigned llsc_mark;
-    unsigned mmio_mark;
-    uint32_t maxReqsPerIssue;
-    uint64_t noncacheableRangeStart, noncacheableRangeEnd, noncacheableSize;
-    uint64_t clock_ticks;
-    Statistic<uint64_t>* requestsPendingCycle;
-    Statistic<uint64_t>* num_reads_issued;
-    Statistic<uint64_t>* num_writes_issued;
-    Statistic<uint64_t>* num_flushes_issued;
-    Statistic<uint64_t>* num_flushinvs_issued;
-    Statistic<uint64_t>* num_custom_issued;
-    Statistic<uint64_t>* num_llsc_issued;
-    Statistic<uint64_t>* num_llsc_success;
-    Statistic<uint64_t>* noncacheableReads;
-    Statistic<uint64_t>* noncacheableWrites;
+    Output out_;
+    uint64_t op_count_;
+    uint64_t mem_freq_;
+    uint64_t max_addr_;
+    uint64_t mmio_addr_;
+    uint64_t line_size_;
+    uint64_t max_outstanding_;
+    unsigned high_mark_;
+    unsigned write_mark_;
+    unsigned flush_mark_;
+    unsigned flushinv_mark_;
+    unsigned flushcache_mark_;
+    unsigned custom_mark_;
+    unsigned llsc_mark_;
+    unsigned mmio_mark_;
+    uint32_t max_reqs_per_issue_;
+    uint64_t noncacheable_range_start_, noncacheable_range_end_, noncacheable_size_;
+    uint64_t clock_ticks_;
+    uint64_t init_count_;
+    std::queue<Interfaces::StandardMem::Addr> init_addr_;
+    Statistic<uint64_t>* stat_requests_pending_per_cycle_;
+    Statistic<uint64_t>* stat_num_reads_issued_;
+    Statistic<uint64_t>* stat_num_writes_issued_;
+    Statistic<uint64_t>* stat_num_flushes_issued_;
+    Statistic<uint64_t>* stat_num_flushcache_issued_;
+    Statistic<uint64_t>* stat_num_flushinvs_issued_;
+    Statistic<uint64_t>* stat_num_custom_issued_;
+    Statistic<uint64_t>* stat_num_llsc_issued_;
+    Statistic<uint64_t>* stat_num_llsc_success_;
+    Statistic<uint64_t>* stat_noncacheable_reads_;
+    Statistic<uint64_t>* stat_noncacheable_writes_;
 
-    bool ll_issued;
-    Interfaces::StandardMem::Addr ll_addr;
+    bool ll_issued_;
+    Interfaces::StandardMem::Addr ll_addr_;
 
-    std::map<Interfaces::StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests;
+    std::map<Interfaces::StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests_;
 
-    Interfaces::StandardMem *memory;
+    Interfaces::StandardMem *memory_;
 
-    SST::RNG::MarsagliaRNG rng;
+    SST::RNG::MarsagliaRNG rng_;
+    SST::RNG::MarsagliaRNG rng_comm_;
 
-    TimeConverter *clockTC;
-    Clock::HandlerBase *clockHandler;
+    TimeConverter clock_timeconverter_;
+    Clock::HandlerBase *clock_handler_;
 
     /* Functions for creating the requests tested by this CPU */
     Interfaces::StandardMem::Request* createWrite(uint64_t addr);
     Interfaces::StandardMem::Request* createRead(Addr addr);
     Interfaces::StandardMem::Request* createFlush(Addr addr);
     Interfaces::StandardMem::Request* createFlushInv(Addr addr);
+    Interfaces::StandardMem::Request* createFlushCache();
     Interfaces::StandardMem::Request* createLL(Addr addr);
     Interfaces::StandardMem::Request* createSC();
     Interfaces::StandardMem::Request* createMMIOWrite();

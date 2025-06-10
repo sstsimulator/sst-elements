@@ -1,0 +1,54 @@
+#!/bin/bash
+
+RISCV_TEST_DIR=./riscv-tests/isa
+
+filename=$RISCV_TEST_DIR/testlist
+
+while read -r line; do
+    if [ ${line:0:1} == "#" ]; then
+        echo "    NOT RUNNING TEST ${line:1}"
+        continue
+    fi
+
+    test=`echo $line | cut -d "." -f 1`
+    echo -n "RUNNING TEST $test: "
+    export VANADIS_EXE=$RISCV_TEST_DIR/$test
+    #echo $VANADIS_EXE
+    #sum $VANADIS_EXE
+    sst ../basic_vanadis.py 2> stderr 1> stdout
+
+    #sst basic_vanadis.py
+
+    #cat stdout
+    #cat stderr
+
+    if [ -s stderr ]; then
+
+        retval=`grep DECODE_FAULT stderr`
+
+        if [ ! -z "$retval" ]; then
+            echo "failed DECODE_FAULT"
+        else
+
+            retval=`grep ALIGN_FAULT stderr`
+
+            if [ ! -z "$retval" ]; then
+                echo "failed ALIGN_FAULT"
+
+            else
+                echo "failed:"
+                cat stderr
+            fi
+        fi
+
+    else
+        retval=`grep "Failed" stdout`
+        if [ ! -z "$retval" ]; then
+            echo "failed $retval"
+        else
+            echo "passed"
+        fi
+    fi
+
+    #rm stderr stdout
+done < "$filename"

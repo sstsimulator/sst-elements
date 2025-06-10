@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -20,7 +20,7 @@
 #define _H_SST_MEMH_HBM_PAGEDMULTI_BACKEND
 
 #include <queue>
-#include <sst/core/rng/sstrng.h>
+#include <sst/core/rng/rng.h>
 #include "sst/elements/memHierarchy/membackend/HBMdramSimBackend.h"
 
 #ifdef DEBUG
@@ -43,12 +43,12 @@ struct HBMpageInfo {
     typedef pageList_t::iterator pageListIter;
 
     uint64_t pageAddr;
-    uint touched; // how many times it is touched in quanta (used in LFU)
+    uint32_t touched; // how many times it is touched in quanta (used in LFU)
     pageListIter listEntry;
     bool inFast;
     SimTime_t lastTouch; // used in mrpuLRU
     uint64_t lastRef; // used in scan detection
-    uint scanLeng; // number of consecutive unit-1-stride accesses
+    uint32_t scanLeng; // number of consecutive unit-1-stride accesses
     SimTime_t pageDelay; // time when page will be in fast mem
 
     typedef enum {NONE, FtoS, StoF} swapDir_t;
@@ -150,7 +150,7 @@ struct HBMpageInfo {
 class HBMpagedMultiMemory : public HBMDRAMSimMemory {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(HBMpagedMultiMemory, "memHierarchy", "HBMpagedMultiMemory", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(HBMpagedMultiMemory, "memHierarchy", "HBMpagedMultiMemory", SST_ELI_ELEMENT_VERSION(1,0,0),
             "HBM DRAMSim-driven memory timings with a fixed timing multi-level memory using paging", SST::MemHierarchy::SimpleMemBackend)
 
     SST_ELI_DOCUMENT_PARAMS( HBMDRAMSIMMEMORY_ELI_PARAMS,
@@ -185,7 +185,7 @@ public:
 
 private:
     Output dbg;
-    RNG::SSTRandom*  rng;
+    RNG::Random*  rng;
 
 	struct Req : public SST::Core::Serialization::serializable {
         Req( ReqId id, Addr addr, bool isWrite, unsigned numBytes ) :
@@ -196,10 +196,10 @@ private:
         bool isWrite;
         unsigned numBytes;
 		void serialize_order(SST::Core::Serialization::serializer &ser)  override {
-			ser & id;
-			ser & addr;
-			ser & isWrite;
-			ser & numBytes;
+			SST_SER(id);
+			SST_SER(addr);
+			SST_SER(isWrite);
+			SST_SER(numBytes);
 		}
 	  private:
         Req() {}
@@ -275,7 +275,7 @@ public:
     public:
         void serialize_order(SST::Core::Serialization::serializer &ser)  override {
             Event::serialize_order(ser);
-            ser & req;  // Cannot serialize pointers unless they are a serializable object
+            SST_SER(req);  // Cannot serialize pointers unless they are a serializable object
         }
 
         ImplementSerializable(SST::MemHierarchy::HBMpagedMultiMemory::MemCtrlEvent);
@@ -283,15 +283,16 @@ public:
 
     typedef map<uint64_t, HBMpageInfo> pageMap_t;
     pageMap_t pageMap;
-    uint maxFastPages;
-    uint pageShift;
-    uint pagesInFast;
-    uint lastMin;
-    uint threshold;
-    uint scanThreshold;
+    uint32_t maxFastPages;
+    uint32_t pageShift;
+    uint32_t pagesInFast;
+    uint32_t lastMin;
+    uint32_t threshold;
+    uint32_t scanThreshold;
     SimTime_t transferDelay;
     SimTime_t minAccTime;
     bool collectStats;
+    TimeConverter* nanoConv;
 
     void handleSelfEvent(SST::Event *event);
     bool quantaClock(SST::Cycle_t _cycle);

@@ -8,7 +8,6 @@ except ImportError:
 
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
-sst.setProgramOption("stopAtCycle", "0 ns")
 
 # Tell SST what statistics handling we want
 sst.setStatisticLoadLevel(4)
@@ -89,13 +88,12 @@ for cpu_id in range(num_cpu):
       "cache_size" : "32KB",
    })
 
-   l1_cpulink = l1_cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-   l1_memlink = l1_cache.setSubComponent("memlink", "memHierarchy.MemNIC")
-   l1_memlink.addParams({"group" : 1 })
-   l1_linkctrl = l1_memlink.setSubComponent("linkcontrol", "shogun.ShogunNIC")
+   l1_lowlink = l1_cache.setSubComponent("lowlink", "memHierarchy.MemNIC")
+   l1_lowlink.addParams({"group" : 1 })
+   l1_linkctrl = l1_lowlink.setSubComponent("linkcontrol", "shogun.ShogunNIC")
 
    corel1link = sst.Link("cpu_l1_link_" + str(cpu_id))
-   corel1link.connect((comp_cpu, "cache_link", "100ps"), (l1_cpulink, "port", "100ps"))
+   corel1link.connect((comp_cpu, "cache_link", "100ps"), (l1_cache, "highlink", "100ps"))
    corel1link.setNoCut()
 
    l1xbarlink = sst.Link("l1_xbar_link_" + str(cpu_id))
@@ -143,8 +141,6 @@ for next_group_id in range(hbmStacks):
             "interleave_size" : "256B",
             "interleave_step" : str(total_mems * 256) + "B",
       })
-
-      mem_cpulink = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
 
       if backend == "simple":
          # Create DDR (Simple)
@@ -278,7 +274,7 @@ for next_group_id in range(hbmStacks):
          linkDimmCtrl.connect( (cramsimCtrl, "memLink", "1ns"), (cramsimDimm, "ctrlLink", "1ns") )
 
       bus_mem_link = sst.Link("bus_mem_link_" + str(next_mem))
-      bus_mem_link.connect((mem_l2_bus, "low_network_%d"%sub_group_id, "100ps"), (mem_cpulink, "port", "100ps"))
+      bus_mem_link.connect((mem_l2_bus, "lowlink%d"%sub_group_id, "100ps"), (memctrl, "highlink", "100ps"))
       bus_mem_link.setNoCut()
 
       next_mem = next_mem + 1
@@ -307,10 +303,9 @@ for next_group_id in range(hbmStacks):
          "replacement_policy" : "lru",
          "verbose" : "2",
       })
-      l2_cpulink = l2_cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
-      l2_memlink = l2_cache.setSubComponent("memlink", "memHierarchy.MemLink")
-      l2_linkctrl = l2_cpulink.setSubComponent("linkcontrol", "shogun.ShogunNIC")
-      l2_cpulink.addParams({ "group" : "2" })
+      l2_highlink = l2_cache.setSubComponent("highlink", "memHierarchy.MemNIC")
+      l2_linkctrl = l2_highlink.setSubComponent("linkcontrol", "shogun.ShogunNIC")
+      l2_highlink.addParams({ "group" : "2" })
 
       l2xbarlink = sst.Link("l2_xbar_link_" + str(next_cache))
       l2xbarlink.connect((l2_linkctrl, "port", "100ps"), (router, "port" + str(next_port), "100ps"))
@@ -319,7 +314,7 @@ for next_group_id in range(hbmStacks):
       next_port = next_port + 1
 
       l2_bus_link = sst.Link("l2g_mem_link_" + str(next_cache))
-      l2_bus_link.connect((l2_memlink, "port", "100ps"), (mem_l2_bus, "high_network_" + str(next_mem_id), "100ps"))
+      l2_bus_link.connect((l2_cache, "lowlink", "100ps"), (mem_l2_bus, "highlink" + str(next_mem_id), "100ps"))
       l2_bus_link.setNoCut()
 
       if (next_cache + 1) % sub_mems == 0:

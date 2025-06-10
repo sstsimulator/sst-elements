@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -39,16 +39,17 @@ enum SerranoStandardOp {
 class SerranoBasicUnit : public SerranoCoarseUnit {
 
 public:
-	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+	SST_ELI_REGISTER_SUBCOMPONENT(
 		SST::Serrano::SerranoBasicUnit,
 		"serrano",
 		"SerranoBasicUnit",
 		SST_ELI_ELEMENT_VERSION(1, 0, 0),
 		"Basic coarse-grained functional unit for simple operations",
-		SST::Serrano::SerranoCoarseUnit )
+		SST::Serrano::SerranoCoarseUnit
+    )
 
 	SST_ELI_DOCUMENT_PARAMS()
-	SST_ELI_DOCUMENT_STATISTICS()				
+	SST_ELI_DOCUMENT_STATISTICS()
 
 	SerranoBasicUnit( SST::ComponentId_t id, Params& params ) :
 		SerranoCoarseUnit(id, params) {
@@ -86,7 +87,7 @@ public:
 	void checkRequiredQueues( SST::Output* output ) {
 		if( ( required_in_qs >= input_qs.size() ) &&
 		    ( required_out_qs >= output_qs.size() ) ) {
-			
+
 		} else {
 			output->fatal(CALL_INFO, -1, "Error: required queues were not matched. in (req/av): %d/%d, out (req/av): %d/%d\n",
 				(int) required_in_qs, (int) input_qs.size(), (int) required_out_qs, (int) output_qs.size() );
@@ -129,7 +130,7 @@ public:
 			msgs_in.clear();
 		} else {
 			output->verbose(CALL_INFO, 8, 0, "Unable to execute this cycle due to queue-check failing: in-q: %s / out-q: %s\n",
-				(all_ins_ready) ? "ready" : "not-ready", (out_ready) ? "ready" : "not-ready" );			
+				(all_ins_ready) ? "ready" : "not-ready", (out_ready) ? "ready" : "not-ready" );
 		}
 	}
 
@@ -165,7 +166,7 @@ protected:
 	void execute_i64_add( SST::Output* output, std::vector<SerranoMessage*>& msg_in ) {
 		execute_add<int64_t>(msg_in, 0);
 	}
-	
+
 	void execute_u64_add( SST::Output* output, std::vector<SerranoMessage*>& msg_in ) {
 		execute_add<uint64_t>(msg_in, 0);
 	}
@@ -177,7 +178,7 @@ protected:
 	void execute_f64_add( SST::Output* output, std::vector<SerranoMessage*>& msg_in ) {
 		execute_add<double>(msg_in, 0.0);
 	}
-	
+
 	std::vector<SerranoMessage*> msgs_in;
 	std::function< void( SST::Output*, std::vector<SerranoMessage*>& )> unit_func;
 

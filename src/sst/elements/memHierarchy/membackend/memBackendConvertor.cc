@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -87,9 +87,9 @@ void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
     }
 }
 
-void MemBackendConvertor::handleCustomEvent( CustomCmdInfo * info) {
+void MemBackendConvertor::handleCustomEvent( Interfaces::StandardMem::CustomData * info, Event::id_type evId, std::string rqstr) {
     uint32_t id = genReqId();
-    CustomReq* req = new CustomReq( info, id );
+    CustomReq* req = new CustomReq( info, evId, rqstr, id );
     m_requestQueue.push_back( req );
     m_pendingRequests[id] = req;
 }
@@ -148,8 +148,7 @@ bool MemBackendConvertor::clock(Cycle_t cycle) {
  */
 void MemBackendConvertor::turnClockOn(Cycle_t cycle) {
     Cycle_t cyclesOff = cycle - m_cycleCount;
-    for (Cycle_t i = 0; i < cyclesOff; i++)
-        stat_outstandingReqs->addData( m_pendingRequests.size() );
+    stat_outstandingReqs->addDataNTimes( cyclesOff, m_pendingRequests.size() );
     m_cycleCount = cycle;
     m_clockOn = true;
 }
@@ -184,11 +183,8 @@ void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
         m_pendingRequests.erase(id);
 
         if (!req->isMemEv()) {
-            CustomCmdInfo * info = static_cast<CustomReq*>(req)->getInfo();
-            if (!flags) flags = info->getFlags();
-            sendResponse(info->getID(), flags);
-            delete info; // NOTE move this if needed, currently memController doesn't need it
-
+            CustomReq* creq = static_cast<CustomReq*>(req);
+            sendResponse(creq->getEvId(), flags);
         } else {
 
             MemEvent* event = static_cast<MemReq*>(req)->getMemEvent();
@@ -229,7 +225,16 @@ void MemBackendConvertor::sendResponse( SST::Event::id_type id, uint32_t flags )
 
 }
 
-void MemBackendConvertor::finish(void) {
+void MemBackendConvertor::finish(Cycle_t endCycle) {
+    // endCycle can be less than m_cycleCount in parallel simulations
+    // because the simulation end isn't detected until a sync interval boundary
+    // and endCycle is adjusted to the actual (not detected) end time
+    // stat_outstandingReqs may vary slightly in parallel & serial
+    if (endCycle > m_cycleCount) {
+        Cycle_t cyclesOff = endCycle - m_cycleCount;
+        stat_outstandingReqs->addDataNTimes( cyclesOff, m_pendingRequests.size() );
+        m_cycleCount = endCycle;
+    }
     stat_totalCycles->addData(m_cycleCount);
     m_backend->finish();
 }
@@ -240,4 +245,43 @@ size_t MemBackendConvertor::getMemSize() {
 
 uint32_t MemBackendConvertor::getRequestWidth() {
     return m_backend->getRequestWidth();
+}
+
+void MemBackendConvertor::serialize_order(SST::Core::Serialization::serializer& ser) {
+    SubComponent::serialize_order(ser);
+
+    SST_SER(m_backend);
+    SST_SER(m_backendRequestWidth);
+    SST_SER(m_clockBackend);
+    SST_SER(m_dbg);
+    SST_SER(m_cycleCount);
+    SST_SER(m_clockOn);
+    SST_SER(m_reqId);
+    SST_SER(m_requestQueue);
+    SST_SER(m_pendingRequests);
+    SST_SER(m_frontendRequestWidth);
+    SST_SER(m_waitingFlushes);
+    SST_SER(m_dependentRequests);
+    SST_SER(stat_GetSLatency);
+    SST_SER(stat_GetSXLatency);
+    SST_SER(stat_GetXLatency);
+    SST_SER(stat_WriteLatency);
+    SST_SER(stat_PutMLatency);
+    SST_SER(stat_GetSReqReceived);
+    SST_SER(stat_GetXReqReceived);
+    SST_SER(stat_WriteReqReceived);
+    SST_SER(stat_PutMReqReceived);
+    SST_SER(stat_GetSXReqReceived);
+    SST_SER(stat_cyclesWithIssue);
+    SST_SER(stat_cyclesAttemptIssueButRejected);
+    SST_SER(stat_totalCycles);
+    SST_SER(stat_outstandingReqs);
+
+    if (ser.mode() == SST::Core::Serialization::serializer::UNPACK) {
+        using std::placeholders::_1;
+        m_backend->setGetRequestorHandler( std::bind( &MemBackendConvertor::getRequestor, this, _1 )  );
+    }
+    // These are reset by the MemController during unpack
+    //std::function<Cycle_t()> m_enableClock; // Re-enable parent's clock
+    //std::function<void(Event::id_type id, uint32_t)> m_notifyResponse; // notify parent of response
 }

@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -23,7 +23,7 @@ namespace SST {
 namespace Vanadis {
 
 template <VanadisRegisterFormat register_format>
-class VanadisShiftRightLogicalImmInstruction : public VanadisInstruction
+class VanadisShiftRightLogicalImmInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisShiftRightLogicalImmInstruction(
@@ -65,37 +65,62 @@ public:
             phys_int_regs_in[0], imm_value);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
+                uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0) override
     {
-#ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: (addr=%p) %s phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16
-            " / in=%" PRIu16 "\n",
-            (void*)getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value,
-            isa_int_regs_out[0], isa_int_regs_in[0]);
-#endif
-        assert(imm_value > 0);
+        #ifdef VANADIS_BUILD_DEBUG
+        if(output->getVerboseLevel() >= verboselevel) {
+
+            std::ostringstream ss;
+            ss << "hw_thr="<<getHWThread()<<" sw_thr=" <<sw_thr;
+            ss << " Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
+            ss << " phys: out=" <<  phys_int_regs_out_0 << " in=" << phys_int_regs_in_0;
+            ss << " imm=" << imm_value;
+            ss << ", isa: out=" <<  isa_int_regs_out[0]  << " in=" << isa_int_regs_in[0];
+            output->verbose( CALL_INFO, verboselevel, 0, "%s\n", ss.str().c_str());
+        }
+        #endif
+    }
+
+    void instOp(VanadisRegisterFile* regFile,
+                                uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0) override
+    {
+        if constexpr ( sizeof( register_format ) == 4 ) {
+            // imm cannot be 0 for RV32 or for RV64 when working on 32 bit values
+            if ( UNLIKELY( 0 == imm_value ) ) {
+                auto str = getenv("VANADIS_NO_FAULT");
+                if ( nullptr == str ) {
+                    flagError();
+                }
+            }
+        }
 
         switch ( register_format ) {
         case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
         {
-            const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
-            regFile->setIntReg<uint64_t>(phys_int_regs_out[0], src_1 >> imm_value);
+            const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in_0);
+            regFile->setIntReg<uint64_t>(phys_int_regs_out_0, src_1 >> imm_value);
         } break;
         case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
         {
-            const uint32_t src_1        = regFile->getIntReg<uint32_t>(phys_int_regs_in[0]);
+            const uint32_t src_1        = regFile->getIntReg<uint32_t>(phys_int_regs_in_0);
             const uint32_t imm_value_32 = static_cast<uint32_t>(imm_value);
 
-            regFile->setIntReg<uint32_t>(phys_int_regs_out[0], src_1 >> imm_value_32);
+            regFile->setIntReg<uint32_t>(phys_int_regs_out_0, src_1 >> imm_value_32);
         } break;
         default:
         {
             flagError();
         } break;
         }
+    }
 
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0);
+        uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
+        instOp(regFile, phys_int_regs_out_0, phys_int_regs_in_0);
+        log(output, 16, 65535, phys_int_regs_out_0, phys_int_regs_in_0);
         markExecuted();
     }
 

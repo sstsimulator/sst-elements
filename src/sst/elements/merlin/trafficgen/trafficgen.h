@@ -1,15 +1,15 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -64,37 +64,37 @@ public:
         {"packet_size",                           "Packet size specified in either b or B (can include SI prefix).","5"},
         {"delay_between_packets",                 "","0"},
         {"message_rate",                          "","1GHz"},
-        {"PacketDest:pattern",                    "Address pattern to be used (NearestNeighbor, Uniform, HotSpot, Normal, Binomial)",NULL},
-        {"PacketDest:Seed",                       "Sets the seed of the RNG", "11" },
-        {"PacketDest:RangeMax",                   "Minumum address to send packets.","0"},
-        {"PacketDest:RangeMin",                   "Maximum address to send packets.","INT_MAX"},
-        {"PacketDest:NearestNeighbor:3DSize",     "For Nearest Neighbors, the 3D size \"x y z\" of the mesh", ""},
-        {"PacketDest:HotSpot:target",             "For HotSpot, which node is the target", ""},
-        {"PacketDest:HotSpot:targetProbability",  "For HotSpot, with what probability is the target targeted", ""},
-        {"PacketDest:Normal:Mean",                "In a normal distribution, the mean", ""},
-        {"PacketDest:Normal:Sigma",               "In a normal distribution, the mean variance", ""},
-        {"PacketDest:Binomial:Mean",              "In a binomial distribution, the mean", ""},
-        {"PacketDest:Binomial:Sigma",             "In a binomial distribution, the variance", ""},
-        {"PacketSize:pattern",                    "Address pattern to be used (Uniform, HotSpot, Normal, Binomial)",NULL},
-        {"PacketSize:Seed",                       "Sets the seed of the RNG", "11" },
-        {"PacketSize:RangeMax",                   "Minumum size of packets.","0"},
-        {"PacketSize:RangeMin",                   "Maximum size of packets.","INT_MAX"},
-        {"PacketSize:HotSpot:target",             "For HotSpot, the target packet size", ""},
-        {"PacketSize:HotSpot:targetProbability",  "For HotSpot, with what probability is the target targeted", ""},
-        {"PacketSize:Normal:Mean",                "In a normal distribution, the mean", ""},
-        {"PacketSize:Normal:Sigma",               "In a normal distribution, the mean variance", "1.0"},
-        {"PacketSize:Binomial:Mean",              "In a binomial distribution, the mean", ""},
-        {"PacketSize:Binomial:Sigma",             "In a binomial distribution, the variance", "0.5"},
-        {"PacketDelay:pattern",                   "Address pattern to be used (Uniform, HotSpot, Normal, Binomial)",NULL},
-        {"PacketDelay:Seed",                      "Sets the seed of the RNG", "11" },
-        {"PacketDelay:RangeMax",                  "Minumum delay between packets.","0"},
-        {"PacketDelay:RangeMin",                  "Maximum delay between packets.","INT_MAX"},
-        {"PacketDelay:HotSpot:target",            "For HotSpot, the target packet delay", ""},
-        {"PacketDelay:HotSpot:targetProbability", "For HotSpot, with what probability is the target targeted", ""},
-        {"PacketDelay:Normal:Mean",               "In a normal distribution, the mean", ""},
-        {"PacketDelay:Normal:Sigma",              "In a normal distribution, the mean variance", "1.0"},
-        {"PacketDelay:Binomial:Mean",             "In a binomial distribution, the mean", ""},
-        {"PacketDelay:Binomial:Sigma",            "In a binomial distribution, the variance", "0.5"}
+        {"PacketDest.pattern",                    "Address pattern to be used (NearestNeighbor, Uniform, HotSpot, Normal, Binomial)",NULL},
+        {"PacketDest.Seed",                       "Sets the seed of the RNG", "11" },
+        {"PacketDest.RangeMax",                   "Minumum address to send packets.","0"},
+        {"PacketDest.RangeMin",                   "Maximum address to send packets.","INT_MAX"},
+        {"PacketDest.NearestNeighbor.Size",       "For Nearest Neighbors, the 3D size \"x y z\" of the mesh", ""},
+        {"PacketDest.HotSpot.target",             "For HotSpot, which node is the target", ""},
+        {"PacketDest.HotSpot.targetProbability",  "For HotSpot, with what probability is the target targeted", ""},
+        {"PacketDest.Normal.Mean",                "In a normal distribution, the mean", ""},
+        {"PacketDest.Normal.Sigma",               "In a normal distribution, the mean variance", ""},
+        {"PacketDest.Binomial.Mean",              "In a binomial distribution, the mean", ""},
+        {"PacketDest.Binomial.Sigma",             "In a binomial distribution, the variance", ""},
+        {"PacketSize.pattern",                    "Address pattern to be used (Uniform, HotSpot, Normal, Binomial)",NULL},
+        {"PacketSize.Seed",                       "Sets the seed of the RNG", "11" },
+        {"PacketSize.RangeMax",                   "Minumum size of packets.","0"},
+        {"PacketSize.RangeMin",                   "Maximum size of packets.","INT_MAX"},
+        {"PacketSize.HotSpot.target",             "For HotSpot, the target packet size", ""},
+        {"PacketSize.HotSpot.targetProbability",  "For HotSpot, with what probability is the target targeted", ""},
+        {"PacketSize.Normal.Mean",                "In a normal distribution, the mean", ""},
+        {"PacketSize.Normal.Sigma",               "In a normal distribution, the mean variance", "1.0"},
+        {"PacketSize.Binomial.Mean",              "In a binomial distribution, the mean", ""},
+        {"PacketSize.Binomial.Sigma",             "In a binomial distribution, the variance", "0.5"},
+        {"PacketDelay.pattern",                   "Address pattern to be used (Uniform, HotSpot, Normal, Binomial)",NULL},
+        {"PacketDelay.Seed",                      "Sets the seed of the RNG", "11" },
+        {"PacketDelay.RangeMax",                  "Minumum delay between packets.","0"},
+        {"PacketDelay.RangeMin",                  "Maximum delay between packets.","INT_MAX"},
+        {"PacketDelay.HotSpot.target",            "For HotSpot, the target packet delay", ""},
+        {"PacketDelay.HotSpot.targetProbability", "For HotSpot, with what probability is the target targeted", ""},
+        {"PacketDelay.Normal.Mean",               "In a normal distribution, the mean", ""},
+        {"PacketDelay.Normal.Sigma",              "In a normal distribution, the mean variance", "1.0"},
+        {"PacketDelay.Binomial.Mean",             "In a binomial distribution, the mean", ""},
+        {"PacketDelay.Binomial.Sigma",            "In a binomial distribution, the variance", "0.5"}
     )
 
     SST_ELI_DOCUMENT_PORTS(
@@ -146,8 +146,7 @@ private:
                 break;
             }
             default:
-                Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,
-                    "Unsure how to deal with %d neighbors\n", numNeighbors);
+                Output::getDefaultObject().fatal(CALL_INFO, -1, "Unsure how to deal with %d neighbors\n", numNeighbors);
             }
         }
 
@@ -164,13 +163,13 @@ private:
     };
 
     class ExponentialDist : public Generator {
-        MersenneRNG* gen;
+        SST::RNG::MersenneRNG* gen;
         SSTExponentialDistribution* dist;
 
     public:
         ExponentialDist(int lambda)
         {
-            gen = new MersenneRNG();
+            gen = new SST::RNG::MersenneRNG();
 	    dist = new SSTExponentialDistribution((double) lambda);
         }
 
@@ -187,13 +186,13 @@ private:
         void seed(uint32_t val)
         {
             delete gen;
-            gen = new MersenneRNG((unsigned int) val);
+            gen = new SST::RNG::MersenneRNG((unsigned int) val);
         }
     };
 
 
     class UniformDist : public Generator {
-        MersenneRNG* gen;
+        SST::RNG::MersenneRNG* gen;
         SSTUniformDistribution* dist;
 
         int dist_size;
@@ -201,7 +200,7 @@ private:
     public:
         UniformDist(int min, int max)
         {
-		gen = new MersenneRNG();
+		gen = new SST::RNG::MersenneRNG();
 
 		dist_size = std::max(1, max-min);
 		dist = new SSTUniformDistribution(dist_size, gen);
@@ -221,14 +220,14 @@ private:
         {
             delete dist;
             delete gen;
-            gen = new MersenneRNG((unsigned int) val);
+            gen = new SST::RNG::MersenneRNG((unsigned int) val);
             dist = new SSTUniformDistribution(dist_size,gen);
         }
     };
 
 
     class DiscreteDist : public Generator {
-	MersenneRNG* gen;
+	SST::RNG::MersenneRNG* gen;
 	SSTDiscreteDistribution* dist;
         int minValue;
     public:
@@ -242,7 +241,7 @@ private:
             }
             probs[target] = targetProb;
 
-	    gen = new MersenneRNG();
+	    gen = new SST::RNG::MersenneRNG();
 	    dist = new SSTDiscreteDistribution(&probs[0], size, gen);
         }
 
@@ -258,20 +257,20 @@ private:
 
         void seed(uint32_t val)
         {
-            gen = new MersenneRNG((unsigned int) val);
+            gen = new SST::RNG::MersenneRNG((unsigned int) val);
         }
     };
 
     class NormalDist : public Generator {
 	SSTGaussianDistribution* dist;
-	MersenneRNG* gen;
+	SST::RNG::MersenneRNG* gen;
 
         int minValue;
         int maxValue;
     public:
         NormalDist(int min, int max, double mean, double stddev) : minValue(min), maxValue(max)
         {
-            gen = new MersenneRNG();
+            gen = new SST::RNG::MersenneRNG();
             dist = new SSTGaussianDistribution(mean, stddev);
         }
 
@@ -290,7 +289,7 @@ private:
 
         void seed(uint32_t val)
         {
-            gen = new MersenneRNG((unsigned int) val);
+            gen = new SST::RNG::MersenneRNG((unsigned int) val);
         }
     };
 
@@ -332,9 +331,9 @@ private:
     bool done;
 
     SST::Interfaces::SimpleNetwork* link_control;
-    SST::Interfaces::SimpleNetwork::Handler<TrafficGen>* send_notify_functor;
-    Clock::Handler<TrafficGen>* clock_functor;
-    TimeConverter* clock_tc;
+    SST::Interfaces::SimpleNetwork::HandlerBase* send_notify_functor;
+    Clock::HandlerBase* clock_functor;
+    TimeConverter clock_tc;
 
     int base_packet_size;
     uint64_t packets_to_send;

@@ -1,17 +1,18 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2021, NTESS
+//
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
+
 #include <sst_config.h>
 #include "mesh.h"
 
@@ -133,7 +134,7 @@ topo_mesh::process_input(RtrEvent* ev)
     topo_mesh_event* tt_ev = new topo_mesh_event(dimensions);
     tt_ev->setEncapsulatedEvent(ev);
     tt_ev->setVC(tt_ev->getVN() * 2);
-    
+
     // Need to figure out what the mesh address is for easier
     // routing.
     int run_id = get_dest_router(tt_ev->getDest());
@@ -143,11 +144,11 @@ topo_mesh::process_input(RtrEvent* ev)
 }
 
 
-void topo_mesh::routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts)
+void topo_mesh::routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts)
 {
     topo_mesh_init_event *tt_ev = static_cast<topo_mesh_init_event*>(ev);
     if ( tt_ev->phase == 0 ) {
-        if ( (0 == router_id) && (ev->getDest() == INIT_BROADCAST_ADDR) ) {
+        if ( (0 == router_id) && (ev->getDest() == UNTIMED_BROADCAST_ADDR) ) {
             /* Broadcast has arrived at 0.  Switch Phases */
             tt_ev->phase = 1;
         } else {
@@ -187,11 +188,11 @@ void topo_mesh::routeInitData(int port, internal_router_event* ev, std::vector<i
 }
 
 
-internal_router_event* topo_mesh::process_InitData_input(RtrEvent* ev)
+internal_router_event* topo_mesh::process_UntimedData_input(RtrEvent* ev)
 {
     topo_mesh_init_event* tt_ev = new topo_mesh_init_event(dimensions);
     tt_ev->setEncapsulatedEvent(ev);
-    if ( tt_ev->getDest() == INIT_BROADCAST_ADDR ) {
+    if ( tt_ev->getDest() == UNTIMED_BROADCAST_ADDR ) {
         /* For broadcast, first send to rtr 0 */
         idToLocation(0, tt_ev->dest_loc);
     } else {

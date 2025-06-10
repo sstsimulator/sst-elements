@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -25,13 +25,14 @@ namespace Serrano {
 class SerranoIteratorUnit : public SerranoCoarseUnit {
 
 public:
-	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+	SST_ELI_REGISTER_SUBCOMPONENT(
 		SST::Serrano::SerranoIteratorUnit,
 		"serrano",
 		"SerranoIteratorUnit",
 		SST_ELI_ELEMENT_VERSION(1, 0, 0),
 		"Performs iteration-like behavior",
-		SST::Serrano::SerranoCoarseUnit )
+		SST::Serrano::SerranoCoarseUnit
+    )
 
 	SST_ELI_DOCUMENT_PARAMS(
 		{ "start", "Value to start iterating at."      },
@@ -55,14 +56,14 @@ public:
 		switch(params_type) {
 		case 1:
 			d_type = TYPE_INT32;
-			configureIterations( params.find<int32_t>("start", 0), 
+			configureIterations( params.find<int32_t>("start", 0),
 				params.find<int32_t>("step", 1),
 				params.find<int32_t>("end", std::numeric_limits<int32_t>::max() ) );
 			func = std::bind( &SST::Serrano::SerranoIteratorUnit::execute_int32, this );
 			break;
 		case 2:
 			d_type = TYPE_INT64;
-			configureIterations( params.find<int64_t>("start", 0), 
+			configureIterations( params.find<int64_t>("start", 0),
 				params.find<int64_t>("step", 1),
 				params.find<int64_t>("end", std::numeric_limits<int64_t>::max() ) );
 			func = std::bind( &SST::Serrano::SerranoIteratorUnit::execute_int64, this );
@@ -119,7 +120,7 @@ protected:
 	void* current_value;
 	void* max_value;
 	void* step_value;
-	bool keep_processing;	
+	bool keep_processing;
 
 	void execute_int32() {
 		executeStep<int32_t>();
@@ -152,7 +153,7 @@ protected:
 			keep_processing = false;
 		}
 	}
-	
+
 	template<class T> void configureIterations( const T start, const T step, const T end ) {
 		current_value       = (void*) ( new T[1] );
 		max_value           = (void*) ( new T[1] );

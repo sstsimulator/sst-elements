@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -38,5 +38,14 @@ bool SimpleMemBackendConvertor::issue( BaseReq* req ) {
     } else {
         CustomReq * creq = static_cast<CustomReq*>(req);
         return static_cast<SimpleMemBackend*>(m_backend)->issueCustomRequest( creq->id(), creq->getInfo() );
+    }
+}
+
+void SimpleMemBackendConvertor::serialize_order(SST::Core::Serialization::serializer& ser) {
+    MemBackendConvertor::serialize_order(ser);
+
+    if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+        using std::placeholders::_1;
+        static_cast<SimpleMemBackend*>(m_backend)->setResponseHandler( std::bind( &SimpleMemBackendConvertor::handleMemResponse, this, _1 ) );
     }
 }

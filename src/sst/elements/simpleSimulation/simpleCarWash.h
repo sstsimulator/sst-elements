@@ -1,8 +1,8 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -117,12 +117,14 @@ private:
     int ShowCarArt();
     int ShowDisappointedCustomers();
 
-    TimeConverter*      tc;
+    TimeConverter       tc;
     Clock::HandlerBase* Clock3Handler;
 
+#ifdef DISABLE_ONE_SHOTS
     // Variables to store OneShot Callback Handlers
     OneShot::HandlerBase* callback1Handler;
     OneShot::HandlerBase* callback2Handler;
+#endif
 
     std::string clock_frequency_str;
     int clock_count;

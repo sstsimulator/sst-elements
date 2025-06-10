@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -22,7 +22,6 @@
 
 #include <sst/core/event.h>
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 #include <sst/core/unitAlgebra.h>
 
@@ -45,7 +44,7 @@ nic::nic(ComponentId_t cid, Params& params) :
     init_state(0),
     init_count(0),
     init_broadcast_count(0),
-    output(Simulation::getSimulation()->getSimulationOutput())
+    output(getSimulationOutput())
 {
     net_id = params.find<int>("id",-1);
     if ( net_id == -1 ) {
@@ -57,7 +56,7 @@ nic::nic(ComponentId_t cid, Params& params) :
 
     num_msg = params.find<int>("num_messages",10);
 
-    send_untimed_bcast = params.find<bool>("send_untimed_data","false");
+    send_untimed_bcast = params.find<bool>("send_untimed_bcast","false");
 
     UnitAlgebra message_size = params.find<std::string>("message_size","64b");
     if ( message_size.hasUnits("B") ) message_size  *= UnitAlgebra("8b/B");
@@ -77,7 +76,7 @@ nic::nic(ComponentId_t cid, Params& params) :
         next_seq[i] = 0;
 
     // Register a clock
-    registerClock( "1GHz", new Clock::Handler<nic>(this,&nic::clock_handler), false);
+    registerClock( "1GHz", new Clock::Handler2<nic,&nic::clock_handler>(this), false);
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
@@ -223,7 +222,7 @@ nic::init_complete(unsigned int phase) {
                 init_broadcast_count++;
             }
             else {
-                if ( req->dest != net_id ) output.output("%d: received event with dest %lld and src %lld\n",net_id,req->dest,req->src);
+                if ( req->dest != net_id ) output.output("%d: received event with dest %" PRI_NID " and src %" PRI_NID "\n",net_id,req->dest,req->src);
                 init_count++;
             }
             delete req;
@@ -305,7 +304,7 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & seq;
+        SST_SER(seq);
     }
 
     virtual void print(const std::string& header, Output &out) const  override {
@@ -372,7 +371,7 @@ nic::clock_handler(Cycle_t cycle)
         SimpleNetwork::Request* req = link_control->recv(0);
         MyRtrEvent* ev = dynamic_cast<MyRtrEvent*>(req->takePayload());
         if ( ev == NULL ) {
-            Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "Aieeee!\n");
+            output.fatal(CALL_INFO, -1, "Error: Received event of wrong type!\n");
         }
         packets_recd++;
         // int src = net_map[req->src];

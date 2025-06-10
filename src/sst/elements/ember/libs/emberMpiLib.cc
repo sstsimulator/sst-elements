@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -43,7 +43,7 @@ EmberMpiLib::EmberMpiLib( Params& params ) : m_size(0), m_rank(-1), m_backed(fal
 	for(int i = 0; i < NUM_EVENTS; i++) {
 		std::string baseEventName( m_eventName[i] );
 
-		sprintf(nameBuffer, "time-%s", baseEventName.c_str());
+		snprintf(nameBuffer, sizeof(char)*256, "time-%s", baseEventName.c_str());
 		m_Stats[i] = registerStatistic<uint32_t>(nameBuffer, "0");
 	}
 
@@ -56,7 +56,7 @@ void EmberMpiLib::completed( const SST::Output* output,
 {
 	if( EMBER_SPYPLOT_NONE != m_spyplotMode) {
 		char* filenameBuffer = (char*) malloc(sizeof(char) * PATH_MAX);
-		sprintf(filenameBuffer, "ember-%" PRIu32 "-%s-%" PRIu32 ".spy", motifNum, motifName.c_str(), (uint32_t) m_rank);
+		snprintf(filenameBuffer, sizeof(char)*PATH_MAX, "ember-%" PRIu32 "-%s-%" PRIu32 ".spy", motifNum, motifName.c_str(), (uint32_t) m_rank);
 
 		generateSpyplotRank( filenameBuffer );
 		free(filenameBuffer);

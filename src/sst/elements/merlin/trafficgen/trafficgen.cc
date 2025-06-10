@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -20,7 +20,6 @@
 #include <signal.h>
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 
 using namespace SST::Merlin;
@@ -128,12 +127,12 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
-    clock_functor = new Clock::Handler<TrafficGen>(this,&TrafficGen::clock_handler);
+    clock_functor = new Clock::Handler2<TrafficGen,&TrafficGen::clock_handler>(this);
     clock_tc = registerClock( params.find<std::string>("message_rate", "1GHz"), clock_functor, false);
 
     // Register a receive handler which will simply strip the events as they arrive
-    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler<TrafficGen>(this,&TrafficGen::handle_receives));
-    send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler<TrafficGen>(this,&TrafficGen::send_notify);
+    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler2<TrafficGen,&TrafficGen::handle_receives>(this));
+    send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler2<TrafficGen,&TrafficGen::send_notify>(this);
 }
 
 
@@ -146,34 +145,34 @@ TrafficGen::~TrafficGen()
 TrafficGen::Generator* TrafficGen::buildGenerator(const std::string &prefix, Params &params)
 {
     Generator* gen = NULL;
-    std::string pattern = params.find<std::string>(prefix + ":pattern");
+    std::string pattern = params.find<std::string>(prefix + ".pattern");
     std::pair<int, int> range = std::make_pair(
-        params.find<int>(prefix + ":RangeMin", 0),
-        params.find<int>(prefix + ":RangeMax", INT_MAX));
+        params.find<int>(prefix + ".RangeMin", 0),
+        params.find<int>(prefix + ".RangeMax", INT_MAX));
 
-    uint32_t rng_seed = params.find<uint32_t>(prefix + ":Seed", 1010101);
+    uint32_t rng_seed = params.find<uint32_t>(prefix + ".Seed", 1010101);
 
     if ( !pattern.compare("NearestNeighbor") ) {
-        std::string shape = params.find<std::string>(prefix + ":NearestNeighbor:3DSize");
+        std::string shape = params.find<std::string>(prefix + ".NearestNeighbor.Size");
         int maxX, maxY, maxZ;
         assert (sscanf(shape.c_str(), "%d %d %d", &maxX, &maxY, &maxZ) == 3);
         gen = new NearestNeighbor(new UniformDist(0, 5), id, maxX, maxY, maxZ, 6);
     } else if ( !pattern.compare("Uniform") ) {
         gen = new UniformDist(range.first, range.second-1);
     } else if ( !pattern.compare("HotSpot") ) {
-        int target = params.find<int>(prefix + ":HotSpot:target");
-        float targetProb = params.find<float>(prefix + ":HotSpot:targetProbability");
+        int target = params.find<int>(prefix + ".HotSpot.target");
+        float targetProb = params.find<float>(prefix + ".HotSpot.targetProbability");
         gen = new DiscreteDist(range.first, range.second, target, targetProb);
     } else if ( !pattern.compare("Normal") ) {
-        float mean = params.find<float>(prefix + ":Normal:Mean", range.second/2.0f);
-        float sigma = params.find<float>(prefix + ":Normal:Sigma", 1.0f);
+        float mean = params.find<float>(prefix + ".Normal.Mean", range.second/2.0f);
+        float sigma = params.find<float>(prefix + ".Normal.Sigma", 1.0f);
         gen = new NormalDist(range.first, range.second, mean, sigma);
     } else if ( !pattern.compare("Exponential") ) {
-        float lambda = params.find<float>(prefix + ":Exponential:Lambda", range.first);
+        float lambda = params.find<float>(prefix + ".Exponential.Lambda", range.first);
         gen = new ExponentialDist(lambda);
     } else if ( !pattern.compare("Binomial") ) {
-        int trials = params.find<int>(prefix + ":Binomial:Mean", range.second);
-        float probability = params.find<float>(prefix + ":Binomial:Sigma", 0.5f);
+        int trials = params.find<int>(prefix + ".Binomial.Mean", range.second);
+        float probability = params.find<float>(prefix + ".Binomial.Sigma", 0.5f);
         gen = new BinomialDist(range.first, range.second, trials, probability);
     } else if ( pattern.compare("") ) { // Allow none - non-pattern
         out.fatal(CALL_INFO, -1, "Unknown pattern '%s'\n", pattern.c_str());

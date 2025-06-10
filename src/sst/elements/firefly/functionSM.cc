@@ -1,13 +1,13 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2021, NTESS
+// Copyright (c) 2013-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -56,14 +56,14 @@ FunctionSM::FunctionSM( ComponentId_t id, SST::Params& params, ProtocolAPI* prot
             Output::STDOUT );
 
     m_toDriverLink = configureSelfLink("ToDriver", "1 ps",
-        new Event::Handler<FunctionSM>(this,&FunctionSM::handleToDriver));
+        new Event::Handler2<FunctionSM,&FunctionSM::handleToDriver>(this));
 
     m_fromDriverLink = configureSelfLink("FromDriver", "1 ps",
-        new Event::Handler<FunctionSM>(this,&FunctionSM::handleStartEvent));
+        new Event::Handler2<FunctionSM,&FunctionSM::handleStartEvent>(this));
     assert( m_fromDriverLink );
 
     m_toMeLink = configureSelfLink("ToMe", "1 ns",
-        new Event::Handler<FunctionSM>(this,&FunctionSM::handleEnterEvent));
+        new Event::Handler2<FunctionSM,&FunctionSM::handleEnterEvent>(this));
     assert( m_toMeLink );
 }
 
@@ -150,8 +150,7 @@ void FunctionSM::initFunction( Info* info,
 
     params.insert( "nodeId", defaultParams.find<std::string>( "nodeId" ), true );
 
-    m_smV[ num ] = (FunctionSMInterface*)loadModule( module + "." + name,
-                             params );
+    m_smV[ num ] = loadModule<FunctionSMInterface>( module + "." + name, params );
 
     assert( m_smV[ Init ] );
     m_smV[ num ]->setInfo( info );

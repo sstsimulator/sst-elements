@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2021 NTESS. Under the terms
+# Copyright 2009-2025 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2021, NTESS
+# Copyright (c) 2009-2025, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
 # See the file CONTRIBUTORS.TXT in the top level directory
-# the distribution for more information.
+# of the distribution for more information.
 #
 # This file is part of the SST software package. For license
 # information, see the LICENSE file in the top level directory of the
@@ -35,7 +35,7 @@ class hr_router(RouterTemplate):
     def _qos_callback(self,variable_name,value):
         self._lockVariable(variable_name)
         if not self.output_arb: self.output_arb = "merlin.arb.output.qos.multi"
-        
+
     def instanceRouter(self, name, radix, rtr_id):
         rtr = sst.Component(name, "merlin.hr_router")
         self._applyStatisticsSettings(rtr)
@@ -43,7 +43,7 @@ class hr_router(RouterTemplate):
         rtr.addParam("num_ports",radix)
         rtr.addParam("id",rtr_id)
         return rtr
-    
+
     def getTopologySlotName(self):
         return "topology"
 

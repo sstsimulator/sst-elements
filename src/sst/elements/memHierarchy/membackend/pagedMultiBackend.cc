@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -28,7 +28,7 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-pagedMultiMemory::pagedMultiMemory(ComponentId_t id, Params &params) : DRAMSimMemory(id, params), pagesInFast(0), lastMin(0) { 
+pagedMultiMemory::pagedMultiMemory(ComponentId_t id, Params &params) : DRAMSimMemory(id, params), pagesInFast(0), lastMin(0) {
     dbg.init("@R:pagedMultiMemory::@p():@l " + getName() + ": ", 0, 0,
              (Output::output_location_t)params.find<int>("debug", 0));
     dbg.output(CALL_INFO, "making pagedMultiMemory controller\n");
@@ -36,7 +36,7 @@ pagedMultiMemory::pagedMultiMemory(ComponentId_t id, Params &params) : DRAMSimMe
 
     string access = params.find<std::string>("access_time", "35ns");
     self_link = configureSelfLink("Self", access,
-                                        new Event::Handler<pagedMultiMemory>(this, &pagedMultiMemory::handleSelfEvent));
+                                        new Event::Handler2<pagedMultiMemory, &pagedMultiMemory::handleSelfEvent>(this));
 
     maxFastPages = params.find<unsigned int>("max_fast_pages", 256);
     pageShift = params.find<unsigned int>("page_shift", 12);
@@ -46,8 +46,7 @@ pagedMultiMemory::pagedMultiMemory(ComponentId_t id, Params &params) : DRAMSimMe
 
     string clock_freq = params.find<std::string>("quantum", "5ms");
     registerClock(clock_freq,
-                        new Clock::Handler<pagedMultiMemory>(this,
-                                                             &pagedMultiMemory::quantaClock));
+                        new Clock::Handler2<pagedMultiMemory, &pagedMultiMemory::quantaClock>(this));
 
     // determine page replacement / addition strategy
     std::string stratStr = params.find<std::string>("page_replace_strategy", "FIFO");
@@ -99,8 +98,11 @@ pagedMultiMemory::pagedMultiMemory(ComponentId_t id, Params &params) : DRAMSimMe
     scanThreshold = params.find<unsigned int>("scan_threshold", 6);
 
     transferDelay = params.find<unsigned int>("transfer_delay", 250);
+
+    nanoConv = getTimeConverter("1ns");
+
     minAccTime = self_link->getDefaultTimeBase()->getFactor() /
-        Simulation::getSimulation()->getTimeLord()->getNano()->getFactor();
+        nanoConv->getFactor();
 
     const uint32_t seed = params.find<uint32_t>("seed", 1447);
 
@@ -421,7 +423,7 @@ bool pagedMultiMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned 
             fastHits->addData(1);
             if (extraDelay > 0) {
                 self_link->send(extraDelay,
-                                Simulation::getSimulation()->getTimeLord()->getNano(),
+                                nanoConv,
                                 new MemCtrlEvent(req));
             } else {
                 self_link->send(1, new MemCtrlEvent(req));
@@ -530,7 +532,7 @@ void pagedMultiMemory::moveToFast(pageInfo &page) {
     assert(page.swapDir == pageInfo::NONE);
 
     uint64_t addr = page.pageAddr << pageShift;
-    const uint numTransfers = 1 << (pageShift - 6); // assume 2^6 byte cache liens
+    const uint32_t numTransfers = 1 << (pageShift - 6); // assume 2^6 byte cache liens
 
     // mark page as swapping
     page.swapDir = pageInfo::StoF;
@@ -554,7 +556,7 @@ void pagedMultiMemory::moveToSlow(pageInfo *page) {
     assert(page->swapDir == pageInfo::NONE);
 
     uint64_t addr = page->pageAddr << pageShift;
-    const uint numTransfers = 1 << (pageShift - 6); // assume 2^6 byte cache liens
+    const uint32_t numTransfers = 1 << (pageShift - 6); // assume 2^6 byte cache liens
 
     dbg.debug(_L10_, "moveToSlow(%p addr:%p)\n", page, (void*)(addr));
 

@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -18,6 +18,7 @@
 #include "zsirius.h"
 
 #include <assert.h>
+#include <memory>
 
 #include "sst/core/params.h"
 
@@ -73,9 +74,9 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
     std::cout << "Set verbosity level to " << verbosityLevel << std::endl;
 
     selfLink = configureSelfLink("Self", "1ns",
-	new Event::Handler<ZodiacSiriusTraceReader>(this, &ZodiacSiriusTraceReader::handleSelfEvent));
+	new Event::Handler2<ZodiacSiriusTraceReader,&ZodiacSiriusTraceReader::handleSelfEvent>(this));
 
-    tConv = Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ns");
+    tConv = getTimeConverter("1ns");
 
     emptyBufferSize = (uint32_t) params.find("buffer", 4096);
     emptyBuffer = (char*) malloc(sizeof(char) * emptyBufferSize);
@@ -97,11 +98,11 @@ void ZodiacSiriusTraceReader::setup() {
 
     eventQ = new std::queue<ZodiacEvent*>();
 
-    char trace_name[trace_file.length() + 20];
-    sprintf(trace_name, "%s.%d", trace_file.c_str(), rank);
+    auto trace_name = std::make_unique<char[]>(trace_file.length() + 20);
+    snprintf(trace_name.get(), trace_file.length() + 20, "%s.%d", trace_file.c_str(), rank);
 
-    printf("Opening trace file: %s\n", trace_name);
-    trace = new SiriusReader(trace_name, rank, 64, eventQ, verbosityLevel);
+    printf("Opening trace file: %s\n", trace_name.get());
+    trace = new SiriusReader(trace_name.get(), rank, 64, eventQ, verbosityLevel);
     trace->setOutput(&zOut);
 
     int count = trace->generateNextEvents();
@@ -113,7 +114,7 @@ void ZodiacSiriusTraceReader::setup() {
     }
 
     char logPrefix[512];
-    sprintf(logPrefix, "@t:%d:ZSirius::@p:@l: ", rank);
+    snprintf(logPrefix, 512, "@t:%d:ZSirius::@p:@l: ", rank);
     string logPrefixStr = logPrefix;
     zOut.setPrefix(logPrefixStr);
 

@@ -1,0 +1,132 @@
+RUNNING TEST rv64mi-p-access: failed DECODE_FAULT
+RUNNING TEST rv64mi-p-breakpoint: failed DECODE_FAULT
+RUNNING TEST rv64mi-p-csr: failed DECODE_FAULT
+RUNNING TEST rv64mi-p-illegal: failed DECODE_FAULT
+RUNNING TEST rv64mi-p-ld-misaligned: passed
+RUNNING TEST rv64mi-p-lh-misaligned: passed
+RUNNING TEST rv64mi-p-lw-misaligned: passed
+RUNNING TEST rv64mi-p-ma_addr: passed
+RUNNING TEST rv64mi-p-ma_fetch: failed ALIGN_FAULT
+RUNNING TEST rv64mi-p-mcsr: failed DECODE_FAULT
+RUNNING TEST rv64mi-p-sbreak: failed DECODE_FAULT
+RUNNING TEST rv64mi-p-scall: failed DECODE_FAULT
+RUNNING TEST rv64mi-p-sd-misaligned: passed
+RUNNING TEST rv64mi-p-sh-misaligned: passed
+RUNNING TEST rv64mi-p-sw-misaligned: passed
+RUNNING TEST rv64mi-p-zicntr: failed DECODE_FAULT
+RUNNING TEST rv64si-p-csr: failed DECODE_FAULT
+RUNNING TEST rv64si-p-dirty: failed DECODE_FAULT
+RUNNING TEST rv64si-p-icache-alias: failed DECODE_FAULT
+RUNNING TEST rv64si-p-ma_fetch: failed ALIGN_FAULT
+RUNNING TEST rv64si-p-sbreak: failed DECODE_FAULT
+RUNNING TEST rv64si-p-scall: failed DECODE_FAULT
+RUNNING TEST rv64si-p-wfi: failed DECODE_FAULT
+RUNNING TEST rv64ssvnapot-p-napot: failed DECODE_FAULT
+RUNNING TEST rv64ua-p-amoadd_d: passed
+RUNNING TEST rv64ua-p-amoadd_w: passed
+RUNNING TEST rv64ua-p-amoand_d: passed
+RUNNING TEST rv64ua-p-amoand_w: passed
+RUNNING TEST rv64ua-p-amomax_d: passed
+RUNNING TEST rv64ua-p-amomaxu_d: passed
+RUNNING TEST rv64ua-p-amomaxu_w: passed
+RUNNING TEST rv64ua-p-amomax_w: passed
+RUNNING TEST rv64ua-p-amomin_d: passed
+RUNNING TEST rv64ua-p-amominu_d: passed
+RUNNING TEST rv64ua-p-amominu_w: passed
+RUNNING TEST rv64ua-p-amomin_w: passed
+RUNNING TEST rv64ua-p-amoor_d: passed
+RUNNING TEST rv64ua-p-amoor_w: passed
+RUNNING TEST rv64ua-p-amoswap_d: passed
+RUNNING TEST rv64ua-p-amoswap_w: passed
+RUNNING TEST rv64ua-p-amoxor_d: passed
+RUNNING TEST rv64ua-p-amoxor_w: passed
+RUNNING TEST rv64ua-p-lrsc: passed
+RUNNING TEST rv64uc-p-rvc: passed
+RUNNING TEST rv64ud-p-fadd: passed
+RUNNING TEST rv64ud-p-fclass: passed
+RUNNING TEST rv64ud-p-fcmp: passed
+RUNNING TEST rv64ud-p-fcvt: passed
+RUNNING TEST rv64ud-p-fcvt_w: passed
+RUNNING TEST rv64ud-p-fdiv: passed
+RUNNING TEST rv64ud-p-fmadd: passed
+RUNNING TEST rv64ud-p-fmin: passed
+RUNNING TEST rv64ud-p-ldst: passed
+RUNNING TEST rv64ud-p-move: passed
+RUNNING TEST rv64ud-p-recoding: passed
+RUNNING TEST rv64ud-p-structural: passed
+RUNNING TEST rv64uf-p-fadd: passed
+RUNNING TEST rv64uf-p-fclass: passed
+RUNNING TEST rv64uf-p-fcmp: passed
+RUNNING TEST rv64uf-p-fcvt: passed
+RUNNING TEST rv64uf-p-fcvt_w: passed
+RUNNING TEST rv64uf-p-fdiv: passed
+RUNNING TEST rv64uf-p-fmadd: passed
+RUNNING TEST rv64uf-p-fmin: passed
+RUNNING TEST rv64uf-p-ldst: passed
+RUNNING TEST rv64uf-p-move: passed
+RUNNING TEST rv64uf-p-recoding: passed
+RUNNING TEST rv64ui-p-add: passed
+RUNNING TEST rv64ui-p-addi: passed
+RUNNING TEST rv64ui-p-addiw: passed
+RUNNING TEST rv64ui-p-addw: passed
+RUNNING TEST rv64ui-p-and: passed
+RUNNING TEST rv64ui-p-andi: passed
+RUNNING TEST rv64ui-p-auipc: passed
+RUNNING TEST rv64ui-p-beq: passed
+RUNNING TEST rv64ui-p-bge: passed
+RUNNING TEST rv64ui-p-bgeu: passed
+RUNNING TEST rv64ui-p-blt: passed
+RUNNING TEST rv64ui-p-bltu: passed
+RUNNING TEST rv64ui-p-bne: passed
+RUNNING TEST rv64ui-p-fence_i: failed DECODE_FAULT
+RUNNING TEST rv64ui-p-jal: passed
+RUNNING TEST rv64ui-p-jalr: passed
+RUNNING TEST rv64ui-p-lb: passed
+RUNNING TEST rv64ui-p-lbu: passed
+RUNNING TEST rv64ui-p-ld: passed
+RUNNING TEST rv64ui-p-lh: passed
+RUNNING TEST rv64ui-p-lhu: passed
+RUNNING TEST rv64ui-p-lui: passed
+RUNNING TEST rv64ui-p-lw: passed
+RUNNING TEST rv64ui-p-lwu: passed
+RUNNING TEST rv64ui-p-ma_data: passed
+RUNNING TEST rv64ui-p-or: passed
+RUNNING TEST rv64ui-p-ori: passed
+RUNNING TEST rv64ui-p-sb: passed
+RUNNING TEST rv64ui-p-sd: passed
+RUNNING TEST rv64ui-p-sh: passed
+RUNNING TEST rv64ui-p-simple: passed
+RUNNING TEST rv64ui-p-sll: passed
+RUNNING TEST rv64ui-p-slli: passed
+RUNNING TEST rv64ui-p-slliw: passed
+RUNNING TEST rv64ui-p-sllw: passed
+RUNNING TEST rv64ui-p-slt: passed
+RUNNING TEST rv64ui-p-slti: passed
+RUNNING TEST rv64ui-p-sltiu: passed
+RUNNING TEST rv64ui-p-sltu: passed
+RUNNING TEST rv64ui-p-sra: passed
+RUNNING TEST rv64ui-p-srai: passed
+RUNNING TEST rv64ui-p-sraiw: passed
+RUNNING TEST rv64ui-p-sraw: passed
+RUNNING TEST rv64ui-p-srl: passed
+RUNNING TEST rv64ui-p-srli: passed
+RUNNING TEST rv64ui-p-srliw: passed
+RUNNING TEST rv64ui-p-srlw: passed
+RUNNING TEST rv64ui-p-sub: passed
+RUNNING TEST rv64ui-p-subw: passed
+RUNNING TEST rv64ui-p-sw: passed
+RUNNING TEST rv64ui-p-xor: passed
+RUNNING TEST rv64ui-p-xori: passed
+RUNNING TEST rv64um-p-div: passed
+RUNNING TEST rv64um-p-divu: passed
+RUNNING TEST rv64um-p-divuw: passed
+RUNNING TEST rv64um-p-divw: passed
+RUNNING TEST rv64um-p-mul: passed
+RUNNING TEST rv64um-p-mulh: passed
+RUNNING TEST rv64um-p-mulhsu: passed
+RUNNING TEST rv64um-p-mulhu: passed
+RUNNING TEST rv64um-p-mulw: passed
+RUNNING TEST rv64um-p-rem: passed
+RUNNING TEST rv64um-p-remu: passed
+RUNNING TEST rv64um-p-remuw: passed
+RUNNING TEST rv64um-p-remw: passed

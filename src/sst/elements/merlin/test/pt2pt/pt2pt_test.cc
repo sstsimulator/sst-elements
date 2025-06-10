@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2025, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -15,7 +15,6 @@
 #include <sst_config.h>
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 #include <sst/core/unitAlgebra.h>
 
@@ -78,7 +77,7 @@ pt2pt_test::pt2pt_test(ComponentId_t cid, Params& params) :
 
 
     // // Register a clock
-    // registerClock( "1GHz", new Clock::Handler<pt2pt_test>(this,&pt2pt_test::clock_handler), false);
+    // registerClock( "1GHz", new Clock::Handler2<pt2pt_test,&pt2pt_test::clock_handler>(this), false);
 
     params.find_array<int>("src",src);
 
@@ -101,21 +100,21 @@ pt2pt_test::pt2pt_test(ComponentId_t cid, Params& params) :
     }
 
     self_link = configureSelfLink("start_timing", "1ns",
-                                  new Event::Handler<pt2pt_test>(this,&pt2pt_test::start));
+                                  new Event::Handler2<pt2pt_test,&pt2pt_test::start>(this));
 
     report_timing = configureSelfLink("report_timing", "1ns",
-                                  new Event::Handler<pt2pt_test>(this,&pt2pt_test::report_bw));
+                                  new Event::Handler2<pt2pt_test,&pt2pt_test::report_bw>(this));
 
     // if ( id == 1 ) {
     //     // self_link = configureSelfLink("complete_link", link_bw_s,
-	// 	// 		      new Event::Handler<pt2pt_test>(this,&pt2pt_test::handle_complete));
+	// 	// 		      new Event::Handler2<pt2pt_test,&pt2pt_test::handle_complete>(this));
 
     //     // Configure a new self link to be used to time the
     //     // serialization latency of the last packet.  We won't know
     //     // the final BW until the network is intialized, so we'll put
     //     // in a dummy value, then change it later.
     //     self_link = configureSelfLink("complete_link", "2GHz",
-	// 			      new Event::Handler<pt2pt_test>(this,&pt2pt_test::handle_complete));
+	// 			      new Event::Handler2<pt2pt_test,&pt2pt_test::handle_complete>(this));
     // }
 
     my_dest = -1;
@@ -138,19 +137,19 @@ void pt2pt_test::finish()
     for ( auto& x : my_recvs ) {
         if ( x.second.end_arrival == 0 ) {
             // Ended early, compute using current sim time
-            x.second.end_arrival = Simulation::getSimulation()->getEndSimCycle();
+            x.second.end_arrival = getEndSimCycle();
         }
         // Compute bandwidth in bits/core time quantum
         // UnitAlgebra bits_sent = UnitAlgebra("1b") * packets_to_send * packet_size;
         UnitAlgebra bits_sent = UnitAlgebra("1b") * x.second.packets_recd * packet_size;
-        UnitAlgebra start_time = Simulation::getSimulation()->getTimeLord()->getTimeBase() * x.second.first_arrival;
-        UnitAlgebra end_time = Simulation::getSimulation()->getTimeLord()->getTimeBase() * x.second.end_arrival;
+        UnitAlgebra start_time = getCoreTimeBase() * x.second.first_arrival;
+        UnitAlgebra end_time = getCoreTimeBase() * x.second.end_arrival;
         // TODO: Still need to tweak to account for serialization latency of the last packet
-        UnitAlgebra total_time = Simulation::getSimulation()->getTimeLord()->getTimeBase() * (x.second.end_arrival - x.second.first_arrival);
+        UnitAlgebra total_time = getCoreTimeBase() * (x.second.end_arrival - x.second.first_arrival);
 
         UnitAlgebra bw = bits_sent / total_time;
 
-        Simulation::getSimulationOutput().output(
+        getSimulationOutput().output(
             "For src = %d and dest = %d:\n"
             "  First packet received at: %s\n"
             "  Last packet received at: %s\n"
@@ -185,7 +184,7 @@ void pt2pt_test::setup()
 
     if ( my_dest != -1 ) {
         trace.output("I'm a sender\n");
-        link_control->setNotifyOnSend(new SimpleNetwork::Handler<pt2pt_test>(this,&pt2pt_test::send_handler));
+        link_control->setNotifyOnSend(new SimpleNetwork::Handler2<pt2pt_test,&pt2pt_test::send_handler>(this));
         // Compute delay in nanoseconds
         UnitAlgebra delay_in_ns = my_delay / UnitAlgebra("1ns");
         self_link->send(delay_in_ns.getRoundedValue(),NULL);
@@ -193,7 +192,7 @@ void pt2pt_test::setup()
 
     if ( !my_recvs.empty() ) {
         trace.output("I'm a receiver\n");
-        link_control->setNotifyOnReceive(new SimpleNetwork::Handler<pt2pt_test>(this,&pt2pt_test::recv_handler));
+        link_control->setNotifyOnReceive(new SimpleNetwork::Handler2<pt2pt_test,&pt2pt_test::recv_handler>(this));
     }
 
     // If I am a receiver and report_interval is not zero, set up
@@ -206,7 +205,7 @@ void pt2pt_test::setup()
         pkt_size *= packet_size;
 
         UnitAlgebra ser_time = pkt_size / bw;
-        pkt_ser_cycles = (ser_time / Simulation::getSimulation()->getTimeLord()->getTimeBase()).getRoundedValue();
+        pkt_ser_cycles = (ser_time / getCoreTimeBase()).getRoundedValue();
 
         // Create a number that when multiplied by the number of
         // packets received in the interval, will give the bandwidth
@@ -220,7 +219,7 @@ void pt2pt_test::setup()
 
         // Now, send a wake-up to do the reporting.  First, we need to
         // set the timebase to be the interval time
-        report_timing->setDefaultTimeBase(getTimeConverter(report_interval));
+        report_timing->setDefaultTimeBase(TimeConverter(getTimeConverter(report_interval)));
         report_timing->send(1,NULL);
     }
 
@@ -232,7 +231,7 @@ void pt2pt_test::setup()
     //     std::cout << link_bw.toStringBestSI() << std::endl;
 
     //     link_bw *= (UnitAlgebra("1b") *= packet_size);
-    //     TimeConverter* tc = getTimeConverter(link_bw);
+    //     TimeConverter tc = getTimeConverter(link_bw);
     //     std::cout << link_bw.toStringBestSI() << std::endl;
     //     self_link->setDefaultTimeBase(tc);
     //     std::cout << tc->getFactor() << std::endl;
@@ -312,17 +311,17 @@ pt2pt_test::recv_handler(int vn) {
 
     recv_data& data = data_it->second;
     if ( data.packets_recd == 0 ) {
-        data.first_arrival = Simulation::getSimulation()->getCurrentSimCycle();
+        data.first_arrival = getCurrentSimCycle();
     }
 
     data.packets_recd++;
     packets_recd++;
 
     pkts_in_interval++;
-    last_pkt_recd = Simulation::getSimulation()->getCurrentSimCycle();
+    last_pkt_recd = getCurrentSimCycle();
 
     if ( data.packets_recd == packets_to_send ) {
-        data.end_arrival = Simulation::getSimulation()->getCurrentSimCycle();
+        data.end_arrival = getCurrentSimCycle();
     }
 
     if ( packets_recd == ( my_recvs.size() * packets_to_send ) ) {
@@ -338,7 +337,7 @@ pt2pt_test::recv_handler(int vn) {
 void pt2pt_test::report_bw(Event* ev) {
 
     // Figure out if we have a partial packet at the end of the window
-    SimTime_t curr_cycle = Simulation::getSimulation()->getCurrentSimCycle();
+    SimTime_t curr_cycle = getCurrentSimCycle();
     UnitAlgebra bw = interval_start_bw;
     if ( last_pkt_recd + pkt_ser_cycles > curr_cycle ) {
         // Partial packet

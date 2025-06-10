@@ -1,4 +1,26 @@
 SSTARIEL: Function profiling is disabled.
+Allocating arrays of size 2000 elements.
+Done allocating arrays.
+Perfoming the fast_c compute loop...
+Sum of arrays is: 6999500.000000
+Freeing arrays...
+Done.
+memory, WARNING: Memories no longer inherit address regions from directories and no region parameters (addr_range_start, addr_range_end, interleave_size, interleave_step) were detected. All addresses will map to this memory: if this is intended, you may ignore this warning or set addr_range_start to 0 in your input deck to eliminate this warning.
+CORE ID: 0 PROCESSED AN EXIT EVENT
+
+Ariel Memory Management Statistics:
+---------------------------------------------------------------------
+Page Table Sizes:
+- Map entries         435
+Page Table Coverages:
+- Bytes               1781760
+ a0.read_requests.0 : Accumulator : Sum.u64 = 745139; SumSQ.u64 = 745139; Count.u64 = 745139; Min.u64 = 1; Max.u64 = 1; 
+ a0.write_requests.0 : Accumulator : Sum.u64 = 298976; SumSQ.u64 = 298976; Count.u64 = 298976; Min.u64 = 1; Max.u64 = 1; 
+ a0.instruction_count.0 : Accumulator : Sum.u64 = 3236674; SumSQ.u64 = 3236674; Count.u64 = 3236674; Min.u64 = 1; Max.u64 = 1; 
+ a0.cycles.0 : Accumulator : Sum.u64 = 32280634; SumSQ.u64 = 32280634; Count.u64 = 32280634; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.CacheHits : Accumulator : Sum.u64 = 1022715; SumSQ.u64 = 1022715; Count.u64 = 1022715; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.CacheMisses : Accumulator : Sum.u64 = 22152; SumSQ.u64 = 22152; Count.u64 = 22152; Min.u64 = 1; Max.u64 = 1; 
+Simulation is complete, simulated time: 32.2806 ms
 ARIEL-SST: Did not find ARIEL_OVERRIDE_POOL in the environment, no override applies.
 ARIEL-SST PIN tool activating with 1 threads
 ARIEL: Default memory pool set to 0
@@ -6,24 +28,5 @@ ARIEL: Tool is configured to begin with profiling immediately.
 ARIEL: Starting program.
 Identified routine: clock_gettime, replacing with Ariel equivalent...
 Replacement complete.
-Allocating arrays of size 2000 elements.
-Done allocating arrays.
-Perfoming the fast_c compute loop...
-Sum of arrays is: 6999500.000000
-Freeing arrays...
-Done.
-CORE ID: 0 PROCESSED AN EXIT EVENT
-
-Ariel Memory Management Statistics:
----------------------------------------------------------------------
-Page Table Sizes:
-- Map entries         376
-Page Table Coverages:
-- Bytes               1540096
- a0.read_requests.0 : Accumulator : Sum.u64 = 358770; SumSQ.u64 = 358770; Count.u64 = 358770; Min.u64 = 1; Max.u64 = 1; 
- a0.write_requests.0 : Accumulator : Sum.u64 = 163934; SumSQ.u64 = 163934; Count.u64 = 163934; Min.u64 = 1; Max.u64 = 1; 
- a0.instruction_count.0 : Accumulator : Sum.u64 = 1509571; SumSQ.u64 = 1509571; Count.u64 = 1509571; Min.u64 = 1; Max.u64 = 1; 
- a0.cycles.0 : Accumulator : Sum.u64 = 17492057; SumSQ.u64 = 17492057; Count.u64 = 17492057; Min.u64 = 1; Max.u64 = 1; 
- l1cache.CacheHits : Accumulator : Sum.u64 = 509604; SumSQ.u64 = 509604; Count.u64 = 509604; Min.u64 = 1; Max.u64 = 1; 
- l1cache.CacheMisses : Accumulator : Sum.u64 = 13248; SumSQ.u64 = 13248; Count.u64 = 13248; Min.u64 = 1; Max.u64 = 1; 
-Simulation is complete, simulated time: 17.4921 ms
+Identified routine: clock_gettime, replacing with Ariel equivalent...
+Replacement complete.
