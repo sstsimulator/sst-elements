@@ -161,7 +161,7 @@ class EmberMpiLib : public EmberLib {
     void send(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group) {
     	q.push( new EmberSendEvent( api(), m_output, m_Stats[Send], payload, count, dtype, dest, tag, group ) );
 
-    	size_t bytes = api().sizeofDataType(dtype);
+    	size_t bytes = count*api().sizeofDataType(dtype);
 
 	    //m_histoM["SendSize"]->add( count * bytes );
 
@@ -173,7 +173,7 @@ class EmberMpiLib : public EmberLib {
         MessageRequest* req ) {
     	q.push( new EmberISendEvent( api(), m_output, m_Stats[Isend], payload, count, dtype, dest, tag, group, req ) );
 
-		size_t bytes = api().sizeofDataType(dtype);
+		size_t bytes = count*api().sizeofDataType(dtype);
 
 		//m_histoM["SendSize"]->add( count * bytes );
 
