@@ -25,7 +25,7 @@ distCarGenerator::distCarGenerator(ComponentId_t id, Params& params) :
   Component(id)
 {
     int64_t random_seed;
-	
+
     // See if any optional simulation parameters were set in the input configuration (Python script, JSON file, etc.)
     random_seed = params.find<int64_t>("random_seed", 151515);
 
@@ -54,7 +54,7 @@ distCarGenerator::distCarGenerator(ComponentId_t id, Params& params) :
 	// Create a random number generator for generating cars
     rng_ = new SST::RNG::MarsagliaRNG(11,  random_seed);
 
-    out_.output("The car generator is now initialized and will try to generate a car every %s.\n", 
+    out_.output("The car generator is now initialized and will try to generate a car every %s.\n",
         arrival_frequency_string.c_str());
 } // End constructor
 
@@ -68,7 +68,7 @@ bool distCarGenerator::tick( Cycle_t UNUSED(tick) )
 	car = checkForNewCustomer();
 
 	if ( car != CarType::None ) {
-        // The generator's clock may not be the same as the car wash's clock 
+        // The generator's clock may not be the same as the car wash's clock
         // so exchange times in minutes
 		CarEvent * ev = new CarEvent( car, getCurrentSimTime(minute_tc_) );
 		link_->send(ev);

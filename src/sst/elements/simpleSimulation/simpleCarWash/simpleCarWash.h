@@ -48,7 +48,7 @@ SST_ELI_DOCUMENT_PARAMS(
 /******** Class member functions - public **********/
     // Constructor
     simpleCarWash(SST::ComponentId_t id, SST::Params& params);
-    
+
     // Inherited functions from "SST::Component".
     // Not used in this example so function definitions are empty
     void setup() override { }
@@ -61,7 +61,7 @@ SST_ELI_DOCUMENT_PARAMS(
 
 private:
 /******** Types used in this class ******************/
-    
+
     // The car wash can handle "Small" and "Large" cars
     enum class CarType { None, Small, Large };
 
@@ -77,21 +77,21 @@ private:
         Cycle_t time_left; // How much longer the car needs to stay in the bay
 
         void run() {
-            if (occupied != CarType::None) 
-                time_left--; 
+            if (occupied != CarType::None)
+                time_left--;
         }
 
         bool isWashFinished() {
-            if ( occupied == CarType::None ) 
+            if ( occupied == CarType::None )
                 return false; // No car was washed
             return time_left == 0; // Done if time_left is 0
-        }          
+        }
     };
 
 /******** Class member functions - private **********/
     // Default constructor - used for serialization only
     simpleCarWash() {}
-    
+
     // The clock handler
     bool tick(SST::Cycle_t);
 
@@ -109,7 +109,7 @@ private:
 
     // Show how many customers were turned away when the carwash closed
     void showDisappointedCustomers();
-    
+
     // Pretty print the queue
     void showCarArt();
 
@@ -117,10 +117,10 @@ private:
 
     // Wash time for each CarType in minutes
     const std::array<Cycle_t, 3> wash_times_{ 0, 3, 5 };
-    
+
     // Random number generator to randomize car arrival
     SST::RNG::MarsagliaRNG* rng_;
-    
+
     // An SST Output object to print information to stdout
     SST::Output out_;
 
@@ -141,13 +141,13 @@ private:
 
     // A wash bay for large and small cars
     WashBay large_bay_;
-    
+
     // A wash bay for small cars only
     WashBay small_bay_;
 
     // Queue of waiting cars
     std::queue<CarQueueEntry> queue_;
-    
+
 };
 
 } // namespace SST::SimpleCarWash

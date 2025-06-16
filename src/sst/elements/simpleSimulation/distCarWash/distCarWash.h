@@ -44,13 +44,13 @@ SST_ELI_DOCUMENT_PARAMS(
 )
 
 SST_ELI_DOCUMENT_PORTS(
-    { "car", "Car events will be sent out of this port", { "simpleSimulation.CarEvent" } } 
+    { "car", "Car events will be sent out of this port", { "simpleSimulation.CarEvent" } }
 )
 
 /******** Class member functions - public **********/
     // Constructor
     distCarWash(SST::ComponentId_t id, SST::Params& params);
-    
+
     // Inherited functions from "SST::Component".
     // Not used in this example so function definitions are empty
     void init(unsigned int phase) override { }
@@ -64,7 +64,7 @@ SST_ELI_DOCUMENT_PORTS(
 
 private:
 /******** Types used in this class ******************/
-    
+
     // Entry in the queue of cars waiting to be washed
     struct CarQueueEntry {
         Cycle_t queue_time; // Time that the car entered the queue
@@ -87,10 +87,10 @@ private:
         }
 
         bool isWashFinished() {
-            if ( occupied == CarType::None ) 
+            if ( occupied == CarType::None )
                 return false; // No car was washed
             return time_left == 0; // Done if time_left is 0
-        }          
+        }
     };
 
 /******** Class member functions - private **********/
@@ -98,12 +98,12 @@ private:
     bool report(SST::Cycle_t);
 
     // Enqueue a car to wait for a wash bay
-    // The signature has changed from simpleCarWash so that 
+    // The signature has changed from simpleCarWash so that
     // queueACar is an event handler instead of a function called
     // by the clock
     void queueACar(SST::Event* ev);
 
-    // Run the wash bays 
+    // Run the wash bays
     // The signature has changed from simpleCarWash so that
     // cycleWashBays is an event handler instead of a function called
     // by the clock
@@ -114,7 +114,7 @@ private:
 
     // Show how many customers were turned away when the carwash closed
     void showDisappointedCustomers();
-    
+
     // Pretty print the queue
     void showCarArt();
 
@@ -122,7 +122,7 @@ private:
 
     // Wash time for each CarType in minutes
     const std::array<Cycle_t, 3> wash_times_{ 0, 3, 5 };
-    
+
     // An SST Output object to print information to stdout
     SST::Output out_;
 
@@ -140,7 +140,7 @@ private:
 
     // A wash bay for large and small cars
     WashBay large_bay_;
-    
+
     // A wash bay for small cars only
     WashBay small_bay_;
 

@@ -14,7 +14,7 @@ class testcase_simpleSimulation(SSTTestCase):
         # Put test based teardown code here. it is called once after every test
         super(type(self), self).tearDown()
 
-##### 
+#####
     # Test simpleCarWash. The test has one component so only run it if SST is running serially
     parallel = testing_check_get_num_threads() * testing_check_get_num_ranks()
     @unittest.skipIf(parallel > 1 , "Test has only one component but SST is running in parallel")

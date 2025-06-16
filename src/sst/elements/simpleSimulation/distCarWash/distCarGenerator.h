@@ -42,14 +42,14 @@ SST_ELI_DOCUMENT_PARAMS(
     { "random_seed", "A seed to use with the random number generator that generates a queue of cars", "151515"}
 )
 
-SST_ELI_DOCUMENT_PORTS( 
-    { "car", "Car events will be sent out of this port", { "simpleSimulation.CarEvent" } } 
+SST_ELI_DOCUMENT_PORTS(
+    { "car", "Car events will be sent out of this port", { "simpleSimulation.CarEvent" } }
 )
 
 /******** Class member functions - public **********/
     // Constructor
     distCarGenerator(SST::ComponentId_t id, SST::Params& params);
-    
+
     // Inherited functions from "SST::Component".
     // Not used in this example so function definitions are empty
     void setup() override { }
@@ -66,7 +66,7 @@ private:
     // Determine if a car arrived and if so, which kind
     CarType checkForNewCustomer();
 
-    // A handler for events arriving on the car port 
+    // A handler for events arriving on the car port
     // Won't be used since the carwash doesn't send any events
     void linkHandler(SST::Event* ev);
 
@@ -74,7 +74,7 @@ private:
 
     // Random number generator to randomize car arrival
     SST::RNG::MarsagliaRNG* rng_;
-    
+
     // An SST Output object to print information to stdout
     SST::Output out_;
 
