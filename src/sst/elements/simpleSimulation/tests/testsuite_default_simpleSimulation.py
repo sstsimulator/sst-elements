@@ -14,14 +14,20 @@ class testcase_simpleSimulation(SSTTestCase):
         # Put test based teardown code here. it is called once after every test
         super(type(self), self).tearDown()
 
+##### 
+    # Test simpleCarWash. The test has one component so only run it if SST is running serially
+    parallel = testing_check_get_num_threads() * testing_check_get_num_ranks()
+    @unittest.skipIf(parallel > 1 , "Test has only one component but SST is running in parallel")
+    def test_simplesimulation_simplecarwash(self):
+        self.simplesim_template("simpleCarWash")
+
+    @unittest.skipIf(parallel > 2, "Test has two components but SST is running with more threads")
+    def test_simplesimulation_distcarwash(self):
+        self.simplesim_template("distCarWash")
+
 #####
 
-    def test_simplesimulation_carwash(self):
-        self.simplesimulation_template("simpleSimulationCarWash")
-
-#####
-
-    def simplesimulation_template(self, testcase):
+    def simplesim_template(self, testcase):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
@@ -33,19 +39,12 @@ class testcase_simpleSimulation(SSTTestCase):
         sdlfile = "{0}/{1}.py".format(test_path, testDataFileName)
         reffile = "{0}/refFiles/{1}.out".format(test_path, testDataFileName)
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
-        tmpfile = "{0}/{1}.tmp".format(tmpdir, testDataFileName)
-        cmpfile = "{0}/{1}.cmp".format(tmpdir, testDataFileName)
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
 
         self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
 
         testing_remove_component_warning_from_file(outfile)
-
-        # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
-        #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
-        #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
-        #       TESTS & RESULT FILES ARE STILL VALID
 
         # Perform the tests
         if os_test_file(errfile, "-s"):
