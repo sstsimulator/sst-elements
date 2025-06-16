@@ -28,7 +28,7 @@ simpleCarWash::simpleCarWash(ComponentId_t id, Params& params) :
   Component(id)
 {
     int64_t random_seed;
-	
+
     // See if any optional simulation parameters were set in the input configuration (Python script, JSON file, etc.)
     simulation_time_ = params.find<int64_t>("time", 1440); 	// 24h * 60m/h = 1440m in a day
 	arrival_frequency_ = params.find<int64_t>("arrival_frequency", 3);
@@ -52,7 +52,7 @@ simpleCarWash::simpleCarWash(ComponentId_t id, Params& params) :
     // Register a clock
     // The clock will automatically be called by the SST framework
     // This will allow our component to wake up on a regular basis and check progress or add new cars to the line
-    // Clocks are not *strictly* required but some way of moving time forward in time is! 
+    // Clocks are not *strictly* required but some way of moving time forward in time is!
 
     rng_ = new SST::RNG::MarsagliaRNG(11,  random_seed);
 
@@ -60,7 +60,7 @@ simpleCarWash::simpleCarWash(ComponentId_t id, Params& params) :
     log_.small_cars_washed = 0;	// How many small cars were washed
     log_.large_cars_washed = 0;	// How many large cars were washed
     log_.cars_arrived = 0;		// How many cars arrived
-	log_.time_in_line = 0;		// How much total time cars spent waiting in line 
+	log_.time_in_line = 0;		// How much total time cars spent waiting in line
     hourly_log_.small_cars_washed = 0;
     hourly_log_.large_cars_washed = 0;
     hourly_log_.cars_arrived = 0;
@@ -72,7 +72,7 @@ simpleCarWash::simpleCarWash(ComponentId_t id, Params& params) :
 
 	small_bay_.occupied = CarType::None;
 	small_bay_.time_left = 0;
-    
+
     out_.output("The carwash simulation is now initialized.\n");
 } // End constructor
 
@@ -95,10 +95,10 @@ void simpleCarWash::finish()
 	out_.output(" Total Cars Washed: %d\n", log_.small_cars_washed + log_.large_cars_washed);
 	out_.output(" Number of cars that arrived: %d\n", log_.cars_arrived);
 	out_.output(" Total time spent by cars waiting for a wash: %" PRIu64 " minutes\n", log_.time_in_line);
-	out_.output(" Average time spent waiting per car: %" PRIu64 " minutes\n", 
+	out_.output(" Average time spent waiting per car: %" PRIu64 " minutes\n",
 		log_.time_in_line / (log_.small_cars_washed + log_.large_cars_washed));
 	out_.output("------------------------------------------------------------------\n");
-	
+
     showDisappointedCustomers();
 } // End finish()
 
@@ -114,13 +114,13 @@ bool simpleCarWash::tick( Cycle_t tick )
         out_.output("Time = %" PRIu64 " (minutes). Another simulated hour has passed! Summary:\n", tick);
         out_.output(" Small Cars Washed = %d\n", hourly_log_.small_cars_washed);
         out_.output(" Large Cars Washed = %d\n", hourly_log_.large_cars_washed);
-		out_.output(" Average wait this hour = %" PRIu64 " minutes\n", 
+		out_.output(" Average wait this hour = %" PRIu64 " minutes\n",
 			(hourly_log_.time_in_line / (hourly_log_.small_cars_washed + hourly_log_.large_cars_washed)));
         out_.output(" Total Cars Arrived = %d\n", hourly_log_.cars_arrived);
 		out_.output(" Number of Cars Waiting = %zu\n\n", queue_.size());
 
         // showCarArt(); // uncomment to see graphical of cars in queue
-        
+
 		// Update summary log and reset hourly log
 		log_.large_cars_washed += hourly_log_.large_cars_washed;
 		log_.small_cars_washed += hourly_log_.small_cars_washed;
@@ -208,7 +208,7 @@ void simpleCarWash::cycleWashBays(Cycle_t time)
 	// If any cars are waiting, try to assign them to a bay
 	// A large car might block a small car if it needs to wait for the large bay!
 	while (! queue_.empty() ) { // Loop until the car at the front of the queue can't be put into an available bay
-		
+
 		// Handle a large car at the front of the queue
 		if ( queue_.front().car == CarType::Large ) {
 			if ( large_bay_.occupied != CarType::None ) break; // The Large wash bay is occupied, cars must wait
@@ -224,12 +224,12 @@ void simpleCarWash::cycleWashBays(Cycle_t time)
 				small_bay_.occupied = CarType::Small;
 				small_bay_.time_left = queue_.front().wash_time;
 				hourly_log_.time_in_line += (time - queue_.front().queue_time); // Record how long the car waited
-				queue_.pop();	
+				queue_.pop();
 			} else if ( large_bay_.occupied == CarType::None ) { // Put the small car in the large bay
 				large_bay_.occupied = CarType::Small;
 				large_bay_.time_left = queue_.front().wash_time;
 				hourly_log_.time_in_line += (time - queue_.front().queue_time); // Record how long the car waited
-				queue_.pop();	
+				queue_.pop();
 			} else { // No free bays, wait
 				break;
 			}
@@ -294,7 +294,7 @@ void simpleCarWash::showDisappointedCustomers()
 			large_car_customers++;
 		}
 		queue_.pop();
-	} 
+	}
 
 	out_.output("Disappointed Customers\n");
 	out_.output("-----------------------------\n");

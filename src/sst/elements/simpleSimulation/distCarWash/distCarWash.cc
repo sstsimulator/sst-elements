@@ -43,7 +43,7 @@ distCarWash::distCarWash(ComponentId_t id, Params& params) :
     out_.output("The car wash will operate for %" PRIu64 " minutes\n\n", simulation_time_);
 
 	// In SST, clocks are regularly occurring events and they can be disabled and enabled throughout simulation.
-	// Instead of waking up every minute to decide if we need to do something 
+	// Instead of waking up every minute to decide if we need to do something
 	// as the simpleCarWash did, this one will:
 	// * Keep track of time in minutes by default
 	minute_tc_ = getTimeConverter("60s");
@@ -54,7 +54,7 @@ distCarWash::distCarWash(ComponentId_t id, Params& params) :
 
 	// * Wake up every hour to do the hourly report
 	registerClock("3600s", new SST::Clock::Handler2<distCarWash, &distCarWash::report>(this));
-	
+
 	// * Use a self-link (internal link) to wakeup whenever a car is done washing
 	bay_link_ = configureSelfLink("bay", minute_tc_, new SST::Event::Handler2<distCarWash, &distCarWash::cycleWashBays>(this));
 	last_wakeup_time_ = 0; // Keep track of when we wake up
@@ -67,7 +67,7 @@ distCarWash::distCarWash(ComponentId_t id, Params& params) :
     log_.small_cars_washed = 0;	// How many small cars were washed
     log_.large_cars_washed = 0;	// How many large cars were washed
     log_.cars_arrived = 0;		// How many cars arrived
-	log_.time_in_line = 0;		// How much total time cars spent waiting in line 
+	log_.time_in_line = 0;		// How much total time cars spent waiting in line
     hourly_log_.small_cars_washed = 0;
     hourly_log_.large_cars_washed = 0;
     hourly_log_.cars_arrived = 0;
@@ -89,7 +89,7 @@ distCarWash::distCarWash(ComponentId_t id, Params& params) :
 void distCarWash::setup()
 {
 	// Wakeup the simulation after 'simulation_time_' minutes
-	bay_link_->send(simulation_time_, nullptr); 
+	bay_link_->send(simulation_time_, nullptr);
 }
 
 
@@ -113,7 +113,7 @@ void distCarWash::finish()
 	out_.output(" Total time spent by cars waiting for a wash: %" PRIu64 " minutes\n", log_.time_in_line);
 	out_.output(" Average time spent waiting per car: %" PRIu64 " minutes\n", log_.time_in_line / (log_.small_cars_washed + log_.large_cars_washed));
 	out_.output("------------------------------------------------------------------\n");
-	
+
     showDisappointedCustomers();
 } // End finish()
 
@@ -125,13 +125,13 @@ bool distCarWash::report( Cycle_t tick )
 	out_.output("Time = %" PRIu64 " (hour). Another simulated hour has passed! Summary:\n", tick);
 	out_.output(" Small Cars Washed = %d\n", hourly_log_.small_cars_washed);
 	out_.output(" Large Cars Washed = %d\n", hourly_log_.large_cars_washed);
-	out_.output(" Average wait this hour = %" PRIu64 " minutes\n", 
+	out_.output(" Average wait this hour = %" PRIu64 " minutes\n",
 		hourly_log_.time_in_line / (hourly_log_.large_cars_washed + hourly_log_.small_cars_washed));
 	out_.output(" Total Cars Arrived = %d\n", hourly_log_.cars_arrived);
 	out_.output(" Number of Cars Waiting = %zu\n\n", queue_.size());
 
 	// showCarArt(); // uncomment to see graphical of cars in queue
-	
+
 	// Update summary log and reset hourly log
 	log_.large_cars_washed += hourly_log_.large_cars_washed;
 	log_.small_cars_washed += hourly_log_.small_cars_washed;
@@ -174,7 +174,7 @@ void distCarWash::queueACar(SST::Event* ev)
 // Move cars in and out of bays
 // This is called when an event arrives on bay_link_
 // IMPORTANT: We send 'nullptr' events on bay_link_ since
-//   we don't need any event data, just a wakeup. So, this 
+//   we don't need any event data, just a wakeup. So, this
 //   function will not delete ev (it will always be nullptr).
 void distCarWash::cycleWashBays(SST::Event* ev)
 {
@@ -216,7 +216,7 @@ void distCarWash::cycleWashBays(SST::Event* ev)
 	// If we put a car in a bay, remove it from the queue and send ourselves a wakeup when the car is scheduled
 	// to finish washing
 	while ( !queue_.empty() ) { // Loop until the car at the front of the queue can't be put into an available bay
-		
+
 		// Handle a large car at the front of the queue
 		if ( queue_.front().car == CarType::Large ) {
 			if ( large_bay_.occupied != CarType::None ) break; // The Large wash bay is occupied, cars must wait
@@ -227,14 +227,14 @@ void distCarWash::cycleWashBays(SST::Event* ev)
 			hourly_log_.time_in_line += (time_min - queue_.front().queue_time); // Record how long the car waited
 			queue_.pop();
 			bay_link_->send(large_bay_.time_left, nullptr); // Wakeup this component when the wash is done
-		
+
 		// Handle a small car at the front of the queue
 		} else if ( queue_.front().car == CarType::Small ) {
 			if ( small_bay_.occupied == CarType::None ) { // Put the small car in the small bay
 				small_bay_.occupied = CarType::Small;
 				small_bay_.time_left = queue_.front().wash_time;
 				hourly_log_.time_in_line += (time_min - queue_.front().queue_time); // Record how long the car waited
-				queue_.pop();	
+				queue_.pop();
 				bay_link_->send(small_bay_.time_left, nullptr); // Wakeup this component when the wash is done
 			} else if ( large_bay_.occupied == CarType::None ) { // Put the small car in the large bay
 				large_bay_.occupied = CarType::Small;
@@ -305,7 +305,7 @@ void distCarWash::showDisappointedCustomers()
 			large_car_customers++;
 		}
 		queue_.pop();
-	} 
+	}
 
 	out_.output("Disappointed Customers\n");
 	out_.output("-----------------------------\n");
