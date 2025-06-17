@@ -3,4 +3,8 @@ README for simpleSimulation
 
 The simpleSimulation provides real-world examples of various simulators that can be used as learning tools or resources:
 
-- simpleCarWash		: queing simulation tool used as a two bay carwash simulation for 24 hours
+- simpleCarWash  : A simulation modeling the queuing of cars through a carwash. The entire simulation is modeled in a single
+                   monolithic component.
+- distCarWash    : A distributed model of the same simulation as simpleCarWash. It splits the car wash into two parts
+                   (components): the car wash itself and customer generator. Because it has two components, the simulation can
+                   be run in parallel.

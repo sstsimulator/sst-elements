@@ -1,17 +1,16 @@
-# Automatically generated SST Python input
+# Import the SST module
 import sst
 
-# Define SST core options
-sst.setProgramOption("timebase", "1 ps")
-sst.setProgramOption("stop-at", "10000s")
+# Define the simulation component
+# Name it "carwash"
+wash = sst.Component("carwash", "simpleSimulation.simpleCarWash")
 
-# Define the simulation components
-comp_clocker0 = sst.Component("clocker0", "simpleSimulation.simpleCarWash")
-comp_clocker0.addParams({
-      "clockcount" : """100000000""",
-      "clock" : """1MHz"""
-})
+# Set the carwash up to run for 4320m (72h)
+wash.addParam("time", 4320)
 
+# Set the random seed to use for generating cars
+wash.addParam("random_seed", 151515);
 
-# Define the simulation links
-# End of generated output.
+# Try to generate a car every two minutes
+wash.addParam("arrival_frequency", 2);
+

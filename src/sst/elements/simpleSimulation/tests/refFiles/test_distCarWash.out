@@ -1,0 +1,612 @@
+
+
+Welcome to the car generator for Uncle Moe's Fantastic, Awesome, and Incredible Carwash!
+
+Every 60s, the generator will try to generate a car
+If a car is generated it will be sent to the connected carwash
+Random seed used is: 151515
+The car generator is now initialized and will try to generate a car every 120s.
+
+Welcome to Uncle Moe's Fantastic, Awesome, and Incredible Carwash!
+
+The car wash will operate for 4320 minutes
+
+The carwash simulation is now initialized.
+------------------------------------------------------------------
+Time = 1 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 4
+ Large Cars Washed = 6
+ Average wait this hour = 4 minutes
+ Total Cars Arrived = 13
+ Number of Cars Waiting = 2
+
+------------------------------------------------------------------
+Time = 2 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 7
+ Large Cars Washed = 10
+ Average wait this hour = 2 minutes
+ Total Cars Arrived = 17
+ Number of Cars Waiting = 2
+
+------------------------------------------------------------------
+Time = 3 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 10
+ Large Cars Washed = 11
+ Average wait this hour = 5 minutes
+ Total Cars Arrived = 20
+ Number of Cars Waiting = 1
+
+------------------------------------------------------------------
+Time = 4 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 7
+ Large Cars Washed = 10
+ Average wait this hour = 2 minutes
+ Total Cars Arrived = 18
+ Number of Cars Waiting = 2
+
+------------------------------------------------------------------
+Time = 5 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 7
+ Large Cars Washed = 12
+ Average wait this hour = 5 minutes
+ Total Cars Arrived = 20
+ Number of Cars Waiting = 2
+
+------------------------------------------------------------------
+Time = 6 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 5
+ Large Cars Washed = 12
+ Average wait this hour = 12 minutes
+ Total Cars Arrived = 22
+ Number of Cars Waiting = 7
+
+------------------------------------------------------------------
+Time = 7 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 9
+ Large Cars Washed = 11
+ Average wait this hour = 19 minutes
+ Total Cars Arrived = 20
+ Number of Cars Waiting = 8
+
+------------------------------------------------------------------
+Time = 8 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 7
+ Large Cars Washed = 12
+ Average wait this hour = 27 minutes
+ Total Cars Arrived = 23
+ Number of Cars Waiting = 11
+
+------------------------------------------------------------------
+Time = 9 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 14
+ Large Cars Washed = 10
+ Average wait this hour = 27 minutes
+ Total Cars Arrived = 19
+ Number of Cars Waiting = 7
+
+------------------------------------------------------------------
+Time = 10 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 13
+ Large Cars Washed = 11
+ Average wait this hour = 13 minutes
+ Total Cars Arrived = 18
+ Number of Cars Waiting = 1
+
+------------------------------------------------------------------
+Time = 11 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 9
+ Large Cars Washed = 10
+ Average wait this hour = 3 minutes
+ Total Cars Arrived = 19
+ Number of Cars Waiting = 0
+
+------------------------------------------------------------------
+Time = 12 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 12
+ Large Cars Washed = 8
+ Average wait this hour = 4 minutes
+ Total Cars Arrived = 22
+ Number of Cars Waiting = 2
+
+------------------------------------------------------------------
+Time = 13 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 11
+ Large Cars Washed = 8
+ Average wait this hour = 4 minutes
+ Total Cars Arrived = 18
+ Number of Cars Waiting = 1
+
+------------------------------------------------------------------
+Time = 14 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 12
+ Large Cars Washed = 10
+ Average wait this hour = 2 minutes
+ Total Cars Arrived = 19
+ Number of Cars Waiting = 0
+
+------------------------------------------------------------------
+Time = 15 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 16
+ Large Cars Washed = 6
+ Average wait this hour = 1 minutes
+ Total Cars Arrived = 25
+ Number of Cars Waiting = 1
+
+------------------------------------------------------------------
+Time = 16 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 5
+ Large Cars Washed = 11
+ Average wait this hour = 4 minutes
+ Total Cars Arrived = 19
+ Number of Cars Waiting = 4
+
+------------------------------------------------------------------
+Time = 17 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 9
+ Large Cars Washed = 11
+ Average wait this hour = 13 minutes
+ Total Cars Arrived = 24
+ Number of Cars Waiting = 9
+
+------------------------------------------------------------------
+Time = 18 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 7
+ Large Cars Washed = 12
+ Average wait this hour = 26 minutes
+ Total Cars Arrived = 20
+ Number of Cars Waiting = 9
+
+------------------------------------------------------------------
+Time = 19 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 15
+ Large Cars Washed = 11
+ Average wait this hour = 19 minutes
+ Total Cars Arrived = 19
+ Number of Cars Waiting = 2
+
+------------------------------------------------------------------
+Time = 20 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 15
+ Large Cars Washed = 10
+ Average wait this hour = 2 minutes
+ Total Cars Arrived = 23
+ Number of Cars Waiting = 0
+
+------------------------------------------------------------------
+Time = 21 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 13
+ Large Cars Washed = 7
+ Average wait this hour = 2 minutes
+ Total Cars Arrived = 19
+ Number of Cars Waiting = 0
+
+------------------------------------------------------------------
+Time = 22 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 10
+ Large Cars Washed = 10
+ Average wait this hour = 4 minutes
+ Total Cars Arrived = 23
+ Number of Cars Waiting = 3
+
+------------------------------------------------------------------
+Time = 23 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 18
+ Large Cars Washed = 9
+ Average wait this hour = 3 minutes
+ Total Cars Arrived = 25
+ Number of Cars Waiting = 0
+
+------------------------------------------------------------------
+Time = 24 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 7
+ Large Cars Washed = 8
+ Average wait this hour = 4 minutes
+ Total Cars Arrived = 19
+ Number of Cars Waiting = 4
+
+------------------------------------------------------------------
+Time = 25 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 11
+ Large Cars Washed = 12
+ Average wait this hour = 4 minutes
+ Total Cars Arrived = 20
+ Number of Cars Waiting = 2
+
+------------------------------------------------------------------
+Time = 26 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 10
+ Large Cars Washed = 11
+ Average wait this hour = 6 minutes
+ Total Cars Arrived = 21
+ Number of Cars Waiting = 1
+
+------------------------------------------------------------------
+Time = 27 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 11
+ Large Cars Washed = 9
+ Average wait this hour = 2 minutes
+ Total Cars Arrived = 19
+ Number of Cars Waiting = 0
+
+------------------------------------------------------------------
+Time = 28 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 14
+ Large Cars Washed = 9
+ Average wait this hour = 1 minutes
+ Total Cars Arrived = 22
+ Number of Cars Waiting = 0
+
+------------------------------------------------------------------
+Time = 29 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 7
+ Large Cars Washed = 10
+ Average wait this hour = 7 minutes
+ Total Cars Arrived = 21
+ Number of Cars Waiting = 4
+
+------------------------------------------------------------------
+Time = 30 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 9
+ Large Cars Washed = 11
+ Average wait this hour = 5 minutes
+ Total Cars Arrived = 16
+ Number of Cars Waiting = 0
+
+------------------------------------------------------------------
+Time = 31 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 11
+ Large Cars Washed = 10
+ Average wait this hour = 1 minutes
+ Total Cars Arrived = 22
+ Number of Cars Waiting = 0
+
+------------------------------------------------------------------
+Time = 32 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 10
+ Large Cars Washed = 10
+ Average wait this hour = 2 minutes
+ Total Cars Arrived = 22
+ Number of Cars Waiting = 3
+
+------------------------------------------------------------------
+Time = 33 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 9
+ Large Cars Washed = 12
+ Average wait this hour = 9 minutes
+ Total Cars Arrived = 19
+ Number of Cars Waiting = 0
+
+------------------------------------------------------------------
+Time = 34 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 9
+ Large Cars Washed = 10
+ Average wait this hour = 3 minutes
+ Total Cars Arrived = 21
+ Number of Cars Waiting = 3
+
+------------------------------------------------------------------
+Time = 35 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 5
+ Large Cars Washed = 12
+ Average wait this hour = 13 minutes
+ Total Cars Arrived = 20
+ Number of Cars Waiting = 5
+
+------------------------------------------------------------------
+Time = 36 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 14
+ Large Cars Washed = 10
+ Average wait this hour = 7 minutes
+ Total Cars Arrived = 18
+ Number of Cars Waiting = 0
+
+------------------------------------------------------------------
+Time = 37 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 8
+ Large Cars Washed = 6
+ Average wait this hour = 1 minutes
+ Total Cars Arrived = 15
+ Number of Cars Waiting = 0
+
+------------------------------------------------------------------
+Time = 38 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 10
+ Large Cars Washed = 10
+ Average wait this hour = 5 minutes
+ Total Cars Arrived = 23
+ Number of Cars Waiting = 4
+
+------------------------------------------------------------------
+Time = 39 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 9
+ Large Cars Washed = 11
+ Average wait this hour = 16 minutes
+ Total Cars Arrived = 22
+ Number of Cars Waiting = 5
+
+------------------------------------------------------------------
+Time = 40 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 9
+ Large Cars Washed = 11
+ Average wait this hour = 14 minutes
+ Total Cars Arrived = 19
+ Number of Cars Waiting = 5
+
+------------------------------------------------------------------
+Time = 41 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 11
+ Large Cars Washed = 11
+ Average wait this hour = 4 minutes
+ Total Cars Arrived = 19
+ Number of Cars Waiting = 2
+
+------------------------------------------------------------------
+Time = 42 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 10
+ Large Cars Washed = 11
+ Average wait this hour = 11 minutes
+ Total Cars Arrived = 22
+ Number of Cars Waiting = 2
+
+------------------------------------------------------------------
+Time = 43 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 10
+ Large Cars Washed = 11
+ Average wait this hour = 12 minutes
+ Total Cars Arrived = 24
+ Number of Cars Waiting = 5
+
+------------------------------------------------------------------
+Time = 44 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 9
+ Large Cars Washed = 12
+ Average wait this hour = 17 minutes
+ Total Cars Arrived = 20
+ Number of Cars Waiting = 5
+
+------------------------------------------------------------------
+Time = 45 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 13
+ Large Cars Washed = 10
+ Average wait this hour = 11 minutes
+ Total Cars Arrived = 20
+ Number of Cars Waiting = 1
+
+------------------------------------------------------------------
+Time = 46 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 9
+ Large Cars Washed = 9
+ Average wait this hour = 1 minutes
+ Total Cars Arrived = 18
+ Number of Cars Waiting = 2
+
+------------------------------------------------------------------
+Time = 47 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 5
+ Large Cars Washed = 12
+ Average wait this hour = 6 minutes
+ Total Cars Arrived = 18
+ Number of Cars Waiting = 3
+
+------------------------------------------------------------------
+Time = 48 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 9
+ Large Cars Washed = 10
+ Average wait this hour = 17 minutes
+ Total Cars Arrived = 23
+ Number of Cars Waiting = 7
+
+------------------------------------------------------------------
+Time = 49 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 8
+ Large Cars Washed = 11
+ Average wait this hour = 16 minutes
+ Total Cars Arrived = 21
+ Number of Cars Waiting = 9
+
+------------------------------------------------------------------
+Time = 50 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 10
+ Large Cars Washed = 11
+ Average wait this hour = 29 minutes
+ Total Cars Arrived = 20
+ Number of Cars Waiting = 7
+
+------------------------------------------------------------------
+Time = 51 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 12
+ Large Cars Washed = 11
+ Average wait this hour = 22 minutes
+ Total Cars Arrived = 26
+ Number of Cars Waiting = 10
+
+------------------------------------------------------------------
+Time = 52 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 16
+ Large Cars Washed = 10
+ Average wait this hour = 21 minutes
+ Total Cars Arrived = 18
+ Number of Cars Waiting = 2
+
+------------------------------------------------------------------
+Time = 53 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 12
+ Large Cars Washed = 9
+ Average wait this hour = 5 minutes
+ Total Cars Arrived = 20
+ Number of Cars Waiting = 2
+
+------------------------------------------------------------------
+Time = 54 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 6
+ Large Cars Washed = 12
+ Average wait this hour = 7 minutes
+ Total Cars Arrived = 19
+ Number of Cars Waiting = 3
+
+------------------------------------------------------------------
+Time = 55 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 9
+ Large Cars Washed = 12
+ Average wait this hour = 7 minutes
+ Total Cars Arrived = 19
+ Number of Cars Waiting = 0
+
+------------------------------------------------------------------
+Time = 56 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 12
+ Large Cars Washed = 6
+ Average wait this hour = 1 minutes
+ Total Cars Arrived = 18
+ Number of Cars Waiting = 0
+
+------------------------------------------------------------------
+Time = 57 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 6
+ Large Cars Washed = 11
+ Average wait this hour = 6 minutes
+ Total Cars Arrived = 21
+ Number of Cars Waiting = 5
+
+------------------------------------------------------------------
+Time = 58 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 12
+ Large Cars Washed = 11
+ Average wait this hour = 11 minutes
+ Total Cars Arrived = 23
+ Number of Cars Waiting = 5
+
+------------------------------------------------------------------
+Time = 59 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 8
+ Large Cars Washed = 12
+ Average wait this hour = 14 minutes
+ Total Cars Arrived = 19
+ Number of Cars Waiting = 4
+
+------------------------------------------------------------------
+Time = 60 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 14
+ Large Cars Washed = 10
+ Average wait this hour = 4 minutes
+ Total Cars Arrived = 21
+ Number of Cars Waiting = 1
+
+------------------------------------------------------------------
+Time = 61 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 5
+ Large Cars Washed = 11
+ Average wait this hour = 4 minutes
+ Total Cars Arrived = 16
+ Number of Cars Waiting = 0
+
+------------------------------------------------------------------
+Time = 62 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 5
+ Large Cars Washed = 11
+ Average wait this hour = 3 minutes
+ Total Cars Arrived = 17
+ Number of Cars Waiting = 2
+
+------------------------------------------------------------------
+Time = 63 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 16
+ Large Cars Washed = 7
+ Average wait this hour = 3 minutes
+ Total Cars Arrived = 22
+ Number of Cars Waiting = 1
+
+------------------------------------------------------------------
+Time = 64 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 12
+ Large Cars Washed = 7
+ Average wait this hour = 2 minutes
+ Total Cars Arrived = 19
+ Number of Cars Waiting = 1
+
+------------------------------------------------------------------
+Time = 65 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 10
+ Large Cars Washed = 11
+ Average wait this hour = 8 minutes
+ Total Cars Arrived = 25
+ Number of Cars Waiting = 5
+
+------------------------------------------------------------------
+Time = 66 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 11
+ Large Cars Washed = 11
+ Average wait this hour = 14 minutes
+ Total Cars Arrived = 20
+ Number of Cars Waiting = 3
+
+------------------------------------------------------------------
+Time = 67 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 9
+ Large Cars Washed = 8
+ Average wait this hour = 4 minutes
+ Total Cars Arrived = 17
+ Number of Cars Waiting = 3
+
+------------------------------------------------------------------
+Time = 68 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 12
+ Large Cars Washed = 9
+ Average wait this hour = 7 minutes
+ Total Cars Arrived = 20
+ Number of Cars Waiting = 2
+
+------------------------------------------------------------------
+Time = 69 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 9
+ Large Cars Washed = 12
+ Average wait this hour = 5 minutes
+ Total Cars Arrived = 24
+ Number of Cars Waiting = 5
+
+------------------------------------------------------------------
+Time = 70 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 5
+ Large Cars Washed = 12
+ Average wait this hour = 18 minutes
+ Total Cars Arrived = 20
+ Number of Cars Waiting = 7
+
+------------------------------------------------------------------
+Time = 71 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 8
+ Large Cars Washed = 12
+ Average wait this hour = 29 minutes
+ Total Cars Arrived = 26
+ Number of Cars Waiting = 13
+
+------------------------------------------------------------------
+Time = 72 (hour). Another simulated hour has passed! Summary:
+ Small Cars Washed = 20
+ Large Cars Washed = 9
+ Average wait this hour = 26 minutes
+ Total Cars Arrived = 18
+ Number of Cars Waiting = 2
+
+It is closing time but there are cars still being washed, let them finish
+It is closing time and bays are empty so the car wash is ready to close
+
+
+------------------------------------------------------------------
+Uncle Moe's Carwash Simulation has completed!
+Here is a summary of the results:
+Simulation duration was: 4321 minutes (~ 72 hours) of operation
+Closing was delayed by 1 minutes due to cars in the wash bays
+ Small Cars Washed: 722
+ Large Cars Washed: 733
+ Total Cars Washed: 1455
+ Number of cars that arrived: 1458
+ Total time spent by cars waiting for a wash: 14262 minutes
+ Average time spent waiting per car: 9 minutes
+------------------------------------------------------------------
+Disappointed Customers
+-----------------------------
+ Small Cars: 3
+ Large Cars: 0
+ Total: 3
+Simulation is complete, simulated time: 259.26 Ks
