@@ -18,10 +18,6 @@
 #include <array>
 #include <queue>
 
-#define WASH_BAY_EMPTY 0
-#define WASH_BAY_FULL 1
-#define MINUTES_IN_A_DAY 24*60
-
 namespace SST::SimpleCarWash {
 
 class simpleCarWash : public SST::Component

@@ -63,14 +63,14 @@ distCarWash::distCarWash(ComponentId_t id, Params& params) :
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
-    // Initialize all of the simulation variables and parameters
-    log_.small_cars_washed = 0;	// How many small cars were washed
-    log_.large_cars_washed = 0;	// How many large cars were washed
-    log_.cars_arrived = 0;		// How many cars arrived
+	// Initialize all of the simulation variables and parameters
+	log_.small_cars_washed = 0;	// How many small cars were washed
+	log_.large_cars_washed = 0;	// How many large cars were washed
+	log_.cars_arrived = 0;		// How many cars arrived
 	log_.time_in_line = 0;		// How much total time cars spent waiting in line
-    hourly_log_.small_cars_washed = 0;
-    hourly_log_.large_cars_washed = 0;
-    hourly_log_.cars_arrived = 0;
+	hourly_log_.small_cars_washed = 0;
+	hourly_log_.large_cars_washed = 0;
+	hourly_log_.cars_arrived = 0;
 	hourly_log_.time_in_line = 0;
 
 	// Initialize bays
@@ -85,11 +85,13 @@ distCarWash::distCarWash(ComponentId_t id, Params& params) :
 
 
 // SST calls setup() when the simulation is about to begin
-// It is the opportunity to send simulation events on links
+// It is the first opportunity to send simulation events on links
 void distCarWash::setup()
 {
 	// Wakeup the simulation after 'simulation_time_' minutes
-	bay_link_->send(simulation_time_, nullptr);
+	// This ensures that this component wakes up at closing time so that it can
+	// close down the car wash and end simulation
+	scheduleWakeup(simulation_time_);
 }
 
 
@@ -226,7 +228,7 @@ void distCarWash::cycleWashBays(SST::Event* ev)
 			large_bay_.time_left = queue_.front().wash_time;
 			hourly_log_.time_in_line += (time_min - queue_.front().queue_time); // Record how long the car waited
 			queue_.pop();
-			bay_link_->send(large_bay_.time_left, nullptr); // Wakeup this component when the wash is done
+			scheduleWakeup(large_bay_.time_left); // Wakeup and try again when the wash is done
 
 		// Handle a small car at the front of the queue
 		} else if ( queue_.front().car == CarType::Small ) {
@@ -235,13 +237,13 @@ void distCarWash::cycleWashBays(SST::Event* ev)
 				small_bay_.time_left = queue_.front().wash_time;
 				hourly_log_.time_in_line += (time_min - queue_.front().queue_time); // Record how long the car waited
 				queue_.pop();
-				bay_link_->send(small_bay_.time_left, nullptr); // Wakeup this component when the wash is done
+				scheduleWakeup(small_bay_.time_left);	// Wakeup and try again when the wash is done
 			} else if ( large_bay_.occupied == CarType::None ) { // Put the small car in the large bay
 				large_bay_.occupied = CarType::Small;
 				large_bay_.time_left = queue_.front().wash_time;
 				hourly_log_.time_in_line += (time_min - queue_.front().queue_time); // Record how long the car waited
 				queue_.pop();
-				bay_link_->send(large_bay_.time_left, nullptr); // Wakeup this component when the wash is done
+				scheduleWakeup(large_bay_.time_left);	// Wakeup and try again when the wash is done
 			} else { // No free bays, wait
 				break;
 			}
@@ -251,8 +253,17 @@ void distCarWash::cycleWashBays(SST::Event* ev)
 
 	// Update last wakeup time
 	last_wakeup_time_ = time_min;
-
 } // End cycleWashBays()
+
+
+// Schedule a wakeup to this component by sending
+// an empty (nullptr) event on our self link 'bay_link_'
+// The wakeup will occur after 'time' cycles and cause
+// cycleWashBays() to execute
+void distCarWash::scheduleWakeup(Cycle_t time)
+{
+	bay_link_->send(time, nullptr);
+} // End scheduleWakeup()
 
 
 // Closing time - check whether the carwash is ready to close

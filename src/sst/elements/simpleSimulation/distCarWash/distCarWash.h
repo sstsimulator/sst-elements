@@ -18,10 +18,6 @@
 #include <array>
 #include <queue>
 
-#define WASH_BAY_EMPTY 0
-#define WASH_BAY_FULL 1
-#define MINUTES_IN_A_DAY 24*60
-
 namespace SST::DistributedCarWash {
 
 class distCarWash : public SST::Component
@@ -108,6 +104,10 @@ private:
     // cycleWashBays is an event handler instead of a function called
     // by the clock
     void cycleWashBays(SST::Event* ev);
+
+    // Schedule this component to wakeup after 'time' cycles
+    // The wakeup will call cycleWashBays()
+    void scheduleWakeup(Cycle_t time);
 
     // If it's closing time, check if we can close
     void closingTime();
