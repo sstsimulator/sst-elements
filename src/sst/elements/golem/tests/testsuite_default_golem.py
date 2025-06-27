@@ -30,9 +30,10 @@ def check_for_crosssim_library():
         return False
 
 def check_for_crosssim_components():
+    binpath = sstsimulator_conf_get_value("SSTCore", "bindir", str) + "/sst-info"
     try:
         result = subprocess.run(
-            ["sst-info", "-l", "golem"],
+            [binpath, "-l", "golem"],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
