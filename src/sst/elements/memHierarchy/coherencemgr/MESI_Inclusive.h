@@ -33,8 +33,8 @@ public:
 
     SST_ELI_DOCUMENT_STATISTICS(
         /* Event hits & misses */
-        {"CacheHits",               "Acceses that hit in the cache", "accesses", 1},
-        {"CacheMisses",             "Acceses that missed in the cache", "accesses", 1},
+        {"CacheHits",               "Accesses that hit in the cache", "accesses", 1},
+        {"CacheMisses",             "Accesses that missed in the cache", "accesses", 1},
         {"GetSHit_Arrival",         "GetS was handled at arrival and was a cache hit", "count", 1},
         {"GetXHit_Arrival",         "GetX was handled at arrival and was a cache hit", "count", 1},
         {"GetSXHit_Arrival",        "GetSX was handled at arrival and was a cache hit", "count", 1},
@@ -249,250 +249,12 @@ public:
             {"hash", "Hash function for mapping addresses to cache lines", "SST::MemHierarchy::HashFunction"} )
 
 /* Class definition */
-    /** Constructor for MESIInclusive. Note that MESIInclusive handles both MESI & MSI protocols */
-    MESIInclusive(SST::ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
-        params.insert(ownerParams);
+    /** Note that MESIInclusive handles both MESI & MSI protocols */
+    MESIInclusive(SST::ComponentId_t id, Params& params, Params& ownerParams, bool prefetch);
+    MESIInclusive() = default; // Serialization
+    ~MESIInclusive() { delete cacheArray_; }
 
-        protocol_ = params.find<bool>("protocol", 1);
-        if (protocol_)
-            protocolState_ = E;
-        else
-            protocolState_ = S;
-
-        flush_state_ = FlushState::Ready;
-
-        shutdown_flush_counter_ = 0;
-
-        // Cache Array
-        uint64_t lines = params.find<uint64_t>("lines");
-        uint64_t assoc = params.find<uint64_t>("associativity");
-
-        ReplacementPolicy * rmgr = createReplacementPolicy(lines, assoc, params, false);
-        HashFunction * ht = createHashFunction(params);
-        cacheArray_ = new CacheArray<SharedCacheLine>(debug, lines, assoc, lineSize_, rmgr, ht);
-        cacheArray_->setBanked(params.find<uint64_t>("banks", 0));
-
-        /* Statistics */
-        stat_evict[I] =         registerStatistic<uint64_t>("evict_I");
-        stat_evict[IS] =        registerStatistic<uint64_t>("evict_IS");
-        stat_evict[IM] =        registerStatistic<uint64_t>("evict_IM");
-        stat_evict[S] =         registerStatistic<uint64_t>("evict_S");
-        stat_evict[SM] =        registerStatistic<uint64_t>("evict_SM");
-        stat_evict[S_Inv] =     registerStatistic<uint64_t>("evict_SInv");
-        stat_evict[M] =         registerStatistic<uint64_t>("evict_M");
-        stat_evict[M_Inv] =     registerStatistic<uint64_t>("evict_MInv");
-        stat_evict[SM_Inv] =    registerStatistic<uint64_t>("evict_SMInv");
-        stat_evict[M_InvX] =    registerStatistic<uint64_t>("evict_MInvX");
-        stat_evict[I_B] =       registerStatistic<uint64_t>("evict_IB");
-        stat_evict[S_B] =       registerStatistic<uint64_t>("evict_SB");
-        stat_evict[SB_Inv] =    registerStatistic<uint64_t>("evict_SBInv");
-        stat_eventState[(int)Command::GetS][I] =    registerStatistic<uint64_t>("stateEvent_GetS_I");
-        stat_eventState[(int)Command::GetS][S] =    registerStatistic<uint64_t>("stateEvent_GetS_S");
-        stat_eventState[(int)Command::GetS][M] =    registerStatistic<uint64_t>("stateEvent_GetS_M");
-        stat_eventState[(int)Command::GetX][I] =    registerStatistic<uint64_t>("stateEvent_GetX_I");
-        stat_eventState[(int)Command::GetX][S] =    registerStatistic<uint64_t>("stateEvent_GetX_S");
-        stat_eventState[(int)Command::GetX][M] =    registerStatistic<uint64_t>("stateEvent_GetX_M");
-        stat_eventState[(int)Command::GetSX][I] =   registerStatistic<uint64_t>("stateEvent_GetSX_I");
-        stat_eventState[(int)Command::GetSX][S] =   registerStatistic<uint64_t>("stateEvent_GetSX_S");
-        stat_eventState[(int)Command::GetSX][M] =   registerStatistic<uint64_t>("stateEvent_GetSX_M");
-        stat_eventState[(int)Command::GetSResp][IS] =       registerStatistic<uint64_t>("stateEvent_GetSResp_IS");
-        stat_eventState[(int)Command::GetXResp][IS] =       registerStatistic<uint64_t>("stateEvent_GetXResp_IS");
-        stat_eventState[(int)Command::GetXResp][IM] =       registerStatistic<uint64_t>("stateEvent_GetXResp_IM");
-        stat_eventState[(int)Command::GetXResp][SM] =       registerStatistic<uint64_t>("stateEvent_GetXResp_SM");
-        stat_eventState[(int)Command::GetXResp][SM_Inv] =   registerStatistic<uint64_t>("stateEvent_GetXResp_SMInv");
-        stat_eventState[(int)Command::PutS][S] =        registerStatistic<uint64_t>("stateEvent_PutS_S");
-        stat_eventState[(int)Command::PutS][M] =        registerStatistic<uint64_t>("stateEvent_PutS_M");
-        stat_eventState[(int)Command::PutS][M_Inv] =    registerStatistic<uint64_t>("stateEvent_PutS_MInv");
-        stat_eventState[(int)Command::PutS][S_Inv] =    registerStatistic<uint64_t>("stateEvent_PutS_SInv");
-        stat_eventState[(int)Command::PutS][SM_Inv] =   registerStatistic<uint64_t>("stateEvent_PutS_SMInv");
-        stat_eventState[(int)Command::PutS][S_B] =      registerStatistic<uint64_t>("stateEvent_PutS_SB");
-        stat_eventState[(int)Command::PutS][SB_Inv] =   registerStatistic<uint64_t>("stateEvent_PutS_SBInv");
-        stat_eventState[(int)Command::PutM][M] =        registerStatistic<uint64_t>("stateEvent_PutM_M");
-        stat_eventState[(int)Command::PutM][M_Inv] =    registerStatistic<uint64_t>("stateEvent_PutM_MInv");
-        stat_eventState[(int)Command::PutM][M_InvX] =   registerStatistic<uint64_t>("stateEvent_PutM_MInvX");
-        stat_eventState[(int)Command::PutX][M] =        registerStatistic<uint64_t>("stateEvent_PutX_M");
-        stat_eventState[(int)Command::PutX][M_Inv] =    registerStatistic<uint64_t>("stateEvent_PutX_MInv");
-        stat_eventState[(int)Command::PutX][M_InvX] =   registerStatistic<uint64_t>("stateEvent_PutX_MInvX");
-        stat_eventState[(int)Command::Inv][I] =         registerStatistic<uint64_t>("stateEvent_Inv_I");
-        stat_eventState[(int)Command::Inv][S] =         registerStatistic<uint64_t>("stateEvent_Inv_S");
-        stat_eventState[(int)Command::Inv][IS] =        registerStatistic<uint64_t>("stateEvent_Inv_IS");
-        stat_eventState[(int)Command::Inv][IM] =        registerStatistic<uint64_t>("stateEvent_Inv_IM");
-        stat_eventState[(int)Command::Inv][SM] =        registerStatistic<uint64_t>("stateEvent_Inv_SM");
-        stat_eventState[(int)Command::Inv][S_B] =       registerStatistic<uint64_t>("stateEvent_Inv_SB");
-        stat_eventState[(int)Command::Inv][I_B] =       registerStatistic<uint64_t>("stateEvent_Inv_IB");
-        stat_eventState[(int)Command::FetchInvX][I] =   registerStatistic<uint64_t>("stateEvent_FetchInvX_I");
-        stat_eventState[(int)Command::FetchInvX][M] =   registerStatistic<uint64_t>("stateEvent_FetchInvX_M");
-        stat_eventState[(int)Command::FetchInvX][IS] =  registerStatistic<uint64_t>("stateEvent_FetchInvX_IS");
-        stat_eventState[(int)Command::FetchInvX][IM] =  registerStatistic<uint64_t>("stateEvent_FetchInvX_IM");
-        stat_eventState[(int)Command::FetchInvX][M_Inv] =   registerStatistic<uint64_t>("stateEvent_FetchInvX_MInv");
-        stat_eventState[(int)Command::FetchInvX][M_InvX] =  registerStatistic<uint64_t>("stateEvent_FetchInvX_MInvX");
-        stat_eventState[(int)Command::FetchInvX][I_B] = registerStatistic<uint64_t>("stateEvent_FetchInvX_IB");
-        stat_eventState[(int)Command::FetchInvX][S_B] = registerStatistic<uint64_t>("stateEvent_FetchInvX_SB");
-        stat_eventState[(int)Command::Fetch][I] =       registerStatistic<uint64_t>("stateEvent_Fetch_I");
-        stat_eventState[(int)Command::Fetch][S] =       registerStatistic<uint64_t>("stateEvent_Fetch_S");
-        stat_eventState[(int)Command::Fetch][IS] =      registerStatistic<uint64_t>("stateEvent_Fetch_IS");
-        stat_eventState[(int)Command::Fetch][IM] =      registerStatistic<uint64_t>("stateEvent_Fetch_IM");
-        stat_eventState[(int)Command::Fetch][SM] =      registerStatistic<uint64_t>("stateEvent_Fetch_SM");
-        stat_eventState[(int)Command::Fetch][SM_Inv] =  registerStatistic<uint64_t>("stateEvent_Fetch_SMInv");
-        stat_eventState[(int)Command::Fetch][S_Inv] =   registerStatistic<uint64_t>("stateEvent_Fetch_SInv");
-        stat_eventState[(int)Command::Fetch][I_B] =     registerStatistic<uint64_t>("stateEvent_Fetch_IB");
-        stat_eventState[(int)Command::Fetch][S_B] =     registerStatistic<uint64_t>("stateEvent_Fetch_SB");
-        stat_eventState[(int)Command::FetchInv][I] =        registerStatistic<uint64_t>("stateEvent_FetchInv_I");
-        stat_eventState[(int)Command::FetchInv][S] =        registerStatistic<uint64_t>("stateEvent_FetchInv_S");
-        stat_eventState[(int)Command::FetchInv][M] =        registerStatistic<uint64_t>("stateEvent_FetchInv_M");
-        stat_eventState[(int)Command::FetchInv][IS] =       registerStatistic<uint64_t>("stateEvent_FetchInv_IS");
-        stat_eventState[(int)Command::FetchInv][IM] =       registerStatistic<uint64_t>("stateEvent_FetchInv_IM");
-        stat_eventState[(int)Command::FetchInv][SM] =       registerStatistic<uint64_t>("stateEvent_FetchInv_SM");
-        stat_eventState[(int)Command::FetchInv][SM_Inv] =   registerStatistic<uint64_t>("stateEvent_FetchInv_SMInv");
-        stat_eventState[(int)Command::FetchInv][M_Inv] =    registerStatistic<uint64_t>("stateEvent_FetchInv_MInv");
-        stat_eventState[(int)Command::FetchInv][M_InvX] =   registerStatistic<uint64_t>("stateEvent_FetchInv_MInvX");
-        stat_eventState[(int)Command::FetchInv][I_B] =      registerStatistic<uint64_t>("stateEvent_FetchInv_IB");
-        stat_eventState[(int)Command::FetchInv][S_B] =      registerStatistic<uint64_t>("stateEvent_FetchInv_SB");
-        stat_eventState[(int)Command::ForceInv][I] =        registerStatistic<uint64_t>("stateEvent_ForceInv_I");
-        stat_eventState[(int)Command::ForceInv][S] =        registerStatistic<uint64_t>("stateEvent_ForceInv_S");
-        stat_eventState[(int)Command::ForceInv][M] =        registerStatistic<uint64_t>("stateEvent_ForceInv_M");
-        stat_eventState[(int)Command::ForceInv][IS] =       registerStatistic<uint64_t>("stateEvent_ForceInv_IS");
-        stat_eventState[(int)Command::ForceInv][IM] =       registerStatistic<uint64_t>("stateEvent_ForceInv_IM");
-        stat_eventState[(int)Command::ForceInv][SM] =       registerStatistic<uint64_t>("stateEvent_ForceInv_SM");
-        stat_eventState[(int)Command::ForceInv][S_Inv] =    registerStatistic<uint64_t>("stateEvent_ForceInv_SInv");
-        stat_eventState[(int)Command::ForceInv][SM_Inv] =   registerStatistic<uint64_t>("stateEvent_ForceInv_SMInv");
-        stat_eventState[(int)Command::ForceInv][M_Inv] =    registerStatistic<uint64_t>("stateEvent_ForceInv_MInv");
-        stat_eventState[(int)Command::ForceInv][M_InvX] =   registerStatistic<uint64_t>("stateEvent_ForceInv_MInvX");
-        stat_eventState[(int)Command::ForceInv][I_B] =      registerStatistic<uint64_t>("stateEvent_ForceInv_IB");
-        stat_eventState[(int)Command::ForceInv][S_B] =      registerStatistic<uint64_t>("stateEvent_ForceInv_SB");
-        stat_eventState[(int)Command::FetchResp][M_Inv] =   registerStatistic<uint64_t>("stateEvent_FetchResp_MInv");
-        stat_eventState[(int)Command::FetchXResp][M_InvX] = registerStatistic<uint64_t>("stateEvent_FetchXResp_MInvX");
-        stat_eventState[(int)Command::AckInv][M_Inv] =      registerStatistic<uint64_t>("stateEvent_AckInv_MInv");
-        stat_eventState[(int)Command::AckInv][S_Inv] =      registerStatistic<uint64_t>("stateEvent_AckInv_SInv");
-        stat_eventState[(int)Command::AckInv][SM_Inv] =     registerStatistic<uint64_t>("stateEvent_AckInv_SMInv");
-        stat_eventState[(int)Command::AckInv][SB_Inv] =     registerStatistic<uint64_t>("stateEvent_AckInv_SBInv");
-        stat_eventState[(int)Command::FlushLine][I] =       registerStatistic<uint64_t>("stateEvent_FlushLine_I");
-        stat_eventState[(int)Command::FlushLine][S] =       registerStatistic<uint64_t>("stateEvent_FlushLine_S");
-        stat_eventState[(int)Command::FlushLine][M] =       registerStatistic<uint64_t>("stateEvent_FlushLine_M");
-        stat_eventState[(int)Command::FlushLineInv][I] =    registerStatistic<uint64_t>("stateEvent_FlushLineInv_I");
-        stat_eventState[(int)Command::FlushLineInv][S] =    registerStatistic<uint64_t>("stateEvent_FlushLineInv_S");
-        stat_eventState[(int)Command::FlushLineInv][M] =    registerStatistic<uint64_t>("stateEvent_FlushLineInv_M");
-        stat_eventState[(int)Command::FlushLineResp][I] =       registerStatistic<uint64_t>("stateEvent_FlushLineResp_I");
-        stat_eventState[(int)Command::FlushLineResp][I_B] =     registerStatistic<uint64_t>("stateEvent_FlushLineResp_IB");
-        stat_eventState[(int)Command::FlushLineResp][S_B] =     registerStatistic<uint64_t>("stateEvent_FlushLineResp_SB");
-        stat_eventSent[(int)Command::GetS]          = registerStatistic<uint64_t>("eventSent_GetS");
-        stat_eventSent[(int)Command::GetX]          = registerStatistic<uint64_t>("eventSent_GetX");
-        stat_eventSent[(int)Command::GetSX]         = registerStatistic<uint64_t>("eventSent_GetSX");
-        stat_eventSent[(int)Command::Write]         = registerStatistic<uint64_t>("eventSent_Write");
-        stat_eventSent[(int)Command::PutS]          = registerStatistic<uint64_t>("eventSent_PutS");
-        stat_eventSent[(int)Command::PutM]          = registerStatistic<uint64_t>("eventSent_PutM");
-        stat_eventSent[(int)Command::AckPut]        = registerStatistic<uint64_t>("eventSent_AckPut");
-        stat_eventSent[(int)Command::FlushLine]     = registerStatistic<uint64_t>("eventSent_FlushLine");
-        stat_eventSent[(int)Command::FlushLineInv]  = registerStatistic<uint64_t>("eventSent_FlushLineInv");
-        stat_eventSent[(int)Command::FlushAll]      = registerStatistic<uint64_t>("eventSent_FlushAll");
-        stat_eventSent[(int)Command::ForwardFlush]  = registerStatistic<uint64_t>("eventSent_ForwardFlush");
-        stat_eventSent[(int)Command::FetchResp]     = registerStatistic<uint64_t>("eventSent_FetchResp");
-        stat_eventSent[(int)Command::FetchXResp]    = registerStatistic<uint64_t>("eventSent_FetchXResp");
-        stat_eventSent[(int)Command::AckInv]        = registerStatistic<uint64_t>("eventSent_AckInv");
-        stat_eventSent[(int)Command::NACK]          = registerStatistic<uint64_t>("eventSent_NACK");
-        stat_eventSent[(int)Command::GetSResp]      = registerStatistic<uint64_t>("eventSent_GetSResp");
-        stat_eventSent[(int)Command::GetXResp]      = registerStatistic<uint64_t>("eventSent_GetXResp");
-        stat_eventSent[(int)Command::WriteResp]     = registerStatistic<uint64_t>("eventSent_WriteResp");
-        stat_eventSent[(int)Command::FlushLineResp] = registerStatistic<uint64_t>("eventSent_FlushLineResp");
-        stat_eventSent[(int)Command::FlushAllResp]  = registerStatistic<uint64_t>("eventSent_FlushAllResp");
-        stat_eventSent[(int)Command::AckFlush]      = registerStatistic<uint64_t>("eventSent_AckFlush");
-        stat_eventSent[(int)Command::UnblockFlush]  = registerStatistic<uint64_t>("eventSent_UnblockFlush");
-        stat_eventSent[(int)Command::Fetch]         = registerStatistic<uint64_t>("eventSent_Fetch");
-        stat_eventSent[(int)Command::FetchInv]      = registerStatistic<uint64_t>("eventSent_FetchInv");
-        stat_eventSent[(int)Command::ForceInv]      = registerStatistic<uint64_t>("eventSent_ForceInv");
-        stat_eventSent[(int)Command::FetchInvX]     = registerStatistic<uint64_t>("eventSent_FetchInvX");
-        stat_eventSent[(int)Command::Inv]           = registerStatistic<uint64_t>("eventSent_Inv");
-        stat_eventSent[(int)Command::Put]           = registerStatistic<uint64_t>("eventSent_Put");
-        stat_eventSent[(int)Command::Get]           = registerStatistic<uint64_t>("eventSent_Get");
-        stat_eventSent[(int)Command::AckMove]       = registerStatistic<uint64_t>("eventSent_AckMove");
-        stat_eventSent[(int)Command::CustomReq]     = registerStatistic<uint64_t>("eventSent_CustomReq");
-        stat_eventSent[(int)Command::CustomResp]    = registerStatistic<uint64_t>("eventSent_CustomResp");
-        stat_eventSent[(int)Command::CustomAck]     = registerStatistic<uint64_t>("eventSent_CustomAck");
-        stat_latencyGetS[LatType::HIT]       = registerStatistic<uint64_t>("latency_GetS_hit");
-        stat_latencyGetS[LatType::MISS]      = registerStatistic<uint64_t>("latency_GetS_miss");
-        stat_latencyGetS[LatType::INV]       = registerStatistic<uint64_t>("latency_GetS_inv");
-        stat_latencyGetX[LatType::HIT]       = registerStatistic<uint64_t>("latency_GetX_hit");
-        stat_latencyGetX[LatType::MISS]      = registerStatistic<uint64_t>("latency_GetX_miss");
-        stat_latencyGetX[LatType::INV]       = registerStatistic<uint64_t>("latency_GetX_inv");
-        stat_latencyGetX[LatType::UPGRADE]   = registerStatistic<uint64_t>("latency_GetX_upgrade");
-        stat_latencyGetSX[LatType::HIT]      = registerStatistic<uint64_t>("latency_GetSX_hit");
-        stat_latencyGetSX[LatType::MISS]     = registerStatistic<uint64_t>("latency_GetSX_miss");
-        stat_latencyGetSX[LatType::INV]      = registerStatistic<uint64_t>("latency_GetSX_inv");
-        stat_latencyGetSX[LatType::UPGRADE]  = registerStatistic<uint64_t>("latency_GetSX_upgrade");
-        stat_latencyFlushLine       = registerStatistic<uint64_t>("latency_FlushLine");
-        stat_latencyFlushLineInv    = registerStatistic<uint64_t>("latency_FlushLineInv");
-        stat_latencyFlushAll        = registerStatistic<uint64_t>("latency_FlushAll");
-        stat_hit[0][0] = registerStatistic<uint64_t>("GetSHit_Arrival");
-        stat_hit[1][0] = registerStatistic<uint64_t>("GetXHit_Arrival");
-        stat_hit[2][0] = registerStatistic<uint64_t>("GetSXHit_Arrival");
-        stat_hit[0][1] = registerStatistic<uint64_t>("GetSHit_Blocked");
-        stat_hit[1][1] = registerStatistic<uint64_t>("GetXHit_Blocked");
-        stat_hit[2][1] = registerStatistic<uint64_t>("GetSXHit_Blocked");
-        stat_miss[0][0] = registerStatistic<uint64_t>("GetSMiss_Arrival");
-        stat_miss[1][0] = registerStatistic<uint64_t>("GetXMiss_Arrival");
-        stat_miss[2][0] = registerStatistic<uint64_t>("GetSXMiss_Arrival");
-        stat_miss[0][1] = registerStatistic<uint64_t>("GetSMiss_Blocked");
-        stat_miss[1][1] = registerStatistic<uint64_t>("GetXMiss_Blocked");
-        stat_miss[2][1] = registerStatistic<uint64_t>("GetSXMiss_Blocked");
-        stat_hits = registerStatistic<uint64_t>("CacheHits");
-        stat_misses = registerStatistic<uint64_t>("CacheMisses");
-
-        /* Prefetch statistics */
-        if (prefetch) {
-            statPrefetchEvict = registerStatistic<uint64_t>("prefetch_evict");
-            statPrefetchInv = registerStatistic<uint64_t>("prefetch_inv");
-            statPrefetchHit = registerStatistic<uint64_t>("prefetch_useful");
-            statPrefetchUpgradeMiss = registerStatistic<uint64_t>("prefetch_coherence_miss");
-            statPrefetchRedundant = registerStatistic<uint64_t>("prefetch_redundant");
-        }
-
-        /* Only for caches that expect writeback acks but we don't know yet so always enabled for now (can't register statistics later) */
-        stat_eventState[(int)Command::AckPut][I] = registerStatistic<uint64_t>("stateEvent_AckPut_I");
-
-        /* MESI-specific statistics (as opposed to MSI) */
-        if (protocol_) {
-            stat_evict[E] =         registerStatistic<uint64_t>("evict_E");
-            stat_evict[E_Inv] =     registerStatistic<uint64_t>("evict_EInv");
-            stat_evict[E_InvX] =    registerStatistic<uint64_t>("evict_EInvX");
-            stat_eventState[(int)Command::GetS][E] =        registerStatistic<uint64_t>("stateEvent_GetS_E");
-            stat_eventState[(int)Command::GetX][E] =        registerStatistic<uint64_t>("stateEvent_GetX_E");
-            stat_eventState[(int)Command::GetSX][E] =       registerStatistic<uint64_t>("stateEvent_GetSX_E");
-            stat_eventState[(int)Command::PutS][E] =        registerStatistic<uint64_t>("stateEvent_PutS_E");
-            stat_eventState[(int)Command::PutS][E_Inv] =    registerStatistic<uint64_t>("stateEvent_PutS_EInv");
-            stat_eventState[(int)Command::PutE][E] =        registerStatistic<uint64_t>("stateEvent_PutE_E");
-            stat_eventState[(int)Command::PutE][M] =        registerStatistic<uint64_t>("stateEvent_PutE_M");
-            stat_eventState[(int)Command::PutE][M_Inv] =    registerStatistic<uint64_t>("stateEvent_PutE_MInv");
-            stat_eventState[(int)Command::PutE][M_InvX] =   registerStatistic<uint64_t>("stateEvent_PutE_MInvX");
-            stat_eventState[(int)Command::PutE][E_Inv] =    registerStatistic<uint64_t>("stateEvent_PutE_EInv");
-            stat_eventState[(int)Command::PutE][E_InvX] =   registerStatistic<uint64_t>("stateEvent_PutE_EInvX");
-            stat_eventState[(int)Command::PutM][E] =        registerStatistic<uint64_t>("stateEvent_PutM_E");
-            stat_eventState[(int)Command::PutM][E_Inv] =    registerStatistic<uint64_t>("stateEvent_PutM_EInv");
-            stat_eventState[(int)Command::PutM][E_InvX] =   registerStatistic<uint64_t>("stateEvent_PutM_EInvX");
-            stat_eventState[(int)Command::PutX][E] =        registerStatistic<uint64_t>("stateEvent_PutX_E");
-            stat_eventState[(int)Command::PutX][E_Inv] =    registerStatistic<uint64_t>("stateEvent_PutX_EInv");
-            stat_eventState[(int)Command::PutX][E_InvX] =   registerStatistic<uint64_t>("stateEvent_PutX_EInvX");
-            stat_eventState[(int)Command::FetchInvX][E] =   registerStatistic<uint64_t>("stateEvent_FetchInvX_E");
-            stat_eventState[(int)Command::FetchInvX][E_Inv] =   registerStatistic<uint64_t>("stateEvent_FetchInvX_EInv");
-            stat_eventState[(int)Command::FetchInvX][E_InvX] =  registerStatistic<uint64_t>("stateEvent_FetchInvX_EInvX");
-            stat_eventState[(int)Command::FetchInv][E] =        registerStatistic<uint64_t>("stateEvent_FetchInv_E");
-            stat_eventState[(int)Command::FetchInv][E_Inv] =    registerStatistic<uint64_t>("stateEvent_FetchInv_EInv");
-            stat_eventState[(int)Command::FetchInv][E_InvX] =   registerStatistic<uint64_t>("stateEvent_FetchInv_EInvX");
-            stat_eventState[(int)Command::ForceInv][E] =        registerStatistic<uint64_t>("stateEvent_ForceInv_E");
-            stat_eventState[(int)Command::ForceInv][E_Inv] =    registerStatistic<uint64_t>("stateEvent_ForceInv_EInv");
-            stat_eventState[(int)Command::ForceInv][E_InvX] =   registerStatistic<uint64_t>("stateEvent_ForceInv_EInvX");
-            stat_eventState[(int)Command::FetchResp][E_Inv] =   registerStatistic<uint64_t>("stateEvent_FetchResp_EInv");
-            stat_eventState[(int)Command::FetchXResp][E_InvX] = registerStatistic<uint64_t>("stateEvent_FetchXResp_EInvX");
-            stat_eventState[(int)Command::AckInv][E_Inv] =      registerStatistic<uint64_t>("stateEvent_AckInv_EInv");
-            stat_eventState[(int)Command::FlushLine][E] =       registerStatistic<uint64_t>("stateEvent_FlushLine_E");
-            stat_eventState[(int)Command::FlushLineInv][E] =    registerStatistic<uint64_t>("stateEvent_FlushLineInv_E");
-            stat_eventSent[(int)Command::PutE] = registerStatistic<uint64_t>("eventSent_PutE");
-        }
-    }
-    ~MESIInclusive() {
-        delete cacheArray_;
-    }
-
-    /** Event handlers **/
+    /** Event handlers - called by controller */
     virtual bool handleGetS(MemEvent * event, bool inMSHR) override;
     virtual bool handleGetX(MemEvent * event, bool inMSHR) override;
     virtual bool handleGetSX(MemEvent * event, bool inMSHR) override;
@@ -522,51 +284,24 @@ public:
     virtual bool handleNACK(MemEvent * event, bool inMSHR) override;
     virtual bool handleNULLCMD(MemEvent * event, bool inMSHR) override;
 
-    /** Cache interface **/
+    /** Bank conflict detection - used by controller */
     virtual Addr getBank(Addr addr) override { return cacheArray_->getBank(addr); }
+
+    /** Configuration **/
+    MemEventInitCoherence * getInitCoherenceEvent() override;
+    std::set<Command> getValidReceiveEvents() override;
     virtual void setSliceAware(uint64_t size, uint64_t step) override { cacheArray_->setSliceAware(size, step); }
 
-    /** Initialization **/
-    MemEventInitCoherence * getInitCoherenceEvent() override;
-
-    std::set<Command> getValidReceiveEvents() override {
-        std::set<Command> cmds = { Command::GetS,
-            Command::GetX,
-            Command::GetSX,
-            Command::Write,
-            Command::FlushLine,
-            Command::FlushLineInv,
-            Command::FlushAll,
-            Command::ForwardFlush,
-            Command::PutS,
-            Command::PutE,
-            Command::PutX,
-            Command::PutM,
-            Command::Inv,
-            Command::ForceInv,
-            Command::Fetch,
-            Command::FetchInv,
-            Command::FetchInvX,
-            Command::NULLCMD,
-            Command::GetSResp,
-            Command::GetXResp,
-            Command::WriteResp,
-            Command::FlushLineResp,
-            Command::FlushAllResp,
-            Command::FetchResp,
-            Command::FetchXResp,
-            Command::AckInv,
-            Command::AckPut,
-            Command::AckFlush,
-            Command::UnblockFlush,
-            Command::NACK };
-        return cmds;
-    }
-
+    /** Status output */
     void printStatus(Output &out) override;
+
+    /** Serialization */
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::MemHierarchy::MESIInclusive);
 
 private:
 
+    /** Cache and MSHR management */
     MemEventStatus processCacheMiss(MemEvent * event, SharedCacheLine * line, bool inMSHR);
     SharedCacheLine * allocateLine(MemEvent * event, SharedCacheLine * line);
     bool handleEviction(Addr addr, SharedCacheLine *& line);
@@ -619,7 +354,7 @@ private:
     void processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) override;
 
 /* Variables */
-    CacheArray<SharedCacheLine> * cacheArray_;
+    CacheArray<SharedCacheLine> * cacheArray_ = nullptr;
     State protocolState_;       // State to transition to on exclusive response to read/shared request
     bool protocol_;             // True for MESI, false for MSI
 
@@ -630,16 +365,16 @@ private:
     int shutdown_flush_counter_;
 
     /* Statistics */
-    Statistic<uint64_t>* stat_latencyGetS[3]; // HIT, MISS, INV
-    Statistic<uint64_t>* stat_latencyGetX[4];
-    Statistic<uint64_t>* stat_latencyGetSX[4];
-    Statistic<uint64_t>* stat_latencyFlushLine;
-    Statistic<uint64_t>* stat_latencyFlushLineInv;
-    Statistic<uint64_t>* stat_latencyFlushAll;
-    Statistic<uint64_t>* stat_hit[3][2];
-    Statistic<uint64_t>* stat_miss[3][2];
-    Statistic<uint64_t>* stat_hits;
-    Statistic<uint64_t>* stat_misses;
+    Statistic<uint64_t>* stat_latencyGetS[3] = {nullptr, nullptr, nullptr}; // HIT, MISS, INV
+    Statistic<uint64_t>* stat_latencyGetX[4] = {nullptr, nullptr, nullptr, nullptr};
+    Statistic<uint64_t>* stat_latencyGetSX[4] = {nullptr, nullptr, nullptr, nullptr};
+    Statistic<uint64_t>* stat_latencyFlushLine = nullptr;
+    Statistic<uint64_t>* stat_latencyFlushLineInv = nullptr;
+    Statistic<uint64_t>* stat_latencyFlushAll = nullptr;
+    Statistic<uint64_t>* stat_hit[3][2] = { {nullptr, nullptr}, {nullptr, nullptr}, {nullptr, nullptr} };
+    Statistic<uint64_t>* stat_miss[3][2] = { {nullptr, nullptr}, {nullptr, nullptr}, {nullptr, nullptr} };
+    Statistic<uint64_t>* stat_hits = nullptr;
+    Statistic<uint64_t>* stat_misses = nullptr;
 };
 
 

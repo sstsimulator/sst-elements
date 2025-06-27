@@ -184,7 +184,7 @@ void Bus::configureParameters(SST::Params& params) {
     std::vector<Addr> addrArr;
     params.find_array<Addr>("debug_addr", addrArr);
     for (std::vector<Addr>::iterator it = addrArr.begin(); it != addrArr.end(); it++)
-        DEBUG_ADDR.insert(*it);
+        debug_addr_filter_.insert(*it);
 
     numHighPorts_  = 0;
     numLowPorts_   = 0;
@@ -329,7 +329,7 @@ void Bus::serialize_order(SST::Core::Serialization::serializer& ser) {
     Component::serialize_order(ser);
 
     SST_SER(dbg_);
-    SST_SER(DEBUG_ADDR);
+    SST_SER(debug_addr_filter_);
     SST_SER(numHighPorts_);
     SST_SER(numLowPorts_);
     SST_SER(idleCount_);

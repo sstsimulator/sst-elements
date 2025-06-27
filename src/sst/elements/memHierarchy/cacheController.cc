@@ -678,3 +678,56 @@ void Cache::emergencyShutdown() {
     }
 }
 
+void Cache::serialize_order(SST::Core::Serialization::serializer& ser) {
+    SST::Component::serialize_order(ser);
+
+    SST_SER(listeners_);
+    SST_SER(linkUp_);
+    SST_SER(linkDown_);
+    SST_SER(prefetchSelfLink_);
+    SST_SER(timeoutSelfLink_);
+    SST_SER(mshr_);
+    SST_SER(coherenceMgr_);
+    SST_SER(init_requests_);
+    SST_SER(prefetchDelay_);
+    SST_SER(lineSize_);
+    SST_SER(allNoncacheableRequests_);
+    SST_SER(maxRequestsPerCycle_);
+    SST_SER(region_);
+    SST_SER(timeout_);
+    SST_SER(maxOutstandingPrefetch_);
+    SST_SER(banked_);
+
+    SST_SER(clockHandler_);
+    SST_SER(defaultTimeBase_);
+    SST_SER(clockIsOn_);
+    SST_SER(clockUpLink_);
+    SST_SER(clockDownLink_);
+    SST_SER(lastActiveClockCycle_);
+
+    SST_SER(timestamp_);
+    SST_SER(requestsThisCycle_);
+    SST_SER(bankStatus_);
+    SST_SER(addrsThisCycle_);
+    SST_SER(retryBuffer_);
+    SST_SER(eventBuffer_);
+    SST_SER(prefetchBuffer_);
+    SST_SER(noncacheableResponseDst_);
+
+    SST_SER(out_);
+    SST_SER(dbg_);
+    SST_SER(debug_addr_filter_);
+
+    SST_SER(statMSHROccupancy);
+    SST_SER(statBankConflicts);
+    SST_SER(statPrefetchDrop);
+    SST_SER(statPrefetchRequest);
+    SST_SER(statRecvEvents);
+    SST_SER(statRetryEvents);
+    SST_SER(statUncacheRecv);
+    SST_SER(statCacheRecv);
+
+    if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+        coherenceMgr_->registerClockEnableFunction(std::bind(&Cache::turnClockOn, this));
+    }
+}

@@ -44,6 +44,250 @@ using namespace SST::MemHierarchy;
  *---------------------------------------------------------------------------------------------------------------------*/
 
 /***********************************************************************************************************
+ * Constructor
+ ***********************************************************************************************************/
+MESIInclusive::MESIInclusive(SST::ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) :
+    CoherenceController(id, params, ownerParams, prefetch)
+{
+    params.insert(ownerParams);
+
+    protocol_ = params.find<bool>("protocol", 1);
+    if (protocol_)
+        protocolState_ = E;
+    else
+        protocolState_ = S;
+
+    flush_state_ = FlushState::Ready;
+
+    shutdown_flush_counter_ = 0;
+
+    // Cache Array
+    uint64_t lines = params.find<uint64_t>("lines");
+    uint64_t assoc = params.find<uint64_t>("associativity");
+
+    ReplacementPolicy * rmgr = createReplacementPolicy(lines, assoc, params, false);
+    HashFunction * ht = createHashFunction(params);
+    cacheArray_ = new CacheArray<SharedCacheLine>(debug_, lines, assoc, lineSize_, rmgr, ht);
+    cacheArray_->setBanked(params.find<uint64_t>("banks", 0));
+
+    /* Statistics */
+    stat_evict[I] =         registerStatistic<uint64_t>("evict_I");
+    stat_evict[IS] =        registerStatistic<uint64_t>("evict_IS");
+    stat_evict[IM] =        registerStatistic<uint64_t>("evict_IM");
+    stat_evict[S] =         registerStatistic<uint64_t>("evict_S");
+    stat_evict[SM] =        registerStatistic<uint64_t>("evict_SM");
+    stat_evict[S_Inv] =     registerStatistic<uint64_t>("evict_SInv");
+    stat_evict[M] =         registerStatistic<uint64_t>("evict_M");
+    stat_evict[M_Inv] =     registerStatistic<uint64_t>("evict_MInv");
+    stat_evict[SM_Inv] =    registerStatistic<uint64_t>("evict_SMInv");
+    stat_evict[M_InvX] =    registerStatistic<uint64_t>("evict_MInvX");
+    stat_evict[I_B] =       registerStatistic<uint64_t>("evict_IB");
+    stat_evict[S_B] =       registerStatistic<uint64_t>("evict_SB");
+    stat_evict[SB_Inv] =    registerStatistic<uint64_t>("evict_SBInv");
+    stat_eventstate_[(int)Command::GetS][I] =    registerStatistic<uint64_t>("stateEvent_GetS_I");
+    stat_eventstate_[(int)Command::GetS][S] =    registerStatistic<uint64_t>("stateEvent_GetS_S");
+    stat_eventstate_[(int)Command::GetS][M] =    registerStatistic<uint64_t>("stateEvent_GetS_M");
+    stat_eventstate_[(int)Command::GetX][I] =    registerStatistic<uint64_t>("stateEvent_GetX_I");
+    stat_eventstate_[(int)Command::GetX][S] =    registerStatistic<uint64_t>("stateEvent_GetX_S");
+    stat_eventstate_[(int)Command::GetX][M] =    registerStatistic<uint64_t>("stateEvent_GetX_M");
+    stat_eventstate_[(int)Command::GetSX][I] =   registerStatistic<uint64_t>("stateEvent_GetSX_I");
+    stat_eventstate_[(int)Command::GetSX][S] =   registerStatistic<uint64_t>("stateEvent_GetSX_S");
+    stat_eventstate_[(int)Command::GetSX][M] =   registerStatistic<uint64_t>("stateEvent_GetSX_M");
+    stat_eventstate_[(int)Command::GetSResp][IS] =       registerStatistic<uint64_t>("stateEvent_GetSResp_IS");
+    stat_eventstate_[(int)Command::GetXResp][IS] =       registerStatistic<uint64_t>("stateEvent_GetXResp_IS");
+    stat_eventstate_[(int)Command::GetXResp][IM] =       registerStatistic<uint64_t>("stateEvent_GetXResp_IM");
+    stat_eventstate_[(int)Command::GetXResp][SM] =       registerStatistic<uint64_t>("stateEvent_GetXResp_SM");
+    stat_eventstate_[(int)Command::GetXResp][SM_Inv] =   registerStatistic<uint64_t>("stateEvent_GetXResp_SMInv");
+    stat_eventstate_[(int)Command::PutS][S] =        registerStatistic<uint64_t>("stateEvent_PutS_S");
+    stat_eventstate_[(int)Command::PutS][M] =        registerStatistic<uint64_t>("stateEvent_PutS_M");
+    stat_eventstate_[(int)Command::PutS][M_Inv] =    registerStatistic<uint64_t>("stateEvent_PutS_MInv");
+    stat_eventstate_[(int)Command::PutS][S_Inv] =    registerStatistic<uint64_t>("stateEvent_PutS_SInv");
+    stat_eventstate_[(int)Command::PutS][SM_Inv] =   registerStatistic<uint64_t>("stateEvent_PutS_SMInv");
+    stat_eventstate_[(int)Command::PutS][S_B] =      registerStatistic<uint64_t>("stateEvent_PutS_SB");
+    stat_eventstate_[(int)Command::PutS][SB_Inv] =   registerStatistic<uint64_t>("stateEvent_PutS_SBInv");
+    stat_eventstate_[(int)Command::PutM][M] =        registerStatistic<uint64_t>("stateEvent_PutM_M");
+    stat_eventstate_[(int)Command::PutM][M_Inv] =    registerStatistic<uint64_t>("stateEvent_PutM_MInv");
+    stat_eventstate_[(int)Command::PutM][M_InvX] =   registerStatistic<uint64_t>("stateEvent_PutM_MInvX");
+    stat_eventstate_[(int)Command::PutX][M] =        registerStatistic<uint64_t>("stateEvent_PutX_M");
+    stat_eventstate_[(int)Command::PutX][M_Inv] =    registerStatistic<uint64_t>("stateEvent_PutX_MInv");
+    stat_eventstate_[(int)Command::PutX][M_InvX] =   registerStatistic<uint64_t>("stateEvent_PutX_MInvX");
+    stat_eventstate_[(int)Command::Inv][I] =         registerStatistic<uint64_t>("stateEvent_Inv_I");
+    stat_eventstate_[(int)Command::Inv][S] =         registerStatistic<uint64_t>("stateEvent_Inv_S");
+    stat_eventstate_[(int)Command::Inv][IS] =        registerStatistic<uint64_t>("stateEvent_Inv_IS");
+    stat_eventstate_[(int)Command::Inv][IM] =        registerStatistic<uint64_t>("stateEvent_Inv_IM");
+    stat_eventstate_[(int)Command::Inv][SM] =        registerStatistic<uint64_t>("stateEvent_Inv_SM");
+    stat_eventstate_[(int)Command::Inv][S_B] =       registerStatistic<uint64_t>("stateEvent_Inv_SB");
+    stat_eventstate_[(int)Command::Inv][I_B] =       registerStatistic<uint64_t>("stateEvent_Inv_IB");
+    stat_eventstate_[(int)Command::FetchInvX][I] =   registerStatistic<uint64_t>("stateEvent_FetchInvX_I");
+    stat_eventstate_[(int)Command::FetchInvX][M] =   registerStatistic<uint64_t>("stateEvent_FetchInvX_M");
+    stat_eventstate_[(int)Command::FetchInvX][IS] =  registerStatistic<uint64_t>("stateEvent_FetchInvX_IS");
+    stat_eventstate_[(int)Command::FetchInvX][IM] =  registerStatistic<uint64_t>("stateEvent_FetchInvX_IM");
+    stat_eventstate_[(int)Command::FetchInvX][M_Inv] =   registerStatistic<uint64_t>("stateEvent_FetchInvX_MInv");
+    stat_eventstate_[(int)Command::FetchInvX][M_InvX] =  registerStatistic<uint64_t>("stateEvent_FetchInvX_MInvX");
+    stat_eventstate_[(int)Command::FetchInvX][I_B] = registerStatistic<uint64_t>("stateEvent_FetchInvX_IB");
+    stat_eventstate_[(int)Command::FetchInvX][S_B] = registerStatistic<uint64_t>("stateEvent_FetchInvX_SB");
+    stat_eventstate_[(int)Command::Fetch][I] =       registerStatistic<uint64_t>("stateEvent_Fetch_I");
+    stat_eventstate_[(int)Command::Fetch][S] =       registerStatistic<uint64_t>("stateEvent_Fetch_S");
+    stat_eventstate_[(int)Command::Fetch][IS] =      registerStatistic<uint64_t>("stateEvent_Fetch_IS");
+    stat_eventstate_[(int)Command::Fetch][IM] =      registerStatistic<uint64_t>("stateEvent_Fetch_IM");
+    stat_eventstate_[(int)Command::Fetch][SM] =      registerStatistic<uint64_t>("stateEvent_Fetch_SM");
+    stat_eventstate_[(int)Command::Fetch][SM_Inv] =  registerStatistic<uint64_t>("stateEvent_Fetch_SMInv");
+    stat_eventstate_[(int)Command::Fetch][S_Inv] =   registerStatistic<uint64_t>("stateEvent_Fetch_SInv");
+    stat_eventstate_[(int)Command::Fetch][I_B] =     registerStatistic<uint64_t>("stateEvent_Fetch_IB");
+    stat_eventstate_[(int)Command::Fetch][S_B] =     registerStatistic<uint64_t>("stateEvent_Fetch_SB");
+    stat_eventstate_[(int)Command::FetchInv][I] =        registerStatistic<uint64_t>("stateEvent_FetchInv_I");
+    stat_eventstate_[(int)Command::FetchInv][S] =        registerStatistic<uint64_t>("stateEvent_FetchInv_S");
+    stat_eventstate_[(int)Command::FetchInv][M] =        registerStatistic<uint64_t>("stateEvent_FetchInv_M");
+    stat_eventstate_[(int)Command::FetchInv][IS] =       registerStatistic<uint64_t>("stateEvent_FetchInv_IS");
+    stat_eventstate_[(int)Command::FetchInv][IM] =       registerStatistic<uint64_t>("stateEvent_FetchInv_IM");
+    stat_eventstate_[(int)Command::FetchInv][SM] =       registerStatistic<uint64_t>("stateEvent_FetchInv_SM");
+    stat_eventstate_[(int)Command::FetchInv][SM_Inv] =   registerStatistic<uint64_t>("stateEvent_FetchInv_SMInv");
+    stat_eventstate_[(int)Command::FetchInv][M_Inv] =    registerStatistic<uint64_t>("stateEvent_FetchInv_MInv");
+    stat_eventstate_[(int)Command::FetchInv][M_InvX] =   registerStatistic<uint64_t>("stateEvent_FetchInv_MInvX");
+    stat_eventstate_[(int)Command::FetchInv][I_B] =      registerStatistic<uint64_t>("stateEvent_FetchInv_IB");
+    stat_eventstate_[(int)Command::FetchInv][S_B] =      registerStatistic<uint64_t>("stateEvent_FetchInv_SB");
+    stat_eventstate_[(int)Command::ForceInv][I] =        registerStatistic<uint64_t>("stateEvent_ForceInv_I");
+    stat_eventstate_[(int)Command::ForceInv][S] =        registerStatistic<uint64_t>("stateEvent_ForceInv_S");
+    stat_eventstate_[(int)Command::ForceInv][M] =        registerStatistic<uint64_t>("stateEvent_ForceInv_M");
+    stat_eventstate_[(int)Command::ForceInv][IS] =       registerStatistic<uint64_t>("stateEvent_ForceInv_IS");
+    stat_eventstate_[(int)Command::ForceInv][IM] =       registerStatistic<uint64_t>("stateEvent_ForceInv_IM");
+    stat_eventstate_[(int)Command::ForceInv][SM] =       registerStatistic<uint64_t>("stateEvent_ForceInv_SM");
+    stat_eventstate_[(int)Command::ForceInv][S_Inv] =    registerStatistic<uint64_t>("stateEvent_ForceInv_SInv");
+    stat_eventstate_[(int)Command::ForceInv][SM_Inv] =   registerStatistic<uint64_t>("stateEvent_ForceInv_SMInv");
+    stat_eventstate_[(int)Command::ForceInv][M_Inv] =    registerStatistic<uint64_t>("stateEvent_ForceInv_MInv");
+    stat_eventstate_[(int)Command::ForceInv][M_InvX] =   registerStatistic<uint64_t>("stateEvent_ForceInv_MInvX");
+    stat_eventstate_[(int)Command::ForceInv][I_B] =      registerStatistic<uint64_t>("stateEvent_ForceInv_IB");
+    stat_eventstate_[(int)Command::ForceInv][S_B] =      registerStatistic<uint64_t>("stateEvent_ForceInv_SB");
+    stat_eventstate_[(int)Command::FetchResp][M_Inv] =   registerStatistic<uint64_t>("stateEvent_FetchResp_MInv");
+    stat_eventstate_[(int)Command::FetchXResp][M_InvX] = registerStatistic<uint64_t>("stateEvent_FetchXResp_MInvX");
+    stat_eventstate_[(int)Command::AckInv][M_Inv] =      registerStatistic<uint64_t>("stateEvent_AckInv_MInv");
+    stat_eventstate_[(int)Command::AckInv][S_Inv] =      registerStatistic<uint64_t>("stateEvent_AckInv_SInv");
+    stat_eventstate_[(int)Command::AckInv][SM_Inv] =     registerStatistic<uint64_t>("stateEvent_AckInv_SMInv");
+    stat_eventstate_[(int)Command::AckInv][SB_Inv] =     registerStatistic<uint64_t>("stateEvent_AckInv_SBInv");
+    stat_eventstate_[(int)Command::FlushLine][I] =       registerStatistic<uint64_t>("stateEvent_FlushLine_I");
+    stat_eventstate_[(int)Command::FlushLine][S] =       registerStatistic<uint64_t>("stateEvent_FlushLine_S");
+    stat_eventstate_[(int)Command::FlushLine][M] =       registerStatistic<uint64_t>("stateEvent_FlushLine_M");
+    stat_eventstate_[(int)Command::FlushLineInv][I] =    registerStatistic<uint64_t>("stateEvent_FlushLineInv_I");
+    stat_eventstate_[(int)Command::FlushLineInv][S] =    registerStatistic<uint64_t>("stateEvent_FlushLineInv_S");
+    stat_eventstate_[(int)Command::FlushLineInv][M] =    registerStatistic<uint64_t>("stateEvent_FlushLineInv_M");
+    stat_eventstate_[(int)Command::FlushLineResp][I] =       registerStatistic<uint64_t>("stateEvent_FlushLineResp_I");
+    stat_eventstate_[(int)Command::FlushLineResp][I_B] =     registerStatistic<uint64_t>("stateEvent_FlushLineResp_IB");
+    stat_eventstate_[(int)Command::FlushLineResp][S_B] =     registerStatistic<uint64_t>("stateEvent_FlushLineResp_SB");
+    stat_eventSent[(int)Command::GetS]          = registerStatistic<uint64_t>("eventSent_GetS");
+    stat_eventSent[(int)Command::GetX]          = registerStatistic<uint64_t>("eventSent_GetX");
+    stat_eventSent[(int)Command::GetSX]         = registerStatistic<uint64_t>("eventSent_GetSX");
+    stat_eventSent[(int)Command::Write]         = registerStatistic<uint64_t>("eventSent_Write");
+    stat_eventSent[(int)Command::PutS]          = registerStatistic<uint64_t>("eventSent_PutS");
+    stat_eventSent[(int)Command::PutM]          = registerStatistic<uint64_t>("eventSent_PutM");
+    stat_eventSent[(int)Command::AckPut]        = registerStatistic<uint64_t>("eventSent_AckPut");
+    stat_eventSent[(int)Command::FlushLine]     = registerStatistic<uint64_t>("eventSent_FlushLine");
+    stat_eventSent[(int)Command::FlushLineInv]  = registerStatistic<uint64_t>("eventSent_FlushLineInv");
+    stat_eventSent[(int)Command::FlushAll]      = registerStatistic<uint64_t>("eventSent_FlushAll");
+    stat_eventSent[(int)Command::ForwardFlush]  = registerStatistic<uint64_t>("eventSent_ForwardFlush");
+    stat_eventSent[(int)Command::FetchResp]     = registerStatistic<uint64_t>("eventSent_FetchResp");
+    stat_eventSent[(int)Command::FetchXResp]    = registerStatistic<uint64_t>("eventSent_FetchXResp");
+    stat_eventSent[(int)Command::AckInv]        = registerStatistic<uint64_t>("eventSent_AckInv");
+    stat_eventSent[(int)Command::NACK]          = registerStatistic<uint64_t>("eventSent_NACK");
+    stat_eventSent[(int)Command::GetSResp]      = registerStatistic<uint64_t>("eventSent_GetSResp");
+    stat_eventSent[(int)Command::GetXResp]      = registerStatistic<uint64_t>("eventSent_GetXResp");
+    stat_eventSent[(int)Command::WriteResp]     = registerStatistic<uint64_t>("eventSent_WriteResp");
+    stat_eventSent[(int)Command::FlushLineResp] = registerStatistic<uint64_t>("eventSent_FlushLineResp");
+    stat_eventSent[(int)Command::FlushAllResp]  = registerStatistic<uint64_t>("eventSent_FlushAllResp");
+    stat_eventSent[(int)Command::AckFlush]      = registerStatistic<uint64_t>("eventSent_AckFlush");
+    stat_eventSent[(int)Command::UnblockFlush]  = registerStatistic<uint64_t>("eventSent_UnblockFlush");
+    stat_eventSent[(int)Command::Fetch]         = registerStatistic<uint64_t>("eventSent_Fetch");
+    stat_eventSent[(int)Command::FetchInv]      = registerStatistic<uint64_t>("eventSent_FetchInv");
+    stat_eventSent[(int)Command::ForceInv]      = registerStatistic<uint64_t>("eventSent_ForceInv");
+    stat_eventSent[(int)Command::FetchInvX]     = registerStatistic<uint64_t>("eventSent_FetchInvX");
+    stat_eventSent[(int)Command::Inv]           = registerStatistic<uint64_t>("eventSent_Inv");
+    stat_eventSent[(int)Command::Put]           = registerStatistic<uint64_t>("eventSent_Put");
+    stat_eventSent[(int)Command::Get]           = registerStatistic<uint64_t>("eventSent_Get");
+    stat_eventSent[(int)Command::AckMove]       = registerStatistic<uint64_t>("eventSent_AckMove");
+    stat_eventSent[(int)Command::CustomReq]     = registerStatistic<uint64_t>("eventSent_CustomReq");
+    stat_eventSent[(int)Command::CustomResp]    = registerStatistic<uint64_t>("eventSent_CustomResp");
+    stat_eventSent[(int)Command::CustomAck]     = registerStatistic<uint64_t>("eventSent_CustomAck");
+    stat_latencyGetS[LatType::HIT]       = registerStatistic<uint64_t>("latency_GetS_hit");
+    stat_latencyGetS[LatType::MISS]      = registerStatistic<uint64_t>("latency_GetS_miss");
+    stat_latencyGetS[LatType::INV]       = registerStatistic<uint64_t>("latency_GetS_inv");
+    stat_latencyGetX[LatType::HIT]       = registerStatistic<uint64_t>("latency_GetX_hit");
+    stat_latencyGetX[LatType::MISS]      = registerStatistic<uint64_t>("latency_GetX_miss");
+    stat_latencyGetX[LatType::INV]       = registerStatistic<uint64_t>("latency_GetX_inv");
+    stat_latencyGetX[LatType::UPGRADE]   = registerStatistic<uint64_t>("latency_GetX_upgrade");
+    stat_latencyGetSX[LatType::HIT]      = registerStatistic<uint64_t>("latency_GetSX_hit");
+    stat_latencyGetSX[LatType::MISS]     = registerStatistic<uint64_t>("latency_GetSX_miss");
+    stat_latencyGetSX[LatType::INV]      = registerStatistic<uint64_t>("latency_GetSX_inv");
+    stat_latencyGetSX[LatType::UPGRADE]  = registerStatistic<uint64_t>("latency_GetSX_upgrade");
+    stat_latencyFlushLine       = registerStatistic<uint64_t>("latency_FlushLine");
+    stat_latencyFlushLineInv    = registerStatistic<uint64_t>("latency_FlushLineInv");
+    stat_latencyFlushAll        = registerStatistic<uint64_t>("latency_FlushAll");
+    stat_hit[0][0] = registerStatistic<uint64_t>("GetSHit_Arrival");
+    stat_hit[1][0] = registerStatistic<uint64_t>("GetXHit_Arrival");
+    stat_hit[2][0] = registerStatistic<uint64_t>("GetSXHit_Arrival");
+    stat_hit[0][1] = registerStatistic<uint64_t>("GetSHit_Blocked");
+    stat_hit[1][1] = registerStatistic<uint64_t>("GetXHit_Blocked");
+    stat_hit[2][1] = registerStatistic<uint64_t>("GetSXHit_Blocked");
+    stat_miss[0][0] = registerStatistic<uint64_t>("GetSMiss_Arrival");
+    stat_miss[1][0] = registerStatistic<uint64_t>("GetXMiss_Arrival");
+    stat_miss[2][0] = registerStatistic<uint64_t>("GetSXMiss_Arrival");
+    stat_miss[0][1] = registerStatistic<uint64_t>("GetSMiss_Blocked");
+    stat_miss[1][1] = registerStatistic<uint64_t>("GetXMiss_Blocked");
+    stat_miss[2][1] = registerStatistic<uint64_t>("GetSXMiss_Blocked");
+    stat_hits = registerStatistic<uint64_t>("CacheHits");
+    stat_misses = registerStatistic<uint64_t>("CacheMisses");
+
+    /* Prefetch statistics */
+    if (prefetch) {
+        statPrefetchEvict = registerStatistic<uint64_t>("prefetch_evict");
+        statPrefetchInv = registerStatistic<uint64_t>("prefetch_inv");
+        statPrefetchHit = registerStatistic<uint64_t>("prefetch_useful");
+        statPrefetchUpgradeMiss = registerStatistic<uint64_t>("prefetch_coherence_miss");
+        statPrefetchRedundant = registerStatistic<uint64_t>("prefetch_redundant");
+    }
+
+    /* Only for caches that expect writeback acks but we don't know yet so always enabled for now (can't register statistics later) */
+    stat_eventstate_[(int)Command::AckPut][I] = registerStatistic<uint64_t>("stateEvent_AckPut_I");
+
+    /* MESI-specific statistics (as opposed to MSI) */
+    if (protocol_) {
+        stat_evict[E] =         registerStatistic<uint64_t>("evict_E");
+        stat_evict[E_Inv] =     registerStatistic<uint64_t>("evict_EInv");
+        stat_evict[E_InvX] =    registerStatistic<uint64_t>("evict_EInvX");
+        stat_eventstate_[(int)Command::GetS][E] =        registerStatistic<uint64_t>("stateEvent_GetS_E");
+        stat_eventstate_[(int)Command::GetX][E] =        registerStatistic<uint64_t>("stateEvent_GetX_E");
+        stat_eventstate_[(int)Command::GetSX][E] =       registerStatistic<uint64_t>("stateEvent_GetSX_E");
+        stat_eventstate_[(int)Command::PutS][E] =        registerStatistic<uint64_t>("stateEvent_PutS_E");
+        stat_eventstate_[(int)Command::PutS][E_Inv] =    registerStatistic<uint64_t>("stateEvent_PutS_EInv");
+        stat_eventstate_[(int)Command::PutE][E] =        registerStatistic<uint64_t>("stateEvent_PutE_E");
+        stat_eventstate_[(int)Command::PutE][M] =        registerStatistic<uint64_t>("stateEvent_PutE_M");
+        stat_eventstate_[(int)Command::PutE][M_Inv] =    registerStatistic<uint64_t>("stateEvent_PutE_MInv");
+        stat_eventstate_[(int)Command::PutE][M_InvX] =   registerStatistic<uint64_t>("stateEvent_PutE_MInvX");
+        stat_eventstate_[(int)Command::PutE][E_Inv] =    registerStatistic<uint64_t>("stateEvent_PutE_EInv");
+        stat_eventstate_[(int)Command::PutE][E_InvX] =   registerStatistic<uint64_t>("stateEvent_PutE_EInvX");
+        stat_eventstate_[(int)Command::PutM][E] =        registerStatistic<uint64_t>("stateEvent_PutM_E");
+        stat_eventstate_[(int)Command::PutM][E_Inv] =    registerStatistic<uint64_t>("stateEvent_PutM_EInv");
+        stat_eventstate_[(int)Command::PutM][E_InvX] =   registerStatistic<uint64_t>("stateEvent_PutM_EInvX");
+        stat_eventstate_[(int)Command::PutX][E] =        registerStatistic<uint64_t>("stateEvent_PutX_E");
+        stat_eventstate_[(int)Command::PutX][E_Inv] =    registerStatistic<uint64_t>("stateEvent_PutX_EInv");
+        stat_eventstate_[(int)Command::PutX][E_InvX] =   registerStatistic<uint64_t>("stateEvent_PutX_EInvX");
+        stat_eventstate_[(int)Command::FetchInvX][E] =   registerStatistic<uint64_t>("stateEvent_FetchInvX_E");
+        stat_eventstate_[(int)Command::FetchInvX][E_Inv] =   registerStatistic<uint64_t>("stateEvent_FetchInvX_EInv");
+        stat_eventstate_[(int)Command::FetchInvX][E_InvX] =  registerStatistic<uint64_t>("stateEvent_FetchInvX_EInvX");
+        stat_eventstate_[(int)Command::FetchInv][E] =        registerStatistic<uint64_t>("stateEvent_FetchInv_E");
+        stat_eventstate_[(int)Command::FetchInv][E_Inv] =    registerStatistic<uint64_t>("stateEvent_FetchInv_EInv");
+        stat_eventstate_[(int)Command::FetchInv][E_InvX] =   registerStatistic<uint64_t>("stateEvent_FetchInv_EInvX");
+        stat_eventstate_[(int)Command::ForceInv][E] =        registerStatistic<uint64_t>("stateEvent_ForceInv_E");
+        stat_eventstate_[(int)Command::ForceInv][E_Inv] =    registerStatistic<uint64_t>("stateEvent_ForceInv_EInv");
+        stat_eventstate_[(int)Command::ForceInv][E_InvX] =   registerStatistic<uint64_t>("stateEvent_ForceInv_EInvX");
+        stat_eventstate_[(int)Command::FetchResp][E_Inv] =   registerStatistic<uint64_t>("stateEvent_FetchResp_EInv");
+        stat_eventstate_[(int)Command::FetchXResp][E_InvX] = registerStatistic<uint64_t>("stateEvent_FetchXResp_EInvX");
+        stat_eventstate_[(int)Command::AckInv][E_Inv] =      registerStatistic<uint64_t>("stateEvent_AckInv_EInv");
+        stat_eventstate_[(int)Command::FlushLine][E] =       registerStatistic<uint64_t>("stateEvent_FlushLine_E");
+        stat_eventstate_[(int)Command::FlushLineInv][E] =    registerStatistic<uint64_t>("stateEvent_FlushLineInv_E");
+        stat_eventSent[(int)Command::PutE] = registerStatistic<uint64_t>("eventSent_PutE");
+    }
+}
+
+/***********************************************************************************************************
  * Event handlers
  ***********************************************************************************************************/
 
@@ -59,7 +303,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
     Command respcmd;
 
     if (mem_h_is_debug_addr(addr))
-        eventDI.prefill(event->getID(), Command::GetS, (localPrefetch ? "-pref" : ""), addr, state);
+        event_debuginfo_.prefill(event->getID(), Command::GetS, (localPrefetch ? "-pref" : ""), addr, state);
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
@@ -71,7 +315,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
             if (status == MemEventStatus::OK) { // Both MSHR insert and cache line allocation succeeded and there's no MSHR conflict
                 line = cacheArray_->lookup(addr, false);
                 if (!mshr_->getProfiled(addr)) {
-                    stat_eventState[(int)Command::GetS][I]->addData(1);
+                    stat_eventstate_[(int)Command::GetS][I]->addData(1);
                     stat_miss[0][inMSHR]->addData(1);
                     stat_misses->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
@@ -84,12 +328,12 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
                 mshr_->setInProgress(addr);
 
                 if (mem_h_is_debug_event(event))
-                    eventDI.reason = "miss";
+                    event_debuginfo_.reason = "miss";
             }
             break;
         case S:
             if (!inMSHR || !mshr_->getProfiled(addr)) {
-                stat_eventState[(int)Command::GetS][S]->addData(1);
+                stat_eventstate_[(int)Command::GetS][S]->addData(1);
                 stat_hit[0][inMSHR]->addData(1);
                 stat_hits->addData(1);
                 notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
@@ -102,11 +346,11 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
             }
 
             if (mem_h_is_debug_event(event))
-                eventDI.reason = "hit";
+                event_debuginfo_.reason = "hit";
 
             if (localPrefetch) {
                 if (mem_h_is_debug_event(event))
-                    eventDI.action = "Done";
+                    event_debuginfo_.action = "Done";
                 cleanUpAfterRequest(event, inMSHR);
                 break;
             }
@@ -122,12 +366,12 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
         case E:
         case M:
             if (mem_h_is_debug_event(event))
-                eventDI.reason = "hit";
+                event_debuginfo_.reason = "hit";
 
             // Local prefetch -> drop
             if (localPrefetch) {
                 if (!inMSHR || !mshr_->getProfiled(addr)) {
-                    stat_eventState[(int)Command::GetS][state]->addData(1);
+                    stat_eventstate_[(int)Command::GetS][state]->addData(1);
                     stat_hit[0][inMSHR]->addData(1);
                     stat_hits->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::PREFETCH, NotifyResultType::HIT);
@@ -135,7 +379,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
                     recordPrefetchLatency(event->getID(), LatType::HIT);
                 }
                 if (mem_h_is_debug_event(event))
-                    eventDI.action = "Done";
+                    event_debuginfo_.action = "Done";
                 cleanUpAfterRequest(event, inMSHR);
                 break;
             }
@@ -148,7 +392,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
 
                 if (status == MemEventStatus::OK) {
                     if (!mshr_->getProfiled(addr)) {
-                        stat_eventState[(int)Command::GetS][state]->addData(1);
+                        stat_eventstate_[(int)Command::GetS][state]->addData(1);
                         stat_hit[0][inMSHR]->addData(1);
                         stat_hits->addData(1);
                         notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
@@ -165,7 +409,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
                 break;
             } else {
                 if (!inMSHR || !mshr_->getProfiled(addr)) {
-                    stat_eventState[(int)Command::GetS][state]->addData(1);
+                    stat_eventstate_[(int)Command::GetS][state]->addData(1);
                     stat_hit[0][inMSHR]->addData(1);
                     stat_hits->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
@@ -193,8 +437,8 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
     }
 
     if (mem_h_is_debug_addr(addr) && line) {
-        eventDI.newst = line->getState();
-        eventDI.verboseline = line->getString();
+        event_debuginfo_.newst = line->getState();
+        event_debuginfo_.verboseline = line->getString();
     }
 
     if (status == MemEventStatus::Reject) {
@@ -217,7 +461,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
     uint64_t sendTime = 0;
 
     if (mem_h_is_debug_event(event))
-        eventDI.prefill(event->getID(), event->getCmd(), "", addr, state);
+        event_debuginfo_.prefill(event->getID(), event->getCmd(), "", addr, state);
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
@@ -230,7 +474,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
                 if (!mshr_->getProfiled(addr)) {
                     recordMiss(event->getID());
                     recordLatencyType(event->getID(), LatType::MISS);
-                    stat_eventState[(int)event->getCmd()][I]->addData(1);
+                    stat_eventstate_[(int)event->getCmd()][I]->addData(1);
                     stat_miss[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
                     stat_misses->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
@@ -241,7 +485,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
                 line->setTimestamp(sendTime);
                 mshr_->setInProgress(addr); // Keeps us from retrying too early due to certain race conditions between events
                 if (mem_h_is_debug_event(event))
-                    eventDI.reason = "miss";
+                    event_debuginfo_.reason = "miss";
             }
             break;
         case S:
@@ -249,7 +493,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
                 status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
                 if (status == MemEventStatus::OK) {
                     if (!mshr_->getProfiled(addr)) {
-                        stat_eventState[(int)event->getCmd()][state]->addData(1);
+                        stat_eventstate_[(int)event->getCmd()][state]->addData(1);
                         stat_miss[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
                         stat_misses->addData(1);
                         notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
@@ -266,7 +510,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
                         line->setState(SM);
                         line->setTimestamp(sendTime);
                         if (mem_h_is_debug_event(event))
-                            eventDI.reason = "miss";
+                            event_debuginfo_.reason = "miss";
                     }
                     mshr_->setInProgress(addr);
                 }
@@ -276,7 +520,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
         case M:
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
-                stat_eventState[(int)event->getCmd()][state]->addData(1);
+                stat_eventstate_[(int)event->getCmd()][state]->addData(1);
                 stat_hit[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
                 stat_hits->addData(1);
                 if (inMSHR)
@@ -329,7 +573,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
             line->setTimestamp(sendTime);
 
             if (mem_h_is_debug_event(event))
-                eventDI.reason = "hit";
+                event_debuginfo_.reason = "hit";
 
             if (!inMSHR || !mshr_->getProfiled(addr))
                 recordLatencyType(event->getID(), LatType::HIT);
@@ -342,8 +586,8 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
     }
 
     if (mem_h_is_debug_addr(addr) && line) {
-        eventDI.newst = line->getState();
-        eventDI.verboseline = line->getString();
+        event_debuginfo_.newst = line->getState();
+        event_debuginfo_.verboseline = line->getString();
     }
 
     if (status == MemEventStatus::Reject)
@@ -364,7 +608,7 @@ bool MESIInclusive::handleFlushLine(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (mem_h_is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::FlushLine, "", addr, state);
+        event_debuginfo_.prefill(event->getID(), Command::FlushLine, "", addr, state);
 
     // Always need an MSHR for a flush
     MemEventStatus status = MemEventStatus::OK;
@@ -398,7 +642,7 @@ bool MESIInclusive::handleFlushLine(MemEvent * event, bool inMSHR) {
         case M:
             if (status == MemEventStatus::OK && line->hasOwner()) {
                 if (!mshr_->getProfiled(addr)) {
-                    stat_eventState[(int)Command::FlushLine][state]->addData(1);
+                    stat_eventstate_[(int)Command::FlushLine][state]->addData(1);
                     mshr_->setProfiled(addr);
                 }
                 downgradeOwner(event, line, inMSHR);
@@ -437,7 +681,7 @@ bool MESIInclusive::handleFlushLine(MemEvent * event, bool inMSHR) {
 
     if (status == MemEventStatus::OK) {
         if (!mshr_->getProfiled(addr)) {
-            stat_eventState[(int)Command::FlushLine][state]->addData(1);
+            stat_eventstate_[(int)Command::FlushLine][state]->addData(1);
             mshr_->setProfiled(addr);
         }
         bool downgrade = (state == E || state == M);
@@ -452,8 +696,8 @@ bool MESIInclusive::handleFlushLine(MemEvent * event, bool inMSHR) {
 
     //printLine(addr);
     if (mem_h_is_debug_addr(addr) && line) {
-        eventDI.newst = line->getState();
-        eventDI.verboseline = line->getString();
+        event_debuginfo_.newst = line->getState();
+        event_debuginfo_.verboseline = line->getString();
     }
 
     if (status == MemEventStatus::Reject)
@@ -470,7 +714,7 @@ bool MESIInclusive::handleFlushLineInv(MemEvent * event, bool inMSHR) {
     MemEventStatus status = MemEventStatus::OK;
 
     if (mem_h_is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::FlushLineInv, "", addr, state);
+        event_debuginfo_.prefill(event->getID(), Command::FlushLineInv, "", addr, state);
     //printLine(addr);
 
     // Always need an MSHR entry
@@ -564,7 +808,7 @@ bool MESIInclusive::handleFlushLineInv(MemEvent * event, bool inMSHR) {
 
     if (status == MemEventStatus::OK) {
         if (!mshr_->getProfiled(addr)) {
-            stat_eventState[(int)Command::FlushLineInv][state]->addData(1);
+            stat_eventstate_[(int)Command::FlushLineInv][state]->addData(1);
             mshr_->setProfiled(addr);
         }
         mshr_->setInProgress(addr);
@@ -578,8 +822,8 @@ bool MESIInclusive::handleFlushLineInv(MemEvent * event, bool inMSHR) {
 
     //printLine(addr);
     if (mem_h_is_debug_addr(addr) && line) {
-        eventDI.newst = line->getState();
-        eventDI.verboseline = line->getString();
+        event_debuginfo_.newst = line->getState();
+        event_debuginfo_.verboseline = line->getString();
     }
 
     if (status == MemEventStatus::Reject)
@@ -599,7 +843,7 @@ bool MESIInclusive::handleFlushLineInv(MemEvent * event, bool inMSHR) {
  *  -> Shared cache -> forward flush
  */
 bool MESIInclusive::handleFlushAll(MemEvent * event, bool inMSHR) {
-    eventDI.prefill(event->getID(), Command::FlushAll, "", 0, State::NP);
+    event_debuginfo_.prefill(event->getID(), Command::FlushAll, "", 0, State::NP);
 
     if (!flush_manager_) {
         if (!inMSHR) {
@@ -608,7 +852,7 @@ bool MESIInclusive::handleFlushAll(MemEvent * event, bool inMSHR) {
                 sendNACK(event);
                 return true;
             } else if (status == MemEventStatus::Stall) {
-                eventDI.action = "Stall";
+                event_debuginfo_.action = "Stall";
                 // Don't forward if there's already a waiting FlushAll so we don't risk re-ordering
                 return true;
             }
@@ -617,7 +861,7 @@ bool MESIInclusive::handleFlushAll(MemEvent * event, bool inMSHR) {
         MemEvent* flush = new MemEvent(*event); // Copy event for forwarding
         flush->setDst(flush_dest_);
         forwardByDestination(flush, timestamp_ + mshrLatency_);
-        eventDI.action = "Forward";
+        event_debuginfo_.action = "Forward";
         return true;
     }
 
@@ -627,8 +871,8 @@ bool MESIInclusive::handleFlushAll(MemEvent * event, bool inMSHR) {
             sendNACK(event);
             return true;
         } else if (status == MemEventStatus::Stall) { /* Stall for current flush */
-            eventDI.action = "Stall";
-            eventDI.reason = "Flush in progress";
+            event_debuginfo_.action = "Stall";
+            event_debuginfo_.reason = "Flush in progress";
             return true;
         }
     }
@@ -643,7 +887,7 @@ bool MESIInclusive::handleFlushAll(MemEvent * event, bool inMSHR) {
             int count = broadcastMemEventToSources(Command::ForwardFlush, event, timestamp_ + 1);
             mshr_->incrementFlushCount(count);
             flush_state_ = FlushState::Forward;
-            eventDI.action = "Begin";
+            event_debuginfo_.action = "Begin";
             break;
         }
         case FlushState::Forward:
@@ -659,13 +903,13 @@ bool MESIInclusive::handleFlushAll(MemEvent * event, bool inMSHR) {
                         retryBuffer_.push_back(ev);
                         count++;
                     } else {
-                        debug->fatal(CALL_INFO, -1, "%s, Error: Attempting to flush a cache line that is in a transient state '%s'. Addr = 0x%" PRIx64 ". Event: %s. Time: %" PRIu64 "ns\n",
+                        debug_->fatal(CALL_INFO, -1, "%s, Error: Attempting to flush a cache line that is in a transient state '%s'. Addr = 0x%" PRIx64 ". Event: %s. Time: %" PRIu64 "ns\n",
                             cachename_.c_str(), StateString[it->getState()], it->getAddr(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
                     }
             }
             if (count > 0) {
                 mshr_->incrementFlushCount(count);
-                eventDI.action = "Flush";
+                event_debuginfo_.action = "Flush";
                 flush_state_ = FlushState::Invalidate;
                 break;
             } /* else fall-thru */
@@ -696,7 +940,7 @@ bool MESIInclusive::handleForwardFlush(MemEvent * event, bool inMSHR) {
      * If FlushHelper - propagate Flush upwards and notify peers when done
      * If not FlushHelper - wait to be contacted by FlushHelper before flushing locally
      */
-    eventDI.prefill(event->getID(), Command::ForwardFlush, "", 0, State::NP);
+    event_debuginfo_.prefill(event->getID(), Command::ForwardFlush, "", 0, State::NP);
 
     if (!inMSHR) {
         MemEventStatus status = mshr_->insertFlush(event, true);
@@ -713,7 +957,7 @@ bool MESIInclusive::handleForwardFlush(MemEvent * event, bool inMSHR) {
                 int count = broadcastMemEventToSources(Command::ForwardFlush, event, timestamp_ + 1);
                 flush_state_ = FlushState::Forward;
                 mshr_->incrementFlushCount(count);
-                eventDI.action = "Begin";
+                event_debuginfo_.action = "Begin";
                 break;
             }
             case FlushState::Drain: // Unused state in this coherence protocol, fall-thru with Forward
@@ -731,12 +975,12 @@ bool MESIInclusive::handleForwardFlush(MemEvent * event, bool inMSHR) {
                         evictionNeeded = true;
                         mshr_->incrementFlushCount();
                     } else {
-                        debug->fatal(CALL_INFO, -1, "%s, Error: Attempting to flush a cache line that is in a transient state '%s'. Addr = 0x%" PRIx64 ". Event: %s. Time: %" PRIu64 "ns\n",
+                        debug_->fatal(CALL_INFO, -1, "%s, Error: Attempting to flush a cache line that is in a transient state '%s'. Addr = 0x%" PRIx64 ". Event: %s. Time: %" PRIu64 "ns\n",
                             cachename_.c_str(), StateString[it->getState()], it->getAddr(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
                     }
                 }
                 if (evictionNeeded) {
-                    eventDI.action = "Flush";
+                    event_debuginfo_.action = "Flush";
                     flush_state_ = FlushState::Invalidate;
                     break;
                 } /* else fall-thru */
@@ -762,12 +1006,12 @@ bool MESIInclusive::handleForwardFlush(MemEvent * event, bool inMSHR) {
                 evictionNeeded = true;
                 mshr_->incrementFlushCount();
             } else {
-                debug->fatal(CALL_INFO, -1, "%s, Error: Attempting to flush a cache line that is in a transient state '%s'. Addr = 0x%" PRIx64 ". Event: %s. Time: %" PRIu64 "ns\n",
+                debug_->fatal(CALL_INFO, -1, "%s, Error: Attempting to flush a cache line that is in a transient state '%s'. Addr = 0x%" PRIx64 ". Event: %s. Time: %" PRIu64 "ns\n",
                     cachename_.c_str(), StateString[it->getState()], it->getAddr(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
             }
         }
         if (evictionNeeded) {
-            eventDI.action = "Flush";
+            event_debuginfo_.action = "Flush";
             flush_state_ = FlushState::Invalidate;
         } else {
             sendResponseUp(event, nullptr, true, timestamp_);
@@ -802,15 +1046,15 @@ bool MESIInclusive::handlePutS(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (mem_h_is_debug_event(event)) {
-        eventDI.prefill(event->getID(), Command::PutS, "", addr, state);
-        eventDI.action = "Done";
+        event_debuginfo_.prefill(event->getID(), Command::PutS, "", addr, state);
+        event_debuginfo_.action = "Done";
     }
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
 
     state = doEviction(event, line, state);
-    stat_eventState[(int)Command::PutS][state]->addData(1);
+    stat_eventstate_[(int)Command::PutS][state]->addData(1);
 
     if (responses.find(addr) != responses.end() && responses.find(addr)->second.find(event->getSrc()) != responses.find(addr)->second.end()) {
         responses.find(addr)->second.erase(event->getSrc());
@@ -863,14 +1107,14 @@ bool MESIInclusive::handlePutS(MemEvent * event, bool inMSHR) {
         case S_B:
             break;
         default:
-            debug->fatal(CALL_INFO,-1,"%s, Error: Received PutS in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+            debug_->fatal(CALL_INFO,-1,"%s, Error: Received PutS in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     //printLine(addr);
     if (mem_h_is_debug_addr(addr) && line) {
-        eventDI.newst = line->getState();
-        eventDI.verboseline = line->getString();
+        event_debuginfo_.newst = line->getState();
+        event_debuginfo_.verboseline = line->getString();
     }
 
     delete event;
@@ -885,14 +1129,14 @@ bool MESIInclusive::handlePutE(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (mem_h_is_debug_event(event)) {
-        eventDI.prefill(event->getID(), Command::PutE, "", addr, state);
-        eventDI.action = "Done";
+        event_debuginfo_.prefill(event->getID(), Command::PutE, "", addr, state);
+        event_debuginfo_.action = "Done";
     }
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
 
-    stat_eventState[(int)Command::PutE][state]->addData(1);
+    stat_eventstate_[(int)Command::PutE][state]->addData(1);
 
     state = doEviction(event, line, state);
     if (responses.find(addr) != responses.end() && responses.find(addr)->second.find(event->getSrc()) != responses.find(addr)->second.end()) {
@@ -927,14 +1171,14 @@ bool MESIInclusive::handlePutE(MemEvent * event, bool inMSHR) {
             }
             break;
         default:
-            debug->fatal(CALL_INFO,-1,"%s, Error: Received PutE in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+            debug_->fatal(CALL_INFO,-1,"%s, Error: Received PutE in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     //printLine(addr);
     if (mem_h_is_debug_addr(addr) && line) {
-        eventDI.newst = line->getState();
-        eventDI.verboseline = line->getString();
+        event_debuginfo_.newst = line->getState();
+        event_debuginfo_.verboseline = line->getString();
     }
 
     delete event;
@@ -949,14 +1193,14 @@ bool MESIInclusive::handlePutM(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (mem_h_is_debug_event(event)) {
-        eventDI.prefill(event->getID(), Command::PutM, "", addr, state);
-        eventDI.action = "Done";
+        event_debuginfo_.prefill(event->getID(), Command::PutM, "", addr, state);
+        event_debuginfo_.action = "Done";
     }
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
 
-    stat_eventState[(int)Command::PutM][state]->addData(1);
+    stat_eventstate_[(int)Command::PutM][state]->addData(1);
 
     state = doEviction(event, line, state);
     if (responses.find(addr) != responses.end() && responses.find(addr)->second.find(event->getSrc()) != responses.find(addr)->second.end()) {
@@ -990,13 +1234,13 @@ bool MESIInclusive::handlePutM(MemEvent * event, bool inMSHR) {
             }
             break;
         default:
-            debug->fatal(CALL_INFO,-1,"%s, Error: Received PutM in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+            debug_->fatal(CALL_INFO,-1,"%s, Error: Received PutM in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     if (mem_h_is_debug_addr(addr) && line) {
-        eventDI.newst = line->getState();
-        eventDI.verboseline = line->getString();
+        event_debuginfo_.newst = line->getState();
+        event_debuginfo_.verboseline = line->getString();
     }
 
     delete event;
@@ -1011,12 +1255,12 @@ bool MESIInclusive::handlePutX(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (mem_h_is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::PutX, "", addr, state);
+        event_debuginfo_.prefill(event->getID(), Command::PutX, "", addr, state);
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
 
-    stat_eventState[(int)Command::PutX][state]->addData(1);
+    stat_eventstate_[(int)Command::PutX][state]->addData(1);
 
     state = doEviction(event, line, state);
     line->addSharer(event->getSrc());
@@ -1053,14 +1297,14 @@ bool MESIInclusive::handlePutX(MemEvent * event, bool inMSHR) {
             }
             break;
         default:
-            debug->fatal(CALL_INFO,-1,"%s, Error: Received PutX in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+            debug_->fatal(CALL_INFO,-1,"%s, Error: Received PutX in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     //printLine(addr);
     if (mem_h_is_debug_addr(addr) && line) {
-        eventDI.newst = line->getState();
-        eventDI.verboseline = line->getString();
+        event_debuginfo_.newst = line->getState();
+        event_debuginfo_.verboseline = line->getString();
     }
 
     delete event;
@@ -1074,12 +1318,12 @@ bool MESIInclusive::handleFetch(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (mem_h_is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::Fetch, "", addr, state);
+        event_debuginfo_.prefill(event->getID(), Command::Fetch, "", addr, state);
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
 
-    stat_eventState[(int)Command::Fetch][state]->addData(1);
+    stat_eventstate_[(int)Command::Fetch][state]->addData(1);
 
     switch (state) {
         case S:
@@ -1095,13 +1339,13 @@ bool MESIInclusive::handleFetch(MemEvent * event, bool inMSHR) {
         case I_B:
             break;
         default:
-            debug->fatal(CALL_INFO,-1,"%s, Error: Received Fetch in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+            debug_->fatal(CALL_INFO,-1,"%s, Error: Received Fetch in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     if (mem_h_is_debug_addr(addr) && line) {
-        eventDI.newst = line->getState();
-        eventDI.verboseline = line->getString();
+        event_debuginfo_.newst = line->getState();
+        event_debuginfo_.verboseline = line->getString();
     }
 
     cleanUpEvent(event, inMSHR); // No replay since state doesn't change
@@ -1116,7 +1360,7 @@ bool MESIInclusive::handleInv(MemEvent * event, bool inMSHR) {
     MemEventStatus status = MemEventStatus::OK;
 
     if (mem_h_is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::Inv, "", addr, state);
+        event_debuginfo_.prefill(event->getID(), Command::Inv, "", addr, state);
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
@@ -1149,18 +1393,18 @@ bool MESIInclusive::handleInv(MemEvent * event, bool inMSHR) {
         case IS:
         case IM:
             if (mem_h_is_debug_event(event))
-                eventDI.action = "Drop";
+                event_debuginfo_.action = "Drop";
             cleanUpEvent(event, inMSHR); // No replay since state doesn't change
-            stat_eventState[(int)Command::Inv][state]->addData(1);
+            stat_eventstate_[(int)Command::Inv][state]->addData(1);
             break;
         default:
-            debug->fatal(CALL_INFO,-1,"%s, Error: Received Inv in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+            debug_->fatal(CALL_INFO,-1,"%s, Error: Received Inv in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     if (handle) {
         if (!inMSHR || mshr_->getProfiled(addr)) {
-            stat_eventState[(int)Command::Inv][state]->addData(1);
+            stat_eventstate_[(int)Command::Inv][state]->addData(1);
             recordPrefetchResult(line, statPrefetchInv);
             if (inMSHR) mshr_->setProfiled(addr);
         }
@@ -1179,8 +1423,8 @@ bool MESIInclusive::handleInv(MemEvent * event, bool inMSHR) {
     }
 
     if (mem_h_is_debug_addr(addr) && line) {
-        eventDI.newst = line->getState();
-        eventDI.verboseline = line->getString();
+        event_debuginfo_.newst = line->getState();
+        event_debuginfo_.verboseline = line->getString();
     }
 
     if (status == MemEventStatus::Reject)
@@ -1197,7 +1441,7 @@ bool MESIInclusive::handleForceInv(MemEvent * event, bool inMSHR) {
     MemEventStatus status = MemEventStatus::OK;
 
     if (mem_h_is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::ForceInv, "", addr, state);
+        event_debuginfo_.prefill(event->getID(), Command::ForceInv, "", addr, state);
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
@@ -1258,7 +1502,7 @@ bool MESIInclusive::handleForceInv(MemEvent * event, bool inMSHR) {
         case IS:
         case IM:
         case I:
-            stat_eventState[(int)Command::ForceInv][state]->addData(1);
+            stat_eventstate_[(int)Command::ForceInv][state]->addData(1);
             cleanUpEvent(event, inMSHR); // No replay since state doesn't change
             break;
         case SM_Inv: { // ForceInv if there's an un-inv'd sharer, else in mshr & stall
@@ -1274,12 +1518,12 @@ bool MESIInclusive::handleForceInv(MemEvent * event, bool inMSHR) {
             break;
             }
         default:
-            debug->fatal(CALL_INFO,-1,"%s, Error: Received ForceInv in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+            debug_->fatal(CALL_INFO,-1,"%s, Error: Received ForceInv in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     if ((handle || profile) && (!inMSHR || !mshr_->getProfiled(addr))) {
-        stat_eventState[(int)Command::ForceInv][state]->addData(1);
+        stat_eventstate_[(int)Command::ForceInv][state]->addData(1);
         recordPrefetchResult(line, statPrefetchInv);
         if (inMSHR || profile) mshr_->setProfiled(addr);
     }
@@ -1302,8 +1546,8 @@ bool MESIInclusive::handleForceInv(MemEvent * event, bool inMSHR) {
     }
 
     if (mem_h_is_debug_addr(addr) && line) {
-        eventDI.newst = line->getState();
-        eventDI.verboseline = line->getString();
+        event_debuginfo_.newst = line->getState();
+        event_debuginfo_.verboseline = line->getString();
     }
 
     if (status == MemEventStatus::Reject)
@@ -1320,7 +1564,7 @@ bool MESIInclusive::handleFetchInv(MemEvent * event, bool inMSHR) {
     MemEventStatus status = MemEventStatus::OK;
 
     if (mem_h_is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::FetchInv, "", addr, state);
+        event_debuginfo_.prefill(event->getID(), Command::FetchInv, "", addr, state);
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
@@ -1335,9 +1579,9 @@ bool MESIInclusive::handleFetchInv(MemEvent * event, bool inMSHR) {
         case IS:
         case IM:
             if (mem_h_is_debug_event(event))
-                eventDI.action = "Drop";
+                event_debuginfo_.action = "Drop";
             cleanUpEvent(event, inMSHR); // No replay since state doesn't change
-            stat_eventState[(int)Command::FetchInv][state]->addData(1);
+            stat_eventstate_[(int)Command::FetchInv][state]->addData(1);
             break;
         case S:
             state1 = S_Inv;
@@ -1396,12 +1640,12 @@ bool MESIInclusive::handleFetchInv(MemEvent * event, bool inMSHR) {
             }
             break;
         default:
-            debug->fatal(CALL_INFO,-1,"%s, Error: Received FetchInv in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+            debug_->fatal(CALL_INFO,-1,"%s, Error: Received FetchInv in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     if ((handle || profile) && (!inMSHR || !mshr_->getProfiled(addr))) {
-        stat_eventState[(int)Command::FetchInv][state]->addData(1);
+        stat_eventstate_[(int)Command::FetchInv][state]->addData(1);
         recordPrefetchResult(line, statPrefetchInv);
         if (inMSHR || profile) mshr_->setProfiled(addr);
     }
@@ -1423,8 +1667,8 @@ bool MESIInclusive::handleFetchInv(MemEvent * event, bool inMSHR) {
     }
 
     if (mem_h_is_debug_addr(addr) && line) {
-        eventDI.newst = line->getState();
-        eventDI.verboseline = line->getString();
+        event_debuginfo_.newst = line->getState();
+        event_debuginfo_.verboseline = line->getString();
     }
 
     if (status == MemEventStatus::Reject)
@@ -1441,7 +1685,7 @@ bool MESIInclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
     MemEventStatus status = MemEventStatus::OK;
 
     if (mem_h_is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::FetchInvX, "", addr, state);
+        event_debuginfo_.prefill(event->getID(), Command::FetchInvX, "", addr, state);
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
@@ -1457,14 +1701,14 @@ bool MESIInclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
                     state == E ? line->setState(E_InvX) : line->setState(M_InvX);
                     status = MemEventStatus::Stall;
                     mshr_->setProfiled(addr);
-                    stat_eventState[(int)Command::FetchInvX][state]->addData(1);
+                    stat_eventstate_[(int)Command::FetchInvX][state]->addData(1);
                 }
                 break;
             }
             sendResponseDown(event, line, true, true);
             line->setState(S);
             cleanUpAfterRequest(event, inMSHR);
-            stat_eventState[(int)Command::FetchInvX][state]->addData(1);
+            stat_eventstate_[(int)Command::FetchInvX][state]->addData(1);
             break;
         case M_Inv:
         case E_Inv:
@@ -1476,7 +1720,7 @@ bool MESIInclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
                 status = inMSHR ? MemEventStatus::Stall : allocateMSHR(event, true, 1);
             } else if (line->hasOwner()) {
                 status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
-                stat_eventState[(int)Command::FetchInvX][state]->addData(1);
+                stat_eventstate_[(int)Command::FetchInvX][state]->addData(1);
                 mshr_->setProfiled(addr);
                 if (status != MemEventStatus::Reject)
                     status = MemEventStatus::Stall;
@@ -1484,7 +1728,7 @@ bool MESIInclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
                 line->setState(S_Inv);
                 sendResponseDown(event, line, true, true);
                 cleanUpAfterRequest(event, inMSHR);
-                stat_eventState[(int)Command::FetchInvX][state]->addData(1);
+                stat_eventstate_[(int)Command::FetchInvX][state]->addData(1);
             }
             break;
         case S_B:
@@ -1493,18 +1737,18 @@ bool MESIInclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
         case IM:
         case I:
             if (mem_h_is_debug_event(event))
-                eventDI.action = "Drop";
+                event_debuginfo_.action = "Drop";
             cleanUpEvent(event, inMSHR); // No replay since state doesn't change
-            stat_eventState[(int)Command::FetchInvX][state]->addData(1);
+            stat_eventstate_[(int)Command::FetchInvX][state]->addData(1);
             break;
         default:
-            debug->fatal(CALL_INFO,-1,"%s, Error: Received FetchInvX in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+            debug_->fatal(CALL_INFO,-1,"%s, Error: Received FetchInvX in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     if (mem_h_is_debug_addr(addr) && line) {
-        eventDI.newst = line->getState();
-        eventDI.verboseline = line->getString();
+        event_debuginfo_.newst = line->getState();
+        event_debuginfo_.verboseline = line->getString();
     }
 
     if (status == MemEventStatus::Reject)
@@ -1519,20 +1763,20 @@ bool MESIInclusive::handleGetSResp(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (mem_h_is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::GetSResp, "", addr, state);
+        event_debuginfo_.prefill(event->getID(), Command::GetSResp, "", addr, state);
 
-    stat_eventState[(int)Command::GetSResp][state]->addData(1);
+    stat_eventstate_[(int)Command::GetSResp][state]->addData(1);
 
     // Find matching request in MSHR
     MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(event->getBaseAddr()));
     //if (mem_h_is_debug_addr(addr))
-        //debug->debug(_L5_, "    Request: %s\n", req->getBriefString().c_str());
+        //debug_->debug(_L5_, "    Request: %s\n", req->getBriefString().c_str());
     bool localPrefetch = req->isPrefetch() && (req->getRqstr() == cachename_);
     req->setFlags(event->getMemFlags());
 
     // Sanity check line state
     if (state != IS) {
-        debug->fatal(CALL_INFO,-1,"%s, Error: Received GetSResp in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+        debug_->fatal(CALL_INFO,-1,"%s, Error: Received GetSResp in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
                 getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
@@ -1546,7 +1790,7 @@ bool MESIInclusive::handleGetSResp(MemEvent * event, bool inMSHR) {
     if (localPrefetch) {
         line->setPrefetch(true);
         if (mem_h_is_debug_event(event))
-            eventDI.action = "Done";
+            event_debuginfo_.action = "Done";
     } else {
         line->addSharer(req->getSrc());
         Addr offset = req->getAddr() - req->getBaseAddr();
@@ -1557,8 +1801,8 @@ bool MESIInclusive::handleGetSResp(MemEvent * event, bool inMSHR) {
     cleanUpAfterResponse(event, inMSHR);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        eventDI.newst = line->getState();
-        eventDI.verboseline = line->getString();
+        event_debuginfo_.newst = line->getState();
+        event_debuginfo_.verboseline = line->getString();
     }
 
     return true;
@@ -1571,9 +1815,9 @@ bool MESIInclusive::handleGetXResp(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (mem_h_is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::GetXResp, "", addr, state);
+        event_debuginfo_.prefill(event->getID(), Command::GetXResp, "", addr, state);
 
-    stat_eventState[(int)Command::GetXResp][state]->addData(1);
+    stat_eventstate_[(int)Command::GetXResp][state]->addData(1);
 
     // Get matching request
     MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(event->getBaseAddr()));
@@ -1600,7 +1844,7 @@ bool MESIInclusive::handleGetXResp(MemEvent * event, bool inMSHR) {
             if (localPrefetch) {
                 line->setPrefetch(true);
                 if (mem_h_is_debug_event(event))
-                    eventDI.action = "Done";
+                    event_debuginfo_.action = "Done";
             } else {
                 if (protocol_ && line->getState() != S && mshr_->getSize(addr) == 1) {
                     line->setOwner(req->getSrc());
@@ -1633,18 +1877,18 @@ bool MESIInclusive::handleGetXResp(MemEvent * event, bool inMSHR) {
         }
         case SM_Inv:
             if (mem_h_is_debug_event(event))
-                eventDI.action = "Stall";
+                event_debuginfo_.action = "Stall";
             line->setState(M_Inv);
             delete event;
             break;
         default:
-            debug->fatal(CALL_INFO,-1,"%s, Error: Received GetXResp in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+            debug_->fatal(CALL_INFO,-1,"%s, Error: Received GetXResp in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     if (mem_h_is_debug_addr(addr) && line) {
-        eventDI.newst = line->getState();
-        eventDI.verboseline = line->getString();
+        event_debuginfo_.newst = line->getState();
+        event_debuginfo_.verboseline = line->getString();
     }
     return true;
 }
@@ -1656,9 +1900,9 @@ bool MESIInclusive::handleFlushLineResp(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (mem_h_is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::FlushLineResp, "", addr, state);
+        event_debuginfo_.prefill(event->getID(), Command::FlushLineResp, "", addr, state);
 
-    stat_eventState[(int)Command::FlushLineResp][state]->addData(1);
+    stat_eventstate_[(int)Command::FlushLineResp][state]->addData(1);
 
     MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
 
@@ -1672,15 +1916,15 @@ bool MESIInclusive::handleFlushLineResp(MemEvent * event, bool inMSHR) {
             line->setState(S);
             break;
         default:
-            debug->fatal(CALL_INFO,-1,"%s, Error: Received FlushLineResp in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+            debug_->fatal(CALL_INFO,-1,"%s, Error: Received FlushLineResp in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     sendResponseUp(req, nullptr, true, timestamp_, Command::FlushLineResp, event->success());
 
     if (mem_h_is_debug_addr(addr) && line) {
-        eventDI.newst = line->getState();
-        eventDI.verboseline = line->getString();
+        event_debuginfo_.newst = line->getState();
+        event_debuginfo_.verboseline = line->getString();
     }
     cleanUpAfterResponse(event, inMSHR);
     return true;
@@ -1688,12 +1932,12 @@ bool MESIInclusive::handleFlushLineResp(MemEvent * event, bool inMSHR) {
 
 
 bool MESIInclusive::handleFlushAllResp(MemEvent * event, bool inMSHR) {
-    eventDI.prefill(event->getID(), Command::FlushAllResp, "", 0, State::NP);
+    event_debuginfo_.prefill(event->getID(), Command::FlushAllResp, "", 0, State::NP);
 
     MemEvent* flush_request = static_cast<MemEvent*>(mshr_->getFlush());
     mshr_->removeFlush(); // Remove FlushAll
 
-    eventDI.action = "Respond";
+    event_debuginfo_.action = "Respond";
 
     sendResponseUp(flush_request, nullptr, true, timestamp_);
 
@@ -1714,9 +1958,9 @@ bool MESIInclusive::handleFetchResp(MemEvent * event, bool inMSHR) {
     State state = line->getState();
 
     if (mem_h_is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::FetchResp, "", addr, state);
+        event_debuginfo_.prefill(event->getID(), Command::FetchResp, "", addr, state);
 
-    stat_eventState[(int)Command::FetchResp][state]->addData(1);
+    stat_eventstate_[(int)Command::FetchResp][state]->addData(1);
 
     // Check acks needed
     mshr_->decrementAcksNeeded(addr);
@@ -1734,10 +1978,10 @@ bool MESIInclusive::handleFetchResp(MemEvent * event, bool inMSHR) {
     retry(addr);
 
     if (mem_h_is_debug_addr(addr)) {
-        eventDI.action = "Retry";
+        event_debuginfo_.action = "Retry";
         if (line) {
-            eventDI.newst = line->getState();
-            eventDI.verboseline = line->getString();
+            event_debuginfo_.newst = line->getState();
+            event_debuginfo_.verboseline = line->getString();
         }
     }
 
@@ -1752,13 +1996,13 @@ bool MESIInclusive::handleFetchXResp(MemEvent * event, bool inMSHR) {
     State state = line->getState();
 
     if (mem_h_is_debug_addr(addr) && line) {
-        eventDI.newst = line->getState();
-        eventDI.verboseline = line->getString();
+        event_debuginfo_.newst = line->getState();
+        event_debuginfo_.verboseline = line->getString();
     }
     if (mem_h_is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::FetchXResp, "", addr, state);
+        event_debuginfo_.prefill(event->getID(), Command::FetchXResp, "", addr, state);
 
-    stat_eventState[(int)Command::FetchXResp][state]->addData(1);
+    stat_eventstate_[(int)Command::FetchXResp][state]->addData(1);
 
     mshr_->decrementAcksNeeded(addr);
 
@@ -1775,10 +2019,10 @@ bool MESIInclusive::handleFetchXResp(MemEvent * event, bool inMSHR) {
     retry(addr);
 
     if (mem_h_is_debug_addr(addr)) {
-        eventDI.action = "Retry";
+        event_debuginfo_.action = "Retry";
         if (line) {
-            eventDI.newst = line->getState();
-            eventDI.verboseline = line->getString();
+            event_debuginfo_.newst = line->getState();
+            event_debuginfo_.verboseline = line->getString();
         }
     }
 
@@ -1788,7 +2032,7 @@ bool MESIInclusive::handleFetchXResp(MemEvent * event, bool inMSHR) {
 
 
 bool MESIInclusive::handleAckFlush(MemEvent * event, bool inMSHR) {
-    eventDI.prefill(event->getID(), Command::AckFlush, "", 0, State::NP);
+    event_debuginfo_.prefill(event->getID(), Command::AckFlush, "", 0, State::NP);
 
     mshr_->decrementFlushCount();
     if (mshr_->getFlushCount() == 0) {
@@ -1800,7 +2044,7 @@ bool MESIInclusive::handleAckFlush(MemEvent * event, bool inMSHR) {
 }
 
 bool MESIInclusive::handleUnblockFlush(MemEvent * event, bool inMSHR) {
-    eventDI.prefill(event->getID(), Command::UnblockFlush, "", 0, State::NP);
+    event_debuginfo_.prefill(event->getID(), Command::UnblockFlush, "", 0, State::NP);
 
     if (flush_helper_) {
         broadcastMemEventToSources(Command::UnblockFlush, event, timestamp_ + 1);
@@ -1817,9 +2061,9 @@ bool MESIInclusive::handleAckInv(MemEvent * event, bool inMSHR) {
     State state = line->getState();
 
     if (mem_h_is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::AckInv, "", addr, state);
+        event_debuginfo_.prefill(event->getID(), Command::AckInv, "", addr, state);
 
-    stat_eventState[(int)Command::AckInv][state]->addData(1);
+    stat_eventstate_[(int)Command::AckInv][state]->addData(1);
 
     if (line->isSharer(event->getSrc()))
         line->removeSharer(event->getSrc());
@@ -1832,7 +2076,7 @@ bool MESIInclusive::handleAckInv(MemEvent * event, bool inMSHR) {
     bool done = mshr_->decrementAcksNeeded(addr);
     if (!done) {
         if (mem_h_is_debug_event(event))
-            eventDI.action = "Stall";
+            event_debuginfo_.action = "Stall";
         delete event;
         return true;
     }
@@ -1860,15 +2104,15 @@ bool MESIInclusive::handleAckInv(MemEvent * event, bool inMSHR) {
                 retry(addr);
             break;
         default:
-            debug->fatal(CALL_INFO,-1,"%s, Error: Received AckInv in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+            debug_->fatal(CALL_INFO,-1,"%s, Error: Received AckInv in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     if (mem_h_is_debug_addr(addr)) {
-        eventDI.action = (done ? "Retry" : "DecAcks");
+        event_debuginfo_.action = (done ? "Retry" : "DecAcks");
         if (line) {
-            eventDI.newst = line->getState();
-            eventDI.verboseline = line->getString();
+            event_debuginfo_.newst = line->getState();
+            event_debuginfo_.verboseline = line->getString();
         }
     }
 
@@ -1883,11 +2127,11 @@ bool MESIInclusive::handleAckPut(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (mem_h_is_debug_event(event)) {
-        eventDI.prefill(event->getID(), Command::AckPut, "", addr, state);
-        eventDI.action = "Done";
+        event_debuginfo_.prefill(event->getID(), Command::AckPut, "", addr, state);
+        event_debuginfo_.action = "Done";
     }
 
-    stat_eventState[(int)Command::AckPut][state]->addData(1);
+    stat_eventstate_[(int)Command::AckPut][state]->addData(1);
 
     cleanUpAfterResponse(event, inMSHR);
     return true;
@@ -1904,9 +2148,9 @@ bool MESIInclusive::handleNULLCMD(MemEvent* event, bool inMSHR) {
     bool evicted = handleEviction(newAddr, line);
 
     if (mem_h_is_debug_addr(newAddr)) {
-        eventDI.prefill(event->getID(), Command::NULLCMD, "", line->getAddr(), evictDI.oldst);
-        eventDI.newst = line->getState();
-        eventDI.verboseline = line->getString();
+        event_debuginfo_.prefill(event->getID(), Command::NULLCMD, "", line->getAddr(), evict_debuginfo_.oldst);
+        event_debuginfo_.newst = line->getState();
+        event_debuginfo_.verboseline = line->getString();
     }
     if (evicted) {
         notifyListenerOfEvict(line->getAddr(), lineSize_, event->getInstructionPointer());
@@ -1918,10 +2162,10 @@ bool MESIInclusive::handleNULLCMD(MemEvent* event, bool inMSHR) {
             if (mshr_->removeEvictPointer(oldAddr, newAddr))
                 retry(oldAddr);
             if (mem_h_is_debug_addr(newAddr)) {
-                eventDI.action = "Retry";
+                event_debuginfo_.action = "Retry";
                 std::stringstream reason;
                 reason << "0x" << std::hex << newAddr;
-                eventDI.reason = reason.str();
+                event_debuginfo_.reason = reason.str();
             }
         } else { /* Deallocating a line for a cache flush */
             mshr_->decrementFlushCount();
@@ -1931,16 +2175,16 @@ bool MESIInclusive::handleNULLCMD(MemEvent* event, bool inMSHR) {
         }
     } else { // Check if we're waiting for a new address
         if (mem_h_is_debug_addr(newAddr)) {
-            eventDI.action = "Stall";
+            event_debuginfo_.action = "Stall";
             std::stringstream reason;
             reason << "0x" << std::hex << newAddr << ", evict failed";
-            eventDI.reason = reason.str();
+            event_debuginfo_.reason = reason.str();
         }
         if (oldAddr != line->getAddr()) { // We're waiting for a new line now...
             if (mem_h_is_debug_addr(newAddr)) {
                 std::stringstream reason;
                 reason << "0x" << std::hex << newAddr << ", new targ";
-                eventDI.reason = reason.str();
+                event_debuginfo_.reason = reason.str();
             }
             mshr_->insertEviction(line->getAddr(), newAddr);
             if (mshr_->removeEvictPointer(oldAddr, newAddr))
@@ -1959,7 +2203,7 @@ bool MESIInclusive::handleNACK(MemEvent * event, bool inMSHR) {
 
     if (mem_h_is_debug_event(event) || mem_h_is_debug_event(nackedEvent)) {
         SharedCacheLine * line = cacheArray_->lookup(addr, false);
-        eventDI.prefill(event->getID(), Command::NACK, "", addr, line ? line->getState() : I);
+        event_debuginfo_.prefill(event->getID(), Command::NACK, "", addr, line ? line->getState() : I);
     }
 
     delete event;
@@ -1996,13 +2240,13 @@ bool MESIInclusive::handleNACK(MemEvent * event, bool inMSHR) {
                 resendEvent(nackedEvent, true); // Resend towards CPU
             } else {
                 if (mem_h_is_debug_event(nackedEvent))
-                    eventDI.action = "Drop";
-                    //debug->debug(_L5_, "\tDrop NACKed event: %s\n", nackedEvent->getVerboseString().c_str());
+                    event_debuginfo_.action = "Drop";
+                    //debug_->debug(_L5_, "\tDrop NACKed event: %s\n", nackedEvent->getVerboseString().c_str());
                 delete nackedEvent;
             }
             break;
         default:
-            debug->fatal(CALL_INFO,-1,"%s, Error: Received NACK with unhandled command type. Event: %s. Time = %" PRIu64 "ns\n",
+            debug_->fatal(CALL_INFO,-1,"%s, Error: Received NACK with unhandled command type. Event: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), nackedEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return true;
@@ -2017,7 +2261,7 @@ MemEventStatus MESIInclusive::processCacheMiss(MemEvent * event, SharedCacheLine
     MemEventStatus status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false); // Miss means we need an MSHR entry
     if (inMSHR && mshr_->getFrontEvent(event->getBaseAddr()) != event) { // Sometimes happens if eviction and event both retry
         if (mem_h_is_debug_event(event))
-            eventDI.action = "Stall";
+            event_debuginfo_.action = "Stall";
         return MemEventStatus::Stall;
     }
     if (status == MemEventStatus::OK && !line) { // Need a cache line too
@@ -2039,10 +2283,10 @@ SharedCacheLine * MESIInclusive::allocateLine(MemEvent * event, SharedCacheLine 
     } else {
         mshr_->insertEviction(line->getAddr(), event->getBaseAddr());
         if (mem_h_is_debug_event(event)) {
-            eventDI.action = "Stall";
+            event_debuginfo_.action = "Stall";
             std::stringstream reason;
             reason << "evict 0x" << std::hex << line->getAddr();
-            eventDI.reason = reason.str();
+            event_debuginfo_.reason = reason.str();
         }
         return nullptr;
     }
@@ -2055,7 +2299,7 @@ bool MESIInclusive::handleEviction(Addr addr, SharedCacheLine *& line) {
     State state = line->getState();
 
     if (mem_h_is_debug_addr(addr) || (line && mem_h_is_debug_addr(line->getAddr())))
-        evictDI.oldst = state;
+        evict_debuginfo_.oldst = state;
 
     stat_evict[state]->addData(1);
 
@@ -2143,7 +2387,7 @@ void MESIInclusive::cleanUpEvent(MemEvent* event, bool inMSHR) {
 
     /* Remove from MSHR */
     if (inMSHR) {
-        if (event->isPrefetch() && event->getRqstr() == cachename_) outstandingPrefetches_--;
+        if (event->isPrefetch() && event->getRqstr() == cachename_) outstanding_prefetch_count_--;
         mshr_->removeFront(addr);
     }
 
@@ -2188,7 +2432,7 @@ void MESIInclusive::cleanUpAfterResponse(MemEvent* event, bool inMSHR) {
     delete event;
     if (req) {
         if (req->isPrefetch() && req->getRqstr() == cachename_)
-            outstandingPrefetches_--;
+            outstanding_prefetch_count_--;
         delete req;
     }
     if (mshr_->exists(addr)) {
@@ -2214,12 +2458,12 @@ void MESIInclusive::retry(Addr addr) {
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             //if (mem_h_is_debug_addr(addr))
-            //    debug->debug(_L5_, "    Retry: Waiting Event exists in MSHR and is ready to retry\n");
+            //    debug_->debug(_L5_, "    Retry: Waiting Event exists in MSHR and is ready to retry\n");
             retryBuffer_.push_back(mshr_->getFrontEvent(addr));
             mshr_->addPendingRetry(addr);
         } else if (!(mshr_->pendingWriteback(addr))) {
             //if (mem_h_is_debug_addr(addr))
-            //    debug->debug(_L5_, "    Retry: Waiting Evict in MSHR, retrying eviction\n");
+            //    debug_->debug(_L5_, "    Retry: Waiting Evict in MSHR, retrying eviction\n");
             std::list<Addr>* evictPointers = mshr_->getEvictPointers(addr);
             for (std::list<Addr>::iterator it = evictPointers->begin(); it != evictPointers->end(); it++) {
                 MemEvent * ev = new MemEvent(cachename_, addr, *it, Command::NULLCMD);
@@ -2293,7 +2537,7 @@ SimTime_t MESIInclusive::sendResponseUp(MemEvent * event, vector<uint8_t>* data,
 
     // Debugging
     if (mem_h_is_debug_event(responseEvent)) {
-        eventDI.action = "Respond";
+        event_debuginfo_.action = "Respond";
     }
 
     return deliveryTime;
@@ -2317,7 +2561,7 @@ void MESIInclusive::sendResponseDown(MemEvent * event, SharedCacheLine * line, b
     forwardByDestination(responseEvent, deliverTime);
 
     if (mem_h_is_debug_event(responseEvent)) {
-        eventDI.action = "Respond";
+        event_debuginfo_.action = "Respond";
     }
 }
 
@@ -2345,8 +2589,8 @@ void MESIInclusive::forwardFlush(MemEvent * event, SharedCacheLine * line, bool 
         line->setTimestamp(deliveryTime-1);
 
     if (mem_h_is_debug_addr(event->getBaseAddr())) {
-        eventDI.action = "Forward";
-    //    debug->debug(_L3_,"Forwarding Flush at cycle = %" PRIu64 ", Cmd = %s, Src = %s, %s\n", deliveryTime, CommandString[(int)flush->getCmd()], flush->getSrc().c_str(), evict ? "with data" : "without data");
+        event_debuginfo_.action = "Forward";
+    //    debug_->debug(_L3_,"Forwarding Flush at cycle = %" PRIu64 ", Cmd = %s, Src = %s, %s\n", deliveryTime, CommandString[(int)flush->getCmd()], flush->getSrc().c_str(), evict ? "with data" : "without data");
     }
 }
 
@@ -2381,7 +2625,7 @@ void MESIInclusive::sendWriteback(Command cmd, SharedCacheLine* line, bool dirty
     line->setTimestamp(deliveryTime-1);
 
    //f (mem_h_is_debug_addr(line->getAddr()))
-        //debug->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s. With%s data.\n", deliveryTime, CommandString[(int)cmd], ((cmd == Command::PutM || writebackCleanBlocks_) ? "" : "out"));
+        //debug_->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s. With%s data.\n", deliveryTime, CommandString[(int)cmd], ((cmd == Command::PutM || writebackCleanBlocks_) ? "" : "out"));
 }
 
 
@@ -2394,8 +2638,8 @@ void MESIInclusive::sendAckPut(MemEvent * event) {
     forwardByDestination(ack, deliveryTime);
 
     if (mem_h_is_debug_event(event))
-        eventDI.action = "Ack";
-        //debug->debug(_L7_, "Sending AckPut at cycle %" PRIu64 "\n", deliveryTime);
+        event_debuginfo_.action = "Ack";
+        //debug_->debug(_L7_, "Sending AckPut at cycle %" PRIu64 "\n", deliveryTime);
 }
 
 
@@ -2424,9 +2668,9 @@ void MESIInclusive::downgradeOwner(MemEvent * event, SharedCacheLine* line, bool
 
 
     if (mem_h_is_debug_addr(line->getAddr())) {
-        eventDI.action = "Stall";
-        eventDI.reason = "Dgr owner";
-        //debug->debug(_L7_, "Sending %s: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n",
+        event_debuginfo_.action = "Stall";
+        event_debuginfo_.reason = "Dgr owner";
+        //debug_->debug(_L7_, "Sending %s: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n",
         //        CommandString[(int)cmd], line->getAddr(), line->getOwner().c_str(), deliveryTime);
     }
 }
@@ -2492,8 +2736,8 @@ uint64_t MESIInclusive::invalidateSharer(std::string shr, MemEvent * event, Shar
         mshr_->incrementAcksNeeded(addr);
 
         if (mem_h_is_debug_addr(addr)) {
-            eventDI.action = "Stall";
-            eventDI.reason = "Inv sharer(s)";
+            event_debuginfo_.action = "Stall";
+            event_debuginfo_.reason = "Inv sharer(s)";
         }
         return deliveryTime;
     }
@@ -2532,8 +2776,8 @@ bool MESIInclusive::invalidateOwner(MemEvent * event, SharedCacheLine * line, bo
     line->setTimestamp(deliveryTime);
 
     if (mem_h_is_debug_addr(addr)) {
-        eventDI.action = "Stall";
-        eventDI.reason = "Inv owner";
+        event_debuginfo_.action = "Stall";
+        event_debuginfo_.reason = "Inv owner";
     }
     return true;
 }
@@ -2595,18 +2839,14 @@ void MESIInclusive::recordLatency(Command cmd, int type, uint64_t latency) {
  * Statistics and listeners
  ***********************************************************************************************************/
 
-MemEventInitCoherence * MESIInclusive::getInitCoherenceEvent() {
-    return new MemEventInitCoherence(cachename_, Endpoint::Cache, true /* inclusive */, false /* sends WBAck */, false /* expects WBAck */, lineSize_, true /* tracks block presence */);
-}
 
-
-void MESIInclusive::printLine(Addr addr) {
+ void MESIInclusive::printLine(Addr addr) {
     if (!mem_h_is_debug_addr(addr))
         return;
 
     SharedCacheLine * line = cacheArray_->lookup(addr, false);
     std::string state = (line == nullptr) ? "NP" : line->getString();
-    debug->debug(_L8_, "  Line 0x%" PRIx64 ": %s\n", addr, state.c_str());
+    debug_->debug(_L8_, "  Line 0x%" PRIx64 ": %s\n", addr, state.c_str());
 }
 
 
@@ -2618,10 +2858,12 @@ void MESIInclusive::printStatus(Output &out) {
 /***********************************************************************************************************
  * Cache flush at simulation shutdown
  ***********************************************************************************************************/
-void MESIInclusive::beginCompleteStage() {
+
+ void MESIInclusive::beginCompleteStage() {
     shutdown_flush_counter_ = 0;
     flush_state_ = FlushState::Ready;
 }
+
 
 void MESIInclusive::processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) {
     if (event->getInitCmd() == MemEventInit::InitCommand::Flush) {
@@ -2667,7 +2909,7 @@ void MESIInclusive::processCompleteEvent(MemEventInit* event, MemLinkBase* highl
             default:
                 // TODO handle case where sim ends and state is not stable
                 std::string valstr = getDataString(it->getData());
-                debug->output("%s, NOTICE: Unable to flush cache line that is in transient state '%s'. Addr = 0x%" PRIx64 ". Value = %s\n",
+                debug_->output("%s, NOTICE: Unable to flush cache line that is in transient state '%s'. Addr = 0x%" PRIx64 ". Value = %s\n",
                     cachename_.c_str(), StateString[it->getState()], it->getAddr(), valstr.c_str());
                 break;
             };
@@ -2687,4 +2929,68 @@ void MESIInclusive::processCompleteEvent(MemEventInit* event, MemLinkBase* highl
         line->setState(M); // Force a writeback of this data
     }
     delete event; // Nothing for now
+}
+
+
+/***********************************************************************************************************
+ * Miscellaneous
+ ***********************************************************************************************************/
+
+MemEventInitCoherence * MESIInclusive::getInitCoherenceEvent() {
+    return new MemEventInitCoherence(cachename_, Endpoint::Cache, true /* inclusive */, false /* sends WBAck */, false /* expects WBAck */, lineSize_, true /* tracks block presence */);
+}
+
+std::set<Command> MESIInclusive::getValidReceiveEvents() {
+    std::set<Command> cmds = { Command::GetS,
+        Command::GetX,
+        Command::GetSX,
+        Command::Write,
+        Command::FlushLine,
+        Command::FlushLineInv,
+        Command::FlushAll,
+        Command::ForwardFlush,
+        Command::PutS,
+        Command::PutE,
+        Command::PutX,
+        Command::PutM,
+        Command::Inv,
+        Command::ForceInv,
+        Command::Fetch,
+        Command::FetchInv,
+        Command::FetchInvX,
+        Command::NULLCMD,
+        Command::GetSResp,
+        Command::GetXResp,
+        Command::WriteResp,
+        Command::FlushLineResp,
+        Command::FlushAllResp,
+        Command::FetchResp,
+        Command::FetchXResp,
+        Command::AckInv,
+        Command::AckPut,
+        Command::AckFlush,
+        Command::UnblockFlush,
+        Command::NACK };
+    return cmds;
+}
+
+void MESIInclusive::serialize_order(SST::Core::Serialization::serializer& ser) {
+    CoherenceController::serialize_order(ser);
+
+    SST_SER(cacheArray_);
+    SST_SER(protocolState_);
+    SST_SER(protocol_);
+    SST_SER(responses);
+    SST_SER(flush_state_);
+    SST_SER(shutdown_flush_counter_);
+    SST_SER(stat_latencyGetS);
+    SST_SER(stat_latencyGetX);
+    SST_SER(stat_latencyGetSX);
+    SST_SER(stat_latencyFlushLine);
+    SST_SER(stat_latencyFlushLineInv);
+    SST_SER(stat_latencyFlushAll);
+    SST_SER(stat_hit);
+    SST_SER(stat_miss);
+    SST_SER(stat_hits);
+    SST_SER(stat_misses);
 }

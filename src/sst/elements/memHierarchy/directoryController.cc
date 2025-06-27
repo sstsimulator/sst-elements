@@ -45,7 +45,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     std::vector<Addr> addrArr;
     params.find_array<Addr>("debug_addr", addrArr);
     for (std::vector<Addr>::iterator it = addrArr.begin(); it != addrArr.end(); it++) {
-        DEBUG_ADDR.insert(*it);
+        debug_addr_filter_.insert(*it);
     }
 
     registerTimeBase("1 ns", true); // TODO eliminate this
@@ -354,7 +354,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
     int mshrSize    = params.find<int>("mshr_num_entries",-1);
     if (mshrSize == 0) dbg.fatal(CALL_INFO, -1, "Invalid param(%s): mshr_num_entries - must be at least 1 or else negative to indicate an unlimited size MSHR\n", getName().c_str());
-    mshr                = loadComponentExtension<MSHR>(&dbg, mshrSize, getName(), DEBUG_ADDR);
+    mshr                = loadComponentExtension<MSHR>(&dbg, mshrSize, getName(), debug_addr_filter_);
 
     /* Get latencies */
     accessLatency   = params.find<uint64_t>("access_latency_cycles", 0);

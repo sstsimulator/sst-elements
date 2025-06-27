@@ -47,7 +47,7 @@ public:
 
     /***** Constructor & destructor *****/
     CoherenceController(ComponentId_t id, Params &params, Params& ownerParams, bool prefetch);
-    virtual ~CoherenceController() {}
+    virtual ~CoherenceController() { }
 
     /*********************************************************************************
      * Event handlers - one per event type
@@ -149,17 +149,17 @@ public:
     /* Setup array of cache listeners */
     void setCacheListener(std::vector<CacheListener*> &ptr, size_t dropPrefetchLevel, size_t maxOutPrefetches) {
         listeners_ = ptr;
-        dropPrefetchLevel_ = dropPrefetchLevel;
-        maxOutstandingPrefetch_ = maxOutPrefetches;
+        drop_prefetch_level_ = dropPrefetchLevel;
+        max_outstanding_prefetch_ = maxOutPrefetches;
     }
 
     /* Set MSHR */
     void setMSHR(MSHR* ptr) { mshr_ = ptr; }
 
     /* Set link managers */
-    void setLinks(MemLinkBase * linkUp, MemLinkBase * linkDown) {
-        linkUp_ = linkUp;
-        linkDown_ = linkDown;
+    void setLinks(MemLinkBase * link_up, MemLinkBase * link_down) {
+        link_up_ = link_up;
+        link_down_ = link_down;
     }
 
     /* Prefetch drop statistic is used by both controller and coherence managers */
@@ -175,7 +175,7 @@ public:
     void registerClockEnableFunction(std::function<void()> fcn) { reenableClock_ = fcn; }
 
     /* Setup debug info (cache-wide) */
-    void setDebug(std::set<Addr> debugAddr) { DEBUG_ADDR = debugAddr; }
+    void setDebug(std::set<Addr> debug_addr) { debug_addr_filter_ = debug_addr; }
 
     /* Retry buffer - parent drains this each cycle */
     std::vector<MemEventBase*>* getRetryBuffer();
@@ -199,6 +199,11 @@ public:
 
     // Called by owner during printStatus/emergencyShutdown
     virtual void printStatus(Output &out) override;
+
+    // Serialization
+    CoherenceController() : SubComponent() {}
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementVirtualSerializable(SST::MemHierarchy::CoherenceController)
 
 protected:
 
@@ -262,7 +267,24 @@ protected:
             action = act;
             reason = rea;
         }
-    } eventDI, evictDI;
+
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(id);
+            SST_SER(thr);
+            SST_SER(hasThr);
+            SST_SER(cmd);
+            SST_SER(mod);
+            SST_SER(addr);
+            SST_SER(oldst);
+            SST_SER(newst);
+            SST_SER(action);
+            SST_SER(reason);
+            SST_SER(verboseline);
+        }
+    };
+
+    /* These track information about coherence events in case a debug log is being generated */
+    dbgin event_debuginfo_, evict_debuginfo_;
 
     virtual void printDebugInfo(dbgin * diStruct);
     virtual void printDebugAlloc(bool alloc, Addr addr, std::string note);
@@ -281,18 +303,18 @@ protected:
 
     /* Listeners: prefetchers, tracers, etc. */
     std::vector<CacheListener*> listeners_;
-    size_t maxOutstandingPrefetch_;
-    size_t dropPrefetchLevel_;
-    size_t outstandingPrefetches_;
+    size_t max_outstanding_prefetch_;
+    size_t drop_prefetch_level_;
+    size_t outstanding_prefetch_count_;
 
     /* Cache name - used for identifying where events came from/are going to */
     std::string cachename_;
 
     /* Output & debug */
-    Output* output; // Output stream for warnings, notices, fatal, etc.
-    Output* debug;  // Output stream for debug -> SST must be compiled with --enable-debug
-    std::set<Addr> DEBUG_ADDR; // Addresses to print debug info for (all if empty)
-    uint32_t dlevel;    // Debug level -> used to determine output format/amount of output
+    Output* output_ = nullptr;   // Output stream for warnings, notices, fatal, etc.
+    Output* debug_ = nullptr;    // Output stream for debug -> SST must be compiled with --enable-debug
+    std::set<Addr> debug_addr_filter_;  // Addresses to print debug info for (all if empty)
+    uint32_t debug_level_;            // Debug level -> used to determine output format/amount of output
 
     /* Latencies amd timing */
     uint64_t timestamp_;        // Local timestamp (cycles)
@@ -316,21 +338,35 @@ protected:
         MemEventBase* event;    // Event to send
         uint64_t deliveryTime;  // Time this event can be sent
         uint64_t size;          // Size of event (for bandwidth accounting)
+
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(event);
+            SST_SER(deliveryTime);
+            SST_SER(size);
+        }
     };
 
     /* Retry buffer - filled by coherence manangers and drained by parent */
     std::vector<MemEventBase*> retryBuffer_;
 
     /* Statistics - some variables used by all are declared here, but they are maintained by coherence protocols */
-    Statistic<uint64_t>* stat_eventSent[(int)Command::LAST_CMD];    // Count events sent
-    Statistic<uint64_t>* stat_evict[LAST_STATE];                    // Count how many evictions happened in a given state
-    std::array<std::array<Statistic<uint64_t>*, LAST_STATE>, (int)Command::LAST_CMD> stat_eventState;
+    std::array<Statistic<uint64_t>*, (int)Command::LAST_CMD> stat_eventSent;  // Count events sent
+    std::array<Statistic<uint64_t>*, (int)LAST_STATE> stat_evict;             // Count how many evictions happened in a given state
+    std::array<std::array<Statistic<uint64_t>*, LAST_STATE>, (int)Command::LAST_CMD> stat_eventstate_;
 
     struct LatencyStat{
         uint64_t time;
         Command cmd;
         int missType;
         LatencyStat(uint64_t t, Command c, int m) : time(t), cmd(c), missType(m) { }
+
+        LatencyStat() {}
+
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(time);
+            SST_SER(cmd);
+            SST_SER(missType);
+        }
     };
 
     std::map<SST::Event::id_type, LatencyStat> startTimes_;
@@ -357,11 +393,11 @@ protected:
 
 private:
     /* Outgoing event queues - events are stalled here to account for access latencies */
-    list<Response> outgoingEventQueueDown_;
-    list<Response> outgoingEventQueueUp_;
+    list<Response> outgoing_event_queue_down_;
+    list<Response> outgoing_event_queue_up_;
 
-    MemLinkBase * linkUp_;
-    MemLinkBase * linkDown_;
+    MemLinkBase * link_up_ = nullptr;
+    MemLinkBase * link_down_ = nullptr;
 
     /**************** Haven't determined if we need the rest yet ! ************************************/
 protected:
@@ -375,12 +411,12 @@ protected:
     uint64_t packetHeaderBytes;
 
     /* Prefetch statistics */
-    Statistic<uint64_t>* statPrefetchEvict;
-    Statistic<uint64_t>* statPrefetchInv;
-    Statistic<uint64_t>* statPrefetchRedundant;
-    Statistic<uint64_t>* statPrefetchUpgradeMiss;
-    Statistic<uint64_t>* statPrefetchHit;
-    Statistic<uint64_t>* statPrefetchDrop;
+    Statistic<uint64_t>* statPrefetchEvict = nullptr;
+    Statistic<uint64_t>* statPrefetchInv = nullptr;
+    Statistic<uint64_t>* statPrefetchRedundant = nullptr;
+    Statistic<uint64_t>* statPrefetchUpgradeMiss = nullptr;
+    Statistic<uint64_t>* statPrefetchHit = nullptr;
+    Statistic<uint64_t>* statPrefetchDrop = nullptr;
 };
 
 }}

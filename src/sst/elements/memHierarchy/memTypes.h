@@ -432,6 +432,7 @@ public:
         return str.str();
     }
 
+    MemRegion() = default;
     void serialize_order(SST::Core::Serialization::serializer &ser) {
         SST_SER(start);
         SST_SER(end);

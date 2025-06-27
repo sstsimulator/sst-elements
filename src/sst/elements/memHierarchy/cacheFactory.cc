@@ -41,7 +41,7 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
     std::vector<Addr> addrArr;
     params.find_array<Addr>("debug_addr", addrArr);
     for (std::vector<Addr>::iterator it = addrArr.begin(); it != addrArr.end(); it++)
-        DEBUG_ADDR.insert(*it);
+        debug_addr_filter_.insert(*it);
 
     bool found;
 
@@ -211,7 +211,7 @@ void Cache::createCoherenceManager(Params &params) {
     coherenceMgr_->setLinks(linkUp_, linkDown_);
     coherenceMgr_->setMSHR(mshr_);
     coherenceMgr_->setCacheListener(listeners_, dropPrefetchLevel, maxOutstandingPrefetch);
-    coherenceMgr_->setDebug(DEBUG_ADDR);
+    coherenceMgr_->setDebug(debug_addr_filter_);
     coherenceMgr_->setSliceAware(region_.interleaveSize, region_.interleaveStep);
     coherenceMgr_->registerClockEnableFunction(std::bind(&Cache::turnClockOn, this));
 }
@@ -699,7 +699,7 @@ uint64_t Cache::createMSHR(Params &params, uint64_t accessLatency, bool L1) {
     if (mshrSize == 1 || mshrSize == 0)
         out_->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - MSHR requires at least 2 entries to avoid deadlock. You specified %d\n", mshrSize);
 
-    mshr_ = loadComponentExtension<MSHR>(dbg_, mshrSize, getName(), DEBUG_ADDR);
+    mshr_ = loadComponentExtension<MSHR>(dbg_, mshrSize, getName(), debug_addr_filter_);
 
     if (mshrLatency > 0 && found)
         return mshrLatency;

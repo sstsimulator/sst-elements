@@ -31,7 +31,7 @@ namespace MemHierarchy {
  * To date the coherence policies in memHierarchy only use cache line state and sometimes owned/shared information
  * but other components are able to extend this to pass arbitrary information as needed
  */
-class ReplacementInfo {
+class ReplacementInfo : public SST::Core::Serialization::serializable {
     public:
         ReplacementInfo(unsigned int i, State s) : index(i), state(s) { }
         virtual ~ReplacementInfo() { }
@@ -43,6 +43,14 @@ class ReplacementInfo {
         void setState(State s) { state = s; }
 
         virtual void reset() { state = I; }
+
+        ReplacementInfo() { }
+        virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+            SST_SER(index);
+            SST_SER(state);
+        }
+        ImplementSerializable(SST::MemHierarchy::ReplacementInfo)
+
     protected:
         unsigned int index;
         State state;
@@ -62,6 +70,15 @@ class CoherenceReplacementInfo : public ReplacementInfo {
             owned = false;
             shared = false;
         }
+
+        CoherenceReplacementInfo() { }
+        virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+            ReplacementInfo::serialize_order(ser);
+            SST_SER(owned);
+            SST_SER(shared);
+        }
+        ImplementSerializable(SST::MemHierarchy::CoherenceReplacementInfo)
+
     protected:
         bool owned;
         bool shared;
@@ -72,9 +89,9 @@ class ReplacementPolicy : public SubComponent{
     public:
         SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::ReplacementPolicy, uint64_t, uint64_t)
 
-        ReplacementPolicy(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : SubComponent(id) {
-        }
-        virtual ~ReplacementPolicy(){}
+        ReplacementPolicy(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : SubComponent(id) { }
+
+        virtual ~ReplacementPolicy() = default;
 
         /* Since we don't dynamic cast ReplacementInfo, do a check here to make sure the type provided by the cache line & the type the replacement policy expects are compatible */
         virtual bool checkCompatibility(ReplacementInfo * rInfo) = 0;
@@ -86,6 +103,12 @@ class ReplacementPolicy : public SubComponent{
         // Get replacement candidates
         virtual uint64_t getBestCandidate() = 0;
         virtual uint64_t findBestCandidate(std::vector<ReplacementInfo*> &rInfo) = 0;
+
+        ReplacementPolicy() = default;
+        void serialize_order(SST::Core::Serialization::serializer& ser) override {
+            SST::SubComponent::serialize_order(ser);
+        }
+        ImplementVirtualSerializable(SST::MemHierarchy::ReplacementPolicy);
 };
 
 /* ------------------------------------------------------------------------------------------
@@ -102,16 +125,16 @@ public:
         array.resize(lines, 0);
     }
 
-    virtual ~LRU() {}
+    virtual ~LRU() = default;
 
     /* Too expensive to constantly dynamic_cast. Check once during construction instead. */
-    bool checkCompatibility(ReplacementInfo * rInfo) { return true; } // No cast
+    bool checkCompatibility(ReplacementInfo * rInfo) override { return true; } // No cast
 
     /* Record recently used line */
-    void update(uint64_t id, ReplacementInfo * rInfo) { array[id] = timestamp++; }
+    void update(uint64_t id, ReplacementInfo * rInfo) override { array[id] = timestamp++; }
 
     /* Record replaced line */
-    void replaced(uint64_t id) { array[id] = 0; }
+    void replaced(uint64_t id) override { array[id] = 0; }
 
     /** Lines are selected for replacement according to the following criteria (and in this order):
      * 1. If invalid (alwasy replace these)
@@ -119,7 +142,7 @@ public:
      * 3. If shared, try to keep
      * 4. If timestamp is the oldest (smallest), then evict
      */
-    uint64_t findBestCandidate(std::vector<ReplacementInfo*> &rInfo) {
+    uint64_t findBestCandidate(std::vector<ReplacementInfo*> &rInfo) override {
         bestCandidate = rInfo[0]->getIndex();
         uint64_t bestTS = array[rInfo[0]->getIndex()];
         if (rInfo[0]->getState() == I) {
@@ -139,8 +162,17 @@ public:
         return bestCandidate;
     }
 
-    uint64_t getBestCandidate() { return bestCandidate; }
+    uint64_t getBestCandidate() override { return bestCandidate; }
 
+    LRU() = default;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        ReplacementPolicy::serialize_order(ser);
+        SST_SER(timestamp);
+        SST_SER(bestCandidate);
+        SST_SER(ways);
+        SST_SER(array);
+    }
+    ImplementSerializable(SST::MemHierarchy::LRU)
 private:
     uint64_t timestamp;
     uint64_t bestCandidate;
@@ -162,21 +194,20 @@ public:
         array.resize(lines, 0);
     }
 
-    virtual ~LRUOpt() {}
+    virtual ~LRUOpt() = default;
 
     /* Too expensive to constantly dynamic_cast. Check once during construction instead. */
-    bool checkCompatibility(ReplacementInfo * rInfo) {
+    bool checkCompatibility(ReplacementInfo * rInfo) override {
         if (dynamic_cast<CoherenceReplacementInfo*>(rInfo))
             return true;
         return false;
     }
 
     /* Record recently used line */
-    void update(uint64_t id, ReplacementInfo * rInfo) { array[id] = timestamp++; }
+    void update(uint64_t id, ReplacementInfo * rInfo) override { array[id] = timestamp++; }
 
     /* Record replaced line */
-    //void replaced(uint64_t id) { array[id] = 0; }
-    void replaced(uint64_t id) { array[id] = 0; }
+    void replaced(uint64_t id) override { array[id] = 0; }
 
     /** Lines are selected for replacement according to the following criteria (and in this order):
      * 1. If invalid (alwasy replace these)
@@ -184,7 +215,7 @@ public:
      * 3. If shared, try to keep
      * 4. If timestamp is the oldest (smallest), then evict
      */
-    uint64_t findBestCandidate(std::vector<ReplacementInfo*> &rInfo) {
+    uint64_t findBestCandidate(std::vector<ReplacementInfo*> &rInfo) override {
         bestCandidate = rInfo[0]->getIndex();
         Rank bestRank = {array[rInfo[0]->getIndex()],
             static_cast<CoherenceReplacementInfo*>(rInfo[0])->getShared(),
@@ -211,8 +242,17 @@ public:
         return bestCandidate;
     }
 
-    uint64_t getBestCandidate() { return bestCandidate; }
+    uint64_t getBestCandidate() override { return bestCandidate; }
 
+    LRUOpt() = default;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        ReplacementPolicy::serialize_order(ser);
+        SST_SER(timestamp);
+        SST_SER(bestCandidate);
+        SST_SER(ways);
+        SST_SER(array);
+    }
+    ImplementSerializable(SST::MemHierarchy::LRUOpt)
 private:
     uint64_t timestamp;
     uint64_t bestCandidate;
@@ -258,20 +298,20 @@ public:
         array.resize(lines, (LFUInfo){0,0});
     }
 
-    virtual ~LFU() { }
+    virtual ~LFU() = default;
 
     /* Too expensive to constantly dynamic_cast. Check once during construction instead. */
-    bool checkCompatibility(ReplacementInfo * rInfo) { return true; } // No cast
+    bool checkCompatibility(ReplacementInfo * rInfo) override { return true; } // No cast
 
     // timestamp = (total accesses * timestamp + timestamp) / (accesses + 1)
     // timestamp increments by 1000 every time to make sure there's sufficient space between timestamps
-    void update(uint64_t id, ReplacementInfo * rInfo) {
+    void update(uint64_t id, ReplacementInfo * rInfo) override {
         array[id].ts = (array[id].acc*array[id].ts + timestamp)/(array[id].acc + 1);
         array[id].acc++;
         timestamp += 1000;
     }
 
-    uint64_t findBestCandidate(vector<ReplacementInfo*> &rInfo) {
+    uint64_t findBestCandidate(vector<ReplacementInfo*> &rInfo) override {
         bestCandidate = rInfo[0]->getIndex();
         LFUInfo bestLFU = array[rInfo[0]->getIndex()];
 
@@ -292,10 +332,19 @@ public:
         return bestCandidate;
     }
 
-    uint64_t getBestCandidate() { return bestCandidate; }
+    uint64_t getBestCandidate() override { return bestCandidate; }
 
-    //void replaced(uint64_t id) { array[id].acc = 0; }
-    void replaced(uint64_t id) { array[id].acc = 0; }
+    void replaced(uint64_t id) override { array[id].acc = 0; }
+
+    LFU() {}
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        ReplacementPolicy::serialize_order(ser);
+        SST_SER(timestamp);
+        SST_SER(bestCandidate);
+        SST_SER(ways);
+        SST_SER(array);
+    }
+    ImplementSerializable(SST::MemHierarchy::LFU)
 private:
 
     struct LFUInfo {
@@ -309,6 +358,11 @@ private:
             uint64_t otherInvFreq = (curTs - other.ts)/other.acc;
             return ownInvFreq > otherInvFreq;
             return false;
+        }
+
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(ts);
+            SST_SER(acc);
         }
     };
 
@@ -335,7 +389,7 @@ public:
     virtual ~LFUOpt() { }
 
     /* Too expensive to constantly dynamic_cast. Check once during construction instead. */
-    bool checkCompatibility(ReplacementInfo * rInfo) {
+    bool checkCompatibility(ReplacementInfo * rInfo) override {
         if (dynamic_cast<CoherenceReplacementInfo*>(rInfo))
             return true;
         return false;
@@ -343,13 +397,13 @@ public:
 
     // timestamp = (total accesses * timestamp + timestamp) / (accesses + 1)
     // timestamp increments by 1000 every time to make sure there's sufficient space between timestamps
-    void update(uint64_t id, ReplacementInfo * rInfo) {
+    void update(uint64_t id, ReplacementInfo * rInfo) override {
         array[id].ts = (array[id].acc*array[id].ts + timestamp)/(array[id].acc + 1);
         array[id].acc++;
         timestamp += 1000;
     }
 
-    uint64_t findBestCandidate(vector<ReplacementInfo*> &rInfo) {
+    uint64_t findBestCandidate(vector<ReplacementInfo*> &rInfo) override {
         bestCandidate = rInfo[0]->getIndex();
         Rank bestRank = {array[rInfo[0]->getIndex()],
             static_cast<CoherenceReplacementInfo*>(rInfo[0])->getShared(),
@@ -375,15 +429,29 @@ public:
         return bestCandidate;
     }
 
-    uint64_t getBestCandidate() { return bestCandidate; }
+    uint64_t getBestCandidate() override { return bestCandidate; }
 
-    //void replaced(uint64_t id) { array[id].acc = 0; }
-    void replaced(uint64_t id) { array[id].acc = 0; }
+    void replaced(uint64_t id) override { array[id].acc = 0; }
+
+    LFUOpt() {}
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        ReplacementPolicy::serialize_order(ser);
+        SST_SER(timestamp);
+        SST_SER(bestCandidate);
+        SST_SER(ways);
+        SST_SER(array);
+    }
+    ImplementSerializable(SST::MemHierarchy::LFUOpt)
 private:
 
     struct LFUInfo {
         uint64_t ts;    // timestamp, function of accesses with more recent ones being more heavily weighted
         uint64_t acc;   // accesses
+
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(ts);
+            SST_SER(acc);
+        }
     };
 
     std::vector<LFUInfo> array;
@@ -454,6 +522,11 @@ private:
             else
                 return timestamp > other.timestamp;
         }
+
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(timestamp);
+            SST_SER(state);
+        }
     };
 
 public:
@@ -470,14 +543,13 @@ public:
     virtual ~MRU() { }
 
     /* Too expensive to constantly dynamic_cast. Check once during construction instead. */
-    bool checkCompatibility(ReplacementInfo * rInfo) { return true; } // No cast
+    bool checkCompatibility(ReplacementInfo * rInfo) override { return true; } // No cast
 
-    void update(uint64_t id, ReplacementInfo * rInfo) { array[id] = timestamp++; }
+    void update(uint64_t id, ReplacementInfo * rInfo) override { array[id] = timestamp++; }
 
-    //void replaced(uint64_t id) { array[id] = 0; }
-    void replaced(uint64_t id) { array[id] = 0; }
+    void replaced(uint64_t id) override { array[id] = 0; }
 
-    uint64_t findBestCandidate(vector<ReplacementInfo*> &rInfo) {
+    uint64_t findBestCandidate(vector<ReplacementInfo*> &rInfo) override {
         bestCandidate = rInfo[0]->getIndex();
         Rank bestRank = {array[rInfo[0]->getIndex()], rInfo[0]->getState() };
         if (rInfo[0]->getState() == I)
@@ -497,7 +569,17 @@ public:
         return bestCandidate;
     }
 
-    uint64_t getBestCandidate() { return bestCandidate;}
+    uint64_t getBestCandidate() override { return bestCandidate;}
+
+    MRU() {}
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        ReplacementPolicy::serialize_order(ser);
+        SST_SER(timestamp);
+        SST_SER(bestCandidate);
+        SST_SER(ways);
+        SST_SER(array);
+    }
+    ImplementSerializable(SST::MemHierarchy::MRU)
 
 };
 
@@ -548,18 +630,17 @@ public:
     virtual ~MRUOpt() { }
 
     /* Too expensive to constantly dynamic_cast. Check once during construction instead. */
-    bool checkCompatibility(ReplacementInfo * rInfo) {
+    bool checkCompatibility(ReplacementInfo * rInfo) override {
         if (dynamic_cast<CoherenceReplacementInfo*>(rInfo))
             return true;
         return false;
     }
 
-    void update(uint64_t id, ReplacementInfo * rInfo) { array[id] = timestamp++; }
+    void update(uint64_t id, ReplacementInfo * rInfo) override { array[id] = timestamp++; }
 
-    //void replaced(uint64_t id) { array[id] = 0; }
-    void replaced(uint64_t id) { array[id] = 0; }
+    void replaced(uint64_t id) override { array[id] = 0; }
 
-    uint64_t findBestCandidate(vector<ReplacementInfo*> &rInfo) {
+    uint64_t findBestCandidate(vector<ReplacementInfo*> &rInfo) override {
         bestCandidate = rInfo[0]->getIndex();
         Rank bestRank = {array[rInfo[0]->getIndex()],
             static_cast<CoherenceReplacementInfo*>(rInfo[0])->getShared(),
@@ -585,8 +666,17 @@ public:
         return bestCandidate;
     }
 
-    uint64_t getBestCandidate() { return bestCandidate; }
+    uint64_t getBestCandidate() override { return bestCandidate; }
 
+    MRUOpt() {}
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        ReplacementPolicy::serialize_order(ser);
+        SST_SER(timestamp);
+        SST_SER(bestCandidate);
+        SST_SER(ways);
+        SST_SER(array);
+    }
+    ImplementSerializable(SST::MemHierarchy::MRUOpt)
 };
 
 
@@ -616,16 +706,16 @@ public:
     }
 
     /* Too expensive to constantly dynamic_cast. Check once during construction instead. */
-    bool checkCompatibility(ReplacementInfo * rInfo) {
+    bool checkCompatibility(ReplacementInfo * rInfo) override {
         return true; // No cast
     }
 
 
-    void update(uint64_t id, ReplacementInfo * rInfo){}
-    void replaced(uint64_t id){}
+    void update(uint64_t id, ReplacementInfo * rInfo) override {}
+    void replaced(uint64_t id) override {}
 
     // Return an empty slot if one exists, otherwise return a random candidate
-    uint64_t findBestCandidate(std::vector<ReplacementInfo*> &rInfo) {
+    uint64_t findBestCandidate(std::vector<ReplacementInfo*> &rInfo) override {
         // Check for empty line
         for (uint64_t i = 0; i < rInfo.size(); i++) {
             if (rInfo[i]->getState() == I) {
@@ -637,7 +727,16 @@ public:
         return bestCandidate;
     }
 
-    uint64_t getBestCandidate() { return bestCandidate; }
+    uint64_t getBestCandidate() override { return bestCandidate; }
+
+    Random() {}
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        ReplacementPolicy::serialize_order(ser);
+        SST_SER(bestCandidate);
+        SST_SER(ways);
+        SST_SER(gen);
+    }
+    ImplementSerializable(SST::MemHierarchy::Random)
 
 private:
     uint64_t bestCandidate;
@@ -681,16 +780,15 @@ public:
     }
 
     /* Too expensive to constantly dynamic_cast. Check once during construction instead. */
-    bool checkCompatibility(ReplacementInfo * rInfo) {
+    bool checkCompatibility(ReplacementInfo * rInfo) override {
         return true; // No cast
     }
 
-    void update(uint64_t id, ReplacementInfo * rInfo) { array[id/ways] = id % ways; }
-    //void replaced(uint64_t id) {}
-    void replaced(uint64_t id) { }
+    void update(uint64_t id, ReplacementInfo * rInfo) override { array[id/ways] = id % ways; }
+    void replaced(uint64_t id) override { }
 
     // Return an empty slot if one exists, otherwise return any slot that is not the most-recently used in the set
-    uint64_t findBestCandidate(std::vector<ReplacementInfo*> &rInfo) {
+    uint64_t findBestCandidate(std::vector<ReplacementInfo*> &rInfo) override {
         for (uint64_t i = 0; i < ways; i++) {
             if (rInfo[i]->getState() == I) {
                 bestCandidate = rInfo[i]->getIndex();
@@ -707,7 +805,17 @@ public:
         return bestCandidate;
     }
 
-    uint64_t getBestCandidate() { return bestCandidate; }
+    uint64_t getBestCandidate() override { return bestCandidate; }
+
+    NMRU() = default;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        ReplacementPolicy::serialize_order(ser);
+        SST_SER(bestCandidate);
+        SST_SER(ways);
+        SST_SER(array);
+        SST_SER(gen);
+    }
+    ImplementSerializable(SST::MemHierarchy::NMRU)
 };
 
 

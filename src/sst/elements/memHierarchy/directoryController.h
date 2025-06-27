@@ -158,7 +158,7 @@ public:
 private:
     Output out;
     Output dbg;
-    std::set<Addr> DEBUG_ADDR;
+    std::set<Addr> debug_addr_filter_;
 
     uint32_t    cacheLineSize;
 

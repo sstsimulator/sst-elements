@@ -33,14 +33,14 @@ namespace SST { namespace MemHierarchy {
  * Required API:
  * - reset() to reset to invalid state
  * - getString() for debug
- * - getAddr() for identifiying a line
+ * - getAddr() for identifying a line
  * - getReplacementInfo() for returning the information that a replacement policy might need
  * - allocated() to determine whether the line is currently allocated/valid
  */
 
 
 
-/* Line with only holds coherence state - no data */
+/* Line which only holds coherence state - no data */
 class DirectoryLine {
     private:
         const unsigned int index_;
@@ -134,6 +134,18 @@ class DirectoryLine {
             str << "]";
             return str.str();
         }
+
+        DirectoryLine() : index_(0) {}
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(const_cast<unsigned int&>(index_));
+            SST_SER(addr_);
+            SST_SER(state_);
+            SST_SER(sharers_);
+            SST_SER(owner_);
+            SST_SER(lastSendTimestamp_);
+            SST_SER(info_);
+            SST_SER(wasPrefetch_);
+        }
 };
 
 /* Line which only holds data - and points to a directory line */
@@ -188,10 +200,18 @@ class DataLine {
         std::string getString() {
             return (tag_ ? "Valid" : "Invalid");
         }
+
+        DataLine() : index_(0) {}
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(const_cast<unsigned int&>(index_));
+            SST_SER(addr_);
+            SST_SER(data_);
+            SST_SER(info_);
+        }
 };
 
 /* Base class for a line that contains both data & coherence state */
-class CacheLine {
+class CacheLine : public SST::Core::Serialization::serializable {
     protected:
         const unsigned int index_;
         Addr addr_;
@@ -256,6 +276,17 @@ class CacheLine {
             str << " State: " << StateString[state_];
             return str.str();
         }
+
+        CacheLine() : index_(0) {}
+        virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+            SST_SER(const_cast<unsigned int&>(index_));
+            SST_SER(addr_);
+            SST_SER(state_);
+            SST_SER(data_);
+            SST_SER(lastSendTimestamp_);
+            SST_SER(wasPrefetch_);
+        }
+        ImplementVirtualSerializable(SST::MemHierarchy::CacheLine);
 };
 
 /* With atomic/lock flags for L1 caches */
@@ -270,7 +301,7 @@ class L1CacheLine : public CacheLine {
         bool eventsWaitingForLock_; /* Number of events in the queue waiting for the lock */
         ReplacementInfo * info_;     /* Replacement info - depends on replacement algorithm */
     protected:
-        void updateReplacement() { info_->setState(state_); }
+        void updateReplacement() override { info_->setState(state_); }
     public:
         L1CacheLine(uint32_t size, unsigned int index) : CacheLine(size, index), LLSC_(false), LLSCTime_(0), userLock_(0), eventsWaitingForLock_(false) {
             info_ = new ReplacementInfo(index, I);
@@ -319,7 +350,7 @@ class L1CacheLine : public CacheLine {
         bool getEventsWaitingForLock() { return eventsWaitingForLock_; }
         void setEventsWaitingForLock(bool eventsWaiting) { eventsWaitingForLock_ = eventsWaiting; }
 
-        ReplacementInfo * getReplacementInfo() { return info_; }
+        ReplacementInfo * getReplacementInfo() override { return info_; }
 
         // String-ify for debugging
         std::string getString() {
@@ -334,6 +365,18 @@ class L1CacheLine : public CacheLine {
             str << "] Lock: (" << userLock_ << "," << eventsWaitingForLock_ << ")";
             return str.str();
         }
+
+        L1CacheLine() = default;
+        void serialize_order(SST::Core::Serialization::serializer& ser) override {
+            CacheLine::serialize_order(ser);
+            SST_SER(LLSC_);
+            SST_SER(LLSCTime_);
+            SST_SER(LLSCTidBuf_);
+            SST_SER(userLock_);
+            SST_SER(eventsWaitingForLock_);
+            SST_SER(info_);
+      }
+      ImplementSerializable(SST::MemHierarchy::L1CacheLine);
 };
 
 /* With owner/sharer state for shared caches */
@@ -343,7 +386,7 @@ class SharedCacheLine : public CacheLine {
         std::string owner_;
         CoherenceReplacementInfo * info_;
     protected:
-        virtual void updateReplacement() { info_->setState(state_); }
+        virtual void updateReplacement() override { info_->setState(state_); }
     public:
         SharedCacheLine(uint32_t size, unsigned int index) : CacheLine(size, index), owner_("") {
             info_ = new CoherenceReplacementInfo(index, I, false, false);
@@ -388,7 +431,7 @@ class SharedCacheLine : public CacheLine {
         }
 
         // Replacement
-        ReplacementInfo * getReplacementInfo() { return info_; }
+        ReplacementInfo * getReplacementInfo() override { return info_; }
 
         // String-ify for debugging
         std::string getString() {
@@ -402,6 +445,16 @@ class SharedCacheLine : public CacheLine {
             str << "]";
             return str.str();
         }
+
+        SharedCacheLine() = default;
+        void serialize_order(SST::Core::Serialization::serializer& ser) override {
+            CacheLine::serialize_order(ser);
+            SST_SER(sharers_);
+            SST_SER(owner_);
+            SST_SER(info_);
+        }
+        ImplementSerializable(SST::MemHierarchy::SharedCacheLine);
+
 };
 
 /* With flags indicating whether block is cached abov efor private caches */
@@ -411,7 +464,7 @@ class PrivateCacheLine : public CacheLine {
         bool owned_;
         CoherenceReplacementInfo * info_;
     protected:
-        virtual void updateReplacement() { info_->setState(state_); }
+        virtual void updateReplacement() override { info_->setState(state_); }
     public:
         PrivateCacheLine(uint32_t size, unsigned int index) : CacheLine(size, index), shared_(false), owned_(false) {
             info_ = new CoherenceReplacementInfo(index, I, false, false);
@@ -435,7 +488,7 @@ class PrivateCacheLine : public CacheLine {
         void setOwned(bool o) { owned_ = o; info_->setOwned(o); }
 
         // Replacement
-        ReplacementInfo * getReplacementInfo() { return info_; }
+        ReplacementInfo * getReplacementInfo() override { return info_; }
 
         // String-ify for debugging
         std::string getString() {
@@ -445,6 +498,15 @@ class PrivateCacheLine : public CacheLine {
             str += shared_ ? "Yes" : "No";
             return str;
         }
+
+        PrivateCacheLine() = default;
+        void serialize_order(SST::Core::Serialization::serializer& ser) override {
+            CacheLine::serialize_order(ser);
+            SST_SER(shared_);
+            SST_SER(owned_);
+            SST_SER(info_);
+        }
+        ImplementSerializable(SST::MemHierarchy::PrivateCacheLine);
 };
 
 }} // End namespace
