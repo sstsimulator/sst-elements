@@ -79,6 +79,7 @@ class testcase_memHierarchy_coherence(SSTTestCase):
     def test_coherence_two_core_case11_mesi(self):
         self.memHA_Template("2core_3level", 11, [86, 68], "mesi")
 
+    # Run all test_coherence_4core_5level.py tets with different seeds
     def test_coherence_four_core_case0_mesi(self):
         self.memHA_Template("4core_5level", 0, [1047, 3254, 5371, 4553], "mesi")
 
@@ -90,9 +91,24 @@ class testcase_memHierarchy_coherence(SSTTestCase):
 
     def test_coherence_four_core_case3_mesi(self):
         self.memHA_Template("4core_5level", 3, [5399, 2533, 433, 1834], "mesi")
+    
+    def test_coherence_none_case0(self):
+        self.memHA_Template("none", 0, [476])
+
+    def test_coherence_none_case1(self):
+        self.memHA_Template("none", 1, [377])
+    
+    def test_coherence_none_case2(self):
+        self.memHA_Template("none", 2, [98])
+    
+    def test_coherence_none_case3(self):
+        self.memHA_Template("none", 3, [4477])
+    
+    def test_coherence_none_case4(self):
+        self.memHA_Template("none", 4, [543623])
 #####
 
-    def memHA_Template(self, testcase, testnum, cpu_seeds, protocol,
+    def memHA_Template(self, testcase, testnum, cpu_seeds, protocol="none",
                        llsc="yes", ignore_err_file=False, testtimeout=240):
 
         # Get the path to the test files
@@ -113,8 +129,9 @@ class testcase_memHierarchy_coherence(SSTTestCase):
         args = '--model-options="{0}'.format(testnum)
         for x in cpu_seeds:
             args = args + " " + str(x)
-        args = args + " " + protocol + " " + llsc + " " + outdir + '"'
-
+        if protocol != "none":
+            args = args + " " + protocol + " " + llsc
+        args += " " + outdir + '"'
 
         ## Output only in debug mode
         log_debug("testcase = {0}".format(test_name))

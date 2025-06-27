@@ -113,15 +113,39 @@ class Bus:
 
         self.connect(highcomps, lowcomps)
 
-        """
-           highcomps = components to connect on the upper/cpu-side of the bus
-                       to add parameters to link, make this an array of (component,params) tuples
-           lowcomps = components to connect on the lower/memory-side of the bus
-                       to add parameters to link, make this an array of (component,params) tuples
-           latency = link latency to use; if None, the Bus's latency will be used
-           link_params = a set of parameters to give every link object (e.g., {"debug" : 1, "debug_level" : 10})
-                       These will be appended to any link_params passd to the Bus in its constructor
-        """
+    """
+        highcomps = components to connect on the upper/cpu-side of the bus
+                    to add parameters to link, make this an array of (component,params) tuples
+        latency = link latency to use; if None, the Bus's latency will be used
+        link_params = a set of parameters to give every link object (e.g., {"debug" : 1, "debug_level" : 10})
+                    These will be appended to any link_params passed to the Bus in its constructor
+    """
+    def connectHigh(self, highcomps, latency=None, link_params={}):
+        comp_list = []
+        comp_list.append(highcomps)
+        self.connect(highcomps=comp_list, latency=latency, link_params=link_params)
+
+    """
+        lowcomps = components to connect on the lower/memory-side of the bus
+                    to add parameters to link, make this an array of (component,params) tuples
+        latency = link latency to use; if None, the Bus's latency will be used
+        link_params = a set of parameters to give every link object (e.g., {"debug" : 1, "debug_level" : 10})
+                    These will be appended to any link_params passed to the Bus in its constructor
+    """
+    def connectLow(self, lowcomps, latency=None, link_params={}):
+        comp_list = []
+        comp_list.append(lowcomps)
+        self.connect(lowcomps=comp_list, latency=latency, link_params=link_params)
+
+    """
+        highcomps = components to connect on the upper/cpu-side of the bus
+                    to add parameters to link, make this an array of (component,params) tuples
+        lowcomps = components to connect on the lower/memory-side of the bus
+                    to add parameters to link, make this an array of (component,params) tuples
+        latency = link latency to use; if None, the Bus's latency will be used
+        link_params = a set of parameters to give every link object (e.g., {"debug" : 1, "debug_level" : 10})
+                    These will be appended to any link_params passed to the Bus in its constructor
+    """
     def connect(self, highcomps=[], lowcomps=[], latency=None, link_params={}):
         if latency is None:
             latency = self.latency
@@ -171,7 +195,81 @@ class Bus:
 
             self.lowlinks = self.lowlinks + 1
 
+""" MemHierarchy MemLink generator
+    This class simplifies the construction of MemLinks
+"""
+class MemLink:
 
+    """
+        latency = link latency to use
+        params = a set of parameters to give every link object by default (e.g., {"debug" : 1, "debug_level" : 10})
+    """
+    def __init__(self, latency, debug=False, debug_addrs=[]):
+        self.default_latency = latency
+        self.linkname = "link_memhierarchy_" + str(sst.getMyMPIRank()) + "_"
+        self.debug = debug
+        self.debug_addrs = debug_addrs
+        self.debug_level = 10 # MemLink does not have any other output level
 
+    def enableDebug(self,  addrs=[]):
+        self.debug = True
+        self.debug_addrs = addrs
 
+    def disableDebug(self):
+        self.debug = False
+        self.debug_addrs = []
+    
+    def setDebugAddrs(self, addrs):
+        self.debug_addrs = addrs
+    
+    def addDebugAddrs(self, addrs):
+        self.debug_addrs.append(addrs)
 
+    """
+        Connect two MemHierarchy components. Component order matters.
+        highcomp = the high (nearest CPU/processor/endpoint) component that typically sends requests to the lowcomp
+            to enable/disable link debug, add a bool to make this a tuple (component,True) or (component,False)
+        lowcomp = the low (nearest memory) component that typically responds to requests from the highcomp
+            to enable/disable link debug, add a bool to make this a tuple (component,True) or (component,False)
+        latency = optionally use a different latency than the default
+    """
+    def connect(self, highcomp, lowcomp, latency=None):
+
+        # Determine which latency and debug params to use
+        if latency is None:
+            latency = self.default_latency
+
+        if isinstance(highcomp, tuple):
+            hcomp = highcomp[0]
+            hcomp_debug = highcomp[1]
+        else:
+            hcomp = highcomp
+            hcomp_debug = self.debug
+
+        if isinstance(lowcomp, tuple):
+            lcomp = lowcomp[0]
+            lcomp_debug = lowcomp[1]
+        else:
+            lcomp = lowcomp
+            lcomp_debug = self.debug
+
+        linkname = ("link_memHierarchy_" + hcomp.getFullName() + "_lowlink" + lcomp.getFullName() + "_highlink").replace(":", ".")
+        link = sst.Link(linkname)
+
+        if hcomp_debug:
+            subcomp = hcomp.setSubComponent("lowlink", "memHierarchy.Memlink")
+            subcomp.addParams({ "debug": True, "debug_level": self.debug_level }) 
+            if self.debug_addrs:
+                subcomp.addParam("debug_addrs", self.debug_addrs)
+            subcomp.addLink(link, "port", latency)
+        else:
+            hcomp.addLink(link, "lowlink", latency)
+        
+        if lcomp_debug:
+            subcomp = lcomp.setSubComponent("highlink", "memHierarchy.Memlink")
+            subcomp.addParams({ "debug": True, "debug_level": self.debug_level }) 
+            if self.debug_addrs:
+                subcomp.addParam("debug_addrs", self.debug_addrs)
+            subcomp.addLink(link, "port", latency)
+        else:
+            lcomp.addLink(link, "highlink", latency)
