@@ -17,6 +17,7 @@
 #ifndef _H_EMBER_SHMEM_RING
 #define _H_EMBER_SHMEM_RING
 
+#include <cstdint>
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
 #include <cxxabi.h>

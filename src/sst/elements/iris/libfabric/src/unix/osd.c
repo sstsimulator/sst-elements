@@ -35,11 +35,14 @@
 #define _GNU_SOURCE
 #endif /* _GNU_SOURCE */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <fcntl.h>
+#include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <pthread.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #ifdef __FreeBSD__
 #include <pthread_np.h>
 #endif

@@ -20,6 +20,8 @@
 #include "os/callev/voscallwritev.h"
 #include "os/syscall/iovec.h"
 
+#include <cassert>
+
 namespace SST {
 namespace Vanadis {
 

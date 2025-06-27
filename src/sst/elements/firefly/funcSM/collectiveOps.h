@@ -18,6 +18,7 @@
 
 #include "sst/elements/hermes/msgapi.h"
 
+#include <cassert>
 #include <cstdint>
 
 namespace SST {

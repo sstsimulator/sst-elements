@@ -17,7 +17,10 @@
 #ifndef _H_EMBER_SHMEM_ATOMIC_INC
 #define _H_EMBER_SHMEM_ATOMIC_INC
 
+#include <cstdint>
+#include <string>
 #include <strings.h>
+#include <vector>
 #include "shmem/emberShmemGen.h"
 #include <cxxabi.h>
 

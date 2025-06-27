@@ -18,11 +18,12 @@
 #define _H_EMBER_TRICOUNT
 
 #include "mpi/embermpigen.h"
-#include <vector>
+#include <cstdint>
 #include <list>
+#include <map>
 #include <queue>
 #include <set>
-#include <map>
+#include <vector>
 
 namespace SST {
 namespace Ember {

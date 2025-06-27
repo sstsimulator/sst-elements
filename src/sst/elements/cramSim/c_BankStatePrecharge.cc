@@ -31,9 +31,10 @@
 #include "sst_config.h"
 
 // C++ includes
-#include <memory>
-#include <iostream>
 #include <assert.h>
+#include <iostream>
+#include <list>
+#include <memory>
 
 // CramSim includes
 #include "c_BankState.hpp"

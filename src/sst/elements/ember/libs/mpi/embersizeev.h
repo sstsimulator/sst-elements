@@ -19,6 +19,8 @@
 
 #include "emberMPIEvent.h"
 
+#include <string>
+
 namespace SST {
 namespace Ember {
 
