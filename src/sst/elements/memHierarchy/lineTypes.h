@@ -48,24 +48,24 @@ class DirectoryLine {
         State state_;
         std::set<std::string> sharers_;
         std::string owner_;
-        uint64_t lastSendTimestamp_;
-        CoherenceReplacementInfo * info_;
-        bool wasPrefetch_;
+        uint64_t last_send_timestamp_;
+        CoherenceReplacementInfo* info_;
+        bool was_prefetch_;
 
     public:
         DirectoryLine(uint32_t size, unsigned int index) : index_(index) {
             info_ = new CoherenceReplacementInfo(index, I, false, false);
             reset();
         }
-        virtual ~DirectoryLine() { }
+        ~DirectoryLine() = default;
 
         void reset() {
             addr_ = NO_ADDR;
             state_ = I;
             sharers_.clear();
             owner_ = "";
-            lastSendTimestamp_ = 0;
-            wasPrefetch_ = false;
+            last_send_timestamp_ = 0;
+            was_prefetch_ = false;
             info_->reset();
         }
 
@@ -108,12 +108,12 @@ class DirectoryLine {
         }
 
         // Timestamp
-        uint64_t getTimestamp() { return lastSendTimestamp_; }
-        void setTimestamp(uint64_t timestamp) { lastSendTimestamp_ = timestamp; }
+        uint64_t getTimestamp() { return last_send_timestamp_; }
+        void setTimestamp(uint64_t timestamp) { last_send_timestamp_ = timestamp; }
 
         // Prefetch
-        bool getPrefetch() { return wasPrefetch_; }
-        void setPrefetch(bool prefetch) { wasPrefetch_ = prefetch; }
+        bool getPrefetch() { return was_prefetch_; }
+        void setPrefetch(bool prefetch) { was_prefetch_ = prefetch; }
 
 
         // Replacement
@@ -142,9 +142,9 @@ class DirectoryLine {
             SST_SER(state_);
             SST_SER(sharers_);
             SST_SER(owner_);
-            SST_SER(lastSendTimestamp_);
+            SST_SER(last_send_timestamp_);
             SST_SER(info_);
-            SST_SER(wasPrefetch_);
+            SST_SER(was_prefetch_);
         }
 };
 
@@ -162,7 +162,7 @@ class DataLine {
             info_ = new CoherenceReplacementInfo(index, I, false, false);
             reset();
         }
-        virtual ~DataLine() { }
+        ~DataLine() { }
 
         void reset() {
             addr_ = NO_ADDR;
@@ -206,6 +206,7 @@ class DataLine {
             SST_SER(const_cast<unsigned int&>(index_));
             SST_SER(addr_);
             SST_SER(data_);
+            SST_SER(tag_);
             SST_SER(info_);
         }
 };

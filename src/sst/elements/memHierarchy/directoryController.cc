@@ -2812,3 +2812,69 @@ void DirectoryController::printDebugInfo() {
     dbg.debug(_L6_, " %s", eventDI.verboseline.c_str());
     dbg.debug(_L5_, "\n");
 }
+
+
+void DirectoryController::serialize_order(SST::Core::Serialization::serializer& ser) {
+    SST::Component::serialize_order(ser);
+
+    SST_SER(out);
+    SST_SER(dbg);
+    SST_SER(debug_addr_filter_);
+    SST_SER(cacheLineSize);
+    SST_SER(region);
+    SST_SER(memOffset);
+    SST_SER(timestamp);
+    SST_SER(maxRequestsPerCycle);
+    SST_SER(clockOn);
+    SST_SER(clockHandler);
+    SST_SER(defaultTimeBase);
+    SST_SER(lastActiveClockCycle);
+    SST_SER(startTimes);
+    SST_SER(stat_replacementRequestLatency);
+    SST_SER(stat_getRequestLatency);
+    SST_SER(stat_cacheHits);
+    SST_SER(stat_mshrHits);
+    SST_SER(stat_eventRecv);
+    SST_SER(stat_noncacheRecv);
+    SST_SER(stat_eventSent);
+    SST_SER(stat_dirEntryReads);
+    SST_SER(stat_dirEntryWrites);
+    SST_SER(stat_MSHROccupancy);
+    SST_SER(eventBuffer);
+    SST_SER(retryBuffer);
+    SST_SER(noncacheMemReqs);
+    SST_SER(addrsThisCycle);
+    SST_SER(eventDI);
+    SST_SER(evictDI);
+    SST_SER(linkDown_);
+    SST_SER(linkUp_);
+    SST_SER(clockLinkUp_);
+    SST_SER(clockLinkDown_);
+    SST_SER(dlevel);
+    SST_SER(mshr);
+    SST_SER(directory);
+    SST_SER(cpuMsgQueue);
+    SST_SER(memMsgQueue);
+    SST_SER(entryCacheMaxSize);
+    SST_SER(entryCacheSize);
+    SST_SER(entrySize);
+    SST_SER(entryCache);
+    SST_SER(lineSize);
+    SST_SER(accessLatency);
+    SST_SER(mshrLatency);
+    SST_SER(flush_state_);
+    SST_SER(responses);
+    SST_SER(dirMemAccesses);
+    SST_SER(protocol);
+    SST_SER(waitWBAck);
+    SST_SER(sendWBAck);
+    SST_SER(incoherentSrc);
+    SST_SER(init_requests_); // Not strictly neccessary to save
+
+    // Reconstruct DirEntry iterators
+    if (ser.mode() == SST::Core::Serialization::serializer::UNPACK) {
+        for (auto& x : directory) {
+            x.second->cacheIter = std::find(entryCache.begin(), entryCache.end(), x.second);
+        }
+    }
+}
