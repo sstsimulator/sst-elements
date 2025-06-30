@@ -208,8 +208,8 @@ void c_TxnGenBase::handleResEvent(SST::Event* ev) {
         s_txnsLatency->addData(l_latency);
 
 #ifdef __SST_DEBUG_OUTPUT__
-        debug->verbose(CALL_INFO,1,0,"[cycle:%" PRIu64 "] addr: 0x%lx isRead:%d seqNum:%" PRIu64 " birthTime:%llu latency:%" PRIu64 " \n",
-            l_currentCycle, l_txn->getAddress(), l_txn->isRead(), l_seqnum,m_outstandingReqs[l_seqnum], l_latency);
+        debug->verbose(CALL_INFO,1,0,"[cycle:%" PRIu64 "] addr: 0x%lx isRead:%d seqNum:%" PRIu64 " birthTime:%" PRIu64 " latency:%" PRIu64 " \n",
+            l_currentCycle, l_txn->getAddress(), l_txn->isRead(), l_seqnum, m_outstandingReqs[l_seqnum], l_latency);
 #endif
 
 
