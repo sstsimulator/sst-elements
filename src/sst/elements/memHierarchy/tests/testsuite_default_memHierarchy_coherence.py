@@ -91,19 +91,19 @@ class testcase_memHierarchy_coherence(SSTTestCase):
 
     def test_coherence_four_core_case3_mesi(self):
         self.memHA_Template("4core_5level", 3, [5399, 2533, 433, 1834], "mesi")
-    
+
     def test_coherence_none_case0(self):
         self.memHA_Template("none", 0, [476])
 
     def test_coherence_none_case1(self):
         self.memHA_Template("none", 1, [377])
-    
+
     def test_coherence_none_case2(self):
         self.memHA_Template("none", 2, [98])
-    
+
     def test_coherence_none_case3(self):
         self.memHA_Template("none", 3, [4477])
-    
+
     def test_coherence_none_case4(self):
         self.memHA_Template("none", 4, [543623])
 #####

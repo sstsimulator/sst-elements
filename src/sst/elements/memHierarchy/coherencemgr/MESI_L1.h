@@ -183,32 +183,32 @@ public:
             {"hash", "Hash function for mapping addresses to cache lines", "SST::MemHierarchy::HashFunction"} )
 
 /* Class definition */
-    MESIL1(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch);
+    MESIL1(ComponentId_t id, Params& params, Params& owner_params, bool prefetch);
     MESIL1() = default; // Serialization
     ~MESIL1() { delete cache_array_; }
 
     /** Event handlers - called by controller */
-    bool handleGetS(MemEvent * event, bool inMSHR) override;
-    bool handleWrite(MemEvent * event, bool inMSHR) override;
-    bool handleGetX(MemEvent * event, bool inMSHR) override;
-    bool handleGetSX(MemEvent * event, bool inMSHR) override;
-    bool handleFlushLine(MemEvent * event, bool inMSHR) override;
-    bool handleFlushLineInv(MemEvent * event, bool inMSHR) override;
-    bool handleFlushAll(MemEvent * event, bool inMSHR) override;
-    bool handleForwardFlush(MemEvent * event, bool inMSHR) override;
-    bool handleFetch(MemEvent * event, bool inMSHR) override;
-    bool handleInv(MemEvent * event, bool inMSHR) override;
-    bool handleForceInv(MemEvent * event, bool inMSHR) override;
-    bool handleFetchInv(MemEvent * event, bool inMSHR) override;
-    bool handleFetchInvX(MemEvent * event, bool inMSHR) override;
-    bool handleGetSResp(MemEvent * event, bool inMSHR) override;
-    bool handleGetXResp(MemEvent * event, bool inMSHR) override;
-    bool handleFlushLineResp(MemEvent * event, bool inMSHR) override;
-    bool handleFlushAllResp(MemEvent * event, bool inMSHR) override;
-    bool handleUnblockFlush(MemEvent * event, bool inMSHR) override;
-    bool handleAckPut(MemEvent * event, bool inMSHR) override;
-    bool handleNULLCMD(MemEvent * event, bool inMSHR) override;
-    bool handleNACK(MemEvent * event, bool inMSHR) override;
+    bool handleGetS(MemEvent * event, bool in_mshr) override;
+    bool handleWrite(MemEvent * event, bool in_mshr) override;
+    bool handleGetX(MemEvent * event, bool in_mshr) override;
+    bool handleGetSX(MemEvent * event, bool in_mshr) override;
+    bool handleFlushLine(MemEvent * event, bool in_mshr) override;
+    bool handleFlushLineInv(MemEvent * event, bool in_mshr) override;
+    bool handleFlushAll(MemEvent * event, bool in_mshr) override;
+    bool handleForwardFlush(MemEvent * event, bool in_mshr) override;
+    bool handleFetch(MemEvent * event, bool in_mshr) override;
+    bool handleInv(MemEvent * event, bool in_mshr) override;
+    bool handleForceInv(MemEvent * event, bool in_mshr) override;
+    bool handleFetchInv(MemEvent * event, bool in_mshr) override;
+    bool handleFetchInvX(MemEvent * event, bool in_mshr) override;
+    bool handleGetSResp(MemEvent * event, bool in_mshr) override;
+    bool handleGetXResp(MemEvent * event, bool in_mshr) override;
+    bool handleFlushLineResp(MemEvent * event, bool in_mshr) override;
+    bool handleFlushAllResp(MemEvent * event, bool in_mshr) override;
+    bool handleUnblockFlush(MemEvent * event, bool in_mshr) override;
+    bool handleAckPut(MemEvent * event, bool in_mshr) override;
+    bool handleNULLCMD(MemEvent * event, bool in_mshr) override;
+    bool handleNACK(MemEvent * event, bool in_mshr) override;
 
     /** Bank conflict detection - used by controller */
     Addr getBank(Addr addr) override;
@@ -216,7 +216,7 @@ public:
     /** Configuration */
     MemEventInitCoherence* getInitCoherenceEvent() override;
     virtual std::set<Command> getValidReceiveEvents() override;
-    void setSliceAware(uint64_t interleaveSize, uint64_t interleaveStep) override;
+    void setSliceAware(uint64_t interleave_size, uint64_t interleave_step) override;
 
     /** Status output */
     void printStatus(Output& out) override;
@@ -246,18 +246,18 @@ public:
 private:
 
     /** Cache and MSHR management */
-    MemEventStatus processCacheMiss(MemEvent * event, L1CacheLine * line, bool inMSHR);
-    MemEventStatus checkMSHRCollision(MemEvent* event, bool inMSHR);
+    MemEventStatus processCacheMiss(MemEvent * event, L1CacheLine * line, bool in_mshr);
+    MemEventStatus checkMSHRCollision(MemEvent* event, bool in_mshr);
     L1CacheLine* allocateLine(MemEvent * event, L1CacheLine * line);
     bool handleEviction(Addr addr, L1CacheLine *& line, bool flush);
-    void cleanUpAfterRequest(MemEvent * event, bool inMSHR);
-    void cleanUpAfterResponse(MemEvent * event, bool inMSHR);
-    void cleanUpAfterFlush(MemEvent * req, MemEvent * resp = nullptr, bool inMSHR = true);
+    void cleanUpAfterRequest(MemEvent * event, bool in_mshr);
+    void cleanUpAfterResponse(MemEvent * event, bool in_mshr);
+    void cleanUpAfterFlush(MemEvent * req, MemEvent * resp = nullptr, bool in_mshr = true);
     void retry(Addr addr);
     void handleLoadLinkExpiration(SST::Event* ev);
 
     /** Event send */
-    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t time, bool success = true) override;
+    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool in_mshr, uint64_t time, bool success = true) override;
     void sendResponseDown(MemEvent * event, L1CacheLine * line, bool data);
     void forwardFlush(MemEvent * event, L1CacheLine * line, bool evict);
     void sendWriteback(Command cmd, L1CacheLine * line, bool dirty, bool flush);
@@ -268,7 +268,7 @@ private:
     /** Statistics/Listeners */
     inline void recordPrefetchResult(L1CacheLine * line, Statistic<uint64_t>* stat);
     void recordLatency(Command cmd, int type, uint64_t latency) override;
-    void eventProfileAndNotify(MemEvent * event, State state, NotifyAccessType type, NotifyResultType result, bool inMSHR);
+    void eventProfileAndNotify(MemEvent * event, State state, NotifyAccessType type, NotifyResultType result, bool in_mshr);
 
     /** Miscellaneous */
     void printLine(Addr addr);
@@ -288,13 +288,13 @@ private:
     CacheArray<L1CacheLine>* cache_array_ = nullptr;
 
     /** Statistics */
-    Statistic<uint64_t>* stat_eventStalledForLock = nullptr;
-    Statistic<uint64_t>* stat_latencyGetS[2] = {nullptr, nullptr};
-    Statistic<uint64_t>* stat_latencyGetX[4] = {nullptr, nullptr, nullptr, nullptr};
-    Statistic<uint64_t>* stat_latencyGetSX[4] = {nullptr, nullptr, nullptr, nullptr};
-    Statistic<uint64_t>* stat_latencyFlushLine[2] = {nullptr, nullptr};
-    Statistic<uint64_t>* stat_latencyFlushLineInv[2] = {nullptr, nullptr};
-    Statistic<uint64_t>* stat_latencyFlushAll = nullptr;
+    Statistic<uint64_t>* stat_event_stalled_for_lock = nullptr;
+    Statistic<uint64_t>* stat_latency_GetS_[2] = {nullptr, nullptr};
+    Statistic<uint64_t>* stat_latency_GetX_[4] = {nullptr, nullptr, nullptr, nullptr};
+    Statistic<uint64_t>* stat_latency_GetSX_[4] = {nullptr, nullptr, nullptr, nullptr};
+    Statistic<uint64_t>* stat_latency_FlushLine_[2] = {nullptr, nullptr};
+    Statistic<uint64_t>* stat_latency_FlushLineInv_[2] = {nullptr, nullptr};
+    Statistic<uint64_t>* stat_latency_FlushAll_ = nullptr;
     Statistic<uint64_t>* stat_hit_[3][2] = { {nullptr, nullptr}, {nullptr, nullptr}, {nullptr, nullptr} };
     Statistic<uint64_t>* stat_miss_[3][2] = { {nullptr, nullptr}, {nullptr, nullptr}, {nullptr, nullptr} };
     Statistic<uint64_t>* stat_hits_ = nullptr;

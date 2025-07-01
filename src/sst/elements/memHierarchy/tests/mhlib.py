@@ -218,10 +218,10 @@ class MemLink:
     def disableDebug(self):
         self.debug = False
         self.debug_addrs = []
-    
+
     def setDebugAddrs(self, addrs):
         self.debug_addrs = addrs
-    
+
     def addDebugAddrs(self, addrs):
         self.debug_addrs.append(addrs)
 
@@ -258,16 +258,16 @@ class MemLink:
 
         if hcomp_debug:
             subcomp = hcomp.setSubComponent("lowlink", "memHierarchy.Memlink")
-            subcomp.addParams({ "debug": True, "debug_level": self.debug_level }) 
+            subcomp.addParams({ "debug": True, "debug_level": self.debug_level })
             if self.debug_addrs:
                 subcomp.addParam("debug_addrs", self.debug_addrs)
             subcomp.addLink(link, "port", latency)
         else:
             hcomp.addLink(link, "lowlink", latency)
-        
+
         if lcomp_debug:
             subcomp = lcomp.setSubComponent("highlink", "memHierarchy.Memlink")
-            subcomp.addParams({ "debug": True, "debug_level": self.debug_level }) 
+            subcomp.addParams({ "debug": True, "debug_level": self.debug_level })
             if self.debug_addrs:
                 subcomp.addParam("debug_addrs", self.debug_addrs)
             subcomp.addLink(link, "port", latency)

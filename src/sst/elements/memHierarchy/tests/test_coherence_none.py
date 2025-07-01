@@ -85,8 +85,10 @@ memctrl.addParams({
     "backing" : "malloc",
     "backing_size_unit" : "1KiB",
     "backing_init_zero" : True,
-    "backing_out_file" : "{}/test_memHierarchy_coherence_none_case{}_none.malloc.mem".format(outdir, option),
 })
+
+if outdir != "":
+    memctrl.addParam("backing_out_file", "{}/test_memHierarchy_coherence_none_case{}_none.malloc.mem".format(outdir, option))
 
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
 memory.addParams({
@@ -154,7 +156,7 @@ elif option == 1: # L1 <-> L2 <-> Mem
 elif option == 2: # L1 <-> L2/distrib <-> Mem
     cache_bus = Bus("cachebus", bus_params, "50ps", [l1cache] )
     mem_bus = Bus("membus", bus_params, "50ps", lowcomps=[memctrl])
-    
+
     for x in range(4):
         l2cache = sst.Component("l2cache" + str(x), "memHierarchy.Cache")
         l2cache.addParams(l2cache_params)
@@ -193,7 +195,7 @@ elif option == 4: # L1 <-> L2/distrib <-> L3/distr <-> Mem
         l3cache.addParams(cache_distributed_params_two_way)
         l3cache.addParam("slice_id", x)
         l2_bus.connectLow(l3cache)
-        l3_bus.connectHigh(l3cache)     
+        l3_bus.connectHigh(l3cache)
 else:
     print("Error, option=%d is not valid. Options 0-4 are allowed\n"%option)
     sys.exit(-1)

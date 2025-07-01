@@ -266,83 +266,83 @@ public:
             {"hash", "Hash function for mapping addresses to cache lines", "SST::MemHierarchy::HashFunction"} )
 
 /* Class definition */
-    MESISharNoninclusive(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch);
+    MESISharNoninclusive(ComponentId_t id, Params& params, Params& owner_params, bool prefetch);
     MESISharNoninclusive() = default; // Serialization
     ~MESISharNoninclusive() {}
 
     /** Event handlers - called by controller */
-    virtual bool handleGetS(MemEvent* event, bool inMSHR) override;
-    virtual bool handleGetX(MemEvent* event, bool inMSHR) override;
-    virtual bool handleGetSX(MemEvent* event, bool inMSHR) override;
-    virtual bool handleFlushLine(MemEvent* event, bool inMSHR) override;
-    virtual bool handleFlushLineInv(MemEvent* event, bool inMSHR) override;
-    virtual bool handleFlushAll(MemEvent* event, bool inMSHR) override;
-    virtual bool handleForwardFlush(MemEvent* event, bool inMSHR) override;
-    virtual bool handlePutS(MemEvent* event, bool inMSHR) override;
-    virtual bool handlePutE(MemEvent* event, bool inMSHR) override;
-    virtual bool handlePutX(MemEvent* event, bool inMSHR) override;
-    virtual bool handlePutM(MemEvent* event, bool inMSHR) override;
-    virtual bool handleInv(MemEvent * event, bool inMSHR) override;
-    virtual bool handleForceInv(MemEvent * event, bool inMSHR) override;
-    virtual bool handleFetch(MemEvent * event, bool inMSHR) override;
-    virtual bool handleFetchInv(MemEvent * event, bool inMSHR) override;
-    virtual bool handleFetchInvX(MemEvent * event, bool inMSHR) override;
-    virtual bool handleNULLCMD(MemEvent* event, bool inMSHR) override;
-    virtual bool handleGetSResp(MemEvent* event, bool inMSHR) override;
-    virtual bool handleGetXResp(MemEvent* event, bool inMSHR) override;
-    virtual bool handleFlushLineResp(MemEvent* event, bool inMSHR) override;
-    virtual bool handleFlushAllResp(MemEvent* event, bool inMSHR) override;
-    virtual bool handleFetchResp(MemEvent* event, bool inMSHR) override;
-    virtual bool handleFetchXResp(MemEvent* event, bool inMSHR) override;
-    virtual bool handleAckFlush(MemEvent* event, bool inMSHR) override;
-    virtual bool handleUnblockFlush(MemEvent* event, bool inMSHR) override;
-    virtual bool handleAckInv(MemEvent* event, bool inMSHR) override;
-    virtual bool handleAckPut(MemEvent* event, bool inMSHR) override;
-    virtual bool handleNACK(MemEvent* event, bool inMSHR) override;
-    
+    virtual bool handleGetS(MemEvent* event, bool in_mshr) override;
+    virtual bool handleGetX(MemEvent* event, bool in_mshr) override;
+    virtual bool handleGetSX(MemEvent* event, bool in_mshr) override;
+    virtual bool handleFlushLine(MemEvent* event, bool in_mshr) override;
+    virtual bool handleFlushLineInv(MemEvent* event, bool in_mshr) override;
+    virtual bool handleFlushAll(MemEvent* event, bool in_mshr) override;
+    virtual bool handleForwardFlush(MemEvent* event, bool in_mshr) override;
+    virtual bool handlePutS(MemEvent* event, bool in_mshr) override;
+    virtual bool handlePutE(MemEvent* event, bool in_mshr) override;
+    virtual bool handlePutX(MemEvent* event, bool in_mshr) override;
+    virtual bool handlePutM(MemEvent* event, bool in_mshr) override;
+    virtual bool handleInv(MemEvent * event, bool in_mshr) override;
+    virtual bool handleForceInv(MemEvent * event, bool in_mshr) override;
+    virtual bool handleFetch(MemEvent * event, bool in_mshr) override;
+    virtual bool handleFetchInv(MemEvent * event, bool in_mshr) override;
+    virtual bool handleFetchInvX(MemEvent * event, bool in_mshr) override;
+    virtual bool handleNULLCMD(MemEvent* event, bool in_mshr) override;
+    virtual bool handleGetSResp(MemEvent* event, bool in_mshr) override;
+    virtual bool handleGetXResp(MemEvent* event, bool in_mshr) override;
+    virtual bool handleFlushLineResp(MemEvent* event, bool in_mshr) override;
+    virtual bool handleFlushAllResp(MemEvent* event, bool in_mshr) override;
+    virtual bool handleFetchResp(MemEvent* event, bool in_mshr) override;
+    virtual bool handleFetchXResp(MemEvent* event, bool in_mshr) override;
+    virtual bool handleAckFlush(MemEvent* event, bool in_mshr) override;
+    virtual bool handleUnblockFlush(MemEvent* event, bool in_mshr) override;
+    virtual bool handleAckInv(MemEvent* event, bool in_mshr) override;
+    virtual bool handleAckPut(MemEvent* event, bool in_mshr) override;
+    virtual bool handleNACK(MemEvent* event, bool in_mshr) override;
+
     /** Bank conflict detection - used by controller */
-    Addr getBank(Addr addr) override { return dirArray_->getBank(addr); }
+    Addr getBank(Addr addr) override { return dir_array_->getBank(addr); }
 
     /** Configuration */
     MemEventInitCoherence* getInitCoherenceEvent() override;
     std::set<Command> getValidReceiveEvents() override;
     void setSliceAware(uint64_t size, uint64_t step) override {
-        dirArray_->setSliceAware(size, step);
-        dataArray_->setSliceAware(size, step);
+        dir_array_->setSliceAware(size, step);
+        data_array_->setSliceAware(size, step);
     }
 
     /** Status output */
     //void printStatus(Output &out);
 
     /** Serialization */
-    void serialize_order(SST::Core::Serialization::serializer& ser) override {}
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
     ImplementSerializable(SST::MemHierarchy::MESISharNoninclusive);
 
 private:
     /** Cache and MSHR management */
-    MemEventStatus processDirectoryMiss(MemEvent * event, DirectoryLine * line, bool inMSHR);
-    MemEventStatus processDataMiss(MemEvent * event, DirectoryLine * tag, DataLine * data, bool inMSHR);
+    MemEventStatus processDirectoryMiss(MemEvent * event, DirectoryLine * line, bool in_mshr);
+    MemEventStatus processDataMiss(MemEvent * event, DirectoryLine * tag, DataLine * data, bool in_mshr);
     DirectoryLine * allocateDirLine(MemEvent * event, DirectoryLine * line);
     DataLine * allocateDataLine(MemEvent * event, DataLine * line);
     bool handleDirEviction(Addr addr, DirectoryLine* &line);
     bool handleDataEviction(Addr addr, DataLine* &line);
-    void cleanUpAfterRequest(MemEvent * event, bool inMSHR);
-    void cleanUpAfterResponse(MemEvent * event, bool inMSHR);
-    void cleanUpEvent(MemEvent * event, bool inMSHR);
+    void cleanUpAfterRequest(MemEvent * event, bool in_mshr);
+    void cleanUpAfterResponse(MemEvent * event, bool in_mshr);
+    void cleanUpEvent(MemEvent * event, bool in_mshr);
     void retry(Addr addr);
 
     /** Invalidate sharers and/or owner; returns either the new line timestamp (or 0 if no invalidation) or a bool indicating whether anything was invalidated */
-    bool invalidateExceptRequestor(MemEvent * event, DirectoryLine * line, bool inMSHR, bool needData);
-    bool invalidateAll(MemEvent * event, DirectoryLine * line, bool inMSHR, bool needData);
-    uint64_t invalidateSharer(std::string shr, MemEvent * event, DirectoryLine * line, bool inMSHR, Command cmd = Command::Inv);
-    void invalidateSharers(MemEvent * event, DirectoryLine * line, bool inMSHR, bool needData, Command cmd);
-    bool invalidateOwner(MemEvent * event, DirectoryLine * line, bool inMSHR, Command cmd = Command::FetchInv);
+    bool invalidateExceptRequestor(MemEvent * event, DirectoryLine * line, bool in_mshr, bool needData);
+    bool invalidateAll(MemEvent * event, DirectoryLine * line, bool in_mshr, bool needData);
+    uint64_t invalidateSharer(std::string shr, MemEvent * event, DirectoryLine * line, bool in_mshr, Command cmd = Command::Inv);
+    void invalidateSharers(MemEvent * event, DirectoryLine * line, bool in_mshr, bool needData, Command cmd);
+    bool invalidateOwner(MemEvent * event, DirectoryLine * line, bool in_mshr, Command cmd = Command::FetchInv);
 
     /** Forward a flush line request, with or without data */
     uint64_t forwardFlush(MemEvent* event, bool evict, std::vector<uint8_t>* data, bool dirty, uint64_t time);
 
     /** Send response up (to processor) */
-    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t baseTime, Command cmd = Command::NULLCMD, bool success = true);
+    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool in_mshr, uint64_t base_time, Command cmd = Command::NULLCMD, bool success = true);
 
     /** Send response down (towards memory) */
     void sendResponseDown(MemEvent* event, std::vector<uint8_t>* data, bool dirty, bool evict);
@@ -352,7 +352,7 @@ private:
     void sendWritebackFromMSHR(Command cmd, DirectoryLine* tag, bool dirty);
     void sendWritebackAck(MemEvent* event);
 
-    uint64_t sendFetch(Command cmd, MemEvent * event, std::string dst, bool inMSHR, uint64_t ts);
+    uint64_t sendFetch(Command cmd, MemEvent * event, std::string dst, bool in_mshr, uint64_t ts);
 
     /** Call through to coherenceController with statistic recording */
     void forwardByAddress(MemEventBase* ev, Cycle_t timestamp) override;
@@ -375,13 +375,13 @@ private:
     void recordPrefetchResult(DirectoryLine * line, Statistic<uint64_t> * stat);
 
 /* Private data members */
-    CacheArray<DataLine>* dataArray_;
-    CacheArray<DirectoryLine>* dirArray_;
+    CacheArray<DataLine>* data_array_;
+    CacheArray<DirectoryLine>* dir_array_;
 
     bool protocol_;  // True for MESI, false for MSI
-    State protocolState_;
+    State protocol_state_;
 
-    std::map<Addr, std::map<std::string, MemEvent::id_type> > responses;
+    std::map<Addr, std::map<std::string, MemEvent::id_type> > responses_;
 
     // Map an outstanding eviction (key = replaceAddr,newAddr) to whether it is a directory eviction (true) or data eviction (false)
     std::map<std::pair<Addr,Addr>, bool> eviction_type_;
@@ -390,17 +390,15 @@ private:
     int shutdown_flush_counter_;
 
 /* Statistics */
-    Statistic<uint64_t>* stat_latencyGetS[3];
-    Statistic<uint64_t>* stat_latencyGetX[4];
-    Statistic<uint64_t>* stat_latencyGetSX[4];
-    Statistic<uint64_t>* stat_latencyFlushLine;
-    Statistic<uint64_t>* stat_latencyFlushLineInv;
-    Statistic<uint64_t>* stat_hit[3][2];
-    Statistic<uint64_t>* stat_miss[3][2];
-    Statistic<uint64_t>* stat_hits;
-    Statistic<uint64_t>* stat_misses;
-
-
+    Statistic<uint64_t>* stat_latency_GetS_[3] = {nullptr, nullptr, nullptr};
+    Statistic<uint64_t>* stat_latency_GetX_[4] = {nullptr, nullptr, nullptr, nullptr};
+    Statistic<uint64_t>* stat_latency_GetSX_[4] = {nullptr, nullptr, nullptr, nullptr};
+    Statistic<uint64_t>* stat_latency_FlushLine_ = nullptr;
+    Statistic<uint64_t>* stat_latency_FlushLineInv_ = nullptr;
+    Statistic<uint64_t>* stat_hit_[3][2] = { {nullptr, nullptr}, {nullptr, nullptr}, {nullptr, nullptr} };
+    Statistic<uint64_t>* stat_miss_[3][2] = { {nullptr, nullptr}, {nullptr, nullptr}, {nullptr, nullptr} };
+    Statistic<uint64_t>* stat_hits_ = nullptr;
+    Statistic<uint64_t>* stat_misses_ = nullptr;
 };
 
 

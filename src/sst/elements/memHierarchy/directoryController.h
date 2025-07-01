@@ -242,7 +242,7 @@ public:
 
     /** Clock handler */
     bool clock(SST::Cycle_t cycle);
-    
+
     /** Serialization */
     DirectoryController() = default;
     void serialize_order(SST::Core::Serialization::serializer& ser) override;
