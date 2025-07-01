@@ -124,7 +124,7 @@ public:
 
     void recvNotify(SST::Event * ev) { (*recvHandler)(ev); }
 
-    MemLink() { }
+    MemLink() = default;
     void serialize_order(SST::Core::Serialization::serializer& ser) override;
     ImplementSerializable(SST::MemHierarchy::MemLink)
 protected:

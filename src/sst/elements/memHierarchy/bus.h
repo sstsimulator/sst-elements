@@ -96,7 +96,7 @@ private:
 
 
     Output                      dbg_;
-    std::set<Addr>              DEBUG_ADDR;
+    std::set<Addr>              debug_addr_filter_;
     int                         numHighPorts_;
     int                         numLowPorts_;
     uint64_t                    idleCount_;

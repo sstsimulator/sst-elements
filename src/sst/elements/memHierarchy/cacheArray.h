@@ -108,7 +108,7 @@ class CacheArray {
         cache_itr end() const { return cache_itr(this, num_lines_); }
 
     /* Serialization support */
-    CacheArray() {}
+    CacheArray() = default;
     void serialize_order(SST::Core::Serialization::serializer& ser);
 };
 
@@ -131,7 +131,7 @@ CacheArray<T>::CacheArray(Output* dbg, unsigned int numLines, unsigned int assoc
         debug_->fatal(CALL_INFO, -1, "CacheArray, Error: number of sets (number of lines / associativity) is 0. Must be at least 1. Number of lines = %u. Associativity = %u.\n",
                         num_lines_, associativity_);
     if ((num_sets_ * associativity_) != num_lines_)
-        debug_->fatal(CALL_INFO, -1, "CacheArray, Error: The number of cachelines is not divisible by the cache associativity. Ensure (lines mod associativiy = 0). Number of lines = %u. Associativity = %u\n",
+        debug_->fatal(CALL_INFO, -1, "CacheArray, Error: The number of cachelines is not divisible by the cache associativity. Ensure (lines mod associativity = 0). Number of lines = %u. Associativity = %u\n",
                 num_lines_, associativity_);
 
     line_offset_ = log2Of(line_size_);
@@ -164,8 +164,6 @@ template <class T>
 CacheArray<T>::~CacheArray() {
     for (size_t i = 0; i < lines_.size(); i++)
         delete lines_[i];
-    delete replacement_mgr_;
-    delete hash_;
     delete [] setStates;
 }
 

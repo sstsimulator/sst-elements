@@ -57,7 +57,7 @@ MemCacheController::MemCacheController(ComponentId_t id, Params &params) : Compo
     std::vector<Addr> addrArr;
     params.find_array<Addr>("debug_addr", addrArr);
     for (std::vector<Addr>::iterator it = addrArr.begin(); it != addrArr.end(); it++) {
-        DEBUG_ADDR.insert(*it);
+        debug_addr_filter_.insert(*it);
     }
 
     // Output for warnings

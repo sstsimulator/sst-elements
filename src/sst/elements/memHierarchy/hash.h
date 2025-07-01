@@ -38,6 +38,12 @@ public:
     virtual ~HashFunction() {}
 
     virtual uint64_t hash(uint32_t ID, uint64_t value) = 0;
+
+    HashFunction() = default;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SubComponent::serialize_order(ser);
+    }
+    ImplementVirtualSerializable(SST::MemHierarchy::HashFunction)
 };
 
 /* Default hash function - none */
@@ -48,9 +54,15 @@ public:
 
     NoHashFunction(ComponentId_t id, Params& params) : HashFunction(id, params) {}
 
-    inline uint64_t hash(uint32_t ID, uint64_t value) {
+    inline uint64_t hash(uint32_t ID, uint64_t value) override {
         return value;
     }
+
+    NoHashFunction() = default;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        HashFunction::serialize_order(ser);
+    }
+    ImplementSerializable(SST::MemHierarchy::NoHashFunction)
 };
 
 /* This function is taken from the C99 standard's RNG and should uniquely map
@@ -62,9 +74,15 @@ public:
 
     LinearHashFunction(ComponentId_t id, Params& params) : HashFunction(id, params) {}
 
-    uint64_t hash(uint32_t ID, uint64_t x) {
+    uint64_t hash(uint32_t ID, uint64_t x) override {
         return 1103515245*x + 12345;
     }
+
+    LinearHashFunction() = default;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        HashFunction::serialize_order(ser);
+    }
+    ImplementSerializable(SST::MemHierarchy::LinearHashFunction)
 };
 
 /* Just a simple xor-based hash. */
@@ -75,7 +93,7 @@ public:
 
     XorHashFunction(ComponentId_t id, Params& params) : HashFunction(id, params) {}
 
-    uint64_t hash(uint32_t ID, uint64_t x) {
+    uint64_t hash(uint32_t ID, uint64_t x) override {
         unsigned char b[8];
         for (unsigned i = 0; i < 8; ++i)
             b[i] = (x >> (i*8))&0xff;
@@ -89,6 +107,12 @@ public:
 
         return result;
     }
+
+    XorHashFunction() = default;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        HashFunction::serialize_order(ser);
+    }
+    ImplementSerializable(SST::MemHierarchy::XorHashFunction)
 };
 
 }}

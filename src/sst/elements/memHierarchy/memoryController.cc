@@ -79,7 +79,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     std::vector<Addr> addrArr;
     params.find_array<Addr>("debug_addr", addrArr);
     for (std::vector<Addr>::iterator it = addrArr.begin(); it != addrArr.end(); it++) {
-        DEBUG_ADDR.insert(*it);
+        debug_addr_filter_.insert(*it);
     }
 
     // Output for warnings
@@ -898,7 +898,7 @@ void MemController::serialize_order(SST::Core::Serialization::serializer& ser) {
 
     SST_SER(out);
     SST_SER(dbg);
-    SST_SER(DEBUG_ADDR);
+    SST_SER(debug_addr_filter_);
     SST_SER(dlevel);
 
     SST_SER(memBackendConvertor_);

@@ -63,7 +63,7 @@ public:
         std::vector<uint64_t> addrArray;
         params.find_array<uint64_t>("debug_addr", addrArray);
         for (std::vector<uint64_t>::iterator it = addrArray.begin(); it != addrArray.end(); it++) {
-            DEBUG_ADDR.insert(*it);
+            debug_addr_filter_.insert(*it);
         }
 
         // Calls to read & write data
@@ -105,7 +105,7 @@ protected:
 
     // Debug
     Output dbg;
-    std::set<Addr> DEBUG_ADDR;
+    std::set<Addr> debug_addr_filter_;
 
     std::function<void(Addr,size_t,std::vector<uint8_t>&)> readData;
     std::function<void(Addr,std::vector<uint8_t>*)> writeData;

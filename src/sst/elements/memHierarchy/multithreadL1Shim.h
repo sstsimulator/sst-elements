@@ -74,7 +74,7 @@ private:
     /** Output and debug */
     Output debug;
     Output output;
-    std::set<Addr> DEBUG_ADDR;
+    std::set<Addr> debug_addr_filter_;
 
     /** Links */
     SST::Link * cacheLink;

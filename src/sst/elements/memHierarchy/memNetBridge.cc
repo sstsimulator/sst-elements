@@ -37,7 +37,7 @@ MemNetBridge::MemNetBridge(SST::ComponentId_t id, SST::Params &params, Merlin::B
     std::vector<uint64_t> addrArray;
     params.find_array<uint64_t>("debug_addr", addrArray);
     for (std::vector<uint64_t>::iterator it = addrArray.begin(); it != addrArray.end(); it++) {
-        DEBUG_ADDR.insert(*it);
+        debug_addr_filter_.insert(*it);
     }
 
 }
