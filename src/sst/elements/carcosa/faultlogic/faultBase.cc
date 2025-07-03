@@ -9,19 +9,11 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include "stuckAtFault.h"
+#include "faultBase.h"
 
 using namespace SST::Carcosa;
 
-/********** StuckAtFault **********/
-
-StuckAtFault::StuckAtFault(Params& params) : FaultBase(params) 
+FaultBase::FaultBase(Params& params)
 {
-#ifdef DEBUG
-    getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "\Fault Type: Stuck-At Fault");
-#endif
-}
-
-void faultLogic(Event&* ev) {
-    // see comment in header file
+    // what do we need in here?
 }

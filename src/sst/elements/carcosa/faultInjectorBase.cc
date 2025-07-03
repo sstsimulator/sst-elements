@@ -42,30 +42,14 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
 #ifdef DEBUG
     getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "\tInjection Probability: %d\n", injectionProbability_);
 #endif
-    /*
-    string faultType = params.find<string>("faultType", "");
-
-    if ( faultType == "stuckAt" ) {
-        stuckAtInit(params);
-        faultLogic = &FaultInjectorBase::stuckAtFault;
-    } else if ( faultType == "randomFlip" ) {
-        faultLogic = &FaultInjectorBase::randomFlipFault;
-    } else if ( faultType == "randomDrop" ) {
-        faultLogic = &FaultInjectorBase::randomDropFault;
-    } else if ( faultType == "corruptMemRegion" ) {
-        faultLogic = &FaultInjectorBase::corruptRegionFault;
-    } else if ( faultType == "custom" ) {
-        faultLogic = &FaultInjectorBase::customFault; // placeholder
-    } else {
-        getSimulationOutput().fatal(CALL_INFO_LONG, -1, "\tInvalid fault type selected. Valid options are stuckAt, RandomFlip, randomDrop, corruptRegion, and custom.\n");
-    }
-    */
+    
+    fault = new StuckAtFault(params);
 }
 
 void
 FaultInjectorBase::eventSent(uintptr_t key, Event*& ev) 
 {
-    (this->*(faultLogic))(ev);
+    fault->faultLogic(ev);
 }
 
 void
@@ -74,7 +58,7 @@ FaultInjectorBase::interceptHandler(uintptr_t key, Event*& ev, bool& cancel)
     // do not cancel delivery by default
     cancel = false;
 
-    (this->*(faultLogic))(ev);
+    fault->faultLogic(ev);
 }
 /**
 void

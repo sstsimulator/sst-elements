@@ -15,8 +15,8 @@
 #include "sst/core/component.h"
 #include "sst/core/event.h"
 #include "sst/elements/memHierarchy/memEvent.h"
-#include <map>
-#include <utility>
+#include "faultlogic/faultBase.h"
+#include "faultlogic/stuckAtFault.h"
 
 namespace SST::Carcosa {
 
@@ -60,7 +60,9 @@ public:
     FaultInjectorBase(Params& params);
 
     FaultInjectorBase() = default;
-    ~FaultInjectorBase() {}
+    ~FaultInjectorBase() {
+        delete fault;
+    }
 
     void eventSent(uintptr_t key, Event*& ev) override;
     void interceptHandler(uintptr_t key, Event*& data, bool& cancel) override;
@@ -88,8 +90,8 @@ public:
         }
     }
 
-private:
-    void (SST::Carcosa::FaultInjectorBase::* faultLogic)(Event*&);
+protected:
+    FaultBase* fault;
 
     installDirection installDirection_ = installDirection::Receive;
     double injectionProbability_ = 0.5;
@@ -98,6 +100,7 @@ private:
     {
         SST::PortModule::serialize_order(ser);
         // serialize parameters like `SST_SER(<param_member>)`
+        SST_SER(fault);
         SST_SER(installDirection_);
         SST_SER(injectionProbability_);
     }
