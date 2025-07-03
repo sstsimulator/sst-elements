@@ -18,14 +18,21 @@
 
 namespace SST::Carcosa {
 
+    /** TODO:
+     * Parameters for switching between interface-driven and normal instantiation
+     * A way to read in data to choose which logic to use
+     *  - Might be possible to parameterize the entirety of the logic, but would be easier if I can 
+     *    build a "library" of functions that are loaded dynamically
+    */
+
 class FaultBase {
 public:
     FaultBase(Params& params);
 
     FaultBase() = default;
     ~FaultBase() {}
-    
-    virtual void faultLogic(Event*& ev) = 0;
+
+    virtual void faultLogic(Event*& ev);
 };
 }
 

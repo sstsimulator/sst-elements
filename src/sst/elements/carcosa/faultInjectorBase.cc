@@ -43,7 +43,7 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
     getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "\tInjection Probability: %d\n", injectionProbability_);
 #endif
     
-    fault = new StuckAtFault(params);
+    fault = new faultBase(params);
 }
 
 void
