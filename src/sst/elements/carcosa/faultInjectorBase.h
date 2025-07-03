@@ -55,8 +55,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
         {"installDirection", "Flag which direction the injector should read from on a port. Valid optins are \'Send\', \'Receive\', and \'Both\'. Default is \'Receive\'."},
         {"injectionProbability", "The probability with which an injection should occur. Valid inputs range from 0 to 1. Default = 0.5."},
-        {"faultType", "The type of fault to be injected. Options are stuckAt, randomFlip, randomDrop, corruptMemRegion, and custom."},
-        {"stuckAtAddrs", "Map of addresses and bits that are stuck, along with the values of those stuck bits."}
     )
 
     FaultInjectorBase(Params& params);
@@ -96,36 +94,14 @@ private:
     installDirection installDirection_ = installDirection::Receive;
     double injectionProbability_ = 0.5;
 
-    // map of addr->{bit, value} for saving stuck bit values
-    std::map<SST::MemHierarchy::Addr, std::vector<std::pair<int, bool>>> stuckAtMap;
-
     void serialize_order(SST::Core::Serialization::serializer& ser) override
     {
         SST::PortModule::serialize_order(ser);
         // serialize parameters like `SST_SER(<param_member>)`
         SST_SER(installDirection_);
         SST_SER(injectionProbability_);
-        SST_SER(stuckAtMap);
     }
     ImplementSerializable(SST::Carcosa::FaultInjectorBase)
-
-    /**
-     * Read event payload and perform the following:
-     *  - If stuckAtMap.at(addr) exists, compare all listed bits with payload value
-     *  - If payload value does not match mapped value, add bit to flip mask
-     *  - Once all stored bit values have been compared, use flip mask to modify address data
-     */
-    void stuckAtFault(Event*& ev);
-
-    void stuckAtInit(SST::Params& params);
-
-    void randomFlipFault(Event*& ev);
-    
-    void randomDropFault(Event*& ev);
-
-    void corruptMemRegionFault(Event*& ev);
-
-    void customFault(Event*& ev);
 };
 
 } // namespace SST::FaultInjectorBase

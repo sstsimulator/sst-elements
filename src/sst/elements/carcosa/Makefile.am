@@ -8,9 +8,11 @@ AM_CPPFLAGS += \
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libcarcosa.la
-libcarcosa_la_SOURCES = \
-    faultInjectorBase.cc \
-    faultInjectorBase.h
+libcarcosa_la_SOURCES =         \
+    faultInjectorBase.cc        \
+    faultInjectorBase.h         \
+    faultlogic/stuckAtFault.cc  \
+    faultlogic/stuckAtFault.h
 
 EXTRA_DIST = \
     dummyTest.py
