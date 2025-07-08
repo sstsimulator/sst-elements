@@ -25,7 +25,6 @@
 #include "llyr.h"
 #include "llyrTypes.h"
 #include "llyrHelpers.h"
-#include "parser/parser.h"
 #include "mappers/mapperList.h"
 
 namespace SST {
@@ -467,7 +466,7 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
 
         output_->verbose(CALL_INFO, 16, 0, "Parsing:  %s\n", thisLine.c_str());
         if( position !=  std::string::npos ) {
-            constructSoftwareGraphIR(inputStream);
+            //  old LLVM implementation
         } else {
             constructSoftwareGraphApp(inputStream);
         }
@@ -477,19 +476,6 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
         output_->fatal(CALL_INFO, -1, "Error: Unable to open %s\n", fileName.c_str() );
         exit(0);
     }
-}
-
-void LlyrComponent::constructSoftwareGraphIR(std::ifstream& inputStream)
-{
-    std::string thisLine;
-
-    output_->verbose(CALL_INFO, 16, 0, "Sending to LLVM parser\n");
-
-    inputStream.seekg (0, inputStream.beg);
-    std::string irString( (std::istreambuf_iterator< char >( inputStream )),
-                          (std::istreambuf_iterator< char >() ));
-    Parser parser(irString, output_);
-    parser.generateAppGraph("offload_");
 }
 
 void LlyrComponent::constructSoftwareGraphApp(std::ifstream& inputStream)
