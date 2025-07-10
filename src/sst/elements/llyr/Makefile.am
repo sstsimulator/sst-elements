@@ -56,7 +56,7 @@ libllyr_la_SOURCES += $(deprecated_libsimpleElementExample_sources)
 endif
 
 EXTRA_DIST = \
-	tests/llyr_test.py
+	tests/simple_test.py
 
 deprecated_EXTRA_DIST =
 
