@@ -105,24 +105,24 @@ CoherenceController::CoherenceController(ComponentId_t id, Params &params, Param
     // Initialize event debug info (event_debuginfo_/evict_debuginfo_)
     evict_debuginfo_.id.first = 0;
     evict_debuginfo_.id.second = 0;
-    evict_debuginfo_.thr = 0;
+    evict_debuginfo_.thread = 0;
     evict_debuginfo_.cmd = Command::NULLCMD;
-    evict_debuginfo_.mod = "";
-    evict_debuginfo_.oldst = I;
-    evict_debuginfo_.newst = I;
+    evict_debuginfo_.modifier = "";
+    evict_debuginfo_.old_state = I;
+    evict_debuginfo_.new_state = I;
     evict_debuginfo_.action = "";
     evict_debuginfo_.reason = "";
-    evict_debuginfo_.verboseline = "";
+    evict_debuginfo_.verbose_line = "";
     event_debuginfo_.id.first = 0;
     event_debuginfo_.id.second = 0;
-    event_debuginfo_.thr = 0;
+    event_debuginfo_.thread = 0;
     event_debuginfo_.cmd = Command::NULLCMD;
-    event_debuginfo_.mod = "";
-    event_debuginfo_.oldst = I;
-    event_debuginfo_.newst = I;
+    event_debuginfo_.modifier = "";
+    event_debuginfo_.old_state = I;
+    event_debuginfo_.new_state = I;
     event_debuginfo_.action = "";
     event_debuginfo_.reason = "";
-    event_debuginfo_.verboseline = "";
+    event_debuginfo_.verbose_line = "";
 }
 
 /*******************************************************************************
@@ -595,12 +595,12 @@ void CoherenceController::clearRetryBuffer() {
 
 
 /* Listener callbacks */
-void CoherenceController::notifyListenerOfAccess(MemEvent * event, NotifyAccessType access_type, NotifyResultType result) {
+void CoherenceController::notifyListenerOfAccess(MemEvent * event, NotifyAccessType access_type, NotifyResultType result_type) {
     if (event->isPrefetch())
         access_type = NotifyAccessType::PREFETCH;
 
     CacheListenerNotification notify(event->getAddr(), event->getBaseAddr(), event->getVirtualAddress(),
-            event->getInstructionPointer(), event->getSize(), access_type, result);
+            event->getInstructionPointer(), event->getSize(), access_type, result_type);
 
     for (int i = 0; i < listeners_.size(); i++)
         listeners_[i]->notifyAccess(notify);
@@ -773,7 +773,7 @@ void CoherenceController::printDebugInfo(dbgin * debuginfo) {
         return;
 
     std::string cmd = CommandString[(int)debuginfo->cmd];
-    cmd += debuginfo->mod;
+    cmd += debuginfo->modifier;
 
     std::stringstream id;
     id << "<" << debuginfo->id.first << "," << debuginfo->id.second << ">";
@@ -782,16 +782,16 @@ void CoherenceController::printDebugInfo(dbgin * debuginfo) {
     reas << "(" << debuginfo->reason << ")";
 
     stringstream thr;
-    if (debuginfo->hasThr)
-        thr << debuginfo->thr;
+    if (debuginfo->has_thread)
+        thr << debuginfo->thread;
     else
         thr << "";
 
     debug_->debug(_L5_, "C: %-20" PRIu64 " %-20" PRIu64 " %-20s %-4s %-13s 0x%-16" PRIx64 " %-15s %-6s %-6s %-10s %-15s",
             getCurrentSimCycle(), timestamp_, cachename_.c_str(), thr.str().c_str(), cmd.c_str(), debuginfo->addr,
-            id.str().c_str(), StateString[debuginfo->oldst], StateString[debuginfo->newst], debuginfo->action.c_str(), reas.str().c_str());
+            id.str().c_str(), StateString[debuginfo->old_state], StateString[debuginfo->new_state], debuginfo->action.c_str(), reas.str().c_str());
 
-    debug_->debug(_L6_, " %s", debuginfo->verboseline.c_str());
+    debug_->debug(_L6_, " %s", debuginfo->verbose_line.c_str());
     debug_->debug(_L5_, "\n");
 }
 

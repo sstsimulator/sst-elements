@@ -35,7 +35,7 @@ namespace SST { namespace MemHierarchy {
  * - getString() for debug
  * - getAddr() for identifying a line
  * - getReplacementInfo() for returning the information that a replacement policy might need
- * - allocated() to determine whether the line is currently allocated/valid
+ * - isAllocated() to determine whether the line is currently allocated/valid
  */
 
 
@@ -120,7 +120,7 @@ class DirectoryLine {
         ReplacementInfo* getReplacementInfo() { return info_; }
 
         // Validity
-        bool allocated() { return state_ != I; }
+        bool isAllocated() { return state_ != I; }
 
         // String-ify for debugging
         std::string getString() {
@@ -194,7 +194,7 @@ class DataLine {
         ReplacementInfo* getReplacementInfo() { return (tag_ != nullptr ? tag_->getReplacementInfo() : info_); }
 
         // Validity
-        bool allocated() { return tag_ != nullptr; }
+        bool isAllocated() { return tag_ != nullptr; }
 
         // String-ify for debugging
         std::string getString() {
@@ -268,7 +268,7 @@ class CacheLine : public SST::Core::Serialization::serializable {
         virtual ReplacementInfo* getReplacementInfo() = 0;
 
         // Validity
-        bool allocated() { return state_ != I; }
+        bool isAllocated() { return state_ != I; }
 
         // String-ify for debugging
         std::string getString() {

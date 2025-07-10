@@ -473,10 +473,10 @@ bool MESISharNoninclusive::handleGetS(MemEvent* event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr) && tag) {
-        event_debuginfo_.newst = tag->getState();
-        event_debuginfo_.verboseline = tag->getString();
+        event_debuginfo_.new_state = tag->getState();
+        event_debuginfo_.verbose_line = tag->getString();
         if (data)
-            event_debuginfo_.verboseline += "/" + data->getString();
+            event_debuginfo_.verbose_line += "/" + data->getString();
     }
 
     if (status == MemEventStatus::Reject) {
@@ -615,10 +615,10 @@ bool MESISharNoninclusive::handleGetX(MemEvent * event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr) && tag) {
-        event_debuginfo_.newst = tag->getState();
-        event_debuginfo_.verboseline = tag->getString();
+        event_debuginfo_.new_state = tag->getState();
+        event_debuginfo_.verbose_line = tag->getString();
         if (data)
-            event_debuginfo_.verboseline += "/" + data->getString();
+            event_debuginfo_.verbose_line += "/" + data->getString();
     }
 
     if (status == MemEventStatus::Reject)
@@ -736,10 +736,10 @@ bool MESISharNoninclusive::handleFlushLine(MemEvent* event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr) && tag) {
-        event_debuginfo_.newst = tag->getState();
-        event_debuginfo_.verboseline = tag->getString();
+        event_debuginfo_.new_state = tag->getState();
+        event_debuginfo_.verbose_line = tag->getString();
         if (data)
-            event_debuginfo_.verboseline += "/" + data->getString();
+            event_debuginfo_.verbose_line += "/" + data->getString();
     }
 
     if (status == MemEventStatus::Reject)
@@ -872,10 +872,10 @@ bool MESISharNoninclusive::handleFlushLineInv(MemEvent* event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr) && tag) {
-        event_debuginfo_.newst = tag->getState();
-        event_debuginfo_.verboseline = tag->getString();
+        event_debuginfo_.new_state = tag->getState();
+        event_debuginfo_.verbose_line = tag->getString();
         if (data)
-            event_debuginfo_.verboseline += "/" + data->getString();
+            event_debuginfo_.verbose_line += "/" + data->getString();
     }
 
     if (status == MemEventStatus::Reject)
@@ -1234,10 +1234,10 @@ bool MESISharNoninclusive::handlePutS(MemEvent * event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr) && tag) {
-        event_debuginfo_.newst = tag->getState();
-        event_debuginfo_.verboseline = tag->getString();
+        event_debuginfo_.new_state = tag->getState();
+        event_debuginfo_.verbose_line = tag->getString();
         if (data)
-            event_debuginfo_.verboseline += "/" + data->getString();
+            event_debuginfo_.verbose_line += "/" + data->getString();
     }
 
     if (status == MemEventStatus::Reject)
@@ -1348,10 +1348,10 @@ bool MESISharNoninclusive::handlePutE(MemEvent * event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr) && tag) {
-        event_debuginfo_.newst = tag->getState();
-        event_debuginfo_.verboseline = tag->getString();
+        event_debuginfo_.new_state = tag->getState();
+        event_debuginfo_.verbose_line = tag->getString();
         if (data)
-            event_debuginfo_.verboseline += "/" + data->getString();
+            event_debuginfo_.verbose_line += "/" + data->getString();
     }
     if (status == MemEventStatus::Reject)
         sendNACK(event);
@@ -1483,10 +1483,10 @@ bool MESISharNoninclusive::handlePutM(MemEvent * event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr) && tag) {
-        event_debuginfo_.newst = tag->getState();
-        event_debuginfo_.verboseline = tag->getString();
+        event_debuginfo_.new_state = tag->getState();
+        event_debuginfo_.verbose_line = tag->getString();
         if (data)
-            event_debuginfo_.verboseline += "/" + data->getString();
+            event_debuginfo_.verbose_line += "/" + data->getString();
     }
     if (status == MemEventStatus::Reject)
         sendNACK(event);
@@ -1569,10 +1569,10 @@ bool MESISharNoninclusive::handlePutX(MemEvent * event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr) && tag) {
-        event_debuginfo_.newst = tag->getState();
-        event_debuginfo_.verboseline = tag->getString();
+        event_debuginfo_.new_state = tag->getState();
+        event_debuginfo_.verbose_line = tag->getString();
         if (data)
-            event_debuginfo_.verboseline += "/" + data->getString();
+            event_debuginfo_.verbose_line += "/" + data->getString();
     }
 
     return true;
@@ -1679,10 +1679,10 @@ bool MESISharNoninclusive::handleFetch(MemEvent * event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr) && tag) {
-        event_debuginfo_.newst = tag->getState();
-        event_debuginfo_.verboseline = tag->getString();
+        event_debuginfo_.new_state = tag->getState();
+        event_debuginfo_.verbose_line = tag->getString();
         if (data)
-            event_debuginfo_.verboseline += "/" + data->getString();
+            event_debuginfo_.verbose_line += "/" + data->getString();
     }
 
     if (status == MemEventStatus::Reject)
@@ -1830,10 +1830,10 @@ bool MESISharNoninclusive::handleInv(MemEvent * event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr) && tag) {
-        event_debuginfo_.newst = tag->getState();
-        event_debuginfo_.verboseline = tag->getString();
+        event_debuginfo_.new_state = tag->getState();
+        event_debuginfo_.verbose_line = tag->getString();
         if (data)
-            event_debuginfo_.verboseline += "/" + data->getString();
+            event_debuginfo_.verbose_line += "/" + data->getString();
     }
 
     if (status == MemEventStatus::Reject)
@@ -2021,10 +2021,10 @@ bool MESISharNoninclusive::handleForceInv(MemEvent * event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr) && tag) {
-        event_debuginfo_.newst = tag->getState();
-        event_debuginfo_.verboseline = tag->getString();
+        event_debuginfo_.new_state = tag->getState();
+        event_debuginfo_.verbose_line = tag->getString();
         if (data)
-            event_debuginfo_.verboseline += "/" + data->getString();
+            event_debuginfo_.verbose_line += "/" + data->getString();
     }
 
     if (status == MemEventStatus::Reject)
@@ -2229,10 +2229,10 @@ bool MESISharNoninclusive::handleFetchInv(MemEvent * event, bool in_mshr){
     }
 
     if (mem_h_is_debug_addr(addr) && tag) {
-        event_debuginfo_.newst = tag->getState();
-        event_debuginfo_.verboseline = tag->getString();
+        event_debuginfo_.new_state = tag->getState();
+        event_debuginfo_.verbose_line = tag->getString();
         if (data)
-            event_debuginfo_.verboseline += "/" + data->getString();
+            event_debuginfo_.verbose_line += "/" + data->getString();
     }
 
     if (status == MemEventStatus::Reject)
@@ -2344,10 +2344,10 @@ bool MESISharNoninclusive::handleFetchInvX(MemEvent * event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr) && tag) {
-        event_debuginfo_.newst = tag->getState();
-        event_debuginfo_.verboseline = tag->getString();
+        event_debuginfo_.new_state = tag->getState();
+        event_debuginfo_.verbose_line = tag->getString();
         if (data)
-            event_debuginfo_.verboseline += "/" + data->getString();
+            event_debuginfo_.verbose_line += "/" + data->getString();
     }
 
     if (status == MemEventStatus::Reject)
@@ -2394,10 +2394,10 @@ bool MESISharNoninclusive::handleGetSResp(MemEvent * event, bool in_mshr) {
     cleanUpAfterResponse(event, in_mshr);
 
     if (mem_h_is_debug_addr(addr) && tag) {
-        event_debuginfo_.newst = tag->getState();
-        event_debuginfo_.verboseline = tag->getString();
+        event_debuginfo_.new_state = tag->getState();
+        event_debuginfo_.verbose_line = tag->getString();
         if (data)
-            event_debuginfo_.verboseline += "/" + data->getString();
+            event_debuginfo_.verbose_line += "/" + data->getString();
     }
 
     return true;
@@ -2508,10 +2508,10 @@ bool MESISharNoninclusive::handleGetXResp(MemEvent * event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr) && tag) {
-        event_debuginfo_.newst = tag->getState();
-        event_debuginfo_.verboseline = tag->getString();
+        event_debuginfo_.new_state = tag->getState();
+        event_debuginfo_.verbose_line = tag->getString();
         if (data)
-            event_debuginfo_.verboseline += "/" + data->getString();
+            event_debuginfo_.verbose_line += "/" + data->getString();
     }
     return true;
 }
@@ -2553,10 +2553,10 @@ bool MESISharNoninclusive::handleFlushLineResp(MemEvent * event, bool in_mshr) {
     sendResponseUp(req, nullptr, true, timestamp_, Command::FlushLineResp, event->success());
 
     if (mem_h_is_debug_addr(addr) && tag) {
-        event_debuginfo_.newst = tag->getState();
-        event_debuginfo_.verboseline = tag->getString();
+        event_debuginfo_.new_state = tag->getState();
+        event_debuginfo_.verbose_line = tag->getString();
         if (data)
-            event_debuginfo_.verboseline += "/" + data->getString();
+            event_debuginfo_.verbose_line += "/" + data->getString();
     }
     cleanUpAfterResponse(event, in_mshr);
     return true;
@@ -2666,10 +2666,10 @@ bool MESISharNoninclusive::handleFetchResp(MemEvent * event, bool in_mshr) {
     if (mem_h_is_debug_event(event)) {
         event_debuginfo_.action = done ? "Retry" : "Stall";
         if (tag) {
-            event_debuginfo_.newst = tag->getState();
-            event_debuginfo_.verboseline = tag->getString();
+            event_debuginfo_.new_state = tag->getState();
+            event_debuginfo_.verbose_line = tag->getString();
             if (data)
-                event_debuginfo_.verboseline += "/" + data->getString();
+                event_debuginfo_.verbose_line += "/" + data->getString();
         }
     }
 
@@ -2722,10 +2722,10 @@ bool MESISharNoninclusive::handleFetchXResp(MemEvent * event, bool in_mshr) {
     delete event;
 
     if (mem_h_is_debug_addr(addr) && tag) {
-        event_debuginfo_.newst = tag->getState();
-        event_debuginfo_.verboseline = tag->getString();
+        event_debuginfo_.new_state = tag->getState();
+        event_debuginfo_.verbose_line = tag->getString();
         if (data)
-            event_debuginfo_.verboseline += "/" + data->getString();
+            event_debuginfo_.verbose_line += "/" + data->getString();
     }
     return true;
 }
@@ -2785,10 +2785,10 @@ bool MESISharNoninclusive::handleAckInv(MemEvent * event, bool in_mshr) {
     if (mem_h_is_debug_addr(addr)) {
         event_debuginfo_.action = done ? "Retry" : "DecAcks";
         if (tag) {
-            event_debuginfo_.newst = tag->getState();
-            event_debuginfo_.verboseline = tag->getString();
+            event_debuginfo_.new_state = tag->getState();
+            event_debuginfo_.verbose_line = tag->getString();
             if (data)
-                event_debuginfo_.verboseline += "/" + data->getString();
+                event_debuginfo_.verbose_line += "/" + data->getString();
         }
     }
 
@@ -2805,7 +2805,7 @@ bool MESISharNoninclusive::handleAckPut(MemEvent * event, bool in_mshr) {
         event_debuginfo_.prefill(event->getID(), Command::AckPut, "", event->getBaseAddr(), state);
         event_debuginfo_.action = "Done";
         if (tag)
-            event_debuginfo_.verboseline = tag->getString();
+            event_debuginfo_.verbose_line = tag->getString();
     }
 
     cleanUpAfterResponse(event, in_mshr);
@@ -2829,9 +2829,9 @@ bool MESISharNoninclusive::handleNULLCMD(MemEvent* event, bool in_mshr) {
         evicted = handleDirEviction(newAddr, tag);
 
         if (mem_h_is_debug_addr(newAddr) || mem_h_is_debug_addr(evict_debuginfo_.addr)) {
-            event_debuginfo_.prefill(event->getID(), Command::NULLCMD, "", evict_debuginfo_.addr, evict_debuginfo_.oldst);
-            event_debuginfo_.newst = tag->getState();
-            event_debuginfo_.verboseline = tag->getString();
+            event_debuginfo_.prefill(event->getID(), Command::NULLCMD, "", evict_debuginfo_.addr, evict_debuginfo_.old_state);
+            event_debuginfo_.new_state = tag->getState();
+            event_debuginfo_.verbose_line = tag->getString();
         }
 
         if (evicted) {
@@ -2876,9 +2876,9 @@ bool MESISharNoninclusive::handleNULLCMD(MemEvent* event, bool in_mshr) {
         evicted = handleDataEviction(newAddr, data);
 
         if (mem_h_is_debug_addr(newAddr) || mem_h_is_debug_addr(evict_debuginfo_.addr)) {
-            event_debuginfo_.prefill(event->getID(), Command::NULLCMD, "", evict_debuginfo_.addr, evict_debuginfo_.oldst);
-            event_debuginfo_.newst = data ? data->getState() : I;
-            event_debuginfo_.verboseline = data ? data->getString() : "";
+            event_debuginfo_.prefill(event->getID(), Command::NULLCMD, "", evict_debuginfo_.addr, evict_debuginfo_.old_state);
+            event_debuginfo_.new_state = data ? data->getState() : I;
+            event_debuginfo_.verbose_line = data ? data->getString() : "";
         }
         if (evicted) {
             if (tag && (tag->getState() == IA || tag->getState() == SA || tag->getState() == EA || tag->getState() == MA)) {
@@ -2906,7 +2906,7 @@ bool MESISharNoninclusive::handleNULLCMD(MemEvent* event, bool in_mshr) {
                 eviction_type_.erase(std::make_pair(oldAddr, newAddr));
                 if (mem_h_is_debug_event(event)) {
                     event_debuginfo_.action = "Retry";
-                    event_debuginfo_.newst = tag->getState();
+                    event_debuginfo_.new_state = tag->getState();
                 }
             } else {
                 mshr_->decrementFlushCount();
@@ -3089,7 +3089,7 @@ bool MESISharNoninclusive::handleDirEviction(Addr addr, DirectoryLine*& tag) {
     State state = tag->getState();
 
     if (mem_h_is_debug_addr(tag->getAddr())) {
-        evict_debuginfo_.oldst = tag->getState();
+        evict_debuginfo_.old_state = tag->getState();
         evict_debuginfo_.addr = tag->getAddr();
     }
 
@@ -3206,7 +3206,7 @@ bool MESISharNoninclusive::handleDataEviction(Addr addr, DataLine *&data) {
     State state = data->getState();
 
     if (mem_h_is_debug_addr(data->getAddr())) {
-        evict_debuginfo_.oldst = data->getState();
+        evict_debuginfo_.old_state = data->getState();
         evict_debuginfo_.addr = data->getAddr();
     }
 

@@ -232,54 +232,54 @@ protected:
 
     struct dbgin {
         SST::Event::id_type id;
-        uint32_t thr;
-        bool hasThr;
+        uint32_t thread;
+        bool has_thread;
         Command cmd;
-        std::string mod; // Command modifier
+        std::string modifier; // Command modifier
         Addr addr;
-        State oldst;
-        State newst;
+        State old_state;
+        State new_state;
         std::string action;
         std::string reason;
-        std::string verboseline;
+        std::string verbose_line;
 
         void prefill(SST::Event::id_type i, Command c, std::string m, Addr a, State o) {
             prefill(i, 0, c, m, a, o);
-            hasThr = false;
+            has_thread = false;
         }
 
         void prefill(SST::Event::id_type i, uint32_t t, Command c, std::string m, Addr a, State o) {
             id = i;
-            thr = t;
-            hasThr = true;
+            thread = t;
+            has_thread = true;
             cmd = c;
-            mod = m;
+            modifier = m;
             addr = a;
-            oldst = o;
-            newst = o;
+            old_state = o;
+            new_state = o;
             action = "";
             reason = "";
-            verboseline = "";
+            verbose_line = "";
         }
 
         void fill(State n, std::string act, std::string rea) {
-            newst = n;
+            new_state = n;
             action = act;
             reason = rea;
         }
 
         void serialize_order(SST::Core::Serialization::serializer& ser) {
             SST_SER(id);
-            SST_SER(thr);
-            SST_SER(hasThr);
+            SST_SER(thread);
+            SST_SER(has_thread);
             SST_SER(cmd);
-            SST_SER(mod);
+            SST_SER(modifier);
             SST_SER(addr);
-            SST_SER(oldst);
-            SST_SER(newst);
+            SST_SER(old_state);
+            SST_SER(new_state);
             SST_SER(action);
             SST_SER(reason);
-            SST_SER(verboseline);
+            SST_SER(verbose_line);
         }
     };
 

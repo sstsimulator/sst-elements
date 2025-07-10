@@ -220,8 +220,8 @@ bool IncoherentL1::handleGetS(MemEvent* event, bool in_mshr){
     }
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return ((status == MemEventStatus::Reject) ? false : true);
@@ -319,8 +319,8 @@ bool IncoherentL1::handleGetX(MemEvent* event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return (status == MemEventStatus::Reject) ? false : true;
@@ -395,8 +395,8 @@ bool IncoherentL1::handleGetSX(MemEvent* event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return (status == MemEventStatus::Reject) ? false : true;
@@ -428,7 +428,7 @@ bool IncoherentL1::handleFlushLine(MemEvent* event, bool in_mshr) {
 
         if (mem_h_is_debug_addr(addr)) {
             if (line)
-                event_debuginfo_.verboseline = line->getString();
+                event_debuginfo_.verbose_line = line->getString();
             event_debuginfo_.reason = "fail, line locked";
         }
 
@@ -453,8 +453,8 @@ bool IncoherentL1::handleFlushLine(MemEvent* event, bool in_mshr) {
         line->setState(E_B);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -482,7 +482,7 @@ bool IncoherentL1::handleFlushLineInv(MemEvent* event, bool in_mshr) {
         cleanUpAfterRequest(event, in_mshr);
         if (mem_h_is_debug_addr(addr)) {
             if (line)
-                event_debuginfo_.verboseline = line->getString();
+                event_debuginfo_.verbose_line = line->getString();
             event_debuginfo_.reason = "fail, line locked";
         }
         return true;
@@ -506,8 +506,8 @@ bool IncoherentL1::handleFlushLineInv(MemEvent* event, bool in_mshr) {
         line->setState(I_B);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -554,8 +554,8 @@ bool IncoherentL1::handleGetSResp(MemEvent * event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr)) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     cleanUpAfterResponse(event, in_mshr);
@@ -615,8 +615,8 @@ bool IncoherentL1::handleGetXResp(MemEvent * event, bool in_mshr) {
 
     stat_event_state_[(int)Command::GetXResp][state]->addData(1);
     if (mem_h_is_debug_addr(addr)) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
     cleanUpAfterResponse(event, in_mshr);
     return true;
@@ -655,8 +655,8 @@ bool IncoherentL1::handleFlushLineResp(MemEvent * event, bool in_mshr) {
     if (mem_h_is_debug_event(event)) {
         event_debuginfo_.action = "Respond";
         if (line) {
-            event_debuginfo_.verboseline = line->getString();
-            event_debuginfo_.newst = line->getState();
+            event_debuginfo_.verbose_line = line->getString();
+            event_debuginfo_.new_state = line->getState();
         }
     }
 
@@ -673,9 +673,9 @@ bool IncoherentL1::handleNULLCMD(MemEvent* event, bool in_mshr) {
     bool evicted = handleEviction(newAddr, line);
 
     if (mem_h_is_debug_addr(newAddr)) {
-        event_debuginfo_.prefill(event->getID(), Command::NULLCMD, "", line->getAddr(), evict_debuginfo_.oldst);
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.prefill(event->getID(), Command::NULLCMD, "", line->getAddr(), evict_debuginfo_.old_state);
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     if (evicted) {
@@ -807,7 +807,7 @@ bool IncoherentL1::handleEviction(Addr addr, L1CacheLine*& line) {
     State state = line->getState();
 
     if (mem_h_is_debug_addr(addr))
-        evict_debuginfo_.oldst = line->getState();
+        evict_debuginfo_.old_state = line->getState();
 
     /* L1s can have locked cache lines */
     if (line->isLocked(timestamp_)) {

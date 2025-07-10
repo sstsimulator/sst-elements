@@ -325,8 +325,8 @@ bool MESIPrivNoninclusive::handleGetS(MemEvent* event, bool in_mshr) {
         sendNACK(event);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -406,8 +406,8 @@ bool MESIPrivNoninclusive::handleGetX(MemEvent* event, bool in_mshr) {
         sendNACK(event);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -528,8 +528,8 @@ bool MESIPrivNoninclusive::handleFlushLine(MemEvent * event, bool in_mshr) {
         sendNACK(event);
 
     if (mem_h_is_debug_event(event) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -683,8 +683,8 @@ bool MESIPrivNoninclusive::handleFlushLineInv(MemEvent * event, bool in_mshr) {
         sendNACK(event);
 
     if (mem_h_is_debug_event(event) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -952,8 +952,8 @@ bool MESIPrivNoninclusive::handlePutS(MemEvent * event, bool in_mshr) {
         sendNACK(event);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -1040,8 +1040,8 @@ bool MESIPrivNoninclusive::handlePutE(MemEvent * event, bool in_mshr) {
         sendNACK(event);
 
     if (mem_h_is_debug_event(event) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -1125,8 +1125,8 @@ bool MESIPrivNoninclusive::handlePutM(MemEvent * event, bool in_mshr) {
     //printLine(addr);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     if (status == MemEventStatus::Reject)
@@ -1230,8 +1230,8 @@ bool MESIPrivNoninclusive::handlePutX(MemEvent * event, bool in_mshr) {
         sendNACK(event);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -1304,8 +1304,8 @@ bool MESIPrivNoninclusive::handleFetch(MemEvent * event, bool in_mshr) {
         sendNACK(event);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -1416,8 +1416,8 @@ bool MESIPrivNoninclusive::handleInv(MemEvent * event, bool in_mshr) {
         sendNACK(event);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -1564,8 +1564,8 @@ bool MESIPrivNoninclusive::handleForceInv(MemEvent * event, bool in_mshr) {
         sendNACK(event);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -1715,8 +1715,8 @@ bool MESIPrivNoninclusive::handleFetchInv(MemEvent * event, bool in_mshr){
         sendNACK(event);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -1818,8 +1818,8 @@ bool MESIPrivNoninclusive::handleFetchInvX(MemEvent * event, bool in_mshr) {
         sendNACK(event);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -1854,8 +1854,8 @@ bool MESIPrivNoninclusive::handleGetSResp(MemEvent * event, bool in_mshr) {
     cleanUpAfterResponse(event, in_mshr);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -1904,8 +1904,8 @@ bool MESIPrivNoninclusive::handleGetXResp(MemEvent * event, bool in_mshr) {
     stat_event_state_[(int)Command::GetXResp][state]->addData(1);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -1943,8 +1943,8 @@ bool MESIPrivNoninclusive::handleFlushLineResp(MemEvent * event, bool in_mshr) {
     sendResponseUp(request, nullptr, true, timestamp_, Command::FlushLineResp, event->success());
 
     if (mem_h_is_debug_event(event) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     cleanUpAfterResponse(event, in_mshr);
@@ -2012,8 +2012,8 @@ bool MESIPrivNoninclusive::handleFetchResp(MemEvent * event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -2057,8 +2057,8 @@ bool MESIPrivNoninclusive::handleFetchXResp(MemEvent * event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -2146,8 +2146,8 @@ bool MESIPrivNoninclusive::handleAckInv(MemEvent * event, bool in_mshr) {
     delete event;
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -2178,8 +2178,8 @@ bool MESIPrivNoninclusive::handleNULLCMD(MemEvent* event, bool in_mshr) {
 
     bool evicted = handleEviction(newAddr, line, event_debuginfo_);
     if (mem_h_is_debug_addr(oldAddr) || mem_h_is_debug_addr(newAddr) || mem_h_is_debug_addr(line->getAddr())) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
     if (evicted) {
         notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer());
@@ -2216,8 +2216,8 @@ bool MESIPrivNoninclusive::handleNULLCMD(MemEvent* event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_event(event) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     delete event;
@@ -2301,8 +2301,8 @@ MemEventStatus MESIPrivNoninclusive::allocateLine(MemEvent * event, PrivateCache
     bool evicted = handleEviction(event->getBaseAddr(), line, evict_debuginfo_);
 
     if (mem_h_is_debug_event(event) || mem_h_is_debug_addr(line->getAddr())) {
-        evict_debuginfo_.newst = line->getState();
-        evict_debuginfo_.verboseline = line->getString();
+        evict_debuginfo_.new_state = line->getState();
+        evict_debuginfo_.verbose_line = line->getString();
         event_debuginfo_.action = evict_debuginfo_.action;
         event_debuginfo_.reason = evict_debuginfo_.reason;
     }
@@ -2336,15 +2336,15 @@ MemEventStatus MESIPrivNoninclusive::allocateLine(MemEvent * event, PrivateCache
 }
 
 
-bool MESIPrivNoninclusive::handleEviction(Addr addr, PrivateCacheLine*& line, dbgin &diStruct) {
+bool MESIPrivNoninclusive::handleEviction(Addr addr, PrivateCacheLine*& line, dbgin &debug_info) {
     if (!line)
         line = cache_array_->findReplacementCandidate(addr);
 
     State state = line->getState();
 
     if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(line->getAddr())) {
-        diStruct.oldst = state;
-        diStruct.addr = line->getAddr();
+        debug_info.old_state = state;
+        debug_info.addr = line->getAddr();
     }
 
     //if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(line->getAddr()))
@@ -2357,8 +2357,8 @@ bool MESIPrivNoninclusive::handleEviction(Addr addr, PrivateCacheLine*& line, db
     switch (state) {
         case I:
             if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(line->getAddr())) {
-                diStruct.action = "None";
-                diStruct.reason = "already idle";
+                debug_info.action = "None";
+                debug_info.reason = "already idle";
             }
             return true;
         case S:
@@ -2372,10 +2372,10 @@ bool MESIPrivNoninclusive::handleEviction(Addr addr, PrivateCacheLine*& line, db
                     if (mem_h_is_debug_addr(line->getAddr()))
                         printDebugAlloc(false, line->getAddr(), "Writeback");
                     if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(line->getAddr())) {
-                        diStruct.action = "Writeback";
+                        debug_info.action = "Writeback";
                     }
                 } else if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(line->getAddr())) {
-                    diStruct.action = "Drop";
+                    debug_info.action = "Drop";
                     if (mem_h_is_debug_addr(line->getAddr()))
                         printDebugAlloc(false, line->getAddr(), "Drop");
                 }
@@ -2391,7 +2391,7 @@ bool MESIPrivNoninclusive::handleEviction(Addr addr, PrivateCacheLine*& line, db
                         mshr_->insertWriteback(line->getAddr(), true);
                     }
                     if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(line->getAddr()))
-                        diStruct.action = "Writeback";
+                        debug_info.action = "Writeback";
                     if (mem_h_is_debug_addr(line->getAddr()))
                         printDebugAlloc(false, line->getAddr(), "Writeback");
                 } else if (!line->getOwned() && !silent_evict_clean_) {
@@ -2403,11 +2403,11 @@ bool MESIPrivNoninclusive::handleEviction(Addr addr, PrivateCacheLine*& line, db
                     if (mem_h_is_debug_addr(line->getAddr()))
                         printDebugAlloc(false, line->getAddr(), "Writeback");
                     if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(line->getAddr()))
-                        diStruct.action = "Writeback";
+                        debug_info.action = "Writeback";
                 } else if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(line->getAddr())) {
                     if (mem_h_is_debug_addr(line->getAddr()))
                         printDebugAlloc(false, line->getAddr(), "Drop");
-                    diStruct.action = "Drop";
+                    debug_info.action = "Drop";
                 }
                 line->setState(I);
                 return true;
@@ -2422,7 +2422,7 @@ bool MESIPrivNoninclusive::handleEviction(Addr addr, PrivateCacheLine*& line, db
                         mshr_->insertWriteback(line->getAddr(), true);
                     }
                     if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(line->getAddr()))
-                        diStruct.action = "Writeback";
+                        debug_info.action = "Writeback";
                     if (mem_h_is_debug_addr(line->getAddr()))
                         printDebugAlloc(false, line->getAddr(), "Writeback");
                 } else if (!line->getOwned()) {
@@ -2432,12 +2432,12 @@ bool MESIPrivNoninclusive::handleEviction(Addr addr, PrivateCacheLine*& line, db
                         mshr_->insertWriteback(line->getAddr(), false);
                     }
                     if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(line->getAddr())) {
-                        diStruct.action = "Writeback";
+                        debug_info.action = "Writeback";
                     }
                     if (mem_h_is_debug_addr(line->getAddr()))
                         printDebugAlloc(false, line->getAddr(), "Writeback");
                 } else if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(line->getAddr())) {
-                    diStruct.action = "Drop";
+                    debug_info.action = "Drop";
 
                     if (mem_h_is_debug_addr(line->getAddr()))
                         printDebugAlloc(false, line->getAddr(), "Drop");
@@ -2451,12 +2451,12 @@ bool MESIPrivNoninclusive::handleEviction(Addr addr, PrivateCacheLine*& line, db
                 if (line->getShared()) { // This cache is not responsible for the block, drop it
                     line->setState(I);
                     if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(line->getAddr())) {
-                        diStruct.action = "Drop";
+                        debug_info.action = "Drop";
                     }
                     if (mem_h_is_debug_addr(line->getAddr()))
                         printDebugAlloc(false, line->getAddr(), "Drop");
                 } else if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(line->getAddr())) {
-                    diStruct.action = "Stall";
+                    debug_info.action = "Stall";
                 }
                 return false;
             }
@@ -2468,18 +2468,18 @@ bool MESIPrivNoninclusive::handleEviction(Addr addr, PrivateCacheLine*& line, db
                 if (line->getOwned()) { // This cache is not responsible for the block, drop it
                     line->setState(I);
                     if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(line->getAddr())) {
-                        diStruct.action = "Drop";
+                        debug_info.action = "Drop";
                     }
                     if (mem_h_is_debug_addr(line->getAddr()))
                         printDebugAlloc(false, line->getAddr(), "Drop");
                     return true;
                 } else if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(line->getAddr()))
-                    diStruct.action = "Stall";
+                    debug_info.action = "Stall";
                 return false;
             }
         default:
             if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(line->getAddr()))
-                diStruct.action = "Stall";
+                debug_info.action = "Stall";
             return false;
     }
 

@@ -270,7 +270,7 @@ private:
 
     /** Cache and MSHR management */
     MemEventStatus allocateLine(MemEvent * event, PrivateCacheLine*& line, bool in_mshr);
-    bool handleEviction(Addr addr, PrivateCacheLine*& line, dbgin &diStruct);
+    bool handleEviction(Addr addr, PrivateCacheLine*& line, dbgin &debug_info);
     void cleanUpAfterRequest(MemEvent * event, bool in_mshr);
     void cleanUpAfterResponse(MemEvent * event, bool in_mshr);
     void cleanUpEvent(MemEvent * event, bool in_mshr);

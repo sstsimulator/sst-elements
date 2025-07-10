@@ -158,7 +158,7 @@ public:
     Addr getBank(Addr addr) override { return cache_array_->getBank(addr); }
     void setSliceAware(uint64_t size, uint64_t step) override { cache_array_->setSliceAware(size, step); }
 
-    MemEventInitCoherence * getInitCoherenceEvent();
+    MemEventInitCoherence * getInitCoherenceEvent() override;
 
     void recordLatency(Command cmd, int type, uint64_t latency) override;
 
@@ -174,7 +174,7 @@ private:
 
     MemEventStatus allocateLine(MemEvent * event, PrivateCacheLine* &line, bool in_mshr);
 
-    bool handleEviction(Addr addr, PrivateCacheLine* &line, dbgin &diStruct);
+    bool handleEviction(Addr addr, PrivateCacheLine* &line, dbgin &debug_info);
 
     void cleanUpAfterRequest(MemEvent * event, bool in_mshr);
 

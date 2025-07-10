@@ -224,8 +224,8 @@ bool Incoherent::handleGetS(MemEvent * event, bool in_mshr) {
     }
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -295,8 +295,8 @@ bool Incoherent::handleGetX(MemEvent * event, bool in_mshr) {
         sendNACK(event);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -350,8 +350,8 @@ bool Incoherent::handleFlushLine(MemEvent * event, bool in_mshr) {
         sendNACK(event);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -402,8 +402,8 @@ bool Incoherent::handleFlushLineInv(MemEvent * event, bool in_mshr) {
         sendNACK(event);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -445,8 +445,8 @@ bool Incoherent::handlePutE(MemEvent * event, bool in_mshr) {
         sendNACK(event);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -490,8 +490,8 @@ bool Incoherent::handlePutM(MemEvent * event, bool in_mshr) {
         sendNACK(event);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -524,8 +524,8 @@ bool Incoherent::handleGetSResp(MemEvent * event, bool in_mshr) {
     cleanUpAfterResponse(event);
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     return true;
@@ -583,8 +583,8 @@ bool Incoherent::handleFlushLineResp(MemEvent * event, bool in_mshr) {
     sendResponseUp(req, nullptr, true, timestamp_, Command::FlushLineResp, event->success());
 
     if (mem_h_is_debug_addr(addr) && line) {
-        event_debuginfo_.newst = line->getState();
-        event_debuginfo_.verboseline = line->getString();
+        event_debuginfo_.new_state = line->getState();
+        event_debuginfo_.verbose_line = line->getString();
     }
 
     cleanUpAfterResponse(event);
@@ -664,8 +664,8 @@ MemEventStatus Incoherent::allocateLine(MemEvent * event, PrivateCacheLine* &lin
     bool evicted = handleEviction(event->getBaseAddr(), line, evict_debuginfo_);
 
     if (mem_h_is_debug_event(event) || mem_h_is_debug_addr(line->getAddr())) {
-        evict_debuginfo_.newst = line->getState();
-        evict_debuginfo_.verboseline = line->getString();
+        evict_debuginfo_.new_state = line->getState();
+        evict_debuginfo_.verbose_line = line->getString();
         evict_debuginfo_.action = event_debuginfo_.action;
         evict_debuginfo_.reason = event_debuginfo_.reason;
     }
@@ -696,15 +696,15 @@ MemEventStatus Incoherent::allocateLine(MemEvent * event, PrivateCacheLine* &lin
 }
 
 
-bool Incoherent::handleEviction(Addr addr, PrivateCacheLine* &line, dbgin &diStruct) {
+bool Incoherent::handleEviction(Addr addr, PrivateCacheLine* &line, dbgin &debug_info) {
     if (!line)
         line = cache_array_->findReplacementCandidate(addr);
 
     State state = line->getState();
 
     if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(line->getAddr())) {
-        diStruct.oldst = state;
-        diStruct.addr = line->getAddr();
+        debug_info.old_state = state;
+        debug_info.addr = line->getAddr();
     }
 
     stat_evict_[state]->addData(1);
@@ -712,8 +712,8 @@ bool Incoherent::handleEviction(Addr addr, PrivateCacheLine* &line, dbgin &diStr
     switch (state) {
         case I:
             if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(line->getAddr())) {
-                diStruct.action = "None";
-                diStruct.reason = "already idle";
+                debug_info.action = "None";
+                debug_info.reason = "already idle";
             }
             return true;
         case E:
