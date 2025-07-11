@@ -1,24 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 memory, Notice: memory controller's region is larger than the backend's mem_size, controller is limiting accessible memory to mem_size
 Region: start=0, end=18446744073709551615, interleaveStep=0, interleaveSize=0. MemSize: 16384B
  df_0.cycles_zero_events : Accumulator : Sum.u64 = 112; SumSQ.u64 = 112; Count.u64 = 112; Min.u64 = 1; Max.u64 = 1; 
