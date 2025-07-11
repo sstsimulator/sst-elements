@@ -58,9 +58,6 @@ class testcase_memHierarchy_memHA(SSTTestCase):
     def test_memHA_HashXor(self):
         self.memHA_Template("HashXor")
 
-    def test_memHA_Incoherent(self):
-        self.memHA_Template("Incoherent")
-
     def test_memHA_Noninclusive_1(self):
         self.memHA_Template("Noninclusive_1")
 

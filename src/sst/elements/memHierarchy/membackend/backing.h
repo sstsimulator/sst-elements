@@ -50,7 +50,7 @@ public:
     // Print contents of backing to stdout (testing purposes)
     virtual void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) = 0;
 
-    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {}
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {}
     ImplementVirtualSerializable(SST::MemHierarchy::Backend::Backing);
 };
 
@@ -175,7 +175,7 @@ public:
     }
 
     // For serialization
-    BackingMMAP() {}
+    BackingMMAP() = default;
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Backing::serialize_order(ser);
@@ -410,15 +410,44 @@ public:
     }
 
     // For serialization
-    BackingMalloc() {}
+    BackingMalloc() = default;
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Backing::serialize_order(ser);
-        SST_SER(buffer_);
         SST_SER(alloc_unit_);
         SST_SER(shift_);
         SST_SER(init_);
+
+        // Manually serialize buffer_ because the uint8_t* array isn't automatically serializable
+        switch (ser.mode()) {
+        case SST::Core::Serialization::serializer::SIZER:
+        case SST::Core::Serialization::serializer::PACK:
+            SST_SER(buffer_.size());
+            for ( auto& x : buffer_ ) { // Serialize each key/value pair
+                Addr key = x.first;
+                uint8_t* value = x.second;
+                SST_SER(key);
+                SST_SER(SST::Core::Serialization::array(value, alloc_unit_));
+            }
+            break;
+        case SST::Core::Serialization::serializer::UNPACK:
+            size_t buffer_size;
+            Addr key;
+
+            SST_SER(buffer_size);
+            for ( size_t i = 0; i < buffer_size; i++ ) {
+                uint8_t* value = (uint8_t*) malloc(sizeof(uint8_t)*alloc_unit_);
+                SST_SER(key);
+                SST_SER(SST::Core::Serialization::array(value, alloc_unit_));
+                buffer_[key] = value;
+            }
+            break;
+        case SST::Core::Serialization::serializer::MAP:
+            break; // Nothing to do
+        }
     }
+
+    ImplementSerializable(SST::MemHierarchy::Backend::BackingMalloc)
 
 private:
     void allocIfNeeded( Addr bAddr ) {

@@ -34,7 +34,7 @@ MultiThreadL1::MultiThreadL1(ComponentId_t id, Params &params) : Component(id) {
     std::vector<Addr> addrArr;
     params.find_array<Addr>("debug_addr", addrArr);
     for (std::vector<Addr>::iterator it = addrArr.begin(); it != addrArr.end(); it++)
-        DEBUG_ADDR.insert(*it);
+        debug_addr_filter_.insert(*it);
 
     /* Setup clock */
     clockHandler = new Clock::Handler2<MultiThreadL1, &MultiThreadL1::tick>(this);

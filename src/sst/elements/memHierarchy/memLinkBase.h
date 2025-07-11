@@ -94,7 +94,7 @@ public:
         std::vector<uint64_t> addrArray;
         params.find_array<uint64_t>("debug_addr", addrArray);
         for (std::vector<uint64_t>::iterator it = addrArray.begin(); it != addrArray.end(); it++) {
-            DEBUG_ADDR.insert(*it);
+            debug_addr_filter_.insert(*it);
         }
 
         setDefaultTimeBase(*tc);
@@ -138,7 +138,7 @@ public:
     }
 
     /* Destructor */
-    virtual ~MemLinkBase() { }
+    virtual ~MemLinkBase() = default;
 
     /* Initialization functions for parent */
     virtual void setRecvHandler(Event::HandlerBase * handler) { recvHandler = handler; }
@@ -198,12 +198,12 @@ public:
     // a specific implementation may require a different setting
     void setName(std::string name) { info.name = name; }
 
-    MemLinkBase() { }
-    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+    MemLinkBase() = default;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
         SST::SubComponent::serialize_order(ser);
 
         SST_SER(dbg);
-        SST_SER(DEBUG_ADDR);
+        SST_SER(debug_addr_filter_);
         SST_SER(dlevel);
         SST_SER(info);
         SST_SER(recvHandler);
@@ -214,7 +214,7 @@ protected:
 
     // Debug stuff
     Output dbg;
-    std::set<Addr> DEBUG_ADDR;
+    std::set<Addr> debug_addr_filter_;
     int dlevel;
 
     // Local EndpointInfo

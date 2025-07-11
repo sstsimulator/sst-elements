@@ -46,43 +46,43 @@ public:
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::CoherenceController, Params&, bool)
 
     /***** Constructor & destructor *****/
-    CoherenceController(ComponentId_t id, Params &params, Params& ownerParams, bool prefetch);
-    virtual ~CoherenceController() {}
+    CoherenceController(ComponentId_t id, Params &params, Params& owner_params, bool prefetch);
+    virtual ~CoherenceController() { }
 
     /*********************************************************************************
      * Event handlers - one per event type
      * Handlers return whether the event was accepted (true) or rejected (false)
      *********************************************************************************/
-    virtual bool handleNULLCMD(MemEvent * event, bool inMSHR);
-    virtual bool handleGetS(MemEvent * event, bool inMSHR);
-    virtual bool handleWrite(MemEvent * event, bool inMSHR);
-    virtual bool handleGetX(MemEvent * event, bool inMSHR);
-    virtual bool handleGetSX(MemEvent * event, bool inMSHR);
-    virtual bool handlePutS(MemEvent * event, bool inMSHR);
-    virtual bool handlePutX(MemEvent * event, bool inMSHR);
-    virtual bool handlePutE(MemEvent * event, bool inMSHR);
-    virtual bool handlePutM(MemEvent * event, bool inMSHR);
-    virtual bool handleFlushLine(MemEvent * event, bool inMSHR);
-    virtual bool handleFlushLineInv(MemEvent * event, bool inMSHR);
-    virtual bool handleFlushAll(MemEvent * event, bool inMSHR);
-    virtual bool handleForwardFlush(MemEvent * event, bool inMSHR);
-    virtual bool handleFetch(MemEvent * event, bool inMSHR);
-    virtual bool handleInv(MemEvent * event, bool inMSHR);
-    virtual bool handleFetchInvX(MemEvent * event, bool inMSHR);
-    virtual bool handleFetchInv(MemEvent * event, bool inMSHR);
-    virtual bool handleForceInv(MemEvent * event, bool inMSHR);
-    virtual bool handleGetSResp(MemEvent * event, bool inMSHR);
-    virtual bool handleGetXResp(MemEvent * event, bool inMSHR);
-    virtual bool handleWriteResp(MemEvent * event, bool inMSHR);
-    virtual bool handleFlushLineResp(MemEvent * event, bool inMSHR);
-    virtual bool handleFlushAllResp(MemEvent * event, bool inMSHR);
-    virtual bool handleAckPut(MemEvent * event, bool inMSHR);
-    virtual bool handleAckInv(MemEvent * event, bool inMSHR);
-    virtual bool handleAckFlush(MemEvent * event, bool inMSHR);
-    virtual bool handleUnblockFlush(MemEvent * event, bool inMSHR);
-    virtual bool handleFetchResp(MemEvent * event, bool inMSHR);
-    virtual bool handleFetchXResp(MemEvent * event, bool inMSHR);
-    virtual bool handleNACK(MemEvent * event, bool inMSHR);
+    virtual bool handleNULLCMD(MemEvent * event, bool in_mshr);
+    virtual bool handleGetS(MemEvent * event, bool in_mshr);
+    virtual bool handleWrite(MemEvent * event, bool in_mshr);
+    virtual bool handleGetX(MemEvent * event, bool in_mshr);
+    virtual bool handleGetSX(MemEvent * event, bool in_mshr);
+    virtual bool handlePutS(MemEvent * event, bool in_mshr);
+    virtual bool handlePutX(MemEvent * event, bool in_mshr);
+    virtual bool handlePutE(MemEvent * event, bool in_mshr);
+    virtual bool handlePutM(MemEvent * event, bool in_mshr);
+    virtual bool handleFlushLine(MemEvent * event, bool in_mshr);
+    virtual bool handleFlushLineInv(MemEvent * event, bool in_mshr);
+    virtual bool handleFlushAll(MemEvent * event, bool in_mshr);
+    virtual bool handleForwardFlush(MemEvent * event, bool in_mshr);
+    virtual bool handleFetch(MemEvent * event, bool in_mshr);
+    virtual bool handleInv(MemEvent * event, bool in_mshr);
+    virtual bool handleFetchInvX(MemEvent * event, bool in_mshr);
+    virtual bool handleFetchInv(MemEvent * event, bool in_mshr);
+    virtual bool handleForceInv(MemEvent * event, bool in_mshr);
+    virtual bool handleGetSResp(MemEvent * event, bool in_mshr);
+    virtual bool handleGetXResp(MemEvent * event, bool in_mshr);
+    virtual bool handleWriteResp(MemEvent * event, bool in_mshr);
+    virtual bool handleFlushLineResp(MemEvent * event, bool in_mshr);
+    virtual bool handleFlushAllResp(MemEvent * event, bool in_mshr);
+    virtual bool handleAckPut(MemEvent * event, bool in_mshr);
+    virtual bool handleAckInv(MemEvent * event, bool in_mshr);
+    virtual bool handleAckFlush(MemEvent * event, bool in_mshr);
+    virtual bool handleUnblockFlush(MemEvent * event, bool in_mshr);
+    virtual bool handleFetchResp(MemEvent * event, bool in_mshr);
+    virtual bool handleFetchXResp(MemEvent * event, bool in_mshr);
+    virtual bool handleNACK(MemEvent * event, bool in_mshr);
 
 
     /*********************************************************************************
@@ -112,7 +112,7 @@ public:
      *********************************************************************************/
 
     /* For clock handling = parent updates timestamp when the clock is re-enabled */
-    void updateTimestamp(uint64_t newTS) { timestamp_ = newTS; }
+    void updateTimestamp(uint64_t new_timestamp) { timestamp_ = new_timestamp; }
 
     /* Check whether the event queues are empty/subcomponent is doing anything */
     bool checkIdle();
@@ -147,35 +147,35 @@ public:
     virtual void hasUpperLevelCacheName(std::string cachename) {}
 
     /* Setup array of cache listeners */
-    void setCacheListener(std::vector<CacheListener*> &ptr, size_t dropPrefetchLevel, size_t maxOutPrefetches) {
+    void setCacheListener(std::vector<CacheListener*> &ptr, size_t drop_prefetch_level, size_t max_out_prefetches) {
         listeners_ = ptr;
-        dropPrefetchLevel_ = dropPrefetchLevel;
-        maxOutstandingPrefetch_ = maxOutPrefetches;
+        drop_prefetch_level_ = drop_prefetch_level;
+        max_outstanding_prefetch_ = max_out_prefetches;
     }
 
     /* Set MSHR */
     void setMSHR(MSHR* ptr) { mshr_ = ptr; }
 
     /* Set link managers */
-    void setLinks(MemLinkBase * linkUp, MemLinkBase * linkDown) {
-        linkUp_ = linkUp;
-        linkDown_ = linkDown;
+    void setLinks(MemLinkBase * link_up, MemLinkBase * link_down) {
+        link_up_ = link_up;
+        link_down_ = link_down;
     }
 
     /* Prefetch drop statistic is used by both controller and coherence managers */
-    void setStatistics(Statistic<uint64_t>* prefetchdrop) { statPrefetchDrop = prefetchdrop; }
+    void setStatistics(Statistic<uint64_t>* prefetch_drop) { stat_prefetch_drop_ = prefetch_drop; }
 
     /* Controller records received events, but valid types are determined by coherence manager. Share those here */
     virtual std::set<Command> getValidReceiveEvents() = 0;
 
     /* Call through to cache array to configure banking/slicing */
-    virtual void setSliceAware(uint64_t interleaveSize, uint64_t interleaveStep) = 0;
+    virtual void setSliceAware(uint64_t interleave_size, uint64_t interleave_step) = 0;
 
     /* Register callback to enable the cache's clock if needed */
-    void registerClockEnableFunction(std::function<void()> fcn) { reenableClock_ = fcn; }
+    void registerClockEnableFunction(std::function<void()> fcn) { reenable_clock_ = fcn; }
 
     /* Setup debug info (cache-wide) */
-    void setDebug(std::set<Addr> debugAddr) { DEBUG_ADDR = debugAddr; }
+    void setDebug(std::set<Addr> debug_addr) { debug_addr_filter_ = debug_addr; }
 
     /* Retry buffer - parent drains this each cycle */
     std::vector<MemEventBase*>* getRetryBuffer();
@@ -200,6 +200,11 @@ public:
     // Called by owner during printStatus/emergencyShutdown
     virtual void printStatus(Output &out) override;
 
+    // Serialization
+    CoherenceController() : SubComponent() {}
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementVirtualSerializable(SST::MemHierarchy::CoherenceController)
+
 protected:
 
     /*********************************************************************************
@@ -207,64 +212,81 @@ protected:
      *********************************************************************************/
 
     /* Listener callbacks */
-    virtual void notifyListenerOfAccess(MemEvent * event, NotifyAccessType accessT, NotifyResultType resultT);
+    virtual void notifyListenerOfAccess(MemEvent * event, NotifyAccessType access_type, NotifyResultType result_type);
     virtual void notifyListenerOfEvict(Addr addr, uint32_t size, uint64_t ip);
 
     /* Forward a message to a lower memory level (towards memory) */
-    uint64_t forwardMessage(MemEvent * event, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data, Command fwdCmd = Command::LAST_CMD);
+    uint64_t forwardMessage(MemEvent * event, unsigned int request_size, uint64_t base_time, vector<uint8_t>* data, Command forward_command = Command::LAST_CMD);
 
     /* Insert event into MSHR */
-    MemEventStatus allocateMSHR(MemEvent * event, bool fwdReq, int pos = -1, bool stallEvict = false);
+    MemEventStatus allocateMSHR(MemEvent * event, bool forward_request, int pos = -1, bool stall_for_evict = false);
 
     /* Insight into link status */
     bool isPeer(std::string name);
 
     /* Statistics */
-    virtual void recordLatencyType(SST::Event::id_type id, int latencytype);
-    virtual void recordPrefetchLatency(SST::Event::id_type, int latencytype);
+    virtual void recordLatencyType(SST::Event::id_type id, int latency_type);
+    virtual void recordPrefetchLatency(SST::Event::id_type, int latency_type);
 
     /* Debug */
 
     struct dbgin {
         SST::Event::id_type id;
-        uint32_t thr;
-        bool hasThr;
+        uint32_t thread;
+        bool has_thread;
         Command cmd;
-        std::string mod; // Command modifier
+        std::string modifier; // Command modifier
         Addr addr;
-        State oldst;
-        State newst;
+        State old_state;
+        State new_state;
         std::string action;
         std::string reason;
-        std::string verboseline;
+        std::string verbose_line;
 
         void prefill(SST::Event::id_type i, Command c, std::string m, Addr a, State o) {
             prefill(i, 0, c, m, a, o);
-            hasThr = false;
+            has_thread = false;
         }
 
         void prefill(SST::Event::id_type i, uint32_t t, Command c, std::string m, Addr a, State o) {
             id = i;
-            thr = t;
-            hasThr = true;
+            thread = t;
+            has_thread = true;
             cmd = c;
-            mod = m;
+            modifier = m;
             addr = a;
-            oldst = o;
-            newst = o;
+            old_state = o;
+            new_state = o;
             action = "";
             reason = "";
-            verboseline = "";
+            verbose_line = "";
         }
 
         void fill(State n, std::string act, std::string rea) {
-            newst = n;
+            new_state = n;
             action = act;
             reason = rea;
         }
-    } eventDI, evictDI;
 
-    virtual void printDebugInfo(dbgin * diStruct);
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(id);
+            SST_SER(thread);
+            SST_SER(has_thread);
+            SST_SER(cmd);
+            SST_SER(modifier);
+            SST_SER(addr);
+            SST_SER(old_state);
+            SST_SER(new_state);
+            SST_SER(action);
+            SST_SER(reason);
+            SST_SER(verbose_line);
+        }
+    };
+
+    /* These track information about coherence events in case a debug log is being generated */
+    dbgin event_debuginfo_, evict_debuginfo_;
+
+    virtual void printDebugInfo(dbgin * debug_struct);
     virtual void printDebugAlloc(bool alloc, Addr addr, std::string note);
     virtual void printDataValue(Addr addr, vector<uint8_t> * data, bool set);
 
@@ -281,62 +303,76 @@ protected:
 
     /* Listeners: prefetchers, tracers, etc. */
     std::vector<CacheListener*> listeners_;
-    size_t maxOutstandingPrefetch_;
-    size_t dropPrefetchLevel_;
-    size_t outstandingPrefetches_;
+    size_t max_outstanding_prefetch_;
+    size_t drop_prefetch_level_;
+    size_t outstanding_prefetch_count_;
 
     /* Cache name - used for identifying where events came from/are going to */
     std::string cachename_;
 
     /* Output & debug */
-    Output* output; // Output stream for warnings, notices, fatal, etc.
-    Output* debug;  // Output stream for debug -> SST must be compiled with --enable-debug
-    std::set<Addr> DEBUG_ADDR; // Addresses to print debug info for (all if empty)
-    uint32_t dlevel;    // Debug level -> used to determine output format/amount of output
+    Output* output_ = nullptr;   // Output stream for warnings, notices, fatal, etc.
+    Output* debug_ = nullptr;    // Output stream for debug -> SST must be compiled with --enable-debug
+    std::set<Addr> debug_addr_filter_;  // Addresses to print debug info for (all if empty)
+    uint32_t debug_level_;            // Debug level -> used to determine output format/amount of output
 
     /* Latencies amd timing */
     uint64_t timestamp_;        // Local timestamp (cycles)
-    uint64_t accessLatency_;    // Data/tag access latency
-    uint64_t tagLatency_;       // Tag only access latency
-    uint64_t mshrLatency_;      // MSHR lookup latency
+    uint64_t access_latency_;   // Data/tag access latency
+    uint64_t tag_latency_;      // Tag only access latency
+    uint64_t mshr_latency_;     // MSHR lookup latency
 
     /* Cache parameters that are often needed by coherence managers */
-    uint64_t lineSize_;
-    bool writebackCleanBlocks_; // Writeback clean data as opposed to just a coherence msg
-    bool silentEvictClean_;     // Silently evict clean blocks (currently ok when just mem below us)
-    bool recvWritebackAck_;     // Whether we should expect writeback acks
-    bool sendWritebackAck_;     // Whether we should send writeback acks
-    bool lastLevel_;            // Whether we are the lowest coherence level and should not send coherence messages down
-    bool flush_manager_;        // Whether this cache will manage (order) FlushAll events - one per system, may be a directory
-    bool flush_helper_;         // Whether this cache will locally manage (order) FlushAll events - one per shared group of caches
-    std::string flush_dest_;    // Destination for FlushAll requests
+    uint64_t line_size_;
+    bool writeback_clean_blocks_;   // Writeback clean data as opposed to just a coherence msg
+    bool silent_evict_clean_;       // Silently evict clean blocks (currently ok when just mem below us)
+    bool recv_writeback_ack_;       // Whether we should expect writeback acks
+    bool send_writeback_ack_;       // Whether we should send writeback acks
+    bool last_level_;               // Whether we are the lowest coherence level and should not send coherence messages down
+    bool flush_manager_;            // Whether this cache will manage (order) FlushAll events - one per system, may be a directory
+    bool flush_helper_;             // Whether this cache will locally manage (order) FlushAll events - one per shared group of caches
+    std::string flush_dest_;        // Destination for FlushAll requests
 
     /* Response structure - used for outgoing event queues */
     struct Response {
         MemEventBase* event;    // Event to send
-        uint64_t deliveryTime;  // Time this event can be sent
+        uint64_t delivery_time; // Time this event can be sent
         uint64_t size;          // Size of event (for bandwidth accounting)
+
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(event);
+            SST_SER(delivery_time);
+            SST_SER(size);
+        }
     };
 
-    /* Retry buffer - filled by coherence manangers and drained by parent */
-    std::vector<MemEventBase*> retryBuffer_;
+    /* Retry buffer - filled by coherence managers and drained by parent */
+    std::vector<MemEventBase*> retry_buffer_;
 
     /* Statistics - some variables used by all are declared here, but they are maintained by coherence protocols */
-    Statistic<uint64_t>* stat_eventSent[(int)Command::LAST_CMD];    // Count events sent
-    Statistic<uint64_t>* stat_evict[LAST_STATE];                    // Count how many evictions happened in a given state
-    std::array<std::array<Statistic<uint64_t>*, LAST_STATE>, (int)Command::LAST_CMD> stat_eventState;
+    std::array<Statistic<uint64_t>*, (int)Command::LAST_CMD> stat_event_sent_ = {}; // Count events sent
+    std::array<Statistic<uint64_t>*, (int)LAST_STATE> stat_evict_ = {};             // Count how many evictions happened in a given state
+    std::array<std::array<Statistic<uint64_t>*, LAST_STATE>, (int)Command::LAST_CMD> stat_event_state_ = {};
 
     struct LatencyStat{
         uint64_t time;
         Command cmd;
-        int missType;
-        LatencyStat(uint64_t t, Command c, int m) : time(t), cmd(c), missType(m) { }
+        int miss_type;
+        LatencyStat(uint64_t t, Command c, int m) : time(t), cmd(c), miss_type(m) { }
+
+        LatencyStat() {}
+
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(time);
+            SST_SER(cmd);
+            SST_SER(miss_type);
+        }
     };
 
-    std::map<SST::Event::id_type, LatencyStat> startTimes_;
+    std::map<SST::Event::id_type, LatencyStat> start_times_;
 
     /* When internally monitoring a timeout period, a coherence controller may need to re-enable the cache's clock */
-    std::function<void()> reenableClock_;
+    std::function<void()> reenable_clock_;
 
     /* Add a new event to the outgoing command queue towards memory */
     virtual void addToOutgoingQueue(Response& resp);
@@ -344,43 +380,43 @@ protected:
     /* Add a new event to the outgoing command queue towards the CPU */
     virtual void addToOutgoingQueueUp(Response& resp);
 
-    virtual uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool success = true);
-    virtual uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool success = true);
-    virtual uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool dirty, bool replay, uint64_t baseTime, bool success = true);
+    virtual uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t base_time, bool success = true);
+    virtual uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool replay, uint64_t base_time, bool success = true);
+    virtual uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool dirty, bool replay, uint64_t base_time, bool success = true);
 
     std::string getSrc();
 
-    std::set<std::string> cpus; // If connected to CPUs or other endpoints (e.g., accelerator), list of CPU names in case we need to broadcast something
+    std::set<std::string> system_cpu_names_; // If connected to CPUs or other endpoints (e.g., accelerator), list of CPU names in case we need to broadcast something
 
-    void sendUntimedDataUp(MemEventInit* event);
-    void sendUnitmedDataDown(MemEventInit* event, bool broadcast);
+    void sendUntimedDataUp(MemEventInit* event) {}
+    void sendUnitmedDataDown(MemEventInit* event, bool broadcast) {}
 
 private:
     /* Outgoing event queues - events are stalled here to account for access latencies */
-    list<Response> outgoingEventQueueDown_;
-    list<Response> outgoingEventQueueUp_;
+    list<Response> outgoing_event_queue_down_;
+    list<Response> outgoing_event_queue_up_;
 
-    MemLinkBase * linkUp_;
-    MemLinkBase * linkDown_;
+    MemLinkBase * link_up_ = nullptr;
+    MemLinkBase * link_down_ = nullptr;
 
     /**************** Haven't determined if we need the rest yet ! ************************************/
 protected:
 
     /* Resend an event after a NACK */
-    void resendEvent(MemEvent * event, bool towardsCPU);
+    void resendEvent(MemEvent * event, bool towards_cpu);
 
     /* Throughput control TODO move these to a port manager */
-    uint64_t maxBytesUp;
-    uint64_t maxBytesDown;
-    uint64_t packetHeaderBytes;
+    uint64_t max_bytes_up_;
+    uint64_t max_bytes_down_;
+    uint64_t packet_header_bytes_;
 
     /* Prefetch statistics */
-    Statistic<uint64_t>* statPrefetchEvict;
-    Statistic<uint64_t>* statPrefetchInv;
-    Statistic<uint64_t>* statPrefetchRedundant;
-    Statistic<uint64_t>* statPrefetchUpgradeMiss;
-    Statistic<uint64_t>* statPrefetchHit;
-    Statistic<uint64_t>* statPrefetchDrop;
+    Statistic<uint64_t>* stat_prefetch_evict_ = nullptr;
+    Statistic<uint64_t>* stat_prefetch_inv_ = nullptr;
+    Statistic<uint64_t>* stat_prefetch_redundant_ = nullptr;
+    Statistic<uint64_t>* stat_prefetch_upgrade_miss_ = nullptr;
+    Statistic<uint64_t>* stat_prefetch_hit_ = nullptr;
+    Statistic<uint64_t>* stat_prefetch_drop_ = nullptr;
 };
 
 }}

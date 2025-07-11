@@ -24,66 +24,66 @@ using namespace SST::MemHierarchy;
 /* Debug macros included from util.h */
 
 
-CoherenceController::CoherenceController(ComponentId_t id, Params &params, Params& ownerParams, bool prefetch) : SubComponent(id) {
-    params.insert(ownerParams); // Combine params
+CoherenceController::CoherenceController(ComponentId_t id, Params &params, Params& owner_params, bool prefetch) : SubComponent(id) {
+    params.insert(owner_params); // Combine params
 
     /* Output stream */
-    output = new Output("", 1, 0, SST::Output::STDOUT);
+    output_= new Output("", 1, 0, SST::Output::STDOUT);
 
     /* Debug stream */
-    debug = new Output("", params.find<int>("debug_level", 1), 0, (Output::output_location_t)params.find<int>("debug", SST::Output::NONE));
+    debug_ = new Output("", params.find<int>("debug_level", 1), 0, (Output::output_location_t)params.find<int>("debug", SST::Output::NONE));
 
-    dlevel = params.find<int>("debug_level", 1);
+    debug_level_ = params.find<int>("debug_level", 1);
     if (params.find<int>("debug", SST::Output::NONE) == SST::Output::NONE)
-        dlevel = 0;
+        debug_level_ = 0;
 
     bool found;
 
     /* Get latency parameters */
-    accessLatency_ = params.find<uint64_t>("access_latency_cycles", 1, found);
+    access_latency_ = params.find<uint64_t>("access_latency_cycles", 1, found);
     if (!found) {
-        output->fatal(CALL_INFO, -1, "%s, Param not specified: access_latency_cycles - this is the access time in cycles for the cache; if tag_latency is also specified, this is the data array access time\n",
+        output_->fatal(CALL_INFO, -1, "%s, Param not specified: access_latency_cycles - this is the access time in cycles for the cache; if tag_latency is also specified, this is the data array access time\n",
                 getName().c_str());
     }
 
-    tagLatency_ = params.find<uint64_t>("tag_access_latency_cycles", accessLatency_);
-    mshrLatency_ = params.find<uint64_t>("mshr_latency_cycles", 1); /* cacheFactory is currently checking/setting this for us */
+    tag_latency_ = params.find<uint64_t>("tag_access_latency_cycles", access_latency_);
+    mshr_latency_ = params.find<uint64_t>("mshr_latency_cycles", 1); /* cacheFactory is currently checking/setting this for us */
 
     /* Get line size - already error checked by cacheFactory */
-    lineSize_ = params.find<uint64_t>("cache_line_size", 64, found);
+    line_size_ = params.find<uint64_t>("cache_line_size", 64, found);
 
     /* Get throughput parameters */
-    UnitAlgebra packetSize = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
-    UnitAlgebra downLinkBW = UnitAlgebra(params.find<std::string>("request_link_width", "0B"));
-    UnitAlgebra upLinkBW = UnitAlgebra(params.find<std::string>("response_link_width", "0B"));
+    UnitAlgebra packet_size = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
+    UnitAlgebra down_link_width = UnitAlgebra(params.find<std::string>("request_link_width", "0B"));
+    UnitAlgebra up_link_width = UnitAlgebra(params.find<std::string>("response_link_width", "0B"));
 
-    if (!packetSize.hasUnits("B"))
-        output->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B), SI units OK. Ex: '8B'. You specified '%s'\n", getName().c_str(), packetSize.toString().c_str());
-    if (!downLinkBW.hasUnits("B"))
-        output->fatal(CALL_INFO, -1, "%s, Invalid param: request_link_width - must have units of bytes (B), SI units OK. Ex: '64B'. You specified '%s'\n", getName().c_str(), downLinkBW.toString().c_str());
-    if (!upLinkBW.hasUnits("B"))
-        output->fatal(CALL_INFO, -1, "%s, Invalid param: response_link_width - must have units of bytes (B), SI units OK. Ex: '64B'. You specified '%s'\n", getName().c_str(), upLinkBW.toString().c_str());
+    if (!packet_size.hasUnits("B"))
+        output_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B), SI units OK. Ex: '8B'. You specified '%s'\n", getName().c_str(), packet_size.toString().c_str());
+    if (!down_link_width.hasUnits("B"))
+        output_->fatal(CALL_INFO, -1, "%s, Invalid param: request_link_width - must have units of bytes (B), SI units OK. Ex: '64B'. You specified '%s'\n", getName().c_str(), down_link_width.toString().c_str());
+    if (!up_link_width.hasUnits("B"))
+        output_->fatal(CALL_INFO, -1, "%s, Invalid param: response_link_width - must have units of bytes (B), SI units OK. Ex: '64B'. You specified '%s'\n", getName().c_str(), up_link_width.toString().c_str());
 
-    maxBytesUp = upLinkBW.getRoundedValue();
-    maxBytesDown = downLinkBW.getRoundedValue();
-    packetHeaderBytes = packetSize.getRoundedValue();
+    max_bytes_up_ = up_link_width.getRoundedValue();
+    max_bytes_down_ = down_link_width.getRoundedValue();
+    packet_header_bytes_ = packet_size.getRoundedValue();
 
     /* Initialize variables */
     timestamp_ = 0;
-    outstandingPrefetches_ = 0;
+    outstanding_prefetch_count_ = 0;
 
     /* Default values for cache parameters */
     // May be updated during init()
-    lastLevel_ = true;
-    silentEvictClean_ = true;
-    writebackCleanBlocks_ = false;
-    recvWritebackAck_ = false;
-    sendWritebackAck_ = false;
+    last_level_ = true;
+    silent_evict_clean_ = true;
+    writeback_clean_blocks_ = false;
+    recv_writeback_ack_ = false;
+    send_writeback_ack_ = false;
 
     // The following cache parameters are set by the cache controller in its constructor
     // Just in case, we give an initial value here
-    dropPrefetchLevel_ = ((size_t) - 1);
-    maxOutstandingPrefetch_ = ((size_t) - 2);
+    drop_prefetch_level_ = ((size_t) - 1);
+    max_outstanding_prefetch_ = ((size_t) - 2);
 
     // Get parent component's name
     cachename_ = getParentComponentName();
@@ -92,37 +92,37 @@ CoherenceController::CoherenceController(ComponentId_t id, Params &params, Param
     // Give  all array entries a default statistic so we don't end up with segfaults during execution
     Statistic<uint64_t> * defStat = registerStatistic<uint64_t>("default_stat");
     for (int i = 0; i < (int)Command::LAST_CMD; i++) {
-        stat_eventSent[i] = defStat;
+        stat_event_sent_[i] = defStat;
         for (int j = 0; j < LAST_STATE; j++) {
-            stat_eventState[i][j] = defStat;
+            stat_event_state_[i][j] = defStat;
 
             if (i == 0) {
-                stat_evict[j] = defStat;
+                stat_evict_[j] = defStat;
             }
         }
     }
 
-    // Initialize event debug info (eventDI/evictDI)
-    evictDI.id.first = 0;
-    evictDI.id.second = 0;
-    evictDI.thr = 0;
-    evictDI.cmd = Command::NULLCMD;
-    evictDI.mod = "";
-    evictDI.oldst = I;
-    evictDI.newst = I;
-    evictDI.action = "";
-    evictDI.reason = "";
-    evictDI.verboseline = "";
-    eventDI.id.first = 0;
-    eventDI.id.second = 0;
-    eventDI.thr = 0;
-    eventDI.cmd = Command::NULLCMD;
-    eventDI.mod = "";
-    eventDI.oldst = I;
-    eventDI.newst = I;
-    eventDI.action = "";
-    eventDI.reason = "";
-    eventDI.verboseline = "";
+    // Initialize event debug info (event_debuginfo_/evict_debuginfo_)
+    evict_debuginfo_.id.first = 0;
+    evict_debuginfo_.id.second = 0;
+    evict_debuginfo_.thread = 0;
+    evict_debuginfo_.cmd = Command::NULLCMD;
+    evict_debuginfo_.modifier = "";
+    evict_debuginfo_.old_state = I;
+    evict_debuginfo_.new_state = I;
+    evict_debuginfo_.action = "";
+    evict_debuginfo_.reason = "";
+    evict_debuginfo_.verbose_line = "";
+    event_debuginfo_.id.first = 0;
+    event_debuginfo_.id.second = 0;
+    event_debuginfo_.thread = 0;
+    event_debuginfo_.cmd = Command::NULLCMD;
+    event_debuginfo_.modifier = "";
+    event_debuginfo_.old_state = I;
+    event_debuginfo_.new_state = I;
+    event_debuginfo_.action = "";
+    event_debuginfo_.reason = "";
+    event_debuginfo_.verbose_line = "";
 }
 
 /*******************************************************************************
@@ -153,7 +153,7 @@ ReplacementPolicy* CoherenceController::createReplacementPolicy(uint64_t lines, 
     if (policy == "random") return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.random", "replacement", slotnum, ComponentInfo::SHARE_NONE, emptyparams, lines, assoc);
     if (policy == "nmru")   return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.nmru", "replacement", slotnum, ComponentInfo::SHARE_NONE, emptyparams, lines, assoc);
 
-    debug->fatal(CALL_INFO, -1, "%s, Invalid param: replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified '%s'.\n", getName().c_str(), policy.c_str());
+    debug_->fatal(CALL_INFO, -1, "%s, Invalid param: replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified '%s'.\n", getName().c_str(), policy.c_str());
     return nullptr;
 }
 
@@ -162,12 +162,14 @@ HashFunction* CoherenceController::createHashFunction(Params& params) {
     if (ht) return ht;
 
     Params hparams;
-    int hashFunc = params.find<int>("hash_function", 0);
-    if (hashFunc == 1)  ht = loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.linear", "hash", 0, ComponentInfo::SHARE_NONE, hparams);
-    if (hashFunc == 2)  ht = loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.xor", "hash", 0, ComponentInfo::SHARE_NONE, hparams);
-    else                ht = loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.none", "hash", 0, ComponentInfo::SHARE_NONE, hparams);
-
-    return ht;
+    int hash_function = params.find<int>("hash_function", 0);
+    if (hash_function == 1) {
+        return loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.linear", "hash", 0, ComponentInfo::SHARE_NONE, hparams);
+    } else if (hash_function == 2)  {
+        return loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.xor", "hash", 0, ComponentInfo::SHARE_NONE, hparams);
+    } else  {
+        return loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.none", "hash", 0, ComponentInfo::SHARE_NONE, hparams);
+    }
 }
 
 
@@ -175,182 +177,182 @@ HashFunction* CoherenceController::createHashFunction(Params& params) {
  * Event handlers - one per event type
  * Handlers return whether event was accepted (true) or rejected (false)
  *******************************************************************************/
-bool CoherenceController::handleGetS(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: GetS events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleGetS(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: GetS events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleGetX(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: GetX events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleGetX(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: GetX events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleGetSX(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: GetSX events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleGetSX(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: GetSX events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleWrite(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: Write events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleWrite(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: Write events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleFlushLine(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: FlushLine events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleFlushLine(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: FlushLine events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleFlushLineInv(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: FlushLineInv events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleFlushLineInv(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: FlushLineInv events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleFlushAll(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: FlushAll events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleFlushAll(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: FlushAll events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleForwardFlush(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: ForwardFlush events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleForwardFlush(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: ForwardFlush events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handlePutS(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: PutS events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handlePutS(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: PutS events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handlePutX(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: PutX events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handlePutX(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: PutX events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handlePutE(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: PutE events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handlePutE(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: PutE events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handlePutM(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: PutM events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handlePutM(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: PutM events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleGetSResp(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: GetSResp events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleGetSResp(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: GetSResp events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleGetXResp(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: GetXResp events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleGetXResp(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: GetXResp events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleWriteResp(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: WriteResp events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleWriteResp(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: WriteResp events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleFlushLineResp(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: FlushLineResp events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleFlushLineResp(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: FlushLineResp events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleFlushAllResp(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: FlushAllResp events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleFlushAllResp(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: FlushAllResp events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleAckFlush(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: AckFlush events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleAckFlush(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: AckFlush events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleUnblockFlush(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: UnblockFlush events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleUnblockFlush(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: UnblockFlush events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleAckPut(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: AckPut events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleAckPut(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: AckPut events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleFetch(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: Fetch events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleFetch(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: Fetch events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleFetchInv(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: FetchInv events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleFetchInv(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: FetchInv events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleFetchInvX(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: FetchInvX events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleFetchInvX(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: FetchInvX events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleForceInv(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: ForceInv events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleForceInv(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: ForceInv events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleInv(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: Inv events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleInv(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: Inv events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleFetchResp(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: FetchResp events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleFetchResp(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: FetchResp events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleFetchXResp(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: FetchXResp events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleFetchXResp(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: FetchXResp events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleAckInv(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: AckInv events are not handled by this coherence manager. Event: %s\n. Time: %" PRIu64 "ns.",
+bool CoherenceController::handleAckInv(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: AckInv events are not handled by this coherence manager. Event: %s\n. Time: %" PRIu64 "ns.",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleNULLCMD(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: NULLCMD events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleNULLCMD(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: NULLCMD events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
 
-bool CoherenceController::handleNACK(MemEvent* event, bool inMSHR) {
-    debug->fatal(CALL_INFO, -1, "%s, Error: NACK events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+bool CoherenceController::handleNACK(MemEvent* event, bool in_mshr) {
+    debug_->fatal(CALL_INFO, -1, "%s, Error: NACK events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
@@ -366,65 +368,64 @@ bool CoherenceController::sendOutgoingEvents() {
     timestamp_++;
 
     // Check for ready events in outgoing 'down' queue
-    uint64_t bytesLeft = maxBytesDown;
-    while (!outgoingEventQueueDown_.empty() && outgoingEventQueueDown_.front().deliveryTime <= timestamp_) {
-        MemEventBase *outgoingEvent = outgoingEventQueueDown_.front().event;
-        if (maxBytesDown != 0) {
-            if (bytesLeft == 0) break;
-            if (bytesLeft >= outgoingEventQueueDown_.front().size) {
-                bytesLeft -= outgoingEventQueueDown_.front().size;  // Send this many bytes
+    uint64_t bytes_left = max_bytes_down_;
+    while (!outgoing_event_queue_down_.empty() && outgoing_event_queue_down_.front().delivery_time <= timestamp_) {
+        MemEventBase *outgoing_event = outgoing_event_queue_down_.front().event;
+        if (max_bytes_down_ != 0) {
+            if (bytes_left == 0) break;
+            if (bytes_left >= outgoing_event_queue_down_.front().size) {
+                bytes_left -= outgoing_event_queue_down_.front().size;  // Send this many bytes
             } else {
-                outgoingEventQueueDown_.front().size -= bytesLeft;
+                outgoing_event_queue_down_.front().size -= bytes_left;
                 break;
             }
         }
 
 
-        if (mem_h_is_debug_event(outgoingEvent)) {
-            debug->debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
-                    getCurrentSimCycle(), timestamp_, cachename_.c_str(), outgoingEvent->getBriefString().c_str());
+        if (mem_h_is_debug_event(outgoing_event)) {
+            debug_->debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
+                    getCurrentSimCycle(), timestamp_, cachename_.c_str(), outgoing_event->getBriefString().c_str());
         }
 
-        linkDown_->send(outgoingEvent);
-        outgoingEventQueueDown_.pop_front();
-
+        link_down_->send(outgoing_event);
+        outgoing_event_queue_down_.pop_front();
     }
 
     // Check for ready events in outgoing 'up' queue
-    bytesLeft = maxBytesUp;
-    while (!outgoingEventQueueUp_.empty() && outgoingEventQueueUp_.front().deliveryTime <= timestamp_) {
-        MemEventBase * outgoingEvent = outgoingEventQueueUp_.front().event;
-        if (maxBytesUp != 0) {
-            if (bytesLeft == 0) break;
-            if (bytesLeft >= outgoingEventQueueUp_.front().size) {
-                bytesLeft -= outgoingEventQueueUp_.front().size;
+    bytes_left = max_bytes_up_;
+    while (!outgoing_event_queue_up_.empty() && outgoing_event_queue_up_.front().delivery_time <= timestamp_) {
+        MemEventBase * outgoing_event = outgoing_event_queue_up_.front().event;
+        if (max_bytes_up_ != 0) {
+            if (bytes_left == 0) break;
+            if (bytes_left >= outgoing_event_queue_up_.front().size) {
+                bytes_left -= outgoing_event_queue_up_.front().size;
             } else {
-                outgoingEventQueueUp_.front().size -= bytesLeft;
+                outgoing_event_queue_up_.front().size -= bytes_left;
                 break;
             }
         }
 
-        if (mem_h_is_debug_event(outgoingEvent)) {
-            debug->debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
-                    getCurrentSimCycle(), timestamp_, cachename_.c_str(), outgoingEvent->getBriefString().c_str());
+        if (mem_h_is_debug_event(outgoing_event)) {
+            debug_->debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
+                    getCurrentSimCycle(), timestamp_, cachename_.c_str(), outgoing_event->getBriefString().c_str());
         }
 
-        if (startTimes_.find(outgoingEvent->getResponseToID()) != startTimes_.end()) {
-            LatencyStat stat = startTimes_.find(outgoingEvent->getResponseToID())->second;
-            recordLatency(stat.cmd, stat.missType, timestamp_ - stat.time);
-            startTimes_.erase(outgoingEvent->getResponseToID());
+        if (start_times_.find(outgoing_event->getResponseToID()) != start_times_.end()) {
+            LatencyStat stat = start_times_.find(outgoing_event->getResponseToID())->second;
+            recordLatency(stat.cmd, stat.miss_type, timestamp_ - stat.time);
+            start_times_.erase(outgoing_event->getResponseToID());
         }
 
-        linkUp_->send(outgoingEvent);
-        outgoingEventQueueUp_.pop_front();
+        link_up_->send(outgoing_event);
+        outgoing_event_queue_up_.pop_front();
     }
 
     // Return whether it's ok for the cache to turn off the clock - we need it on to be able to send waiting events
-    return outgoingEventQueueDown_.empty() && outgoingEventQueueUp_.empty();
+    return outgoing_event_queue_down_.empty() && outgoing_event_queue_up_.empty();
 }
 
 bool CoherenceController::checkIdle() {
-    return outgoingEventQueueDown_.empty() && outgoingEventQueueUp_.empty();
+    return outgoing_event_queue_down_.empty() && outgoing_event_queue_up_.empty();
 }
 
 
@@ -435,22 +436,22 @@ void CoherenceController::forwardByAddress(MemEventBase * event) {
 
 void CoherenceController::forwardByAddress(MemEventBase * event, Cycle_t ts) {
     event->setSrc(cachename_);
-    std::string dst = linkDown_->findTargetDestination(event->getRoutingAddress());
+    std::string dst = link_down_->findTargetDestination(event->getRoutingAddress());
     if (dst != "") { /* Common case */
         event->setDst(dst);
-        Response fwdReq = {event, ts, packetHeaderBytes + event->getPayloadSize()};
-        addToOutgoingQueue(fwdReq);
+        Response forward_request = {event, ts, packet_header_bytes_ + event->getPayloadSize()};
+        addToOutgoingQueue(forward_request);
     } else {
-        dst = linkUp_->findTargetDestination(event->getRoutingAddress());
+        dst = link_up_->findTargetDestination(event->getRoutingAddress());
         if (dst != "") {
             event->setDst(dst);
-            Response fwdReq = {event, ts, packetHeaderBytes + event->getPayloadSize()};
-            addToOutgoingQueueUp(fwdReq);
+            Response forward_request = {event, ts, packet_header_bytes_ + event->getPayloadSize()};
+            addToOutgoingQueueUp(forward_request);
         } else {
-            std::string availableDests = "cpulink:\n" + linkUp_->getAvailableDestinationsAsString();
-            if (linkUp_ != linkDown_) availableDests = availableDests + "memlink:\n" + linkDown_->getAvailableDestinationsAsString();
-            output->fatal(CALL_INFO, -1, "%s, Error: Unable to find destination for address 0x%" PRIx64 ". Event: %s\nKnown Destinations: %s\n",
-                    getName().c_str(), event->getRoutingAddress(), event->getVerboseString().c_str(), availableDests.c_str());
+            std::string available_dests = "cpulink:\n" + link_up_->getAvailableDestinationsAsString();
+            if (link_up_ != link_down_) available_dests = available_dests + "memlink:\n" + link_down_->getAvailableDestinationsAsString();
+            output_->fatal(CALL_INFO, -1, "%s, Error: Unable to find destination for address 0x%" PRIx64 ". Event: %s\nKnown Destinations: %s\n",
+                    getName().c_str(), event->getRoutingAddress(), event->getVerboseString().c_str(), available_dests.c_str());
         }
     }
 
@@ -464,21 +465,21 @@ void CoherenceController::forwardByDestination(MemEventBase * event) {
 /* Forward an event to a specific destination */
 void CoherenceController::forwardByDestination(MemEventBase * event, Cycle_t ts) {
     event->setSrc(cachename_);
-    Response fwdReq = {event, ts, packetHeaderBytes + event->getPayloadSize()};
+    Response forward_request = {event, ts, packet_header_bytes_ + event->getPayloadSize()};
 
-    if (linkUp_->isReachable(event->getDst())) {
-        addToOutgoingQueueUp(fwdReq);
-    } else if (linkDown_->isReachable(event->getDst())) {
-        addToOutgoingQueue(fwdReq);
+    if (link_up_->isReachable(event->getDst())) {
+        addToOutgoingQueueUp(forward_request);
+    } else if (link_down_->isReachable(event->getDst())) {
+        addToOutgoingQueue(forward_request);
     } else {
-        output->fatal(CALL_INFO, -1, "%s, Error: Destination %s appears unreachable on both links. Event: %s\n",
+        output_->fatal(CALL_INFO, -1, "%s, Error: Destination %s appears unreachable on both links. Event: %s\n",
                 getName().c_str(), event->getDst().c_str(), event->getVerboseString().c_str());
     }
 }
 
 /* Broadcast an event to all sources */
 int CoherenceController::broadcastMemEventToSources(Command cmd, MemEvent* metadata, Cycle_t ts) {
-    std::set<MemLinkBase::EndpointInfo>* sources = linkUp_->getSources();
+    std::set<MemLinkBase::EndpointInfo>* sources = link_up_->getSources();
     for (auto it = sources->begin(); it != sources->end(); it++) {
         MemEvent* event = new MemEvent(cachename_, cmd);
         if (metadata) event->copyMetadata(metadata);
@@ -490,7 +491,7 @@ int CoherenceController::broadcastMemEventToSources(Command cmd, MemEvent* metad
 }
 
 int CoherenceController::broadcastMemEventToPeers(Command cmd, MemEvent* metadata, Cycle_t ts) {
-    std::set<MemLinkBase::EndpointInfo>* peers = linkUp_->getPeers();
+    std::set<MemLinkBase::EndpointInfo>* peers = link_up_->getPeers();
     int sent = 0;
     for (auto it = peers->begin(); it != peers->end(); it++) {
         if (it->name == cachename_) continue;
@@ -513,45 +514,45 @@ int CoherenceController::broadcastMemEventToPeers(Command cmd, MemEvent* metadat
 void CoherenceController::processInitCoherenceEvent(MemEventInitCoherence* event, bool source) {
     // If something besides memory is below us, we are not the last level doing coherence
     if (!source && event->getType() != Endpoint::Memory)
-        lastLevel_ = false;
+        last_level_ = false;
 
     // If the component below us tracks whether a block is present above, then we can't silently evict (per current protocols)
-    if (!source && (event->getTracksPresence() || lastLevel_))
-        silentEvictClean_ = false;
+    if (!source && (event->getTracksPresence() || last_level_))
+        silent_evict_clean_ = false;
 
     // The component below us does not neccessarily keep a copy of data, therefore we need to write back data when evicting clean blocks
     if ((!source && !event->getInclusive()) || (!source && event->getType() == Endpoint::Directory))
-        writebackCleanBlocks_ = true;
+        writeback_clean_blocks_ = true;
 
     // The component below us will send writeback acks, we should wait for them
     if (!source && event->getSendWBAck())
-        recvWritebackAck_ = true;
+        recv_writeback_ack_ = true;
 
     if (source && event->getRecvWBAck())
-        sendWritebackAck_ = true;
+        send_writeback_ack_ = true;
 
     // Track CPU names so we can broadcast L1 invalidation snoops if needed
     if (source && (event->getType() == Endpoint::CPU || event->getType() == Endpoint::MMIO))
-        cpus.insert(event->getSrc());
+        system_cpu_names_.insert(event->getSrc());
 
-    debug->debug(_L3_, "%s processInitCoherenceEvent. Result is (source=%s): LL ? %s, silentEvict ? %s, WBClean ? %s, sendWBAck ? %s, recvWBAck ? %s\n",
+    debug_->debug(_L3_, "%s processInitCoherenceEvent. Result is (source=%s): LL ? %s, silentEvict ? %s, WBClean ? %s, sendWBAck ? %s, recvWBAck ? %s\n",
             cachename_.c_str(),
             source ? "true" : "false",
-            lastLevel_ ? "Y" : "N",
-            silentEvictClean_ ? "Y" : "N",
-            writebackCleanBlocks_ ? "Y" : "N",
-            sendWritebackAck_ ? "Y" : "N",
-            recvWritebackAck_ ? "Y" : "N");
+            last_level_ ? "Y" : "N",
+            silent_evict_clean_ ? "Y" : "N",
+            writeback_clean_blocks_ ? "Y" : "N",
+            send_writeback_ack_ ? "Y" : "N",
+            recv_writeback_ack_ ? "Y" : "N");
 }
 
 void CoherenceController::setup() {
     /* Identify if this cache is the flush manager, and, if not, the destination for any flushes */
-    flush_manager_ = lastLevel_;
+    flush_manager_ = last_level_;
     flush_helper_ = true;
-    bool global_peer = lastLevel_;
+    bool global_peer = last_level_;
     /* Identify the local flush helper in our group of peers */
-    MemLinkBase::EndpointInfo min = linkUp_->getEndpointInfo();
-    auto peers = linkUp_->getPeers();
+    MemLinkBase::EndpointInfo min = link_up_->getEndpointInfo();
+    auto peers = link_up_->getPeers();
     for (auto it = peers->begin(); it != peers->end(); it++) {
         if (*it < min) {
             min = *it;
@@ -562,10 +563,10 @@ void CoherenceController::setup() {
 
     if (flush_manager_) {
         flush_dest_ = getName();
-    } else if (lastLevel_) { // If true, the global flush manager is one of our peers
+    } else if (last_level_) { // If true, the global flush manager is one of our peers
         flush_dest_ = min.name;
     } else {
-        auto dests = linkDown_->getDests();
+        auto dests = link_down_->getDests();
         min = *(dests->begin());
         for (auto it = dests->begin(); it != dests->end(); it++) {
             if (*it < min) {
@@ -578,28 +579,28 @@ void CoherenceController::setup() {
 
 void CoherenceController::processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) {
     if (event->getInitCmd() == MemEventInit::InitCommand::Flush) {
-        debug->output("Complete Event (%s): %s\n", getName().c_str(), event->getVerboseString().c_str());
+        debug_->output("Complete Event (%s): %s\n", getName().c_str(), event->getVerboseString().c_str());
     }
     delete event; // Nothing for now
 }
 
 /* Retry buffer */
 std::vector<MemEventBase*>* CoherenceController::getRetryBuffer() {
-    return &retryBuffer_;
+    return &retry_buffer_;
 }
 
 void CoherenceController::clearRetryBuffer() {
-    retryBuffer_.clear();
+    retry_buffer_.clear();
 }
 
 
 /* Listener callbacks */
-void CoherenceController::notifyListenerOfAccess(MemEvent * event, NotifyAccessType accessT, NotifyResultType resultT) {
+void CoherenceController::notifyListenerOfAccess(MemEvent * event, NotifyAccessType access_type, NotifyResultType result_type) {
     if (event->isPrefetch())
-        accessT = NotifyAccessType::PREFETCH;
+        access_type = NotifyAccessType::PREFETCH;
 
     CacheListenerNotification notify(event->getAddr(), event->getBaseAddr(), event->getVirtualAddress(),
-            event->getInstructionPointer(), event->getSize(), accessT, resultT);
+            event->getInstructionPointer(), event->getSize(), access_type, result_type);
 
     for (int i = 0; i < listeners_.size(); i++)
         listeners_[i]->notifyAccess(notify);
@@ -616,139 +617,139 @@ void CoherenceController::notifyListenerOfEvict(Addr addr, uint32_t size, Addr i
 
 
 /* Forward a message to a lower level (towards memory) in the hierarchy */
-uint64_t CoherenceController::forwardMessage(MemEvent * event, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data, Command fwdCmd) {
+uint64_t CoherenceController::forwardMessage(MemEvent * event, unsigned int request_size, uint64_t base_time, vector<uint8_t>* data, Command forward_command) {
     /* Create event to be forwarded */
-    MemEvent* forwardEvent;
-    forwardEvent = new MemEvent(*event);
+    MemEvent* forward_event;
+    forward_event = new MemEvent(*event);
 
-    if (fwdCmd != Command::LAST_CMD) {
-        forwardEvent->setCmd(fwdCmd);
+    if (forward_command != Command::LAST_CMD) {
+        forward_event->setCmd(forward_command);
     }
 
-    if (data == nullptr) forwardEvent->setPayload(0, nullptr);
+    if (data == nullptr) forward_event->setPayload(0, nullptr);
 
-    forwardEvent->setSize(requestSize);
+    forward_event->setSize(request_size);
 
-    if (data != nullptr) forwardEvent->setPayload(*data);
+    if (data != nullptr) forward_event->setPayload(*data);
 
     /* Determine latency in cycles */
-    uint64_t deliveryTime;
-    if (baseTime < timestamp_) baseTime = timestamp_;
+    uint64_t delivery_time;
+    if (base_time < timestamp_) base_time = timestamp_;
     if (event->queryFlag(MemEvent::F_NONCACHEABLE)) {
-        forwardEvent->setFlag(MemEvent::F_NONCACHEABLE);
-        deliveryTime = timestamp_ + mshrLatency_;
-    } else deliveryTime = baseTime + tagLatency_;
+        forward_event->setFlag(MemEvent::F_NONCACHEABLE);
+        delivery_time = timestamp_ + mshr_latency_;
+    } else delivery_time = base_time + tag_latency_;
 
-    forwardByAddress(forwardEvent, deliveryTime);
+    forwardByAddress(forward_event, delivery_time);
 
     if (mem_h_is_debug_event(event))
-        eventDI.action = "Forward";
+        event_debuginfo_.action = "Forward";
 
-    return deliveryTime;
+    return delivery_time;
 }
 
 /* Send a NACK event */
 void CoherenceController::sendNACK(MemEvent * event) {
-    MemEvent * NACKevent = event->makeNACKResponse(event);
+    MemEvent * nack_event = event->makeNACKResponse(event);
 
-    uint64_t deliveryTime = timestamp_ + tagLatency_; // Probably had to lookup and see that we couldn't handle this request and/or MSHR was full
-    forwardByDestination(NACKevent, deliveryTime);
+    uint64_t delivery_time = timestamp_ + tag_latency_; // Probably had to lookup and see that we couldn't handle this request and/or MSHR was full
+    forwardByDestination(nack_event, delivery_time);
 
     if (mem_h_is_debug_event(event))
-        eventDI.action = "NACK";
+        event_debuginfo_.action = "NACK";
 }
 
 
 /* Resend an event after a NACK */
-void CoherenceController::resendEvent(MemEvent * event, bool towardsCPU) {
+void CoherenceController::resendEvent(MemEvent * event, bool towards_cpu) {
     // Calculate backoff - avoids flooding links
     int retries = event->getRetries();
     if (retries > 10) retries = 10;
     uint64_t backoff = ( 0x1 << retries);
     event->incrementRetries();
 
-    uint64_t deliveryTime =  timestamp_ + mshrLatency_ + backoff;
-    forwardByDestination(event, deliveryTime);
+    uint64_t delivery_time =  timestamp_ + mshr_latency_ + backoff;
+    forwardByDestination(event, delivery_time);
 
     if (mem_h_is_debug_event(event)) {
-        eventDI.action = "Resend";
-        eventDI.reason = event->getBriefString();
+        event_debuginfo_.action = "Resend";
+        event_debuginfo_.reason = event->getBriefString();
     }
 }
 
 
 /* Send response up (towards CPU). L1s need to implement their own to split out the requested block */
-uint64_t CoherenceController::sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool success) {
-    return sendResponseUp(event, CommandResponse[(int)event->getCmd()], data, false, replay, baseTime, success);
+uint64_t CoherenceController::sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t base_time, bool success) {
+    return sendResponseUp(event, CommandResponse[(int)event->getCmd()], data, false, replay, base_time, success);
 }
 
 
 /* Send response up (towards CPU). L1s need to implement their own to split out the requested block */
-uint64_t CoherenceController::sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool success) {
-    return sendResponseUp(event, cmd, data, false, replay, baseTime, success);
+uint64_t CoherenceController::sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool replay, uint64_t base_time, bool success) {
+    return sendResponseUp(event, cmd, data, false, replay, base_time, success);
 }
 
 
 /* Send response towards the CPU. L1s need to implement their own to split out the requested block */
-uint64_t CoherenceController::sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool dirty, bool replay, uint64_t baseTime, bool success) {
-    MemEvent * responseEvent = event->makeResponse(cmd);
-    responseEvent->setSize(event->getSize());
-    if (data != nullptr) responseEvent->setPayload(*data);
-    responseEvent->setDirty(dirty);
+uint64_t CoherenceController::sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool dirty, bool replay, uint64_t base_time, bool success) {
+    MemEvent * response_event = event->makeResponse(cmd);
+    response_event->setSize(event->getSize());
+    if (data != nullptr) response_event->setPayload(*data);
+    response_event->setDirty(dirty);
 
     if (!success)
-        responseEvent->setFail();
+        response_event->setFail();
 
-    if (baseTime < timestamp_) baseTime = timestamp_;
-    uint64_t deliveryTime = baseTime + (replay ? mshrLatency_ : accessLatency_);
-    forwardByDestination(responseEvent, deliveryTime);
+    if (base_time < timestamp_) base_time = timestamp_;
+    uint64_t delivery_time = base_time + (replay ? mshr_latency_ : access_latency_);
+    forwardByDestination(response_event, delivery_time);
 
-    return deliveryTime;
+    return delivery_time;
 }
 
 /* Return the name of the source for this cache */
 std::string CoherenceController::getSrc() {
-    return linkUp_->getSources()->begin()->name;
+    return link_up_->getSources()->begin()->name;
 }
 
 /* Allocate an MSHR entry for an event */
-MemEventStatus CoherenceController::allocateMSHR(MemEvent * event, bool fwdReq, int pos, bool stallEvict) {
-    // Screen prefetches first to ensure limits are not exceeeded:
+MemEventStatus CoherenceController::allocateMSHR(MemEvent * event, bool forward_request, int pos, bool stall_for_evict) {
+    // Screen prefetches first to ensure limits are not exceeded:
     //      - Maximum number of outstanding prefetches
     //      - MSHR too full to accept prefetches
     if (event->isPrefetch() && event->getRqstr() == cachename_) {
-        if (dropPrefetchLevel_ <= mshr_->getSize()) {
-            eventDI.action = "Reject";
-            eventDI.reason = "Prefetch drop level";
+        if (drop_prefetch_level_ <= mshr_->getSize()) {
+            event_debuginfo_.action = "Reject";
+            event_debuginfo_.reason = "Prefetch drop level";
             return MemEventStatus::Reject;
         }
-        if (maxOutstandingPrefetch_ <= outstandingPrefetches_) {
-            eventDI.action = "Reject";
-            eventDI.reason = "Max outstanding prefetches";
+        if (max_outstanding_prefetch_ <= outstanding_prefetch_count_) {
+            event_debuginfo_.action = "Reject";
+            event_debuginfo_.reason = "Max outstanding prefetches";
             return MemEventStatus::Reject;
         }
     }
 
-    int end_pos = mshr_->insertEvent(event->getBaseAddr(), event, pos, fwdReq, stallEvict);
+    int end_pos = mshr_->insertEvent(event->getBaseAddr(), event, pos, forward_request, stall_for_evict);
     if (end_pos == -1) {
         if (mem_h_is_debug_event(event)) {
-            eventDI.action = "Reject";
-            eventDI.reason = "MSHR full";
+            event_debuginfo_.action = "Reject";
+            event_debuginfo_.reason = "MSHR full";
         }
         return MemEventStatus::Reject; // MSHR is full
     } else if (end_pos != 0) {
         if (mem_h_is_debug_event(event)) {
-            eventDI.action = "Stall";
-            eventDI.reason = "MSHR conflict";
+            event_debuginfo_.action = "Stall";
+            event_debuginfo_.reason = "MSHR conflict";
         }
         if (event->isPrefetch() && event->getRqstr() == cachename_) {
-            outstandingPrefetches_++;
+            outstanding_prefetch_count_++;
         }
         return MemEventStatus::Stall;
     }
 
     if (event->isPrefetch() && event->getRqstr() == cachename_) {
-        outstandingPrefetches_++;
+        outstanding_prefetch_count_++;
     }
     return MemEventStatus::OK;
 }
@@ -764,53 +765,53 @@ MemEventStatus CoherenceController::allocateMSHR(MemEvent * event, bool fwdReq, 
 // Prints at debug level 5
 // VERBOSE_LINE_STATE is only printed at debug level 6
 void CoherenceController::printDebugInfo() {
-    printDebugInfo(&eventDI);
+    printDebugInfo(&event_debuginfo_);
 }
 
-void CoherenceController::printDebugInfo(dbgin * diStruct) {
-    if (dlevel < 5)
+void CoherenceController::printDebugInfo(dbgin * debuginfo) {
+    if (debug_level_ < 5)
         return;
 
-    std::string cmd = CommandString[(int)diStruct->cmd];
-    cmd += diStruct->mod;
+    std::string cmd = CommandString[(int)debuginfo->cmd];
+    cmd += debuginfo->modifier;
 
     std::stringstream id;
-    id << "<" << diStruct->id.first << "," << diStruct->id.second << ">";
+    id << "<" << debuginfo->id.first << "," << debuginfo->id.second << ">";
 
     stringstream reas;
-    reas << "(" << diStruct->reason << ")";
+    reas << "(" << debuginfo->reason << ")";
 
     stringstream thr;
-    if (diStruct->hasThr)
-        thr << diStruct->thr;
+    if (debuginfo->has_thread)
+        thr << debuginfo->thread;
     else
         thr << "";
 
-    debug->debug(_L5_, "C: %-20" PRIu64 " %-20" PRIu64 " %-20s %-4s %-13s 0x%-16" PRIx64 " %-15s %-6s %-6s %-10s %-15s",
-            getCurrentSimCycle(), timestamp_, cachename_.c_str(), thr.str().c_str(), cmd.c_str(), diStruct->addr,
-            id.str().c_str(), StateString[diStruct->oldst], StateString[diStruct->newst], diStruct->action.c_str(), reas.str().c_str());
+    debug_->debug(_L5_, "C: %-20" PRIu64 " %-20" PRIu64 " %-20s %-4s %-13s 0x%-16" PRIx64 " %-15s %-6s %-6s %-10s %-15s",
+            getCurrentSimCycle(), timestamp_, cachename_.c_str(), thr.str().c_str(), cmd.c_str(), debuginfo->addr,
+            id.str().c_str(), StateString[debuginfo->old_state], StateString[debuginfo->new_state], debuginfo->action.c_str(), reas.str().c_str());
 
-    debug->debug(_L6_, " %s", diStruct->verboseline.c_str());
-    debug->debug(_L5_, "\n");
+    debug_->debug(_L6_, " %s", debuginfo->verbose_line.c_str());
+    debug_->debug(_L5_, "\n");
 }
 
 void CoherenceController::printDebugAlloc(bool alloc, Addr addr, std::string note) {
-    if (dlevel < 5)
+    if (debug_level_ < 5)
         return;
 
     std::string action = alloc ? "Alloc" : "Dealloc";
 
-    debug->debug(_L5_, "C: %-20" PRIu64 " %-20" PRIu64 " %-25s %-13s 0x%-16" PRIx64 "",
+    debug_->debug(_L5_, "C: %-20" PRIu64 " %-20" PRIu64 " %-25s %-13s 0x%-16" PRIx64 "",
             getCurrentSimCycle(), timestamp_, cachename_.c_str(), action.c_str(), addr);
 
     if (note != "")
-        debug->debug(_L5_, " %s\n", note.c_str());
+        debug_->debug(_L5_, " %s\n", note.c_str());
     else
-        debug->debug(_L5_, "\n");
+        debug_->debug(_L5_, "\n");
 }
 
 void CoherenceController::printDataValue(Addr addr, vector<uint8_t> * data, bool set) {
-    if (dlevel < 11)
+    if (debug_level_ < 11)
         return;
 
     std::string action = set ? "WRITE" : "READ";
@@ -820,7 +821,7 @@ void CoherenceController::printDataValue(Addr addr, vector<uint8_t> * data, bool
         value << std::hex << std::setw(2) << (int)data->at(i);
     }
 
-    debug->debug(_L11_, "V: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " B: %-3zu %s\n",
+    debug_->debug(_L11_, "V: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " B: %-3zu %s\n",
             getCurrentSimCycle(), timestamp_, cachename_.c_str(), action.c_str(),
             addr, data->size(), value.str().c_str());
 /*
@@ -833,14 +834,14 @@ void CoherenceController::printDataValue(Addr addr, vector<uint8_t> * data, bool
 void CoherenceController::printStatus(Output& out) {
     out.output("  Begin MemHierarchy::CoherenceController %s\n", getName().c_str());
 
-    out.output("    Events waiting in outgoingEventQueueDown: %zu\n", outgoingEventQueueDown_.size());
-    for (list<Response>::iterator it = outgoingEventQueueDown_.begin(); it!= outgoingEventQueueDown_.end(); it++) {
-        out.output("      Time: %" PRIu64 ", Event: %s\n", (*it).deliveryTime, (*it).event->getVerboseString().c_str());
+    out.output("    Events waiting in outgoingEventQueueDown: %zu\n", outgoing_event_queue_down_.size());
+    for (list<Response>::iterator it = outgoing_event_queue_down_.begin(); it!= outgoing_event_queue_down_.end(); it++) {
+        out.output("      Time: %" PRIu64 ", Event: %s\n", (*it).delivery_time, (*it).event->getVerboseString().c_str());
     }
 
-    out.output("    Events waiting in outgoingEventQueueUp: %zu\n", outgoingEventQueueUp_.size());
-    for (list<Response>::iterator it = outgoingEventQueueUp_.begin(); it!= outgoingEventQueueUp_.end(); it++) {
-        out.output("      Time: %" PRIu64 ", Event: %s\n", (*it).deliveryTime, (*it).event->getVerboseString().c_str());
+    out.output("    Events waiting in outgoingEventQueueUp: %zu\n", outgoing_event_queue_up_.size());
+    for (list<Response>::iterator it = outgoing_event_queue_up_.begin(); it!= outgoing_event_queue_up_.end(); it++) {
+        out.output("      Time: %" PRIu64 ", Event: %s\n", (*it).delivery_time, (*it).event->getVerboseString().c_str());
     }
 
     out.output("  End MemHierarchy::CoherenceController\n");
@@ -859,11 +860,11 @@ void CoherenceController::printStatus(Output& out) {
  */
 void CoherenceController::addToOutgoingQueue(Response& resp) {
     list<Response>::reverse_iterator rit;
-    for (rit = outgoingEventQueueDown_.rbegin(); rit!= outgoingEventQueueDown_.rend(); rit++) {
-        if (resp.deliveryTime >= (*rit).deliveryTime) break;
+    for (rit = outgoing_event_queue_down_.rbegin(); rit!= outgoing_event_queue_down_.rend(); rit++) {
+        if (resp.delivery_time >= (*rit).delivery_time) break;
         if (resp.event->getRoutingAddress() == (*rit).event->getRoutingAddress()) break;
     }
-    outgoingEventQueueDown_.insert(rit.base(), resp);
+    outgoing_event_queue_down_.insert(rit.base(), resp);
 }
 
 /* Add a new event to the outgoing queue up (towards memory)
@@ -871,17 +872,17 @@ void CoherenceController::addToOutgoingQueue(Response& resp) {
  */
 void CoherenceController::addToOutgoingQueueUp(Response& resp) {
     list<Response>::reverse_iterator rit;
-    for (rit = outgoingEventQueueUp_.rbegin(); rit != outgoingEventQueueUp_.rend(); rit++) {
-        if (resp.deliveryTime >= (*rit).deliveryTime) break;
+    for (rit = outgoing_event_queue_up_.rbegin(); rit != outgoing_event_queue_up_.rend(); rit++) {
+        if (resp.delivery_time >= (*rit).delivery_time) break;
         if (resp.event->getRoutingAddress() == (*rit).event->getRoutingAddress()) break;
     }
-    outgoingEventQueueUp_.insert(rit.base(), resp);
+    outgoing_event_queue_up_.insert(rit.base(), resp);
 }
 
 
 /* Return whether the component is a peer */
 bool CoherenceController::isPeer(std::string name) {
-    return linkUp_->isPeer(name);
+    return link_up_->isPeer(name);
 }
 
 /**************************************/
@@ -891,32 +892,82 @@ bool CoherenceController::isPeer(std::string name) {
 void CoherenceController::recordIncomingRequest(MemEventBase* event) {
     // Default type is -1
     LatencyStat lat(timestamp_, event->getCmd(), -1);
-    startTimes_.insert(std::make_pair(event->getID(), lat));
+    start_times_.insert(std::make_pair(event->getID(), lat));
 }
 
 void CoherenceController::removeRequestRecord(SST::Event::id_type id) {
-    if (startTimes_.find(id) != startTimes_.end())
-        startTimes_.erase(id);
+    if (start_times_.find(id) != start_times_.end())
+        start_times_.erase(id);
 }
 
 void CoherenceController::recordLatencyType(Event::id_type id, int type) {
-    auto it = startTimes_.find(id);
-    if(it != startTimes_.end())
-        it->second.missType = type;
+    auto it = start_times_.find(id);
+    if(it != start_times_.end())
+        it->second.miss_type = type;
 }
 
 void CoherenceController::recordMiss(Event::id_type id) {
-    auto it = startTimes_.find(id);
-    if(it != startTimes_.end())
-        it->second.missType = LatType::MISS;
+    auto it = start_times_.find(id);
+    if(it != start_times_.end())
+        it->second.miss_type = LatType::MISS;
 }
 
 void CoherenceController::recordPrefetchLatency(Event::id_type id, int type) {
-    auto it = startTimes_.find(id);
-    if(it != startTimes_.end()) {
+    auto it = start_times_.find(id);
+    if(it != start_times_.end()) {
         LatencyStat stat = it->second;
         recordLatency(stat.cmd, type, timestamp_ - stat.time);
-        startTimes_.erase(id);
+        start_times_.erase(id);
     }
 }
 
+void CoherenceController::serialize_order(SST::Core::Serialization::serializer& ser) {
+    SST::SubComponent::serialize_order(ser);
+
+    SST_SER(event_debuginfo_);
+    SST_SER(evict_debuginfo_);
+    SST_SER(mshr_);
+    SST_SER(listeners_);
+    SST_SER(max_outstanding_prefetch_);
+    SST_SER(drop_prefetch_level_);
+    SST_SER(outstanding_prefetch_count_);
+    SST_SER(cachename_);
+    SST_SER(output_);
+    SST_SER(debug_);
+    SST_SER(debug_addr_filter_);
+    SST_SER(debug_level_);
+    SST_SER(timestamp_);
+    SST_SER(access_latency_);
+    SST_SER(tag_latency_);
+    SST_SER(mshr_latency_);
+    SST_SER(line_size_);
+    SST_SER(writeback_clean_blocks_);
+    SST_SER(silent_evict_clean_);
+    SST_SER(recv_writeback_ack_);
+    SST_SER(send_writeback_ack_);
+    SST_SER(last_level_);
+    SST_SER(flush_manager_);
+    SST_SER(flush_helper_);
+    SST_SER(flush_dest_);
+    SST_SER(retry_buffer_);
+    SST_SER(stat_event_sent_);
+    SST_SER(stat_evict_);
+    SST_SER(stat_event_state_);
+    SST_SER(start_times_);
+    SST_SER(system_cpu_names_);
+    SST_SER(outgoing_event_queue_down_);
+    SST_SER(outgoing_event_queue_up_);
+    SST_SER(link_up_);
+    SST_SER(link_down_);
+    SST_SER(max_bytes_up_);
+    SST_SER(max_bytes_down_);
+    SST_SER(packet_header_bytes_);
+    SST_SER(stat_prefetch_evict_);
+    SST_SER(stat_prefetch_inv_);
+    SST_SER(stat_prefetch_redundant_);
+    SST_SER(stat_prefetch_upgrade_miss_);
+    SST_SER(stat_prefetch_hit_);
+    SST_SER(stat_prefetch_drop_);
+
+    // Rely on cache to re-register reenable_clock_ in deserialization
+}
