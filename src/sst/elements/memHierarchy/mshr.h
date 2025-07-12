@@ -47,45 +47,42 @@ using namespace std;
 enum class MSHREntryType { Event, Evict, Writeback };
 
 class MSHREntry {
-    public:
-        // Event entry
+public:
+    // Event entry
     MSHREntry(MemEventBase* ev, bool stallEvict, SimTime_t curr_time) {
-            entry_type_ = MSHREntryType::Event;
-            evict_ptrs_ = nullptr;
-            event_ = ev;
-            time_ = curr_time;
-            in_progress_ = false;
-            need_evict_ = stallEvict;
-            profiled_ = false;
-            downgrade_ = false;
-        }
+        entry_type_ = MSHREntryType::Event;
+        event_ = ev;
+        time_ = curr_time;
+        in_progress_ = false;
+        need_evict_ = stallEvict;
+        profiled_ = false;
+        downgrade_ = false;
+    }
 
         // Writeback entry
     MSHREntry(bool downgr, SimTime_t curr_time) {
-            entry_type_ = MSHREntryType::Writeback;
-            evict_ptrs_ = nullptr;
-            event_ = nullptr;
-            time_ = curr_time;
-            in_progress_ = false;
-            need_evict_ = false;
-            profiled_ = false;
-            event_ = nullptr;
-            downgrade_ = downgr;
-        }
+        entry_type_ = MSHREntryType::Writeback;
+        event_ = nullptr;
+        time_ = curr_time;
+        in_progress_ = false;
+        need_evict_ = false;
+        profiled_ = false;
+        event_ = nullptr;
+        downgrade_ = downgr;
+    }
 
-        // Evict entry
+    // Evict entry
     MSHREntry(Addr addr, SimTime_t curr_time) {
-            entry_type_ = MSHREntryType::Evict;
-            event_ = nullptr;
-            evict_ptrs_ = new std::list<Addr>;
-            evict_ptrs_->push_back(addr);
-            time_ = curr_time;
-            in_progress_ = false;
-            need_evict_ = false;
-            profiled_ = false;
-            event_ = nullptr;
-            downgrade_ = false;
-        }
+        entry_type_ = MSHREntryType::Evict;
+        event_ = nullptr;
+        evict_ptrs_.push_back(addr);
+        time_ = curr_time;
+        in_progress_ = false;
+        need_evict_ = false;
+        profiled_ = false;
+        event_ = nullptr;
+        downgrade_ = false;
+    }
 
     MSHREntry(const MSHREntry& entry) {
         entry_type_ = entry.entry_type_;
@@ -98,85 +95,110 @@ class MSHREntry {
         downgrade_ = entry.downgrade_;
     }
 
-        MSHREntryType getType() { return entry_type_; }
+    MSHREntry() { } // For serialization only
 
-        bool getInProgress() { return in_progress_; }
-        void setInProgress(bool value) { in_progress_ = value; }
+    ~MSHREntry() {
+        // Should never have ownership of event_ when deleted
+    }
 
-        bool getStalledForEvict() { return need_evict_; }
-        void setStalledForEvict(bool set) { need_evict_ = set; }
+    MSHREntryType getType() { return entry_type_; }
 
-        void setProfiled() { profiled_ = true; }
-        bool getProfiled() { return profiled_; }
+    bool getInProgress() { return in_progress_; }
+    void setInProgress(bool value) { in_progress_ = value; }
 
-        SimTime_t getStartTime() { return time_; }
+    bool getStalledForEvict() { return need_evict_; }
+    void setStalledForEvict(bool set) { need_evict_ = set; }
 
-        std::list<Addr>* getPointers() {
-            return evict_ptrs_;
-        }
+    void setProfiled() { profiled_ = true; }
+    bool getProfiled() { return profiled_; }
 
-        MemEventBase * getEvent() {
-            return event_;
-        }
+    SimTime_t getStartTime() { return time_; }
 
-        bool getDowngrade() {
-            return downgrade_;
-        }
+    std::list<Addr>* getPointers() {
+        return &evict_ptrs_;
+    }
 
-        /* Remove event at head of queue and swap with a new one (leaving entry in place) */
+    MemEventBase * getEvent() {
+        return event_;
+    }
+
+    bool getDowngrade() {
+        return downgrade_;
+    }
+
+    /* Remove event at head of queue and swap with a new one (leaving entry in place) */
     MemEventBase * swapEvent(MemEventBase* newEvent, SimTime_t curr_time) {
-            if (entry_type_ != MSHREntryType::Event) return nullptr;
-            time_ = curr_time;
-            MemEventBase* oldEvent = event_;
-            event_ = newEvent;
-            return oldEvent;
-        }
+        if (entry_type_ != MSHREntryType::Event) return nullptr;
+        time_ = curr_time;
+        MemEventBase* oldEvent = event_;
+        event_ = newEvent;
+        return oldEvent;
+    }
 
-        std::string getString() {
-            std::ostringstream str;
-            str << "Time: " << std::to_string(time_);
-            str << " Iss: ";
-            in_progress_ ? str << "T" : str << "F";
-            str << " Evi: ";
-            need_evict_ ? str << "T" : str << "F";
-            str << " Stat: ";
-            profiled_ ? str << "T" : str << "F";
-            if (entry_type_ == MSHREntryType::Event) {
-                str << " Type: Event" << " (" << event_->getBriefString() << ")";
-            } else if (entry_type_ == MSHREntryType::Evict) {
-                str << " Type: Evict (";
-                for (std::list<Addr>::iterator it = evict_ptrs_->begin(); it != evict_ptrs_->end(); it++) {
-                    str << " 0x" << std::hex << *it;
-                }
-                str << ")";
-            } else {
-                str << " Type: Writeback";
+    std::string getString() {
+        std::ostringstream str;
+        str << "Time: " << std::to_string(time_);
+        str << " Iss: ";
+        in_progress_ ? str << "T" : str << "F";
+        str << " Evi: ";
+        need_evict_ ? str << "T" : str << "F";
+        str << " Stat: ";
+        profiled_ ? str << "T" : str << "F";
+        if (entry_type_ == MSHREntryType::Event) {
+            str << " Type: Event" << " (" << event_->getBriefString() << ")";
+        } else if (entry_type_ == MSHREntryType::Evict) {
+            str << " Type: Evict (";
+            for (Addr addr : evict_ptrs_) {
+                str << " 0x" << std::hex << addr;
             }
-            return str.str();
+            str << ")";
+        } else {
+            str << " Type: Writeback";
         }
+        return str.str();
+    }
+
+     void serialize_order(SST::Core::Serialization::serializer& ser) {
+        SST_SER(entry_type_);
+        SST_SER(evict_ptrs_);
+        SST_SER(event_);
+        SST_SER(time_);
+        SST_SER(need_evict_);
+        SST_SER(in_progress_);
+        SST_SER(profiled_);
+        SST_SER(downgrade_);
+    }
 
     private:
         MSHREntryType entry_type_;      // Type of entry
-        std::list<Addr> *evict_ptrs_;   // Specific to Evict type - address(es) waiting for this address to be evicted from cache
-        MemEventBase* event_;           // Specific to Event type
-        SimTime_t time_;                // Time event was enqueued in the MSHR - used for latency stats and detecting timeout
-        bool need_evict_;               // Whether event is stalled for an eviction
-        bool in_progress_;              // Whether event is currently being handled; prevents early retries
-        bool profiled_;                 // Whether event has been profiled/added to stats already
-        bool downgrade_;                // Specific to Writeback type
+        std::list<Addr> evict_ptrs_;    // Specific to Evict type - address(es) waiting for this address to be evicted from cache
+        MemEventBase* event_ = nullptr; // Specific to Event type
+        SimTime_t time_ = 0;            // Time event was enqueued in the MSHR - used for latency stats and detecting timeout
+        bool need_evict_ = false;       // Whether event is stalled for an eviction
+        bool in_progress_ = false;      // Whether event is currently being handled; prevents early retries
+        bool profiled_ = false;         // Whether event has been profiled/added to stats already
+        bool downgrade_ = false;        // Specific to Writeback type
 };
 
 struct MSHRRegister {
-    MSHRRegister() : acks_needed_(0), data_dirty_(false), pending_retries_(0) { }
+    MSHRRegister() { }
     list<MSHREntry> entries_;
-    uint32_t acks_needed_;
+    uint32_t acks_needed_ = 0;
     vector<uint8_t> data_buffer_;
-    bool data_dirty_;
-    uint32_t pending_retries_;
+    bool data_dirty_ = false;
+    uint32_t pending_retries_ = 0;
 
     uint32_t getPendingRetries() { return pending_retries_; }
     void addPendingRetry() { pending_retries_++; }
     void removePendingRetry() { pending_retries_--; }
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) {
+        SST_SER(entries_);
+        SST_SER(acks_needed_);
+        SST_SER(data_buffer_);
+        SST_SER(data_dirty_);
+        SST_SER(pending_retries_);
+    }
 };
 
 typedef map<Addr, MSHRRegister> MSHRBlock;
@@ -297,7 +319,12 @@ public:
     void setDataDirty(Addr addr, bool dirty);
 
     /* Print contents of MSHR to out*/
-    void printStatus(Output &out);
+    void printStatus(Output &out) override;
+
+    /* Serialize class for checkpoint/restart */
+    MSHR() {}
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::MemHierarchy::MSHR);
 
 private:
 
@@ -305,14 +332,14 @@ private:
 
     MSHRBlock mshr_;                                    // MSHR maps each address to a list of events/evictions/etc
     std::list<MemEventBase*> flushes_;                  // Flushes are not linked to a particular address so are stored outside the mshr_ structure
-    int flush_all_in_mshr_count_;                       // Number of FlushAll (vs ForwardFlush) in the flushes_ list
-    int flush_acks_needed_;                             // Number of things that need to complete before flush can retry
-    Output* dbg_;                                       // Debug output acquired from owning component
-    int size_;                                          // Current entries in mshr_ + flushes_
-    int max_size_;                                      // Size limit for mshr_ + flushes_
-    int prefetch_count_;                                // Number of prefetches in mshr_
-    string owner_name_;                                 // Name of owning component
-    std::set<Addr> DEBUG_ADDR;                          // Which addresses to print debug info for (empty = all)
+    int flush_all_in_mshr_count_ = 0;                   // Number of FlushAll (vs ForwardFlush) in the flushes_ list
+    int flush_acks_needed_ = 0;                         // Number of things that need to complete before flush can retry
+    Output* dbg_ = nullptr;                             // Debug output acquired from owning component
+    int size_ = 0;                                      // Current entries in mshr_ + flushes_
+    int max_size_ = 0;                                  // Size limit for mshr_ + flushes_
+    int prefetch_count_ = 0;                            // Number of prefetches in mshr_
+    string owner_name_ = "";                            // Name of owning component
+    std::set<Addr> debug_addr_filter_;                          // Which addresses to print debug info for (empty = all)
 };
 }}
 #endif
