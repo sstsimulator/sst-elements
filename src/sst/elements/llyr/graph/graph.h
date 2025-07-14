@@ -20,9 +20,6 @@
 // enable debugging in the graph lib
 // #define GRAPH_DEBUG
 
-#include <sst/core/sst_config.h>
-#include <sst/core/output.h>
-
 #include "edge.h"
 #include "vertex.h"
 
