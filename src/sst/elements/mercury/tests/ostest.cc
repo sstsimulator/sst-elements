@@ -18,6 +18,10 @@
 #include <iostream>
 #include <mercury/common/skeleton.h>
 int main(int argc, char** argv) {
+  for (int i = 0; i < argc; i++) {
+    std::cout << argv[i] << "\n";
+  }
+
   std::cout << "Hello from Mercury!\n";
   std::cout << "Now I will sleep\n";
   sleep(5);
