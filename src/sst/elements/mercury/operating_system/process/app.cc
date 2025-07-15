@@ -19,6 +19,7 @@
 
 #include <sst/core/params.h>
 #include <sst/core/factory.h>
+#include <sst/core/stringize.h>
 #include <sst/core/eli/elementbuilder.h>
 #include <mercury/common/output.h>
 #include <mercury/common/util.h>
@@ -30,6 +31,7 @@
 #include <mercury/components/operating_system.h>
 #include <inttypes.h>
 #include <dlfcn.h>
+#include <vector>
 
 extern "C" FILE* sst_hg_stdout(){
   return SST::Hg::Thread::current()->parentApp()->stdOutFile();
@@ -526,11 +528,12 @@ UserAppCxxEmptyMain::aliasMains()
 void
 UserAppCxxFullMain::initArgv(argv_entry& entry)
 {
-  std::string appname = params_.find<std::string>("name");
-  std::string argv_str = params_.find<std::string>("argv", "");
-  std::deque<std::string> argv_param_dq;
-//  pst::BasicStringTokenizer::tokenize(argv_str, argv_param_dq, std::string(" "));
-  int argc = argv_param_dq.size() + 1;
+  std::string              appname = params_.find<std::string>("name");
+  std::string              argv_str = params_.find<std::string>("argv", "");
+  std::vector<std::string> argv_param;
+
+  SST::tokenize(argv_param, argv_str, " ");
+  int argc = argv_param.size() + 1;
   char* argv_buffer = new char[256 * argc];
   char* argv_buffer_ptr = argv_buffer;
   char** argv = new char*[argc+1];
@@ -538,7 +541,7 @@ UserAppCxxFullMain::initArgv(argv_entry& entry)
   ::strcpy(argv_buffer, appname.c_str());
   int i=1;
   argv_buffer_ptr += appname.size() + 1;
-  for (auto& src_str : argv_param_dq){
+  for (auto& src_str : argv_param) {
     ::strcpy(argv_buffer_ptr, src_str.c_str());
     argv[i] = argv_buffer_ptr;
     //increment pointer for next strcpy
