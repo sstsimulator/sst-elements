@@ -31,8 +31,8 @@ MemNICFour::MemNICFour(ComponentId_t id, Params &params, TimeConverter* tc) : Me
     std::array<std::string,4> pref = {"req", "ack", "fwd", "data"};
 
     clockOn = true;
-    clockHandler = new Clock::Handler<MemNICFour>(this, &MemNICFour::clock);
-    clockTC = registerClock(tc, clockHandler);
+    clockHandler = new Clock::Handler2<MemNICFour, &MemNICFour::clock>(this);
+    clockTC = registerClock(*tc, clockHandler);
 
     for (int i = 0; i < 4; i++) {
         link_control[i] = loadUserSubComponent<SST::Interfaces::SimpleNetwork>(pref[i], ComponentInfo::SHARE_NONE, 1);
@@ -53,10 +53,10 @@ MemNICFour::MemNICFour(ComponentId_t id, Params &params, TimeConverter* tc) : Me
 
     // Set link control to call recvNotify on event receive
 
-    link_control[REQ]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour>(this, &MemNICFour::recvNotifyReq));
-    link_control[ACK]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour>(this, &MemNICFour::recvNotifyAck));
-    link_control[FWD]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour>(this, &MemNICFour::recvNotifyFwd));
-    link_control[DATA]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour>(this, &MemNICFour::recvNotifyData));
+    link_control[REQ]->setNotifyOnReceive(new SimpleNetwork::Handler2<MemNICFour, &MemNICFour::recvNotifyReq>(this));
+    link_control[ACK]->setNotifyOnReceive(new SimpleNetwork::Handler2<MemNICFour, &MemNICFour::recvNotifyAck>(this));
+    link_control[FWD]->setNotifyOnReceive(new SimpleNetwork::Handler2<MemNICFour, &MemNICFour::recvNotifyFwd>(this));
+    link_control[DATA]->setNotifyOnReceive(new SimpleNetwork::Handler2<MemNICFour, &MemNICFour::recvNotifyData>(this));
 
     // Register statistics
     stat_oooEvent[REQ] = registerStatistic<uint64_t>("outoforder_req_events");
@@ -70,8 +70,10 @@ MemNICFour::MemNICFour(ComponentId_t id, Params &params, TimeConverter* tc) : Me
 
     // TimeBase for statistics
     std::string timebase = params.find<std::string>("clock", "1GHz", found);
-    if (found)
-        setDefaultTimeBase(getTimeConverter(timebase));
+    if (found) {
+        TimeConverter param_tc = getTimeConverter(timebase);
+        setDefaultTimeBase(param_tc);
+    }
 }
 
 void MemNICFour::init(unsigned int phase) {
@@ -278,7 +280,7 @@ MemNICFour::OrderedMemRtrEvent* MemNICFour::processRecv(SimpleNetwork::Request *
             }
             if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
                 sourceEndpointInfo.insert(imre->info);
-            } 
+            }
             if (destIDs.find(imre->info.id) != destIDs.end()) {
                 destEndpointInfo.insert(imre->info);
             }

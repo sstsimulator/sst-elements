@@ -26,7 +26,7 @@ memoryController = sst.Component("memory", "memHierarchy.MemController")
 memoryController.addParams({
       "debug"            : 0,
       "debug_level"      : 10,
-      "backing"          : "malloc", 
+      "backing"          : "malloc",
       "clock"            : "1GHz",
       "addr_range_start" : 0,
 })

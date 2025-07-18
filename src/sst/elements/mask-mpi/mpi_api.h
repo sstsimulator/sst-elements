@@ -12,7 +12,7 @@ Copyright (c) 2009-2025, NTESS
 
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, 
+Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
     * Redistributions of source code must retain the above copyright
@@ -43,7 +43,7 @@ Questions? Contact sst-macro-help@sandia.gov
 */
 
 #include <sst/core/params.h>
-#include <mercury/common/factory.h>
+#include <sst/core/factory.h>
 #include <mercury/components/operating_system_fwd.h>
 #include <mercury/operating_system/libraries/event_library.h>
 #include <mercury/operating_system/libraries/library.h>
@@ -84,7 +84,7 @@ class MpiApi : public SST::Iris::sumi::SimTransport
   SST_ELI_REGISTER_DERIVED(
     SST::Hg::Library,
     MpiApi,
-    "hg",
+    "mask_mpi",
     "MpiApi",
     SST_ELI_ELEMENT_VERSION(1,0,0),
     "implements the MPI transport API")

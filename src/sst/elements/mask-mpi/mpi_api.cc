@@ -12,7 +12,7 @@ Copyright (c) 2009-2025, NTESS
 
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, 
+Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
     * Redistributions of source code must retain the above copyright
@@ -75,7 +75,7 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #include <unusedvariablemacro.h>
 
-#ifdef SST_HG_OTF2_ENABLED 
+#ifdef SST_HG_OTF2_ENABLED
 #include <sumi-mpi/otf2_output_stat.h>
 #endif
 
@@ -89,7 +89,6 @@ Questions? Contact sst-macro-help@sandia.gov
 #ifdef SST_HG_OTF2_ENABLED
 #include <sumi-mpi/otf2_output_stat.h>
 #endif
-
 
 //MakeDebugSlot(mpi_sync)
 //MakeDebugSlot(mpi_finalize)
@@ -862,7 +861,7 @@ MPI_Call::ID_str(MPI_function func)
   case Call_ID_MPI_Win_create_errhandler: return "MPI_Win_create_errhandler";
   case Call_ID_MPI_Win_get_errhandler: return "MPI_Win_get_errhandler";
   case Call_ID_MPI_Win_set_errhandler: return "MPI_Win_set_errhandler";
-  default: 
+  default:
    sst_hg_abort_printf("Bad MPI Call ID %d\n", func);
    return "Unknown or missing MPI function";
   }

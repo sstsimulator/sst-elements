@@ -73,3 +73,14 @@ void NextBlockPrefetcher::registerResponseCallback(Event::HandlerBase *handler) 
 void NextBlockPrefetcher::printStats(Output& out) {
 
 }
+
+void NextBlockPrefetcher::serialize_order(SST::Core::Serialization::serializer& ser) {
+    CacheListener::serialize_order(ser);
+
+    SST_SER(registeredCallbacks);
+    SST_SER(blockSize);
+    SST_SER(statPrefetchEventsIssued);
+    SST_SER(statMissEventsProcessed);
+    SST_SER(statHitEventsProcessed);
+}
+

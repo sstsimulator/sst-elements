@@ -25,6 +25,24 @@
 #include <iostream>
 #include <inttypes.h>
 
+// Undo some Clang-specific changes possibly made by the libc++ bundled with
+// PinCRT
+#ifdef __LP64__
+# ifdef __clang__
+#  if defined(PIN_VERSION_MINOR) && PIN_VERSION_MINOR > 29
+// Allow usage of the warnmacros header without modifying it
+#   ifdef UNUSED
+#   undef UNUSED
+#   endif
+#   include <sst/core/warnmacros.h>
+DIAG_DISABLE(macro-redefined)
+#   define __PRI_64_prefix  "l"
+#   define __PRI_PTR_prefix "l"
+REENABLE_WARNING
+#  endif
+# endif
+#endif
+
 using namespace std;
 
 uint32_t max_thread_count;

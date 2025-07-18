@@ -45,11 +45,11 @@ public:
             phys_int_regs_in[0]);
     }
 
-    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
                 uint16_t phys_int_regs_in_0)
         {
             #ifdef VANADIS_BUILD_DEBUG
-            if(output->getVerboseLevel() >= 16) 
+            if(output->getVerboseLevel() >= 16)
             {
                 output->verbose(
                     CALL_INFO, verboselevel, 0, "hw_thr=%d sw_thr = %d JR Execute: (addr=0x%0" PRI_ADDR ")    isa-in: %" PRIu16 " / phys-in: %" PRIu16 " taken address=0x%0" PRI_ADDR "\n",
@@ -57,7 +57,7 @@ public:
             }
             #endif
         }
-    
+
     void instOp(VanadisRegisterFile* regFile, uint16_t phys_int_regs_in_0)
     {
         takenAddress = regFile->getIntReg<uint64_t>(phys_int_regs_in_0);
@@ -65,16 +65,16 @@ public:
 
     virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile)
     {
-        
+
         instOp(regFile, phys_int_regs_in[0]);
         log(output, 16, 65535, phys_int_regs_in[0]);
-        
+
         //        if ((takenAddress & 0x3) != 0) {
         //            flagError();
         //        }
 
         markExecuted();
-        
+
     }
 };
 

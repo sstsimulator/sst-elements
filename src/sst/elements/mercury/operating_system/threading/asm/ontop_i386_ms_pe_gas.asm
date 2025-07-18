@@ -48,11 +48,11 @@ _ontop_fcontext:
     /* load current stack limit */
     movl  0x08(%edx), %eax
     push  %eax
-    
+
     /* load current dealloction stack */
     movl  0xe0c(%edx), %eax
     push  %eax
-    
+
     /* load fiber local storage */
     movl  0x10(%edx), %eax
     push  %eax

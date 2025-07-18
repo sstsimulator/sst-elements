@@ -1,6 +1,6 @@
 .globl .jump_fcontext
 .globl  jump_fcontext[DS]
-.align 2 
+.align 2
 .csect	jump_fcontext[DS]
 jump_fcontext:
   .long	.jump_fcontext
@@ -80,7 +80,7 @@ jump_fcontext:
     # adjust stack
     addi 1, 1, 92
 
-    # return transfer_t 
+    # return transfer_t
     stw  6, 0(3)
     stw  5, 4(3)
 

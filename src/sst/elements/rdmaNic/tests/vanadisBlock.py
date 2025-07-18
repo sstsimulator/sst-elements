@@ -69,7 +69,7 @@ class Vanadis_Builder:
         if debugPython:
             print( "nodeId {} cpuID={}".format( nodeId, cpuId ) )
 
-        prefix = 'node' + str(nodeId) + '.cpu' + str( cpuId ) 
+        prefix = 'node' + str(nodeId) + '.cpu' + str( cpuId )
         cpu = sst.Component(prefix, vanadis_cpu_type)
         cpu.addParams({
             "clock" : cpu_clock,
@@ -152,7 +152,7 @@ class Vanadis_Builder:
             "debug" : stdMem_debug,
             "debug_level" : 11,
         })
-		
+
         # L1 D-Cache
         l1dcache = sst.Component(prefix + ".l1dcache", "memHierarchy.Cache")
         l1dcache.addParams({
@@ -230,11 +230,11 @@ class Vanadis_Builder:
         link = sst.Link(prefix+".link_cpu_itlb")
         link.connect( (icache_if, "lowlink", "1ns"), (itlbWrapper, "cpu_if", "1ns") )
 
-        # D-TLB -> D-L1 
+        # D-TLB -> D-L1
         link = sst.Link(prefix+".link_l1cache")
         link.connect( (dtlbWrapper, "cache_if", "1ns"), (l1dcache, "highlink", "1ns") )
 
-        # I-TLB -> I-L1 
+        # I-TLB -> I-L1
         link = sst.Link(prefix+".link_l1icache")
         link.connect( (itlbWrapper, "cache_if", "1ns"), (l1icache, "highlink", "1ns") )
 

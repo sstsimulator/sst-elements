@@ -232,7 +232,7 @@ int Pin3Frontend::forkChildProcess(const char* app, char** args,
             for(auto env_itr = app_env.begin(); env_itr != app_env.end(); env_itr++) {
                 size_t nv_pair_size = sizeof(char) * (2 + env_itr->first.size() + env_itr->second.size());
                 char* execute_env_nv_pair = (char*) malloc(nv_pair_size);
-                
+
                 output->verbose(CALL_INFO, 2, 0, "Env: %s=%s\n",
                         env_itr->first.c_str(), env_itr->second.c_str());
 

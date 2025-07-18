@@ -22,7 +22,7 @@ namespace SST {
 namespace simpleElementExample {
 
 /*
- *  Example Event that gets passed on links 
+ *  Example Event that gets passed on links
  *  between components in this library
  *
  * All Events inherit from SST::Event
@@ -39,7 +39,7 @@ class basicEvent : public SST::Event
 public:
     // Constructor
     basicEvent() : SST::Event(), last(false) { }
-    
+
     // Example data members
     std::vector<char> payload;
     bool last;
@@ -48,8 +48,8 @@ public:
     // all data members of the event
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & payload;
-        ser & last;
+        SST_SER(payload);
+        SST_SER(last);
     }
 
     // Register this event as serializable

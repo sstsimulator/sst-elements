@@ -25,13 +25,13 @@ namespace SST {
 namespace Hg {
 
 class ComputeLibrary : public ComputeAPI, public Library
-{  
+{
  public:
 
    SST_ELI_REGISTER_DERIVED(
     Library,
     ComputeLibrary,
-    "hg",
+    "computelibrary",
     "ComputeLibrary",
     SST_ELI_ELEMENT_VERSION(1,0,0),
     "provides basic compute modeling")

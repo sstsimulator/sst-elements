@@ -39,13 +39,13 @@ standardCPU::standardCPU(ComponentId_t id, Params& params) :
     rng_comm_.restart(z_seed, 13);
 
     out_.init("", params.find<unsigned int>("verbose", 1), 0, Output::STDOUT);
-    
+
     bool found;
 
     /* Required parameter - memFreq */
     mem_freq_ = params.find<int>("memFreq", 0, found);
     if (!found) {
-        out_.fatal(CALL_INFO, -1,"%s, Error: parameter 'memFreq' was not provided\n", 
+        out_.fatal(CALL_INFO, -1,"%s, Error: parameter 'memFreq' was not provided\n",
                 getName().c_str());
     }
 
@@ -98,7 +98,7 @@ standardCPU::standardCPU(ComponentId_t id, Params& params) :
     custom_mark_ = flushcache_mark_ + customf; /* Numbers less than this indicate flush */
     llsc_mark_ = custom_mark_ + llscf; /* Numbers less than this indicate LL-SC */
     mmio_mark_ = llsc_mark_ + mmiof; /* Numbers less than this indicate MMIO read or write */
-    
+
     noncacheable_range_start_ = params.find<uint64_t>("noncacheableRangeStart", 0);
     noncacheable_range_end_ = params.find<uint64_t>("noncacheableRangeEnd", 0);
     noncacheable_size_ = noncacheable_range_end_ - noncacheable_range_start_;
@@ -114,11 +114,11 @@ standardCPU::standardCPU(ComponentId_t id, Params& params) :
 
     //set our clock
     std::string clockFreq = params.find<std::string>("clock", "1GHz");
-    clock_handler_ = new Clock::Handler<standardCPU>(this, &standardCPU::clockTic);
+    clock_handler_ = new Clock::Handler2<standardCPU, &standardCPU::clockTic>(this);
     clock_timeconverter_ = registerClock( clockFreq, clock_handler_ );
 
     /* Find the interface the user provided in the Python and load it*/
-    memory_ = loadUserSubComponent<StandardMem>("memory", ComponentInfo::SHARE_NONE, clock_timeconverter_, new StandardMem::Handler<standardCPU>(this, &standardCPU::handleEvent));
+    memory_ = loadUserSubComponent<StandardMem>("memory", ComponentInfo::SHARE_NONE, &clock_timeconverter_, new StandardMem::Handler2<standardCPU, &standardCPU::handleEvent>(this));
 
     if (!memory_) {
         out_.fatal(CALL_INFO, -1, "Unable to load memHierarchy.standardInterface subcomponent; check that 'memory' slot is filled in input.\n");
@@ -164,14 +164,14 @@ void standardCPU::init(unsigned int phase)
         init_addr_.push(addr);
         init_count_--;
     }
-    
+
     if (phase > 0 && !init_addr_.empty()) {
         Interfaces::StandardMem::Request* read = createRead(init_addr_.front());
 	    requests_[read->getID()] =  std::make_pair(0, "");
         memory_->sendUntimedData(read);
         init_addr_.pop();
     }
-   
+
     while (Interfaces::StandardMem::Request* req = memory_->recvUntimedData()) {
         auto it = requests_.find(req->getID());
         if (it == requests_.end()) {
@@ -236,12 +236,12 @@ bool standardCPU::clockTic( Cycle_t )
             for (int i = 0; i < reqsToSend; i++) {
 
                 StandardMem::Addr addr = rng_.generateNextUInt64();
-                
+
                 uint32_t instNum = rng_.generateNextUInt32() % high_mark_;
                 uint64_t size = 4;
                 std::string cmdString = "Read";
                 Interfaces::StandardMem::Request* req;
-                
+
                 if (ll_issued_) {
                     req = createSC();
                     cmdString = "StoreConditional";
@@ -277,7 +277,7 @@ bool standardCPU::clockTic( Cycle_t )
                 if (req->needsResponse()) {
 		    requests_[req->getID()] =  std::make_pair(getCurrentSimTime(), cmdString);
                 }
-            
+
                 memory_->send(req);
 
                 op_count_--;
@@ -294,6 +294,64 @@ bool standardCPU::clockTic( Cycle_t )
 
     // return false so we keep going
     return false;
+}
+
+/*
+ * Default constructor
+*/
+standardCPU::standardCPU() : Component() {}
+
+/*
+ * Serialization function
+*/
+void standardCPU::serialize_order(SST::Core::Serialization::serializer& ser) {
+    Component::serialize_order(ser);
+
+    SST_SER(out_);
+    SST_SER(op_count_);
+    SST_SER(mem_freq_);
+    SST_SER(max_addr_);
+    SST_SER(mmio_addr_);
+    SST_SER(line_size_);
+    SST_SER(max_outstanding_);
+    SST_SER(high_mark_);
+    SST_SER(write_mark_);
+    SST_SER(flush_mark_);
+    SST_SER(flushinv_mark_);
+    SST_SER(flushcache_mark_);
+    SST_SER(custom_mark_);
+    SST_SER(llsc_mark_);
+    SST_SER(mmio_mark_);
+    SST_SER(max_reqs_per_issue_);
+    SST_SER(noncacheable_range_start_);
+    SST_SER(noncacheable_range_end_);
+    SST_SER(noncacheable_size_);
+    SST_SER(clock_ticks_);
+    SST_SER(init_count_);
+    SST_SER(stat_requests_pending_per_cycle_);
+    SST_SER(stat_num_reads_issued_);
+    SST_SER(stat_num_writes_issued_);
+    SST_SER(stat_num_flushes_issued_);
+    SST_SER(stat_num_flushcache_issued_);
+    SST_SER(stat_num_flushinvs_issued_);
+    SST_SER(stat_num_custom_issued_);
+    SST_SER(stat_num_llsc_issued_);
+    SST_SER(stat_num_llsc_success_);
+    SST_SER(stat_noncacheable_reads_);
+    SST_SER(stat_noncacheable_writes_);
+
+    SST_SER(ll_issued_);
+    SST_SER(ll_addr_);
+
+    SST_SER(requests_);
+
+    SST_SER(memory_);
+
+    SST_SER(rng_);
+    SST_SER(rng_comm_);
+
+    SST_SER(clock_timeconverter_);
+    SST_SER(clock_handler_);
 }
 
 /* Methods for sending different kinds of requests */
@@ -369,7 +427,7 @@ StandardMem::Request* standardCPU::createLL(Addr addr) {
     addr = (addr >> 2) << 2;
 
     StandardMem::Request* req = new Interfaces::StandardMem::LoadLink(addr, 4);
-    // Set these so we issue a matching sc 
+    // Set these so we issue a matching sc
     ll_addr_ = addr;
     ll_issued_ = true;
 
@@ -416,7 +474,7 @@ void standardCPU::emergencyShutdown() {
     if (out_.getVerboseLevel() > 1) {
         if (out_.getOutputLocation() == Output::STDOUT)
             out_.setOutputLocation(Output::STDERR);
-        
+
         out_.output("MemHierarchy::standardCPU %s\n", getName().c_str());
         out_.output("  Outstanding events: %zu\n", requests_.size());
         out_.output("End MemHierarchy::standardCPU %s\n", getName().c_str());

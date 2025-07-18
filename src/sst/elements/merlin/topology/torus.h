@@ -49,15 +49,15 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         internal_router_event::serialize_order(ser);
-        ser & dimensions;
-        ser & routing_dim;
+        SST_SER(dimensions);
+        SST_SER(routing_dim);
 
         if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
             dest_loc = new int[dimensions];
         }
 
         for ( int i = 0 ; i < dimensions ; i++ ) {
-            ser & dest_loc[i];
+            SST_SER(dest_loc[i]);
         }
     }
 
@@ -112,7 +112,7 @@ private:
     int local_port_start;
 
     int num_vns;
-    
+
 public:
     topo_torus(ComponentId_t cid, Params& params, int num_ports, int rtr_id, int num_vns);
     ~topo_torus();
@@ -131,7 +131,7 @@ public:
             vcs_per_vn[i] = 2;
         }
     }
-    
+
 protected:
     virtual int choose_multipath(int start_port, int num_ports, int dest_dist);
 

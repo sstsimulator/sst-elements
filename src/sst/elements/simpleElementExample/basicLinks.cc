@@ -14,7 +14,7 @@
 // distribution.
 
 
-// This include is ***REQUIRED*** 
+// This include is ***REQUIRED***
 // for ALL SST implementation files
 #include "sst_config.h"
 
@@ -25,7 +25,7 @@
 using namespace SST;
 using namespace SST::simpleElementExample;
 
-/* 
+/*
  * During construction the example component should prepare for simulation
  * - Read parameters
  * - Configure link
@@ -36,7 +36,7 @@ using namespace SST::simpleElementExample;
 basicLinks::basicLinks(ComponentId_t id, Params& params) : Component(id) {
 
     // SST Output Object
-    // Initialize with 
+    // Initialize with
     // - no prefix ("")
     // - Verbose set to 1
     // - No mask
@@ -48,7 +48,7 @@ basicLinks::basicLinks(ComponentId_t id, Params& params) : Component(id) {
     eventsToSend = params.find<int64_t>("eventsToSend", 0, found);
 
     // If parameter wasn't found, end the simulation with exit code -1.
-    // Tell the user what went wrong (didn't find 'eventsToSend' parameter in the input) 
+    // Tell the user what went wrong (didn't find 'eventsToSend' parameter in the input)
     // and which component generated the error (getName())
     if (!found) {
         out->fatal(CALL_INFO, -1, "Error in %s: the input did not specify 'eventsToSend' parameter\n", getName().c_str());
@@ -71,11 +71,11 @@ basicLinks::basicLinks(ComponentId_t id, Params& params) : Component(id) {
     // Initialize the random number generator
     rng = new SST::RNG::MarsagliaRNG(11, 272727);
 
-    
+
     /*
      *  Links for this example
      */
-    
+
     // 1. These links share
     linkHandler = configureLink("port_handler", new Event::Handler2<basicLinks, &basicLinks::handleEvent>(this));
     sst_assert(linkHandler, CALL_INFO, -1, "Error in %s: Link configuration for 'port_handler' failed\n", getName().c_str());
@@ -89,12 +89,12 @@ basicLinks::basicLinks(ComponentId_t id, Params& params) : Component(id) {
     int portnum = 0;
     while (isPortConnected(linkname)) {
         SST::Link* link = configureLink(linkname, new Event::Handler2<basicLinks, &basicLinks::handleEventWithID, int>(this, portnum));
-        
+
         if (!link)
             out->fatal(CALL_INFO, -1, "Error in %s: unable to configure link %s\n", getName().c_str(), linkname.c_str());
 
         linkVector.push_back(link);
-        
+
         // Build the next name to check
         portnum++;
         linkname = linkprefix + std::to_string(portnum);
@@ -112,7 +112,7 @@ basicLinks::basicLinks(ComponentId_t id, Params& params) : Component(id) {
      *  Statistics for this example
      *  We will count bytes received on each link
      */
-    
+
     // Count bytes received on the port_handler link
     stat_portHandler = registerStatistic<uint64_t>("EventSize_PortHandler");
 
@@ -140,7 +140,7 @@ basicLinks::~basicLinks()
 }
 
 
-/* 
+/*
  * Event handler with no ID
  * If multiple ports used this handler, we would not be able to differentiate
  * events that arrived on different links
@@ -148,7 +148,7 @@ basicLinks::~basicLinks()
 void basicLinks::handleEvent(SST::Event *ev)
 {
     basicEvent *event = dynamic_cast<basicEvent*>(ev);
-    
+
     if (event) {
 
         // Check if this is the last event our neighbor will send us
@@ -175,9 +175,9 @@ void basicLinks::handleEvent(SST::Event *ev)
 void basicLinks::handleEventWithID(SST::Event *ev, int id) {
 
     basicEvent *event = dynamic_cast<basicEvent*>(ev);
- 
+
     if (event) {
-        
+
         if (event->last) {
             lastEventReceived++;
         } else {
@@ -192,7 +192,7 @@ void basicLinks::handleEventWithID(SST::Event *ev, int id) {
 }
 
 
-/* 
+/*
  * Clock does three things:
  * 1. Send an event on a random link until we've sent a certain number. Then send a "LAST" event on every link.
  * 2. Poll the polled link to check for received events
@@ -200,10 +200,10 @@ void basicLinks::handleEventWithID(SST::Event *ev, int id) {
  */
 bool basicLinks::clockTic( Cycle_t cycleCount)
 {
-    // Send an event if we need to 
+    // Send an event if we need to
     if (eventsToSend > 0) {
         basicEvent *event = new basicEvent();
-        
+
         // Use the RNG to pick a payload size between 1 and eventSize
         uint32_t size = 1 + (rng->generateNextUInt32() % eventSize);
 
@@ -211,7 +211,7 @@ bool basicLinks::clockTic( Cycle_t cycleCount)
         for (int i = 0; i < size; i++) {
             event->payload.push_back(1);
         }
-        
+
         eventsToSend--;
 
         // Use the RNG to pick a destination
@@ -223,7 +223,7 @@ bool basicLinks::clockTic( Cycle_t cycleCount)
         } else {
             linkVector[dest - 2]->send(event);
         }
-        
+
         // This is the last event we'll send
         // Notify our neighbor(s) that we're done
         if (eventsToSend == 0) {
@@ -249,7 +249,7 @@ bool basicLinks::clockTic( Cycle_t cycleCount)
     while (SST::Event* ev = linkPolled->recv()) {
         // Static cast is faster for casts that happen many times but higher potential for errors
         basicEvent* event = static_cast<basicEvent*>(ev);
-        
+
         // Check if this is the last event our neighbor will send us
         if (event->last) {
             lastEventReceived++;
@@ -257,7 +257,7 @@ bool basicLinks::clockTic( Cycle_t cycleCount)
             // Record the size of the payload
             stat_portPolled->addData(event->payload.size());
         }
-        
+
         // Receiver has the responsiblity for deleting events
         delete event;
     }
@@ -267,9 +267,9 @@ bool basicLinks::clockTic( Cycle_t cycleCount)
     // 1. We've sent all of our events
     // 2. We've received every event we expect to
     if (eventsToSend == 0 && lastEventReceived == (2 + linkVector.size())) {
-        
+
         // Tell SST that it's OK to end the simulation (once all primary components agree, simulation will end)
-        primaryComponentOKToEndSim(); 
+        primaryComponentOKToEndSim();
 
         // Return true to indicate that this clock handler should be disabled
         return true;

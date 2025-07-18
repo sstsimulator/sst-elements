@@ -34,7 +34,7 @@ public:
                             "[syscall-gettime64] --> sim-time: %" PRIu64 " ns -> %" PRIu64 " secs + %" PRIu32 " us\n",
                             sim_time_ns, sim_seconds, sim_ns);
 
-        
+
         if ( VanadisOSBitType::VANADIS_OS_64B == event->getOSBitType() ) {
             payload.resize( 16 );
             uint64_t* tv_sec  = (uint64_t*) payload.data();
@@ -53,7 +53,7 @@ public:
         writeMemory( event->getTimeStructAddress(), payload );
     }
 
-    void memReqIsDone(bool) { 
+    void memReqIsDone(bool) {
         setReturnSuccess(0);
     }
 

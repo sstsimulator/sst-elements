@@ -418,7 +418,7 @@ public:
 	}
 	SimTime_t getDelay_ns( ) {
 		SimTime_t val = m_nic2host_lat_ns - ( m_nic2host_lat_ns > 0 ? 1 : 0 );
-		return val; 
+		return val;
 	}
 
     void schedEvent( SelfEvent* event, SimTime_t delay = 0 ) {
@@ -496,8 +496,8 @@ struct X {
     SST::Link*              m_selfLink;
 
     SST::Interfaces::SimpleNetwork*     m_linkControl;
-    SST::Interfaces::SimpleNetwork::Handler<Nic>* m_recvNotifyFunctor;
-    SST::Interfaces::SimpleNetwork::Handler<Nic>* m_sendNotifyFunctor;
+    SST::Interfaces::SimpleNetwork::HandlerBase* m_recvNotifyFunctor;
+    SST::Interfaces::SimpleNetwork::HandlerBase* m_sendNotifyFunctor;
     LinkControlWidget* m_linkRecvWidget;
     LinkControlWidget* m_linkSendWidget;
 

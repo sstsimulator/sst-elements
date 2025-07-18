@@ -36,9 +36,6 @@ using namespace SST::MemHierarchy;
 
 /* Debug macros included from util.h */
 
-
-const Bus::key_t Bus::ANY_KEY = std::pair<uint64_t, int>((uint64_t)-1, -1);
-
 Bus::Bus(ComponentId_t id, Params& params) : Component(id) {
     configureParameters(params);
     configureLinks();
@@ -104,7 +101,6 @@ void Bus::broadcastEvent(SST::Event* ev) {
 }
 
 
-
 void Bus::sendSingleEvent(SST::Event* ev) {
     MemEventBase *event = static_cast<MemEventBase*>(ev);
 #ifdef __SST_DEBUG_OUTPUT__
@@ -147,28 +143,28 @@ void Bus::configureLinks() {
     std::string linkprefix = "highlink";
     if (isPortConnected("high_network_0")) {
         dbg_.output("%s, DEPRECATION WARNING: The 'high_network_%%d' ports on MemHierarchy Buses have been renamed to 'highlink%%d'. MemHierarchy port names are being standardized. The 'high_network_%%d' ports will be removed in SST 16.\n", getName().c_str());
-        linkprefix = "high_network_"; 
+        linkprefix = "high_network_";
     }
-    
+
     SST::Link* link;
     std::string linkname = linkprefix + "0";
     while (isPortConnected(linkname)) {
-        link = configureLink(linkname, new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
+        link = configureLink(linkname, new Event::Handler2<Bus, &Bus::processIncomingEvent>(this));
         if (!link)
             dbg_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), linkname.c_str());
         highNetPorts_.push_back(link);
         numHighPorts_++;
         linkname = linkprefix + std::to_string(numHighPorts_);
     }
-    
+
     linkprefix = "lowlink";
     if (isPortConnected("low_network_0")) {
         dbg_.output("%s, DEPRECATION WARNING: The 'low_network_%%d' ports on MemHierarchy Buses have been renamed to 'lowlink%%d'. MemHierarchy port names are being standardized. The 'low_network_%%d' ports will be removed in SST 16.\n", getName().c_str());
-        linkprefix = "low_network_"; 
+        linkprefix = "low_network_";
     }
     linkname = linkprefix + "0";
     while (isPortConnected(linkname)) {
-        link = configureLink(linkname, new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
+        link = configureLink(linkname, new Event::Handler2<Bus, &Bus::processIncomingEvent>(this));
         if (!link)
             dbg_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), linkname.c_str());
         lowNetPorts_.push_back(link);
@@ -188,7 +184,7 @@ void Bus::configureParameters(SST::Params& params) {
     std::vector<Addr> addrArr;
     params.find_array<Addr>("debug_addr", addrArr);
     for (std::vector<Addr>::iterator it = addrArr.begin(); it != addrArr.end(); it++)
-        DEBUG_ADDR.insert(*it);
+        debug_addr_filter_.insert(*it);
 
     numHighPorts_  = 0;
     numLowPorts_   = 0;
@@ -199,7 +195,7 @@ void Bus::configureParameters(SST::Params& params) {
     drain_        = params.find<bool>("drain_bus", false);
 
     if (frequency == "Invalid") dbg_.fatal(CALL_INFO, -1, "Bus Frequency was not specified\n");
-    
+
      /* Multiply Frequency times two.  This is because an SST Bus components has
         2 SST Links (highNEt & LowNet) and thus it takes a least 2 cycles for any
         transaction (a real bus should be allowed to have 1 cycle latency).  To overcome
@@ -209,7 +205,7 @@ void Bus::configureParameters(SST::Params& params) {
     uA = uA * 2;
     frequency = uA.toString();
 
-    clockHandler_ = new Clock::Handler<Bus>(this, &Bus::clockTick);
+    clockHandler_ = new Clock::Handler2<Bus, &Bus::clockTick>(this);
     defaultTimeBase_ = registerClock(frequency, clockHandler_);
 }
 
@@ -224,7 +220,7 @@ void Bus::init(unsigned int phase) {
                 delete ev;
             } else if (memEvent->getCmd() == Command::NULLCMD) {
                 mapNodeEntry(memEvent->getSrc(), highNetPorts_[i]);
-                
+
                 if (memEvent->getInitCmd() == MemEventInit::InitCommand::Region) {
                     MemEventInitRegion * mEvReg = static_cast<MemEventInitRegion*>(memEvent);
                     mEvReg->setGroup(MemEventInitRegion::ReachableGroup::Source);
@@ -240,7 +236,7 @@ void Bus::init(unsigned int phase) {
                     }
                 } else {
                     for (int k = 0; k < numLowPorts_; k++) {
-                        lowNetPorts_[k]->sendUntimedData(memEvent->clone()); 
+                        lowNetPorts_[k]->sendUntimedData(memEvent->clone());
                     }
                 }
                 delete memEvent;
@@ -261,7 +257,7 @@ void Bus::init(unsigned int phase) {
             if (!memEvent) delete ev;
             else if (memEvent->getCmd() == Command::NULLCMD) {
                 mapNodeEntry(memEvent->getSrc(), lowNetPorts_[i]);
-                
+
                 if (memEvent->getInitCmd() == MemEventInit::InitCommand::Region) {
                     MemEventInitRegion * mEvReg = static_cast<MemEventInitRegion*>(memEvent);
                     mEvReg->setGroup(MemEventInitRegion::ReachableGroup::Dest);
@@ -327,4 +323,24 @@ void Bus::complete(unsigned int phase) {
             }
         }
     }
+}
+
+void Bus::serialize_order(SST::Core::Serialization::serializer& ser) {
+    Component::serialize_order(ser);
+
+    SST_SER(dbg_);
+    SST_SER(debug_addr_filter_);
+    SST_SER(numHighPorts_);
+    SST_SER(numLowPorts_);
+    SST_SER(idleCount_);
+    SST_SER(idleMax_);
+    SST_SER(broadcast_);
+    SST_SER(busOn_);
+    SST_SER(drain_);
+    SST_SER(clockHandler_);
+    SST_SER(defaultTimeBase_);
+    SST_SER(highNetPorts_);
+    SST_SER(lowNetPorts_);
+    SST_SER(nameMap_);
+    SST_SER(eventQueue_);
 }

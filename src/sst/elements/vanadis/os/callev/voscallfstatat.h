@@ -25,8 +25,8 @@ class VanadisSyscallFstatAtEvent : public VanadisSyscallEvent {
 public:
     VanadisSyscallFstatAtEvent() : VanadisSyscallEvent() {}
     VanadisSyscallFstatAtEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t dirfd, uint64_t pathname, uint64_t statbuf, int64_t flags)
-        : VanadisSyscallEvent(core, thr, bittype), dirfd(dirfd), pathname(pathname), statbuf(statbuf), flags(flags) {} 
-        
+        : VanadisSyscallEvent(core, thr, bittype), dirfd(dirfd), pathname(pathname), statbuf(statbuf), flags(flags) {}
+
     VanadisSyscallOp getOperation() override { return SYSCALL_OP_FSTATAT; }
 
     uint64_t getDirfd() const { return dirfd; }
@@ -37,14 +37,14 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& dirfd;
-        ser& pathname;
-        ser& statbuf;
-        ser& flags;
+        SST_SER(dirfd);
+        SST_SER(pathname);
+        SST_SER(statbuf);
+        SST_SER(flags);
     }
     ImplementSerializable(SST::Vanadis::VanadisSyscallFstatAtEvent);
 
-    uint64_t dirfd; 
+    uint64_t dirfd;
     uint64_t pathname;
     uint64_t statbuf;
     int64_t  flags;

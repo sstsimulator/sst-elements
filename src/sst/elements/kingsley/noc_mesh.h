@@ -113,8 +113,8 @@ private:
 
     typedef std::queue<noc_mesh_event*> port_queue_t;
 
-    Clock::Handler<noc_mesh>* my_clock_handler;
-    TimeConverter* clock_tc;
+    Clock::HandlerBase* my_clock_handler;
+    TimeConverter clock_tc;
     void clock_wakeup();
     bool clock_is_off;
     Cycle_t last_time = 0;
@@ -205,10 +205,10 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseNocEvent::serialize_order(ser);
-        ser & dest_mesh_loc;
-        ser & egress_port;
-        ser & next_port;
-        ser & encap_ev;
+        SST_SER(dest_mesh_loc);
+        SST_SER(egress_port);
+        SST_SER(next_port);
+        SST_SER(encap_ev);
     }
 
 private:

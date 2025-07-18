@@ -81,14 +81,14 @@ class RdmaNicNetworkEvent : public Event {
   public:
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & pktOverhead;
-        ser & streamId;
-        ser & streamSeq;
-        ser & destPid;
-        ser & srcPid;
-        ser & srcNode;
-        ser & buf;
-		ser & pktType;
+        SST_SER(pktOverhead);
+        SST_SER(streamId);
+        SST_SER(streamSeq);
+        SST_SER(destPid);
+        SST_SER(srcPid);
+        SST_SER(srcNode);
+        SST_SER(buf);
+		SST_SER(pktType);
     }
     ImplementSerializable(SST::MemHierarchy::RdmaNicNetworkEvent);
 };

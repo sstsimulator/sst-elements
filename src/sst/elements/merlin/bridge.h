@@ -128,18 +128,18 @@ public:
     }
 
     void setup(void)
-    {   
+    {
         interfaces[0].nic->setup();
         interfaces[1].nic->setup();
-    
+
         translator->setup();
     }
 
     void finish(void)
-    {   
+    {
         interfaces[0].nic->finish();
         interfaces[1].nic->finish();
-    
+
         translator->finish();
     }
 
@@ -197,7 +197,7 @@ private:
 
     Translator *translator;
 
-    SimpleNetwork::Handler<Bridge, uint8_t>* sendNotify[2];
+    SimpleNetwork::HandlerBase* sendNotify[2];
 
     void configureNIC(uint8_t id, SST::Params &params)
     {
@@ -227,8 +227,8 @@ private:
             nic.nic = info->create<SimpleNetwork>(id, ComponentInfo::SHARE_PORTS, 1 /* vns */);
         }
 
-        nic.nic->setNotifyOnReceive(new SimpleNetwork::Handler<Bridge, uint8_t>(this, &Bridge::handleIncoming, id));
-        sendNotify[id] = new SimpleNetwork::Handler<Bridge, uint8_t>(this, &Bridge::spaceAvailable, id);
+        nic.nic->setNotifyOnReceive(new SimpleNetwork::Handler2<Bridge,&Bridge::handleIncoming,uint8_t>(this,id));
+        sendNotify[id] = new SimpleNetwork::Handler2<Bridge,&Bridge::spaceAvailable,uint8_t>(this,id);
 
         nic.stat_recv = registerStatistic<uint64_t>("pkts_received_net" + std::to_string(id));
         nic.stat_send = registerStatistic<uint64_t>("pkts_sent_net" + std::to_string(id));

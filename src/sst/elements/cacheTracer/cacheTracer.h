@@ -105,8 +105,8 @@ private:
 
     map<MemEvent::id_type,uint64_t>InFlightReqQueue;
 
-    TimeConverter* picoTimeConv;
-    TimeConverter* nanoTimeConv;
+    TimeConverter picoTimeConv;
+    TimeConverter nanoTimeConv;
 
     // Serialization
     cacheTracer();                         // for serialization only

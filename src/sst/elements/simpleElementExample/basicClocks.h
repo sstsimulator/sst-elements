@@ -25,13 +25,13 @@
  *  - UnitAlgebra for error checking
  *
  * Description:
- *  The component registers three clocks with parameterizable frequencies. 
+ *  The component registers three clocks with parameterizable frequencies.
  *  The constructor uses UnitAlgebra to check that each frequency parameter includes units.
- *  Clock0 uses mainTick as its handler. Clock1 and Clock2 use otherTick as their handler 
+ *  Clock0 uses mainTick as its handler. Clock1 and Clock2 use otherTick as their handler
  *  and pass an id (1 and 2, respectively) that identifies which clock is calling the shared handler.
  *
  * Simulation:
- *  The simulation runs until Clock0 has executed 'clockTicks' cycles. Clock0 prints a message to 
+ *  The simulation runs until Clock0 has executed 'clockTicks' cycles. Clock0 prints a message to
  *  STDOUT ten times during the simulation (see 'printInterval' variable). This notification prints
  *  Clock0's current cycle, the simulation time, and uses Clock1 and Clock2's TimeConverters to print
  *  the current time in terms of Clock1 and Clock2 cycles.
@@ -52,7 +52,7 @@ class basicClocks : public SST::Component
 public:
 
 /*
- *  SST Registration macros register Components with the SST Core and 
+ *  SST Registration macros register Components with the SST Core and
  *  document their parameters, ports, etc.
  *  SST_ELI_REGISTER_COMPONENT is required, the documentation macros
  *  are only required if relevant
@@ -78,7 +78,7 @@ public:
 
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_PORTS()
-    
+
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_STATISTICS()
 
@@ -89,7 +89,7 @@ public:
 
     // Constructor. Components receive a unique ID and the set of parameters that were assigned in the Python input.
     basicClocks(SST::ComponentId_t id, SST::Params& params);
-    
+
     // Destructor
     ~basicClocks();
 
@@ -99,17 +99,17 @@ public:
     ImplementSerializable(SST::simpleElementExample::basicClocks)
 
 private:
-   
+
     // Clock handler for clock0
     bool mainTick(SST::Cycle_t cycle);
 
     // Clock handler for clock1 and clock2
     bool otherTick(SST::Cycle_t cycle, uint32_t id);
-    
+
     // TimeConverters - see timeConverter.h/.cc in sst-core
     // These store a clock interval and can be used to convert between time
-    TimeConverter* clock1converter;     // TimeConverter for clock1
-    TimeConverter* clock2converter;     // TimeConverter for clock2
+    TimeConverter clock1converter;     // TimeConverter for clock1
+    TimeConverter clock2converter;     // TimeConverter for clock2
     Clock::HandlerBase* clock2Handler; // Clock2 handler (clock2Tick)
 
 
@@ -121,7 +121,7 @@ private:
 
     // SST Output object, for printing, error messages, etc.
     SST::Output* out;
-    
+
     // Number of cycles between print statements in mainTick
     Cycle_t printInterval;
 };

@@ -40,3 +40,12 @@ bool SimpleMemBackendConvertor::issue( BaseReq* req ) {
         return static_cast<SimpleMemBackend*>(m_backend)->issueCustomRequest( creq->id(), creq->getInfo() );
     }
 }
+
+void SimpleMemBackendConvertor::serialize_order(SST::Core::Serialization::serializer& ser) {
+    MemBackendConvertor::serialize_order(ser);
+
+    if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+        using std::placeholders::_1;
+        static_cast<SimpleMemBackend*>(m_backend)->setResponseHandler( std::bind( &SimpleMemBackendConvertor::handleMemResponse, this, _1 ) );
+    }
+}

@@ -38,7 +38,7 @@ PageFaultHandler::PageFaultHandler(ComponentId_t id, Params& params) :
     std::string latency = params.find<std::string>("opal_latency", "32ps");
 
     while (isPortConnected(linkname)) {
-        SST::Link* link = configureLink(linkname, latency, new Event::Handler<PageFaultHandler>(this, &PageFaultHandler::handleEvent));
+        SST::Link* link = configureLink(linkname, latency, new Event::Handler2<PageFaultHandler,&PageFaultHandler::handleEvent>(this));
         opalLink.push_back(link);
         numPorts++;
         linkname = linkprefix + std::to_string(numPorts);

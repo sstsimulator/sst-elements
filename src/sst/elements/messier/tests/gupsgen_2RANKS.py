@@ -49,7 +49,7 @@ nvm_memctrl_params = {
 }
 
 nvm_mem_backend_params = {
-    "mem_size" : "1024MB", 
+    "mem_size" : "1024MB",
    # "max_requests_per_cycle" : 1,
    # "backend.device_count" : 1,
    # "backend.link_count" : 4,

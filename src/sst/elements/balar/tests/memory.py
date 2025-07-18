@@ -4,9 +4,9 @@ import sst
 
 coherence_protocol="MESI"
 
-dc_debug = 1 
-mc_debug = 1 
-stdMem_debug = 0 
+dc_debug = 1
+mc_debug = 1
+stdMem_debug = 0
 
 debug_addr = 0x6280
 
@@ -20,7 +20,7 @@ class Builder:
 
     def build( self, nodeId, numPorts,  group  ):
 
-        self.prefix = 'node' + str(nodeId) 
+        self.prefix = 'node' + str(nodeId)
         self.numPorts = numPorts + 1
         if debugPython:
             print("Memory nodeid={} numPorts={}".format(nodeId,numPorts))
@@ -50,7 +50,7 @@ class Builder:
             "debug_addr" : debug_addr,
         })
         dirtoMemLink = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
-        self.connect( "Dirctrl", numPorts, dirctrl, group, linkType="cpulink" ) 
+        self.connect( "Dirctrl", numPorts, dirctrl, group, linkType="cpulink" )
 
         memctrl = sst.Component(self.prefix + ".memory", "memHierarchy.MemController")
         memctrl.addParams({
@@ -100,7 +100,7 @@ class Builder:
         if dest:
             config+=", destinations={}".format(dest)
             memNIC.addParam( "destinations" , source)
-        
+
 
         if debugPython:
             print( config )

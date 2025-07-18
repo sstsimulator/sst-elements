@@ -121,7 +121,7 @@ comp_dirctrl0.addParams({
 })
 
 dc0_highlink = comp_dirctrl0.setSubComponent("highlink", "memHierarchy.MemNIC")
-dc0_highlink.addParams({ 
+dc0_highlink.addParams({
     "group" : 3,
     "debug" : 0,
     "debug_level" : 10,
@@ -139,7 +139,7 @@ comp_dirctrl1.addParams({
 })
 
 dc1_highlink = comp_dirctrl1.setSubComponent("highlink", "memHierarchy.MemNIC")
-dc1_highlink.addParams({ 
+dc1_highlink.addParams({
     "group" : 3,
     "debug" : 0,
     "debug_level" : 10,

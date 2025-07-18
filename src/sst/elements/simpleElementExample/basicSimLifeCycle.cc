@@ -14,7 +14,7 @@
 // distribution.
 
 
-// This include is ***REQUIRED*** 
+// This include is ***REQUIRED***
 // for ALL SST implementation files
 #include "sst_config.h"
 
@@ -25,24 +25,24 @@
 using namespace SST;
 using namespace SST::simpleElementExample;
 
-/* 
+/*
  * Lifecycle Phase #1: Construction
  * - Configure output object
  * - Ensure both links are connected and configure
  * - Read parameters
  * - Initialize internal state
  */
-basicSimLifeCycle::basicSimLifeCycle(ComponentId_t id, Params& params) : Component(id) 
+basicSimLifeCycle::basicSimLifeCycle(ComponentId_t id, Params& params) : Component(id)
 {
 
     // SST Output Object
-    // Initialize with 
+    // Initialize with
     // - no prefix ("")
     // - Verbose set to 1
     // - No mask
     // - Output to STDOUT (Output::STDOUT)
     out = new Output("", 1, 0, Output::STDOUT);
-    
+
     out->output("Phase: Construction, %s\n", getName().c_str());
 
     // Get parameter from the Python input
@@ -50,7 +50,7 @@ basicSimLifeCycle::basicSimLifeCycle(ComponentId_t id, Params& params) : Compone
     eventsToSend = params.find<unsigned>("eventsToSend", 0, found);
 
     // If parameter wasn't found, end the simulation with exit code -1.
-    // Tell the user how to fix the error (set 'eventsToSend' parameter in the input) 
+    // Tell the user how to fix the error (set 'eventsToSend' parameter in the input)
     // and which component generated the error (getName())
     if (!found) {
         out->fatal(CALL_INFO, -1, "Error in %s: the input did not specify 'eventsToSend' parameter\n", getName().c_str());
@@ -80,17 +80,17 @@ basicSimLifeCycle::basicSimLifeCycle(ComponentId_t id, Params& params) : Compone
 
 /*
  * Lifecycle Phase #2: Init
- * Components in the ring will discover their neighbors names and agree to use the 
- * average number of eventsToSend from each neighbor. 
- * 
+ * Components in the ring will discover their neighbors names and agree to use the
+ * average number of eventsToSend from each neighbor.
+ *
  * - Send our eventsToSend parameter and name around the ring
  * - Record information from other components
  * - During init(), the 'sendUntimedData' functions must be used instead of 'send'
  */
-void basicSimLifeCycle::init(unsigned phase) 
+void basicSimLifeCycle::init(unsigned phase)
 {
     out->output("Phase: Init(%u), %s\n", phase, getName().c_str());
-    
+
     // Only send our info on phase 0
     if (phase == 0) {
         basicLifeCycleEvent* event = new basicLifeCycleEvent(getName(), eventsToSend);
@@ -122,14 +122,14 @@ void basicSimLifeCycle::init(unsigned phase)
 /*
  * Lifecycle Phase #3: Setup
  * - Send first event
- *   This send should use the link->send function since it is intended for simulation rather than 
+ *   This send should use the link->send function since it is intended for simulation rather than
  *   pre-simulation (init) or post-simulation (complete)
  * - Initialize the 'iter' variable to point to next component to send to in eventRequests map
  */
-void basicSimLifeCycle::setup() 
+void basicSimLifeCycle::setup()
 {
     out->output("Phase: Setup, %s\n", getName().c_str());
-    
+
     // Use the average of each components' eventsToSend parameter to agree on eventsToSend
     // Then, total events to send during simulation is our neighbors * events to each
     eventsToSend /= (neighbors.size() + 1); // Plus one since I am not in the neighbor list
@@ -155,7 +155,7 @@ void basicSimLifeCycle::setup()
 
     // Send first event
     leftLink->send(new basicLifeCycleEvent(*iter));
-    
+
     // Record that we sent this event
     eventsSent++;
 
@@ -167,7 +167,7 @@ void basicSimLifeCycle::setup()
 }
 
 
-/* 
+/*
  * Lifecycle Phase #4: Run
  *
  * During the run phase, SST will call this event handler anytime an
@@ -180,16 +180,16 @@ void basicSimLifeCycle::setup()
 void basicSimLifeCycle::handleEvent(SST::Event *ev)
 {
     basicLifeCycleEvent *event = dynamic_cast<basicLifeCycleEvent*>(ev);
-    
+
     if (event) {
         if (verbose) out->output("    %" PRIu64 " %s received %s\n", getCurrentSimCycle(), getName().c_str(), event->toString().c_str());
-       
+
         // Determine whether event is intended for us and handle accordingly
         if (event->getStr() == getName()) {
             eventsReceived++;
             delete event;
-            
-            if (eventsReceived == eventsToSend) 
+
+            if (eventsReceived == eventsToSend)
                 primaryComponentOKToEndSim();
 
             // Send a new event if we need to
@@ -198,14 +198,14 @@ void basicSimLifeCycle::handleEvent(SST::Event *ev)
                 eventsSent++;
                 iter++;
                 if (iter == neighbors.end()) iter = neighbors.begin();
-            } 
+            }
 
         } else {
             /* Otherwise, event wasn't for us. Forward it. */
             eventsForwarded++;
             leftLink->send(event);
         }
-        
+
     } else {
         out->fatal(CALL_INFO, -1, "Error in %s: Received an event during simulation but it is not the expected type\n", getName().c_str());
     }
@@ -219,7 +219,7 @@ void basicSimLifeCycle::handleEvent(SST::Event *ev)
 void basicSimLifeCycle::complete(unsigned phase)
 {
     out->output("Phase: Complete(%u), %s\n", phase, getName().c_str());
-    
+
     if (phase == 0) {
         std::string goodbye = "Goodbye from " + getName();
         std::string farewell = "Farewell from " + getName();
@@ -256,10 +256,10 @@ void basicSimLifeCycle::complete(unsigned phase)
  * Lifecycle Phase #6: Finish
  * During the finish() phase, output the info that we received during complete()
  */
-void basicSimLifeCycle::finish() 
+void basicSimLifeCycle::finish()
 {
     out->output("Phase: Finish, %s\n", getName().c_str());
-    
+
     out->output("    My name is %s and I sent %u messages. I received %u messages and forwarded %u messages.\n"
             "    My left neighbor said: %s\n"
             "    My right neighbor said: %s\n",
@@ -287,12 +287,12 @@ void basicSimLifeCycle::emergencyShutdown() {
     out->output("Uh-oh, my name is %s and I have to quit. I sent %u messages.\n", getName().c_str(), eventsSent);
 }
 
-/* 
+/*
  * PrintStatus
  * Try sending the simulation a SIGUSR2
  */
 void basicSimLifeCycle::printStatus(Output& sim_out) {
-    sim_out.output("%s reporting. I have sent %u messages, received %u, and forwarded %u.\n", 
+    sim_out.output("%s reporting. I have sent %u messages, received %u, and forwarded %u.\n",
             getName().c_str(), eventsSent, eventsReceived, eventsForwarded);
 }
 

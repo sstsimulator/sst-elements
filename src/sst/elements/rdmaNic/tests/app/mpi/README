@@ -1,6 +1,6 @@
 # The MPI test is Intel MPI Benchmark (IMB) and it uses the MVAPICH MPI library.
-# The MVAPICH library has Vandais and RDMA NIC specific code. 
-# 
+# The MVAPICH library has Vandais and RDMA NIC specific code.
+#
 # This readme provides instructions on how to build MVAPICH and IMB and run a SST simulation.
 
 
@@ -8,13 +8,13 @@
 
 # You need to get MVAPICH 2-2.3.7-1.
 
-tar xzvf mvapich2-2.3.7-1.tar.gz 
+tar xzvf mvapich2-2.3.7-1.tar.gz
 
 patch --directory=mvapich2-2.3.7-1/ -p1 < patch.diff
 
 mkdir mvapich2-2.3.7-1/build
 
-cp configure_rdma mvapich2-2.3.7-1/build 
+cp configure_rdma mvapich2-2.3.7-1/build
 
 cd mvapich2-2.3.7-1
 
@@ -24,7 +24,7 @@ cd build
 
 ./configure_rdma
 
-make -j8  install 
+make -j8  install
 
 # set path to install/bin
 PATH=`pwd`/install/bin:$PATH

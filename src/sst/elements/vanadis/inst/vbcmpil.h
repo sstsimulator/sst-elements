@@ -48,7 +48,7 @@ public:
         if(sizeof(register_format) == 4) {
             return "BCMPIL32";
         } else if (sizeof(register_format) == 8) {
-            return "BCMPIL64"; 
+            return "BCMPIL64";
         } else {
             return "BCMPILER";
         }
@@ -64,8 +64,8 @@ public:
         strncpy( buffer, ss.str().c_str(), buffer_size );
     }
 
-    void log(SST::Output* output, int verboselevel, uint32_t sw_thr,  bool compare_result, 
-                            uint16_t phys_int_regs_in_0, uint16_t phys_int_regs_out_0) 
+    void log(SST::Output* output, int verboselevel, uint32_t sw_thr,  bool compare_result,
+                            uint16_t phys_int_regs_in_0, uint16_t phys_int_regs_out_0)
     {
         #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= verboselevel) {
@@ -84,7 +84,7 @@ public:
     }
 
     void instOp(SST::Output* output,VanadisRegisterFile* regFile, uint16_t phys_int_regs_in_0, uint16_t phys_int_regs_out_0,
-                 bool * compare_result) 
+                 bool * compare_result)
     {
         *compare_result = registerCompareImm<compareType, register_format>(regFile, this, output, phys_int_regs_in_0, imm_value);
         if ( *compare_result ) {
@@ -95,7 +95,7 @@ public:
             // branch (so the instruction after the delay slot)
             const uint64_t link_address = calculateStandardNotTakenAddress();
             regFile->setIntReg<uint64_t>(phys_int_regs_out_0, link_address);
-            
+
         }
         else {
             takenAddress = calculateStandardNotTakenAddress();

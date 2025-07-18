@@ -117,7 +117,7 @@ class topoSimple(Topo):
 
     def getRouterNameForId(self,rtr_id):
         return "router"
-                
+
 
 class topoTorus(Topo):
     def __init__(self):
@@ -188,10 +188,10 @@ class topoTorus(Topo):
 
     def getRouterNameForLocation(self,location):
         return "rtr_%s"%(self._formatShape(location))
-    
+
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location));
-    
+
 
     def build(self):
 
@@ -318,11 +318,11 @@ class topoMesh(Topo):
 
     def getRouterNameForLocation(self,location):
         return "rtr_%s"%(self._formatShape(location))
-    
+
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location));
-    
-    
+
+
     def build(self):
 
         num_routers = _params["num_peers"] // _params["mesh.local_ports"]
@@ -454,11 +454,11 @@ class topoHyperX(Topo):
 
     def getRouterNameForLocation(self,location):
         return "rtr_%s"%(self._formatShape(location))
-    
+
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location));
-    
-    
+
+
     def build(self):
         num_routers = _params["num_peers"] // _params["hyperx.local_ports"]
         links = dict()
@@ -607,15 +607,15 @@ class topoFatTree(Topo):
         group = remainder // routers_per_group
         router = remainder % routers_per_group
         return self.getRouterNameForLocation((level,group,router))
-            
-    
+
+
     def getRouterNameForLocation(self,location):
         return "rtr_l%s_g%d_r%d"%(location[0],location[1],location[2])
-    
+
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location));
-    
-        
+
+
     def fattree_rb(self, level, group, links):
 #        print("routers_per_level: %d, groups_per_level: %d, start_ids: %d"%(self.routers_per_level[level],self.groups_per_level[level],self.start_ids[level]))
         id = self.start_ids[level] + group * (self.routers_per_level[level]//self.groups_per_level[level])
@@ -803,13 +803,13 @@ class topoDragonFly(Topo):
         rpg = _params["dragonfly.routers_per_group"]
         ret = self.getRouterNameForLocation(rtr_id // rpg, rtr_id % rpg)
         return ret
-        
+
     def getRouterNameForLocation(self,group,rtr):
         return "rtr_G%dR%d"%(group,rtr)
-    
+
     def findRouterByLocation(self,group,rtr):
         return sst.findComponentByName(self.getRouterNameForLocation(group,rtr))
-    
+
     def build(self):
         links = dict()
 

@@ -91,7 +91,7 @@ NicTester::NicTester(ComponentId_t id, Params &params) :
     );
 
     m_selfLink = configureSelfLink("NicTester::selfLink", "1 ps",
-        new Event::Handler<NicTester>(this,&NicTester::handleSelfEvent));
+        new Event::Handler2<NicTester,&NicTester::handleSelfEvent>(this));
     assert( m_selfLink );
 
     registerAsPrimaryComponent();

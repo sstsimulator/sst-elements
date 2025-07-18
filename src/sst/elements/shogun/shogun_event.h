@@ -96,9 +96,9 @@ namespace Shogun {
         void serialize_order(SST::Core::Serialization::serializer& ser) override
         {
             Event::serialize_order(ser);
-            ser& dest;
-            ser& src;
-            ser& req;
+            SST_SER(dest);
+            SST_SER(src);
+            SST_SER(req);
         }
 
         ImplementSerializable(SST::Shogun::ShogunEvent);

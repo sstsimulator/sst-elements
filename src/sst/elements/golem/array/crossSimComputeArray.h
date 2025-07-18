@@ -52,7 +52,7 @@ public:
 
         // Configure selfLink
         selfLink = configureSelfLink("Self", tc,
-            new Event::Handler<CrossSimComputeArray>(this, &CrossSimComputeArray::handleSelfEvent));
+            new Event::Handler2<CrossSimComputeArray,&CrossSimComputeArray::handleSelfEvent>(this));
         selfLink->setDefaultTimeBase(latencyTC);
 
         // Allocate arrays to hold Python objects

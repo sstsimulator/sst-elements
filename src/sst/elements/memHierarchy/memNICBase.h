@@ -98,7 +98,7 @@ class MemNICBase : public MemLinkBase {
 
                 void serialize_order(SST::Core::Serialization::serializer &ser) override {
                     Event::serialize_order(ser);
-                    ser & event;
+                    SST_SER(event);
                 }
 
                 ImplementSerializable(SST::MemHierarchy::MemNICBase::MemRtrEvent);
@@ -121,20 +121,14 @@ class MemNICBase : public MemLinkBase {
                 }
 
                 virtual bool hasClientData() const override { return false; }
-                
+
                 virtual std::string toString() const override {
                     return info.toString();
                 }
 
                 void serialize_order(SST::Core::Serialization::serializer & ser) override {
                     MemRtrEvent::serialize_order(ser);
-                    ser & info.name;
-                    ser & info.addr;
-                    ser & info.id;
-                    ser & info.region.start;
-                    ser & info.region.end;
-                    ser & info.region.interleaveSize;
-                    ser & info.region.interleaveStep;
+                    SST_SER(info);
                 }
 
                 ImplementSerializable(SST::MemHierarchy::MemNICBase::InitMemRtrEvent);
@@ -142,7 +136,7 @@ class MemNICBase : public MemLinkBase {
 
         // Init/complete functions
         // Send untimed data immediately if possible
-        void sendUntimedData(MemEventInit* ev, bool broadcast, bool lookup_dst, 
+        void sendUntimedData(MemEventInit* ev, bool broadcast, bool lookup_dst,
                 SST::Interfaces::SimpleNetwork * linkcontrol) {
             if (!broadcast && lookup_dst) {
                 std::string dst = findTargetDestination(ev->getRoutingAddress());
@@ -200,7 +194,7 @@ class MemNICBase : public MemLinkBase {
             }
             return false;
         }
-        
+
         virtual bool isClocked() { return true; } // Tell parent to trigger our clock
 
         virtual std::set<EndpointInfo>* getSources() { return &sourceEndpointInfo; }
@@ -233,7 +227,7 @@ class MemNICBase : public MemLinkBase {
         virtual bool isReachable(std::string dst) {
             return reachableNames.find(dst) != reachableNames.end();
         }
-        
+
         virtual std::string getAvailableDestinationsAsString() {
             stringstream str;
             for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
@@ -244,12 +238,12 @@ class MemNICBase : public MemLinkBase {
 
 
     protected:
-        virtual void addSource(EndpointInfo info) { 
+        virtual void addSource(EndpointInfo info) {
             sourceEndpointInfo.insert(info);
             reachableNames.insert(info.name);
         }
-        virtual void addDest(EndpointInfo info) { 
-            destEndpointInfo.insert(info); 
+        virtual void addDest(EndpointInfo info) {
+            destEndpointInfo.insert(info);
             reachableNames.insert(info.name);
         }
 
@@ -270,7 +264,7 @@ class MemNICBase : public MemLinkBase {
                 dbg.debug(_L10_, "%s (memNICBase) received source imre. Name: %s, Addr: %" PRIu64 ", ID: %" PRIu32 ", start: %" PRIu64 ", end: %" PRIu64 ", size: %" PRIu64 ", step: %" PRIu64 "\n",
                         getName().c_str(), imre->info.name.c_str(), imre->info.addr, imre->info.id, imre->info.region.start, imre->info.region.end, imre->info.region.interleaveSize, imre->info.region.interleaveStep);
             }
-            
+
             if (destIDs.find(imre->info.id) != destIDs.end()) {
                 addDest(imre->info);
                 dbg.debug(_L10_, "%s (memNICBase) received dest imre. Name: %s, Addr: %" PRIu64 ", ID: %" PRIu32 ", start: %" PRIu64 ", end: %" PRIu64 ", size: %" PRIu64 ", step: %" PRIu64 "\n",
@@ -388,11 +382,11 @@ class MemNICBase : public MemLinkBase {
             while ((req = linkcontrol->recvUntimedData()) != nullptr) {
                 Event * payload = req->takePayload();
                 MemRtrEvent * mre = dynamic_cast<MemRtrEvent*>(payload);
-                
+
                 if (mre) {
                     MemEventInit *ev = static_cast<MemEventInit*>(mre->takeEvent()); // mre no longer has a copy of its event
                     dbg.debug(_L10_, "%s (memNICBase) received mre during complete. %s\n", getName().c_str(), ev->getVerboseString(dlevel).c_str());
-                    
+
                     /*
                      * Expected events: Flush (from dst or src) or writeback/data (from src)
                      */
@@ -407,18 +401,18 @@ class MemNICBase : public MemLinkBase {
                 delete req;
             }
         }
-        
+
         // Setup
         // Clean up state generated during init() and perform some sanity checks
         virtual void setup() {
             /* Limit destinations to the memory regions reported by endpoint messages that came through them */
-            
+
             std::set<std::string> names;
             std::set<EndpointInfo> newDests;
             for (auto it = endpointInfo.begin(); it != endpointInfo.end(); it++) {
                 names.insert(it->name);
             }
-            
+
             dbg.debug(_L10_, "Routing information for %s\n", getName().c_str());
             for (auto it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
                 //dbg.debug(_L10_, "    Orig Dest: %s\n", it->toString().c_str());
@@ -450,7 +444,7 @@ class MemNICBase : public MemLinkBase {
                         if (it->name == et->name) continue; // Not a problem
                         if ((it->region).doesIntersect(et->region)) {
                             dbg.fatal(CALL_INFO, -1, "%s, Error: Found destinations on the network with overlapping address regions. Cannot generate routing table."
-                                    "\n  Destination 1: %s\n  Destination 2: %s\n", 
+                                    "\n  Destination 1: %s\n  Destination 2: %s\n",
                                     getName().c_str(), it->toString().c_str(), et->toString().c_str());
                         }
                         stopAfter--;
@@ -473,11 +467,11 @@ class MemNICBase : public MemLinkBase {
                 dbg.debug(_L10_, "    Address: %s -> %" PRIu64 "\n", it->first.c_str(), it->second);
             }
             for (auto it = sourceEndpointInfo.begin(); it != sourceEndpointInfo.end(); it++) {
-                dbg.debug(_L10_, "    Source: %s\n", it->toString().c_str()); 
+                dbg.debug(_L10_, "    Source: %s\n", it->toString().c_str());
             }
             if (sourceEndpointInfo.empty()) dbg.debug(_L10_, "    Source: NONE\n");
             for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
-                dbg.debug(_L10_, "    Dest: %s\n", it->toString().c_str()); 
+                dbg.debug(_L10_, "    Dest: %s\n", it->toString().c_str());
             }
             if (destEndpointInfo.empty()) dbg.debug(_L10_, "    Dest: NONE\n");
             for (auto it = peerEndpointInfo.begin(); it != peerEndpointInfo.end(); it++) {
@@ -485,7 +479,7 @@ class MemNICBase : public MemLinkBase {
             }
             if (peerEndpointInfo.empty()) dbg.debug(_L10_, "    Peer: NONE\n");
             for (auto it = endpointInfo.begin(); it != endpointInfo.end(); it++) {
-                dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str()); 
+                dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str());
             }
 
             if (!initWaitForDst.empty()) {
@@ -557,7 +551,7 @@ class MemNICBase : public MemLinkBase {
                     }
                     if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
                         addSource(imre->info);
-                    } 
+                    }
                     if (destIDs.find(imre->info.id) != destIDs.end()) {
                         addDest(imre->info);
                     }
@@ -602,7 +596,7 @@ class MemNICBase : public MemLinkBase {
                 dbg.fatal(CALL_INFO, -1, "Param not specified(%s): group - group ID (or hierarchy level) for this NIC's component. Example: L2s in group 1, directories in group 2, memories (on network) in group 3.\n",
                         getName().c_str());
             }
-            
+
             if (params.is_value_array("sources")) {
                 std::vector<uint32_t> srcArr;
                 params.find_array<uint32_t>("sources", srcArr);
@@ -614,8 +608,8 @@ class MemNICBase : public MemLinkBase {
                 params.find_array<uint32_t>("destinations", dstArr);
                 destIDs = std::unordered_set<uint32_t>(dstArr.begin(), dstArr.end());
             }
-            
-            // range_check current is off(0) or on(1) but is using a uint32_t to 
+
+            // range_check current is off(0) or on(1) but is using a uint32_t to
             // allow for future selection of different algorithms.
             range_check=params.find<uint32_t>("range_check", 1);
 

@@ -37,13 +37,13 @@ cudaError_t cudaMalloc(void **devPtr, uint64_t size) {
     __sync_synchronize();
     *g_balarBaseAddr = (uint32_t) call_packet_ptr;
     __sync_synchronize();
-    
+
     // Read from GPU will return the address to the cuda return packet
     BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
     __sync_synchronize();
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
-        printf("CUDA API ID: %d with error: %d\nMalloc addr: %lu Dev addr: %lu\n", 
+        printf("CUDA API ID: %d with error: %d\nMalloc addr: %lu Dev addr: %lu\n",
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error,
                 response_packet_ptr->cudamalloc.malloc_addr, response_packet_ptr->cudamalloc.devptr_addr);
     }
@@ -102,10 +102,10 @@ cudaError_t cudaMemcpy(uint64_t dst, uint64_t src, uint64_t count, enum cudaMemc
 
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
-        printf("CUDA API ID: %d with error: %d\n", 
+        printf("CUDA API ID: %d with error: %d\n",
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
-    
+
     return response_packet_ptr->cuda_error;
 }
 
@@ -136,16 +136,16 @@ cudaError_t cudaConfigureCall(dim3 gridDim, dim3 blockDim, uint64_t sharedMem) {
     __sync_synchronize();
     *g_balarBaseAddr = (uint32_t) call_packet_ptr;
     __sync_synchronize();
-    
+
     // Read from GPU will return the address to the cuda return packet
     BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
     __sync_synchronize();
-    
+
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
-        printf("CUDA API ID: %d with error: %d\n", 
+        printf("CUDA API ID: %d with error: %d\n",
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
-    
+
     return response_packet_ptr->cuda_error;
 }
 
@@ -191,10 +191,10 @@ cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[BALAR_CUDA_MAX_ARG_SIZ
     __sync_synchronize();
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
-        printf("CUDA API ID: %d with error: %d\n", 
+        printf("CUDA API ID: %d with error: %d\n",
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
-    
+
     return response_packet_ptr->cuda_error;
 }
 
@@ -219,10 +219,10 @@ cudaError_t cudaLaunch(uint64_t func) {
     __sync_synchronize();
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
-        printf("CUDA API ID: %d with error: %d\n", 
+        printf("CUDA API ID: %d with error: %d\n",
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
-    
+
     return response_packet_ptr->cuda_error;
 }
 
@@ -261,12 +261,12 @@ unsigned int __cudaRegisterFatBinary(char file_name[BALAR_CUDA_MAX_FILE_NAME]) {
     __sync_synchronize();
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
-        printf("CUDA API ID: %d with error: %d and fatbin handle %d\n", 
+        printf("CUDA API ID: %d with error: %d and fatbin handle %d\n",
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error,
                 response_packet_ptr->fat_cubin_handle);
         fflush(stdout);
     }
-    
+
     return response_packet_ptr->fat_cubin_handle;
 }
 
@@ -304,10 +304,10 @@ void __cudaRegisterFunction(
     __sync_synchronize();
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
-        printf("CUDA API ID: %d with error: %d\n", 
+        printf("CUDA API ID: %d with error: %d\n",
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
         fflush(stdout);
     }
-    
+
     return;
 }

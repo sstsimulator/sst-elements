@@ -54,7 +54,7 @@ void execute_mvm(uint32_t tile_id) {
     );
 }
 
-void store_vector(float* out, uint32_t tile_id) { 
+void store_vector(float* out, uint32_t tile_id) {
     int status_flag = 0;
 
     asm volatile (
@@ -117,7 +117,7 @@ int main() {
     execute_mvm(0);
     execute_mvm(1);
 
-    for (int i = 0; i < num_ping_pongs; i++) { 
+    for (int i = 0; i < num_ping_pongs; i++) {
 
         // Move vectors
         move_vector(1, 0);
@@ -135,7 +135,7 @@ int main() {
     // Print output vector
     printf("Output Vector A:\n");
     print_vector(outA, cols);
-    
+
     printf("Output Vector B:\n");
     print_vector(outB, cols);
 

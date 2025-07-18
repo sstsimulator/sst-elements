@@ -39,9 +39,9 @@ class NicInitEvent : public Event {
 public:
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & node;
-        ser & vNic;
-        ser & num_vNics;
+        SST_SER(node);
+        SST_SER(vNic);
+        SST_SER(num_vNics);
     }
 
     ImplementSerializable(SST::Firefly::NicInitEvent);

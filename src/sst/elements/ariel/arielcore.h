@@ -162,7 +162,7 @@ class ArielCore : public ComponentExtension {
         ArielTunnel *tunnel;
         StdMemHandler* stdMemHandlers;
         Link* RtlLink;
-        TimeConverter *timeconverter; // TimeConverter for the associated ArielCPU
+        TimeConverter timeconverter; // TimeConverter for the associated ArielCPU
 
         std::unordered_map<StandardMem::Request::id_t, RequestInfo>* pendingTransactions;
         uint32_t maxIssuePerCycle;

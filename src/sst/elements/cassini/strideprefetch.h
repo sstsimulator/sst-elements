@@ -41,9 +41,9 @@ public:
     StridePrefetcher(ComponentId_t id, Params& params);
     ~StridePrefetcher();
 
-    void notifyAccess(const CacheListenerNotification& notify);
-    void registerResponseCallback(Event::HandlerBase *handler);
-    void printStats(Output &out);
+    void notifyAccess(const CacheListenerNotification& notify) override;
+    void registerResponseCallback(Event::HandlerBase *handler) override;
+    void printStats(Output& out) override;
 
     SST_ELI_REGISTER_SUBCOMPONENT(
         StridePrefetcher,

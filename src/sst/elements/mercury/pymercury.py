@@ -18,7 +18,6 @@
 import sys
 import sst
 from sst.merlin.base import *
-from sst.merlin import *
 
 class HgJob(Job):
     def __init__(self, job_id, numNodes, numCores = 1, nicsPerNode = 1):
@@ -38,7 +37,7 @@ class HgJob(Job):
     def build(self, nodeID, extraKeys):
         logical_id = self._nid_map[nodeID]
         node = self.node.build(nodeID,logical_id,self._numNodes * self._numCores, self._numCores)
-        os = self.os.build(node,"os_slot") 
+        os = self.os.build(node,"os_slot")
         nic = self.nic.build(node,"nic_slot")
 
         # Build NetworkInterface
@@ -98,8 +97,10 @@ class HgOS(TemplateBase):
                                      ])
         self._declareParamsWithUserPrefix("params","app1",
                                           ["name",
-                                           "exe",
+                                           "argv",
+                                           "exe_library_name",
                                            "libraries",
+                                           "dependencies",
                                            "verbose",
                                            "post_rdma_delay",
                                            "post_header_delay",
@@ -114,11 +115,11 @@ class HgOS(TemplateBase):
                                            "compute_library_loop_overhead",
                                           ],
                                           "app1.")
-        self._subscribeToPlatformParamSet("operating_system")        
+        self._subscribeToPlatformParamSet("operating_system")
 
     def build(self,comp,slot):
         if self._check_first_build():
             sst.addGlobalParams("params_%s"%self._instance_name, self._getGroupParams("params"))
         sub = comp.setSubComponent(slot,self.name)
         sub.addGlobalParamSet("params_%s"%self._instance_name)
-        return sub 
+        return sub

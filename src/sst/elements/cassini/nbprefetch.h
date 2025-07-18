@@ -39,9 +39,9 @@ public:
     NextBlockPrefetcher(ComponentId_t id, Params& params);
     ~NextBlockPrefetcher();
 
-    void notifyAccess(const CacheListenerNotification& notify);
-    void registerResponseCallback(Event::HandlerBase *handler);
-    void printStats(Output& out);
+    void notifyAccess(const CacheListenerNotification& notify) override;
+    void registerResponseCallback(Event::HandlerBase *handler) override;
+    void printStats(Output& out) override;
 
     SST_ELI_REGISTER_SUBCOMPONENT(
         NextBlockPrefetcher,
@@ -61,6 +61,12 @@ public:
         { "miss_events_processed", "Number of cache misses received", "misses", 2 },
         { "hit_events_processed", "Number of cache hits received", "hits", 2 }
     )
+
+
+    // Serialization support
+    NextBlockPrefetcher() : SST::MemHierarchy::CacheListener() {} // For serialization
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::Cassini::NextBlockPrefetcher)
 
 private:
     std::vector<Event::HandlerBase*> registeredCallbacks;

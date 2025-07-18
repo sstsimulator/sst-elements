@@ -12,7 +12,7 @@ Copyright (c) 2009-2025, NTESS
 
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, 
+Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
     * Redistributions of source code must retain the above copyright
@@ -83,13 +83,13 @@ Message::tostr(class_t ty)
 void
 Message::serialize_order(SST::Core::Serialization::serializer& ser)
 {
-  ser & arrived_;
-  ser & recv_sync_delay_;
-  ser & sender_;
-  ser & recver_;
-  ser & class_;
-  ser & send_cq_;
-  ser & recv_cq_;
+  SST_SER(arrived_);
+  SST_SER(recv_sync_delay_);
+  SST_SER(sender_);
+  SST_SER(recver_);
+  SST_SER(class_);
+  SST_SER(send_cq_);
+  SST_SER(recv_cq_);
   NetworkMessage::serialize_order(ser);
 }
 

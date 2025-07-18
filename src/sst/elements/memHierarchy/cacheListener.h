@@ -48,23 +48,36 @@ public:
         access(accessT), result(resultT) {}
 
     /** the target address is the underlying address from the
-        LOAD/STORE, not the baseAddr (which is usually he cache line
+        LOAD/STORE, not the baseAddr (which is usually the cache line
         address). For an evict they are the same. */
-        Addr getTargetAddress() const {return targAddr;}
-	Addr getPhysicalAddress() const { return physAddr; }
-	Addr getVirtualAddress() const { return virtAddr; }
-	Addr getInstructionPointer() const { return instPtr; }
-	NotifyAccessType getAccessType() const { return access; }
-	NotifyResultType getResultType() const { return result; }
-	uint32_t getSize() const { return size; }
+    Addr getTargetAddress() const {return targAddr;}
+    Addr getPhysicalAddress() const { return physAddr; }
+    Addr getVirtualAddress() const { return virtAddr; }
+    Addr getInstructionPointer() const { return instPtr; }
+    NotifyAccessType getAccessType() const { return access; }
+    NotifyResultType getResultType() const { return result; }
+    uint32_t getSize() const { return size; }
+
+    CacheListenerNotification() = default; // For serialization
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) {
+        SST_SER(size);
+        SST_SER(targAddr);
+        SST_SER(physAddr);
+        SST_SER(virtAddr);
+        SST_SER(instPtr);
+        SST_SER(access);
+        SST_SER(result);
+    }
+
 private:
-	uint32_t size;
-        Addr targAddr;
-	Addr physAddr;
-	Addr virtAddr;
-	Addr instPtr;
-	NotifyAccessType access;
-	NotifyResultType result;
+    uint32_t size;
+    Addr targAddr;
+    Addr physAddr;
+    Addr virtAddr;
+    Addr instPtr;
+    NotifyAccessType access;
+    NotifyResultType result;
 };
 
 class CacheListener : public SubComponent {
@@ -81,12 +94,19 @@ public:
         SST::MemHierarchy::CacheListener
     )
 
-    CacheListener(ComponentId_t id, Params& UNUSED(params)) : SubComponent(id) {}
+    CacheListener(ComponentId_t id, Params& params) : SubComponent(id) {}
+    CacheListener() = default;
     virtual ~CacheListener() {}
 
-    virtual void printStats(Output &UNUSED(out)) {}
-    virtual void notifyAccess(const CacheListenerNotification& UNUSED(notify)) {}
+    virtual void printStats(Output& out) {}
+    virtual void notifyAccess(const CacheListenerNotification& notify) {}
     virtual void registerResponseCallback(Event::HandlerBase *handler) { delete handler; }
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::SubComponent::serialize_order(ser);
+    }
+
+    ImplementSerializable(SST::MemHierarchy::CacheListener)
 };
 
 }}

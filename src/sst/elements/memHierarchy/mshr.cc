@@ -32,7 +32,7 @@ MSHR::MSHR(ComponentId_t cid, Output* debug, int maxSize, string cacheName, std:
     prefetch_count_ = 0;
     owner_name_ = cacheName;
 
-    DEBUG_ADDR = debugAddr;
+    debug_addr_filter_ = debugAddr;
 
     flush_acks_needed_ = 0;
     flush_all_in_mshr_count_ = 0;
@@ -328,7 +328,7 @@ int MSHR::insertEvent(Addr addr, MemEventBase* event, int pos, bool fwdRequest, 
 int MSHR::insertEventIfConflict(Addr addr, MemEventBase* event) {
     if (mshr_.find(addr) == mshr_.end())
         return 0;
-    
+
     if (size_ == max_size_-1) { /* Assuming fwdEvent == false */
         if (mem_h_is_debug_addr(addr)) {
             stringstream reason;
@@ -448,7 +448,7 @@ MemEventStatus MSHR::insertFlush(MemEventBase* event, bool forward_flush, bool c
             status = flushes_.front() == event ? MemEventStatus::OK : MemEventStatus::Stall;
         }
     }
-    
+
     return status;
 }
 
@@ -760,3 +760,17 @@ void MSHR::printStatus(Output &out) {
     out.output("    End MSHR Status for %s\n", owner_name_.c_str());
 }
 
+void MSHR::serialize_order(SST::Core::Serialization::serializer& ser) {
+    SST::ComponentExtension::serialize_order(ser);
+
+    SST_SER(mshr_);
+    SST_SER(flushes_);
+    SST_SER(flush_all_in_mshr_count_);
+    SST_SER(flush_acks_needed_);
+    SST_SER(dbg_);
+    SST_SER(size_);
+    SST_SER(max_size_);
+    SST_SER(prefetch_count_);
+    SST_SER(owner_name_);
+    SST_SER(debug_addr_filter_);
+}

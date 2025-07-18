@@ -45,7 +45,7 @@ int main( int argc, char* argv[] ) {
 
     off_t off = lseek( fd, 0, SEEK_CUR );
 
-    assert( 0 == off ); 
+    assert( 0 == off );
 
     size_t len = strlen(data);
 
@@ -67,7 +67,7 @@ int main( int argc, char* argv[] ) {
     assert( off == 0 );
     assert( 0 == lseek( fd, 0, SEEK_CUR ) );
 
-    
+
     char buf[BUF_LEN + 1];
     bzero( buf, BUF_LEN);
 

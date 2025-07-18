@@ -32,7 +32,7 @@ class VanadisRegisterFile
 
 public:
     VanadisRegisterFile(
-        const uint32_t thr, const VanadisDecoderOptions* decoder_ots, const uint16_t int_regs, const uint16_t fp_regs, 
+        const uint32_t thr, const VanadisDecoderOptions* decoder_ots, const uint16_t int_regs, const uint16_t fp_regs,
         const VanadisFPRegisterMode fp_rmode, SST::Output* logger) :
         hw_thread(thr),
         count_int_regs(int_regs),
@@ -43,10 +43,10 @@ public:
 		fp_reg_width( (fp_rmode == VANADIS_REGISTER_MODE_FP32) ? 4 : 8 )
     {
         // Registers are always 64-bits
-       
+
         int_reg_storage = new char[int_reg_width * count_int_regs];
         fp_reg_storage = new char[fp_reg_width * count_fp_regs];
-        
+
         init();
         output = logger;
 
@@ -78,7 +78,7 @@ public:
 
     void copyFromRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len, bool is_fp) {
         if(is_fp) {
-            copyFromFPRegister(reg, offset, values, len); 
+            copyFromFPRegister(reg, offset, values, len);
         } else {
             copyFromIntRegister(reg, offset, values, len);
         }
@@ -89,7 +89,7 @@ public:
         assert((offset + len) <= fp_reg_width);
         int index = get_reg_index(reg,1);
         uint8_t* reg_ptr = (uint8_t*) &fp_reg_storage[index];
-        
+
         for(auto i = 0; i < len; ++i) {
             values[i] = reg_ptr[offset + i];
         }
@@ -100,11 +100,11 @@ public:
         assert((offset + len) <= int_reg_width);
         int index = get_reg_index(reg, 0);
         uint8_t* reg_ptr = (uint8_t*) &int_reg_storage[index];
-        
+
         for(auto i = 0; i < len; ++i) {
             values[i] = reg_ptr[offset + i];
         }
-        
+
     }
 
     void copyToIntRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len) {
@@ -133,7 +133,7 @@ public:
         assert(reg < count_int_regs);
         assert(sizeof(T) <= int_reg_width);
 
-        if ( reg != decoder_opts->getRegisterIgnoreWrites() ) 
+        if ( reg != decoder_opts->getRegisterIgnoreWrites() )
         {
             int index = get_reg_index(reg, 0);
             char* reg_start = &int_reg_storage[index];
@@ -194,7 +194,7 @@ public:
             fp_reg_storage[index + i] = 0;
         }
     }
-    
+
 
     uint32_t getHWThread() const { return hw_thread; }
     uint16_t getThreadCount() const { return threadCount; }
@@ -258,7 +258,7 @@ private:
         output->verbose(CALL_INFO, level, 0, "R[%5" PRIu16 "]: %s\n", reg, val_string);
         delete[] val_string;
     }
-    
+
     int get_reg_index(uint16_t reg, bool is_fp)
     {
         int index = 0;
@@ -268,7 +268,7 @@ private:
             index = int_reg_width * reg;
         }
         return index;
-        
+
     }
     const uint32_t               hw_thread;
     const uint16_t               count_int_regs;

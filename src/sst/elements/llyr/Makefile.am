@@ -16,12 +16,12 @@ libllyr_la_SOURCES = \
 	graph/graph.h \
 	graph/edge.h \
 	graph/vertex.h \
-	parser/parser.h \
-	parser/parser.cc \
+	mappers/csvParser.h \
+	mappers/mapperList.h \
 	mappers/llyrMapper.h \
 	mappers/simpleMapper.h \
 	mappers/pyMapper.h \
-	mappers/csvParser.h \
+	pes/peList.h \
 	pes/processingElement.h \
 	pes/dummyPE.h \
 	pes/fpPE.h \
@@ -29,7 +29,8 @@ libllyr_la_SOURCES = \
 	pes/logicPE.h \
 	pes/loadPE.h \
 	pes/storePE.h \
-	pes/complexPE.h
+	pes/complexPE.h \
+	pes/controlPE.h
 
 deprecated_libllyr_sources =
 
@@ -58,9 +59,9 @@ libllyr_la_SOURCES += $(deprecated_libsimpleElementExample_sources)
 endif
 
 EXTRA_DIST = \
-	tests/llyr_test.py
+	tests/simple_test.py
 
-deprecated_EXTRA_DIST = 
+deprecated_EXTRA_DIST =
 
 if !SST_ENABLE_PREVIEW_BUILD
 EXTRA_DIST += $(deprecated_EXTRA_DIST)

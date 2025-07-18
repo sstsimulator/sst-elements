@@ -19,7 +19,7 @@ namespace SST {
 namespace Hg {
 
 extern template class  HgBase<SST::Component>;
-extern template SST::TimeConverter* HgBase<SST::Component>::time_converter_;
+extern template SST::TimeConverter HgBase<SST::Component>::time_converter_;
 
 NodeCL::NodeCL(ComponentId_t id, Params &params)
     : NodeBase(id,params) {

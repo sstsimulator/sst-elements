@@ -37,7 +37,7 @@ class MsgTiming : public SubComponent {
         SST::Firefly::CtrlMsg::MsgTiming
     )
 
-	SST_ELI_DOCUMENT_PARAMS( 
+	SST_ELI_DOCUMENT_PARAMS(
         {"shortMsgLength","Sets the short to long message transition point", "16000"},
         {"sendAckDelay_ns","", "0"},
         {"txSetupMod","Set the module used to calculate TX setup latency", ""},

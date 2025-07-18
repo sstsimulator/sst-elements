@@ -12,7 +12,7 @@ Copyright (c) 2009-2025, NTESS
 
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, 
+Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
     * Redistributions of source code must retain the above copyright
@@ -45,6 +45,8 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mpi_comm/mpi_comm_cart.h>
 #include <mercury/common/errors.h>
 
+#include <memory>
+
 namespace SST::MASKMPI {
 
 MpiCommCart::MpiCommCart(
@@ -53,9 +55,9 @@ MpiCommCart::MpiCommCart(
   AppId aid, int ndims,
   const int *dims, const int *periods, int reorder) :
   MpiComm(id, rank, peers, aid, TOPO_CART),
-  ndims_(ndims), 
+  ndims_(ndims),
   // Wint-in-bool-context on gcc9.2, but I don't know why just ignore for now
-  reorder_(reorder) 
+  reorder_(reorder)
 {
   for (int i = 0; i < ndims; i++) {
     dims_.push_back(dims[i]);
@@ -96,26 +98,26 @@ MpiCommCart::shift(int dir, int dis)
                      "mpicomm_cart::shift: dir %d is too big for dims %d",
                      dir, dims_.size());
   }
-  int coords[dims_.size()];
-  set_coords(rank_, coords);
+  auto coords = std::make_unique<int[]>(dims_.size());
+  set_coords(rank_, coords.get());
   coords[dir] += dis;
 
   if (coords[dir] >= dims_[dir]) {
     if (periods_[dir]) {
       coords[dir] = coords[dir] % dims_[dir];
-      return rank(coords);
+      return rank(coords.get());
     } else {
       return MpiComm::proc_null;
     }
   } else if (coords[dir] < 0) {
     if (periods_[dir]) {
       coords[dir] = (dims_[dir] + coords[dir]) % dims_[dir];
-      return rank(coords);
+      return rank(coords.get());
     } else {
       return MpiComm::proc_null;
     }
   } else {
-    return rank(coords);
+    return rank(coords.get());
   }
 
 }

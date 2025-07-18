@@ -52,12 +52,12 @@ public:
         ss << (std::is_signed<register_format>::value ? "signed" : "unsigned");
         ss << ")";
         ss << " isa-out: "    <<  isa_int_regs_out[0] << " isa-in: "  <<  isa_int_regs_in[0];
-        ss << " / phys-out: " << phys_int_regs_out[0] << " phys-in: " <<  phys_int_regs_in[0]; 
-        ss << " / imm: " << imm_value; 
+        ss << " / phys-out: " << phys_int_regs_out[0] << " phys-in: " <<  phys_int_regs_in[0];
+        ss << " / imm: " << imm_value;
         strncpy( buffer, ss.str().c_str(), buffer_size );
     }
 
-    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
         uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0,uint16_t phys_int_regs_in_1) override
         {
             #ifdef VANADIS_BUILD_DEBUG
@@ -68,7 +68,7 @@ public:
                 ss << " (op: ";
                 ss << convertCompareTypeToString(compare_type);
                 ss << ", ";
-                ss << (std::is_signed<register_format>::value ? "signed" : "unsigned"); 
+                ss << (std::is_signed<register_format>::value ? "signed" : "unsigned");
                 ss << ")";
                 ss << " isa-out: "    << isa_int_regs_out[0]  << " isa-in: "  << isa_int_regs_in[0];
                 ss << " / phys-out: " << phys_int_regs_out_0 << " phys-in: " << phys_int_regs_in_0;
@@ -78,14 +78,14 @@ public:
             #endif
         }
 
-    void instOp(SST::Output* output, VanadisRegisterFile* regFile, 
+    void instOp(SST::Output* output, VanadisRegisterFile* regFile,
         uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0)
     {
-        
-        const bool compare_result = registerCompareImm<compare_type, register_format>(regFile, 
+
+        const bool compare_result = registerCompareImm<compare_type, register_format>(regFile,
                 this, output, phys_int_regs_in_0, imm_value);
-        if ( compare_result ) { 
-            regFile->setIntReg<uint64_t>(phys_int_regs_out_0, static_cast<uint64_t>(1)); 
+        if ( compare_result ) {
+            regFile->setIntReg<uint64_t>(phys_int_regs_out_0, static_cast<uint64_t>(1));
         } else {
             regFile->setIntReg<uint64_t>(phys_int_regs_out_0, static_cast<uint64_t>(0));
         }

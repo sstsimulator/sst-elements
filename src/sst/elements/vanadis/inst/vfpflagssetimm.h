@@ -76,7 +76,7 @@ public:
 			log(output, 16, 65535);
 
 			instOp();
-            
+
 			markExecuted();
 		}
     }

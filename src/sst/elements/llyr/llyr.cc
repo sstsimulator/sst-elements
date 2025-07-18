@@ -25,7 +25,6 @@
 #include "llyr.h"
 #include "llyrTypes.h"
 #include "llyrHelpers.h"
-#include "parser/parser.h"
 #include "mappers/mapperList.h"
 
 namespace SST {
@@ -51,12 +50,12 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     //set our Main Clock
     const std::string clock_rate = params.find< std::string >("clock", "1.0GHz");
     output_->verbose(CALL_INFO, 1, 0, "Clock is configured for %s\n", clock_rate.c_str());
-    clock_tick_handler_ = new Clock::Handler<LlyrComponent>(this, &LlyrComponent::tick);
+    clock_tick_handler_ = new Clock::Handler2<LlyrComponent,&LlyrComponent::tick>(this);
     time_converter_ = registerClock(clock_rate, clock_tick_handler_);
 
     //set up memory interfaces
     mem_interface_ = loadUserSubComponent<SST::Interfaces::StandardMem>("iface", ComponentInfo::SHARE_NONE, time_converter_,
-                                        new StandardMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
+                                        new StandardMem::Handler2<LlyrComponent,&LlyrComponent::handleEvent>(this));
 
     if( !mem_interface_ ) {
         std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.memInterface");
@@ -65,7 +64,7 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
         Params interfaceParams = params.get_scoped_params("memoryinterfaceparams");
         interfaceParams.insert("port", "cache_link");
         mem_interface_ = loadAnonymousSubComponent<SST::Interfaces::StandardMem>(interfaceName, "iface", 0, ComponentInfo::SHARE_PORTS |
-            ComponentInfo::INSERT_STATS, interfaceParams, time_converter_, new StandardMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
+            ComponentInfo::INSERT_STATS, interfaceParams, time_converter_, new StandardMem::Handler2<LlyrComponent,&LlyrComponent::handleEvent>(this));
 
         if( !mem_interface_ ) {
             output_->fatal(CALL_INFO, -1, "%s, Error loading memory interface\n", getName().c_str());
@@ -467,7 +466,7 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
 
         output_->verbose(CALL_INFO, 16, 0, "Parsing:  %s\n", thisLine.c_str());
         if( position !=  std::string::npos ) {
-            constructSoftwareGraphIR(inputStream);
+            //  old LLVM implementation
         } else {
             constructSoftwareGraphApp(inputStream);
         }
@@ -477,19 +476,6 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
         output_->fatal(CALL_INFO, -1, "Error: Unable to open %s\n", fileName.c_str() );
         exit(0);
     }
-}
-
-void LlyrComponent::constructSoftwareGraphIR(std::ifstream& inputStream)
-{
-    std::string thisLine;
-
-    output_->verbose(CALL_INFO, 16, 0, "Sending to LLVM parser\n");
-
-    inputStream.seekg (0, inputStream.beg);
-    std::string irString( (std::istreambuf_iterator< char >( inputStream )),
-                          (std::istreambuf_iterator< char >() ));
-    Parser parser(irString, output_);
-    parser.generateAppGraph("offload_");
 }
 
 void LlyrComponent::constructSoftwareGraphApp(std::ifstream& inputStream)

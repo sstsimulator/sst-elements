@@ -101,4 +101,4 @@ link_mmu_cache_link.setNoCut()
 
 link_mem_bus_link = sst.Link("link_mem_bus_link")
 link_mem_bus_link.connect( (comp_l1cache, "lowlink", "50ps"), (comp_memory, "highlink", "50ps") )
-                                                                                                             
+

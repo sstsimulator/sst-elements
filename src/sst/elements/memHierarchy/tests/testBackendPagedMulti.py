@@ -5,7 +5,7 @@ from mhlib import componentlist
 # Different simpleDRAM parameters from simpleDRAM tests
 # mru/lru/nmru cache replacement
 # Lower latencies
-# DelayBuffer backend 
+# DelayBuffer backend
 
 cpu_params = {
     "memFreq" : 20,

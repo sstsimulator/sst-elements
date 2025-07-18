@@ -32,7 +32,7 @@ import sst
 component = sst.Component("ParamComponent", "simpleElementExample.basicParams")
 
 ### Parameterize the component.
-# Run 'sst-info simpleElementExample.basicParams' at the command line 
+# Run 'sst-info simpleElementExample.basicParams' at the command line
 # to see parameter documentation
 
 
@@ -40,15 +40,15 @@ component = sst.Component("ParamComponent", "simpleElementExample.basicParams")
 
 requiredParam = 20
 
-# Array parameters can be directly passed from python lists 
+# Array parameters can be directly passed from python lists
 arrayP = [12, 50, -8, 0, 0, 48939]
 
 params = {
     "int_param" : requiredParam,    # This is a required parameter for the basicParams component.
     "bool_param" : "false",         # Bool types can use 0/1, "T/F" or "true/false" (case insensitive)
-    "uint32_param" : "678",         # SST interprets all parameters as strings and the component initiates a conversion to a specific type. 
+    "uint32_param" : "678",         # SST interprets all parameters as strings and the component initiates a conversion to a specific type.
                                     # So the user can pass a string or anything that can be trivially converted to a string.
-    "array_param"  : arrayP,        # Parameters can take arrays too. 
+    "array_param"  : arrayP,        # Parameters can take arrays too.
 #   "array_param"  : "[0, 1, 5, 20, -1 ]", # Strings formatted like an array are fine too
     "example_param" : "a:92",
 #   "double_param"  : 22.9,          # If we don't provide this, the parameter will take its default value

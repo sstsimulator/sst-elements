@@ -195,15 +195,15 @@ private:
         Addr addr;
         bool isWrite;
         unsigned numBytes;
-		void serialize_order(SST::Core::Serialization::serializer &ser)  override {
-			ser & id;
-			ser & addr;
-			ser & isWrite;
-			ser & numBytes;
-		}
-	  private:
-        Req() {}
-		ImplementSerializable(SST::MemHierarchy::pagedMultiMemory::Req)
+	void serialize_order(SST::Core::Serialization::serializer &ser)  override {
+	    SST_SER(id);
+	    SST_SER(addr);
+	    SST_SER(isWrite);
+            SST_SER(numBytes);
+	}
+	private:
+            Req() {}
+	    ImplementSerializable(SST::MemHierarchy::pagedMultiMemory::Req)
     };
     pageInfo::pageList_t pageList; // used in FIFO
 
@@ -275,7 +275,7 @@ public:
     public:
         void serialize_order(SST::Core::Serialization::serializer &ser)  override {
             Event::serialize_order(ser);
-            ser & req;  // Cannot serialize pointers unless they are a serializable object
+            SST_SER(req);
         }
 
         ImplementSerializable(SST::MemHierarchy::pagedMultiMemory::MemCtrlEvent);

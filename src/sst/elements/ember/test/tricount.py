@@ -36,7 +36,7 @@ if __name__ == "__main__":
     topo = topoSingle()
     topo.link_latency = "20ns"
     topo.num_ports = 32
-    
+
     # Set up the routers
     router = hr_router()
     router.link_bw = "12GB/s"
@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
     topo.router = router
     topo.link_latency = "20ns"
-    
+
     ### set up the endpoint
     networkif = ReorderLinkControl()
     networkif.link_bw = "12GB/s"
@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
     # Set up VN remapping
     #networkif.vn_remap = [0]
-    
+
     ep = EmberMPIJob(0,3)
     #ep = EmberMPIJob(0,topo.getNumNodes())
     ep.network_interface = networkif
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     ep.addMotif("TriCount vertices_filename=vertices4.txt debug_level=0")
     ep.addMotif("Fini")
     ep.nic.nic2host_lat= "100ns"
-        
+
     system = System()
     system.setTopology(topo)
     system.allocateNodes(ep,"linear")

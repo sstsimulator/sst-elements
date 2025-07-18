@@ -12,7 +12,7 @@
 // (2) Redistributions in binary form must reproduce the above copyright
 // notice, this list of conditions and the following disclaimer in the
 // documentation and/or other materials provided with the distribution.
-// 
+//
 // (3) Neither the name of the University of California, Lawrence Berkeley
 // National Laboratory, U.S. Dept. of Energy nor the names of its contributors
 // may be used to endorse or promote products derived from this software
@@ -30,7 +30,7 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // You are under no obligation whatsoever to provide any bug fixes, patches,
 // or upgrades to the features, functionality or performance of the source
 // code ("Enhancements") to anyone; however, if you choose to make your

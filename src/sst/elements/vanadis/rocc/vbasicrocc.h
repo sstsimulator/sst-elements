@@ -50,11 +50,11 @@ public:
 
     VanadisRoCCBasic(ComponentId_t id, Params& params) : VanadisRoCCInterface(id, params),
         max_instructions(params.find<size_t>("max_instructions", 8)) {
-        
+
         try {
             UnitAlgebra clock = params.find<UnitAlgebra>("clock", "1GHz");
 
-            if (!(clock.hasUnits("Hz") || clock.hasUnits("s")) || 
+            if (!(clock.hasUnits("Hz") || clock.hasUnits("s")) ||
                 clock.getRoundedValue() <= 0) {
                 output->fatal(CALL_INFO, -1,
                     "%s, Error - Invalid param: clock.\n"
@@ -76,8 +76,7 @@ public:
 
         memInterface = loadUserSubComponent<Interfaces::StandardMem>(
             "memory_interface", ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, getTimeConverter("1ps"),
-            new StandardMem::Handler<SST::Vanadis::VanadisRoCCBasic>(
-                this, &VanadisRoCCBasic::processIncomingDataCacheEvent));
+            new StandardMem::Handler2<SST::Vanadis::VanadisRoCCBasic,&VanadisRoCCBasic::processIncomingDataCacheEvent>(this));
 
         if ( nullptr == memInterface ) {
             output->fatal(
@@ -105,10 +104,10 @@ public:
         roccCmd_q.push_back( rocc_me );
     }
 
-    RoCCResponse* respond() override { 
+    RoCCResponse* respond() override {
         RoCCResponse* temp = curr_resp;
         curr_resp = NULL;
-        return temp; 
+        return temp;
     }
 
     // initialize subcomponents and parameterizable data structures
@@ -130,7 +129,7 @@ public:
             curr_cmd = roccCmd_q.front(); // grab the command to process
 
             output->verbose(CALL_INFO, 9, 0, "decoding func7 of RoCC inst\n");
-            switch (curr_cmd->inst->func7) { 
+            switch (curr_cmd->inst->func7) {
                 case 0x0:
                 {
                     output->verbose(CALL_INFO, 9, 0, "performing RoCC ADD\n");
@@ -151,7 +150,7 @@ public:
                     output->verbose(CALL_INFO, 9, 0, "issuing store\n");
                     issueStore();
                 } break;
-                default: 
+                default:
                 {
                     output->verbose(CALL_INFO, 9, 0, "ERROR: unrecognized RoCC func7\n");
                 } break;
@@ -197,14 +196,14 @@ public:
         for (int i = 0; i < 4; ++i) {
             payload[i] = (rocc_internal_register >> (i * 8)) & 0xFF;
         }
-        
-        store_req = new StandardMem::Write(curr_cmd->rs1, 4, payload, 
+
+        store_req = new StandardMem::Write(curr_cmd->rs1, 4, payload,
             false, 0, curr_cmd->rs1, 0, 0);
         memInterface->send(store_req);
     }
 
     // finalizes the execution of a RoCC instruction by:
-    // pop it out of the command queue so it will no longer be processed 
+    // pop it out of the command queue so it will no longer be processed
     // turn off busy bit so host knows this accelerator is no longer busy
     // send RoCC response back to host
     void completeRoCC(uint64_t rd_val) {
@@ -220,7 +219,7 @@ public:
 
         StandardMemHandlers(VanadisRoCCBasic* rocc, SST::Output* output) :
                 Interfaces::StandardMem::RequestHandler(output), rocc(rocc) {output = output;}
-        
+
         virtual ~StandardMemHandlers() {}
 
         virtual void handle(StandardMem::ReadResp* ev) {
@@ -228,11 +227,11 @@ public:
             RoCCCommand* rocc_cmd = rocc->curr_cmd; // need to grab the instruction that generated the read request
             // so that we know where to store the read response results
 
-            if ( ev->getFail() ) { 
+            if ( ev->getFail() ) {
                 out->verbose(CALL_INFO, 9, 0, "RoCC load failed, sending error code 1\n");
                 rocc->completeRoCC(1);
             }
-            
+
             uint64_t reg_offset  = 0;
             uint64_t addr_offset = 0;
             uint64_t reg_width = 8;
@@ -244,7 +243,7 @@ public:
             }
 
             switch (ev->getAllFlags()) { // treat read response data differently based on who issued it
-            case 0x0: 
+            case 0x0:
                 {
                     rocc->rocc_internal_register = rocc->dataToInt(&register_value);
                     rocc->output->verbose(CALL_INFO, 9, 0, "RoCC loaded value: %d\n", rocc->rocc_internal_register);
@@ -257,10 +256,10 @@ public:
                     rocc->completeRoCC(1); // complete the load command
                 } break;
             }
-            
+
             delete ev;
-        } 
-        
+        }
+
         virtual void handle(StandardMem::WriteResp* ev) {
             // write is much simpler because we aren't handling any reponse data
             // just need to make sure it went through properly
@@ -269,11 +268,11 @@ public:
                 out->verbose(CALL_INFO, 9, 0, "RoCC store failed, responding with error code 1\n");
                 rocc->completeRoCC(1);
             }
-            
+
             delete ev;
             rocc->completeRoCC(0);
         }
-    
+
         VanadisRoCCBasic* rocc;
         SST::Output* output;
     };

@@ -79,7 +79,7 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         SST::Interfaces::SimpleNetwork::Request::serialize_order(ser);
-        ser & seq;
+        SST_SER(seq);
     }
 
 private:

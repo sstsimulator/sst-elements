@@ -12,7 +12,7 @@ Copyright (c) 2009-2025, NTESS
 
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, 
+Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
     * Redistributions of source code must retain the above copyright
@@ -60,12 +60,12 @@ void
 MpiMessage::serialize_order(serializer& ser)
 {
   ProtocolMessage::serialize_order(ser);
-  ser & (src_rank_);
-  ser & (dst_rank_);
-  ser & type_;
-  ser & (tag_);
-  ser & (commid_);
-  ser & (seqnum_);
+  SST_SER(src_rank_);
+  SST_SER(dst_rank_);
+  SST_SER(type_);
+  SST_SER(tag_);
+  SST_SER(commid_);
+  SST_SER(seqnum_);
 }
 
 MpiMessage::~MpiMessage() throw ()

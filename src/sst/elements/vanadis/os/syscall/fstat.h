@@ -65,13 +65,13 @@ namespace Vanadis {
 class VanadisFstatSyscall : public VanadisSyscall {
 public:
     VanadisFstatSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallFstatEvent* event )
-        : VanadisSyscall( os, coreLink, process, event, "fstat" ) 
+        : VanadisSyscall( os, coreLink, process, event, "fstat" )
     {
 	    m_output->verbose(CALL_INFO, 16, 0, "-> call is fstat( %d, 0x%0" PRI_ADDR " )\n", event->getFileHandle(), event->getStructAddress());
 
         setReturnFail(-LINUX_EINVAL);
 
- #if 0       
+ #if 0
 	    auto fd = process->getFileDescriptor( event->getFileHandle());
         if (-1 == fd ) {
             m_output->verbose(CALL_INFO, 16, 0,
@@ -90,7 +90,7 @@ public:
                 statBuf.resize(sizeof(struct stat_64));
             }
             setReturnSuccess(0);
-#endif            
+#endif
 #if 0
             if (  <= 2) {
                 if (0 == fstat(fstat_ev->getFileHandle(), &stat_output)) {

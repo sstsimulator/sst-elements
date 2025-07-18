@@ -36,7 +36,7 @@ private:
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& newBrk;
+        SST_SER(newBrk);
     }
     ImplementSerializable(SST::Vanadis::VanadisSyscallBRKEvent);
 

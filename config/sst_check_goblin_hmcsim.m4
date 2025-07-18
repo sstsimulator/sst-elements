@@ -25,7 +25,7 @@ AC_DEFUN([SST_CHECK_GOBLIN_HMCSIM],
        GOBLIN_HMCSIM_LDFLAGS=
        GOBLIN_HMCSIM_LIB=
        GOBLIN_HMCSIM_LIBDIR=])])
-  
+
   AC_LANG_PUSH([C++])
   AC_CHECK_HEADER([hmc_sim.h], [], [sst_check_goblin_hmcsim_happy="no"])
   AC_LANG_POP([C++])

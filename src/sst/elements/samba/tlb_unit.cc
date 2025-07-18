@@ -151,7 +151,7 @@ TLB::TLB(ComponentId_t id, int tlb_id, TLB * Next_level, int Level, SST::Params&
 
 	}
 
-	//	registerClock( cpu_clock, new SST::Clock::Handler<TLB>(this, &TLB::tick ) );
+	//	registerClock( cpu_clock, new SST::Clock::Handler2<TLB,&TLB::tick>(this) );
 
 
 }

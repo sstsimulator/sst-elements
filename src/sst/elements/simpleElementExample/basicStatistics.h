@@ -45,7 +45,7 @@ class basicStatistics : public SST::Component
 public:
 
 /*
- *  SST Registration macros register Components with the SST Core and 
+ *  SST Registration macros register Components with the SST Core and
  *  document their parameters, ports, etc.
  *  SST_ELI_REGISTER_COMPONENT is required, the documentation macros
  *  are only required if relevant
@@ -72,10 +72,10 @@ public:
 
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_PORTS( )
-    
+
     // Document the statistic that this component provides
     // { "statistic_name", "description", "units", enable_level }
-    SST_ELI_DOCUMENT_STATISTICS( 
+    SST_ELI_DOCUMENT_STATISTICS(
         {"UINT32_statistic", "Statistic that records unsigned 32-bit values", "unitless", 1},
         {"UINT32_statistic_duplicate", "Statistic that records unsigned 32-bit values. Multiple stats record values to this statistic.", "unitless", 1},
         {"UINT64_statistic", "Statistic that records unsigned 64-bit values", "unitless", 2},
@@ -91,7 +91,7 @@ public:
 
     // Constructor. Components receive a unique ID and the set of parameters that were assigned in the Python input.
     basicStatistics(SST::ComponentId_t id, SST::Params& params);
-    
+
     // Destructor
     ~basicStatistics();
 
@@ -113,7 +113,7 @@ private:
     Statistic<uint64_t>* stat_U64;
     Statistic<int32_t>* stat_I32;
     Statistic<int64_t>* stat_I64;
-    
+
     // These statistics illustrate multiple references to the same statistic
     Statistic<uint32_t>* stat_U32;              // Reference to UINT32_statistic_duplicate
     Statistic<uint32_t>* stat_U32_duplicate;    // Another reference to UINT32_statistic_duplicate, but counts different values

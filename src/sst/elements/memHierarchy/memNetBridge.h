@@ -61,7 +61,7 @@ public:
 private:
     // Debug
     Output dbg;
-    std::set<Addr> DEBUG_ADDR;
+    std::set<Addr> debug_addr_filter_;
     int dlevel;
 
     typedef std::map<std::string, SimpleNetwork::nid_t> addrMap_t;
