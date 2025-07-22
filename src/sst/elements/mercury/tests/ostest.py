@@ -13,6 +13,8 @@ os0.addParams({ "app1.name" : "ostest"})
 os1.addParams({ "app1.name" : "ostest"})
 os0.addParams({ "app1.exe_library_name" : "ostest"})
 os1.addParams({ "app1.exe_library_name" : "ostest"})
+os0.addParams({ "app1.argv" : "arg1 arg2"})
+os1.addParams({ "app1.argv" : "arg1 arg2"})
 
 #node0.addParams({ "verbose" : "100"})
 #node1.addParams({ "verbose" : "100"})

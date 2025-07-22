@@ -97,6 +97,7 @@ class HgOS(TemplateBase):
                                      ])
         self._declareParamsWithUserPrefix("params","app1",
                                           ["name",
+                                           "argv",
                                            "exe_library_name",
                                            "libraries",
                                            "dependencies",
