@@ -85,9 +85,9 @@ int USER_MAIN(int argc, char* argv[]) {
 
   MPI_Comm halo_comm = MPI_COMM_WORLD;
 
-  int pex = 2;
-  int pey = 2;
-  int pez = 2;
+  int pex = 1;  // pex, pey, and pez should all be overridden in test_halo3d26.py
+  int pey = 1;  // otherwise will fail at (pex * pey * pez) != size) below
+  int pez = 1;
 
   int nx = 10;
   int ny = 10;
@@ -100,7 +100,6 @@ int USER_MAIN(int argc, char* argv[]) {
 
   int print = 0;
 
-/*
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-nx") == 0) {
       if (i == argc) {
@@ -212,7 +211,6 @@ int USER_MAIN(int argc, char* argv[]) {
       exit(-1);
     }
   }
-*/
 
   MPI_Barrier(MPI_COMM_WORLD);
 
