@@ -130,18 +130,18 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
         snprintf(decoder_name, 64, "decoder%" PRIu32 "", i);
         VanadisDecoder* thr_decoder = loadUserSubComponent<SST::Vanadis::VanadisDecoder>(decoder_name);
 
-        fp_flags.push_back(new VanadisFloatingPointFlags());
-        thr_decoder->setFPFlags(fp_flags[i]);
-        output->verbose(
-            CALL_INFO, 8, 0, "Loading decoder%" PRIu32 ": %s.\n", i,
-            (nullptr == thr_decoder) ? "failed" : "successful");
-
         if ( nullptr == thr_decoder ) {
             output->fatal(CALL_INFO, -1, "Error: was unable to load %s on thread %" PRIu32 "\n", decoder_name, i);
         }
         else {
             output->verbose(CALL_INFO, 8, 0, "-> Decoder configured for %s\n", thr_decoder->getISAName());
         }
+
+        fp_flags.push_back(new VanadisFloatingPointFlags());
+        thr_decoder->setFPFlags(fp_flags[i]);
+        output->verbose(
+            CALL_INFO, 8, 0, "Loading decoder%" PRIu32 ": %s.\n", i,
+            (nullptr == thr_decoder) ? "failed" : "successful");
 
         thr_decoder->setHardwareThread(i);
         thread_decoders.push_back(thr_decoder);
