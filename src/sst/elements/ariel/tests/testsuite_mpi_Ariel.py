@@ -15,7 +15,7 @@ def get_hello_string(rank, ranks, tracerank, threads, frontend):
         return [f"Hello from rank {rank} of {ranks}, thread {i}! (Launched by pin)\n" for i in range(threads)]
     else:
         return [f"Hello from rank {rank} of {ranks}, thread {i}!\n" for i in range(threads)]
-      
+
 ################################################################################
     ##############################################
     # EPA Frontend Functions not yet in sst-core #

@@ -112,7 +112,7 @@ int EPAFrontend::forkChildProcess(const char* app, char** args, std::map<std::st
         child_pid = the_child;
 
         // Pin frontend waits a second here for the child to start. This does
-        // not appear to be necessary so commenting it out. 
+        // not appear to be necessary so commenting it out.
         // sleep(1);
         int pstat;
         pid_t check = waitpid(the_child, &pstat, WNOHANG);
@@ -233,12 +233,10 @@ void EPAFrontend::setForkArguments() {
     //  - the ones required for mpi
     //  - the ones required for the app
 
-    // MPI: We need one argument for the launcher, one for the number of ranks,
-    //      and one for the 
     uint32_t mpi_arg_count = 0;
     if (mpimode == 1) {
-        // We need one argument for the launcher, one for the number of ranks,
-        // one for the rank to trace, and one for the "--" (required by 
+        // MPI: We need one argument for the launcher, one for the number of
+        // ranks, one for the rank to trace, and one for the "--" (required by
         // mpilauncher)
         mpi_arg_count = 4;
     }
@@ -280,7 +278,7 @@ void EPAFrontend::setForkArguments() {
 
     for (auto itr = app_arguments.begin(); itr != app_arguments.end(); itr++) {
         std::string app_arg = (*itr);
-        execute_args[arg] = (char*) malloc(sizeof(char) * 
+        execute_args[arg] = (char*) malloc(sizeof(char) *
             (app_arg.size() + 1));
         strcpy(execute_args[arg], app_arg.c_str());
         arg++;

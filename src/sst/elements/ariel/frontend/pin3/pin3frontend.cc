@@ -336,7 +336,7 @@ void Pin3Frontend::setForkArguments() {
     execute_args[arg++] = const_cast<char*>("-w");
     execute_args[arg++] = (char*) malloc(buff8size);
     snprintf(execute_args[arg-1], buff8size, "%d", writepayloadtrace);
-    
+
     execute_args[arg++] = const_cast<char*>("-E");
     execute_args[arg++] = (char*) malloc(buff8size);
     snprintf(execute_args[arg-1], buff8size, "%d", instrument_instructions);
