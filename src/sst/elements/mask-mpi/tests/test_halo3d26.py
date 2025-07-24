@@ -28,6 +28,7 @@ if __name__ == "__main__":
         "verbose" : "0",
         "app1.name" : "halo3d26",
         "app1.exe_library_name" : "halo3d26",
+        "app1.argv" : "-pex 2 -pey 2 -pez 2",
         "app1.dependencies" : ["sumi", ],
         "app1.libraries" : ["computelibrary:ComputeLibrary",
                             "mask_mpi:MpiApi",],
