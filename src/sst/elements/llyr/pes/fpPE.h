@@ -16,8 +16,13 @@
 #ifndef _FP_PE_H
 #define _FP_PE_H
 
+#include <bitset>
+#include <cstdint>
+#include <iomanip>
 #include <limits>
+#include <ostream>
 #include <string>
+#include <vector>
 
 #include "pes/processingElement.h"
 

@@ -17,8 +17,11 @@
 #ifndef MESIINTERNALDIRCONTROLLER_H
 #define MESIINTERNALDIRCONTROLLER_H
 
-#include <iostream>
 #include <array>
+#include <cstdint>
+#include <iostream>
+#include <map>
+#include <set>
 
 #include "sst/elements/memHierarchy/coherencemgr/coherenceController.h"
 #include "sst/elements/memHierarchy/lineTypes.h"

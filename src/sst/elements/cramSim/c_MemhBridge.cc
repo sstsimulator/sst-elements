@@ -17,6 +17,7 @@
 #include "sst_config.h"
 
 #include <assert.h>
+#include <cstdint>
 #include <iostream>
 
 

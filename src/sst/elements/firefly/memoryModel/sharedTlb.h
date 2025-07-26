@@ -13,6 +13,13 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cstdint>
+#include <functional>
+#include <queue>
+#include <string>
+#include <unordered_map>
+#include <utility>
+
 class SharedTlb {
     std::string m_prefix;
     const char* prefix() { return m_prefix.c_str(); }

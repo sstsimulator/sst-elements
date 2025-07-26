@@ -38,7 +38,10 @@ extern "C" {
     #include <unistd.h>
     #include <sys/syscall.h>
     #include <sys/mman.h>
+    #include <stdint.h>
+    #include <stdio.h>
     #include <stdlib.h>
+    #include <string.h>
 
     inline __attribute__((always_inline)) void __vanadisFence() {
         asm volatile ("fence");

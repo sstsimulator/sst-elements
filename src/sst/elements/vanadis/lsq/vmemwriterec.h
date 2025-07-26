@@ -17,6 +17,8 @@
 #define _H_VANADIS_MEMORY_WRITTEN_RECORD
 
 #include "sst/core/output.h"
+#include <cstdint>
+#include <cstdio>
 #include <vector>
 
 namespace SST {

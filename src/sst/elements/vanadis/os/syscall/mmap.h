@@ -20,6 +20,9 @@
 #include "os/callev/voscallmmap.h"
 #include "os/include/device.h"
 
+#include <cstdint>
+#include <vector>
+
 namespace SST {
 namespace Vanadis {
 
