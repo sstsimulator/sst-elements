@@ -17,6 +17,8 @@
 #include "sst_config.h"
 #include "prosbinaryreader.h"
 
+#include <cstdlib>
+
 using namespace SST::Prospero;
 
 

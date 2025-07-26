@@ -17,6 +17,10 @@
 #include "sst_config.h"
 #include "nic.h"
 
+#include <cinttypes>
+#include <cstdint>
+#include <functional>
+
 using namespace SST;
 using namespace SST::Firefly;
 using namespace SST::Interfaces;

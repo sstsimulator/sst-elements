@@ -29,8 +29,9 @@
 //SST includes
 #include "sst_config.h"
 
-#include <memory>
 #include <assert.h>
+#include <list>
+#include <memory>
 
 #include "c_BankState.hpp"
 #include "c_BankCommand.hpp"

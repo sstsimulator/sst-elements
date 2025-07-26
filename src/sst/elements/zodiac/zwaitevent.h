@@ -19,6 +19,8 @@
 
 #include "zevent.h"
 
+#include <cstdint>
+
 using namespace SST::Hermes;
 
 namespace SST {

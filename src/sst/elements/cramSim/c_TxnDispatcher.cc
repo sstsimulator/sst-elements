@@ -32,6 +32,7 @@
 
 
 #include <bitset>
+#include <cstdint>
 
 using namespace std;
 using namespace SST;

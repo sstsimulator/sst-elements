@@ -21,6 +21,8 @@
 #include "inst/vregfmt.h"
 #include "util/vfpreghandler.h"
 
+#include <cstdint>
+
 #define VANADIS_MIPS_FP_COMPARE_BIT         0x00800000
 #define VANADIS_MIPS_FP_COMPARE_BIT_INVERSE 0xFF7FFFFF
 
