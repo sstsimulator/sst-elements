@@ -17,6 +17,7 @@
 #define _RDMA_H
 
 #include <assert.h>
+#include <stddef.h>
 #include <stdint.h>
 #include "base.h"
 

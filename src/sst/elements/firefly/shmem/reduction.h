@@ -19,6 +19,8 @@
 
 #include "shmem/common.h"
 
+#include <cstddef>
+
 namespace SST {
 namespace Firefly {
 

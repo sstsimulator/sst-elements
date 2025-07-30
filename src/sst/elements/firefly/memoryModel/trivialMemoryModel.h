@@ -18,6 +18,8 @@
 
 #include "memoryModel/memoryModel.h"
 
+#include <cstddef>
+
 namespace SST {
 namespace Firefly {
 

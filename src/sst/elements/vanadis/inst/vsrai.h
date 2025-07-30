@@ -19,6 +19,8 @@
 #include "inst/vinst.h"
 #include "inst/vregfmt.h"
 
+#include <cstdint>
+
 namespace SST {
 namespace Vanadis {
 

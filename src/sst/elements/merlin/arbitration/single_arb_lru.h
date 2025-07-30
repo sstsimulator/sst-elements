@@ -21,6 +21,8 @@
 
 #include "sst/elements/merlin/arbitration/single_arb.h"
 
+#include <cstdint>
+
 namespace SST {
 namespace Merlin {
 

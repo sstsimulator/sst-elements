@@ -13,6 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <stdint.h>
+
 #ifndef _SUMI_POLL_H_
 #define _SUMI_POLL_H_
 
