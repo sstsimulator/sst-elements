@@ -21,7 +21,7 @@ networkParams = {
 
 nicParams = {
     "module" : "merlin.linkcontrol",
-    "topology" : networkParams['topology'], 
+    "topology" : networkParams['topology'],
     "packetSize" : networkParams['packetSize'],
     "link_bw" : networkParams['link_bw'],
     "buffer_size" : networkParams['buffer_size'],

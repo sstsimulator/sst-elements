@@ -25,7 +25,7 @@ namespace Vanadis {
 
 #define InstallFuncPtr( opCode, funcName ) case SYSCALL_OP_##funcName:  m_functionMap[ opCode ] = MakeFuncPtr( funcName ); break;
 #define MakeFuncPtr( funcName ) std::bind(&VanadisCPUOSHandler2< T1,BitType,regZero,OsCodeReg,LinkReg >::funcName, this, std::placeholders::_1 )
-       
+
 #define Install_ISA_FuncPtr( isa, funcName ) install( VANADIS_SYSCALL_##isa##_##funcName, Make_ISA_FuncPtr( isa, funcName ) )
 #define Make_ISA_FuncPtr( isa, x ) std::bind(&Vanadis##isa##OSHandler2< T1,BitType,RegZero,OsCodeReg,LinkReg >::x, this, std::placeholders::_1 )
 
@@ -57,7 +57,7 @@ namespace Vanadis {
         FUNC( arg, UNLINKAT ); \
         FUNC( arg, UNMAP ); \
         FUNC( arg, WRITE ); \
-        FUNC( arg, WRITEV); 
+        FUNC( arg, WRITEV);
 
 
 #define InstallCommonFuncs( isa ) FOREACH_COMMON( InstallFunc, isa )
@@ -347,7 +347,7 @@ protected:
         T1 newBrk = getArgRegister(0);
 
         output->verbose(CALL_INFO, 16, 0, "brk( value: %" PRIuXX " )\n", newBrk);
-        
+
         return new VanadisSyscallBRKEvent(core_id, hw_thr, BitType, newBrk );
     }
 
@@ -356,13 +356,13 @@ protected:
         T1 writev_iovec_ptr   = getArgRegister( 1 );
         T1 writev_iovec_count = getArgRegister( 2 );
         return new VanadisSyscallWritevEvent(core_id, hw_thr, BitType, writev_fd, writev_iovec_ptr, writev_iovec_count);
-    } 
+    }
 
     VanadisSyscallEvent* SET_TID_ADDRESS( int hw_thr ) {
         T1 addr = getArgRegister( 0 );
 
         output->verbose(CALL_INFO, 16, 0, "set_tid_address( %#" PRIxXX " )\n", addr);
-        
+
         return new VanadisSyscallSetTidAddressEvent(core_id, hw_thr, BitType, addr);
     }
 
@@ -377,7 +377,7 @@ protected:
         T1 exit_code = getArgRegister( 0 );
 
         output->verbose(CALL_INFO, 16, 0, "exit_group( %" PRIdXX " )\n", exit_code);
-        
+
         flushLSQ=true;
 
         return new VanadisSyscallExitGroupEvent(core_id, hw_thr, BitType, exit_code);
@@ -410,7 +410,7 @@ protected:
 
     virtual T1 convertFlags( T1 ) = 0;
 
-    // SHOULD getIntReg be type uint64_t? 
+    // SHOULD getIntReg be type uint64_t?
     T1 getLinkReg() {
         return regFile->getIntReg< uint64_t >( isaTable->getIntPhysReg(LinkReg));
     }

@@ -35,7 +35,7 @@ public:
     basicLifeCycleEvent(std::string val) : SST::Event(), str(val), num(0) { }
     basicLifeCycleEvent(std::string sval, unsigned uval) : SST::Event(), str(sval), num(uval) { }
     basicLifeCycleEvent(unsigned val) : SST::Event(), str(""), num(val) { }
-    
+
     // Destructor
     ~basicLifeCycleEvent() { }
 
@@ -55,8 +55,8 @@ private:
     // Serialization
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & str;
-        ser & num;
+        SST_SER(str);
+        SST_SER(num);
     }
 
     // Register this event as serializable

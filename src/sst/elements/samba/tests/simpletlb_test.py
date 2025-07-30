@@ -34,8 +34,8 @@ comp_l1cache.addParams({
         "prefetcher" : "cassini.StridePrefetcher",
         "L1" : "1",
         "cache_size" : "8KB",
-        "debug" : "1",          
-        "debug_level" : "10",    
+        "debug" : "1",
+        "debug_level" : "10",
         "debug_addresses": "[]",
         "verbose": "1",
 })

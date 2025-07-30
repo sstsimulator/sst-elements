@@ -31,11 +31,11 @@ namespace ArielComponent {
 typedef struct RtlSharedData {
 
     void* rtl_inp_ptr;
-    void* rtl_ctrl_ptr;   
+    void* rtl_ctrl_ptr;
     void* updated_rtl_params;
 
-    std::unordered_map<uint64_t, uint64_t>* pageTable; 
-    std::unordered_map<uint64_t, uint64_t>* translationCache; 
+    std::unordered_map<uint64_t, uint64_t>* pageTable;
+    std::unordered_map<uint64_t, uint64_t>* translationCache;
     std::deque<uint64_t> *freePages;
     uint64_t pageSize;
     uint64_t cacheLineSize;
@@ -63,15 +63,15 @@ class ArielRtlEvent : public ArielEvent, public SST::Event {
         EvRecvAck = false;
       }
       ~ArielRtlEvent() { }
-      
+
       typedef std::vector<char> dataVec;
       dataVec payload;
-      
+
       /*void serialize_order(SST::Core::Serialization::serializer &ser)  override {
           Event::serialize_order(ser);
-          ser & payload;
+          SST_SER(payload);
       }*/
-      
+
       ArielEventType getEventType() const override {
          return RTL;
       }
@@ -87,15 +87,15 @@ class ArielRtlEvent : public ArielEvent, public SST::Event {
       void* get_updated_rtl_params() {
           return RtlData.updated_rtl_params;
       }
-      
+
       size_t get_rtl_inp_size() {
           return RtlData.rtl_inp_size;
       }
- 
+
       size_t get_rtl_ctrl_size() {
           return RtlData.rtl_ctrl_size;
       }
-      
+
       size_t get_updated_rtl_params_size() {
           return RtlData.updated_rtl_params_size;
       }
@@ -123,7 +123,7 @@ class ArielRtlEvent : public ArielEvent, public SST::Event {
       void set_rtl_ctrl_ptr(void* setPtr) {
           RtlData.rtl_ctrl_ptr = setPtr;
       }
-      
+
       void set_updated_rtl_params(void* setPtr) {
           RtlData.updated_rtl_params = setPtr;
       }
@@ -131,11 +131,11 @@ class ArielRtlEvent : public ArielEvent, public SST::Event {
       void set_rtl_inp_size(size_t size) {
           RtlData.rtl_inp_size = size;
       }
- 
+
       void set_rtl_ctrl_size(size_t size) {
           RtlData.rtl_ctrl_size = size;
       }
-      
+
       void set_updated_rtl_params_size(size_t size) {
           RtlData.updated_rtl_params_size = size;
       }
@@ -155,7 +155,7 @@ class ArielRtlEvent : public ArielEvent, public SST::Event {
       void setEventRecvAck(bool EvRecvd) {
           EvRecvAck = EvRecvd;
       }
- 
+
       ImplementSerializable(SST::ArielComponent::ArielRtlEvent);
 };
 

@@ -25,7 +25,7 @@ class VanadisSyscallResponse : public SST::Event {
 public:
     VanadisSyscallResponse() : SST::Event(), return_code(0), hw_thr(-1), mark_success(true), has_exited(false) {}
 
-    VanadisSyscallResponse(int64_t ret_c, bool success = true, bool hasExited = false ) : 
+    VanadisSyscallResponse(int64_t ret_c, bool success = true, bool hasExited = false ) :
         SST::Event(), return_code(ret_c), hw_thr(-1), mark_success(success), has_exited(hasExited) {}
     ~VanadisSyscallResponse() {}
 
@@ -40,10 +40,10 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        ser& return_code;
-        ser& mark_success;
-        ser& hw_thr;
-        ser& has_exited;
+        SST_SER(return_code);
+        SST_SER(mark_success);
+        SST_SER(hw_thr);
+        SST_SER(has_exited);
     }
 
     ImplementSerializable(SST::Vanadis::VanadisSyscallResponse);

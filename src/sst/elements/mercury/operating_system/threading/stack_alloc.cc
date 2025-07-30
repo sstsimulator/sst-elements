@@ -101,7 +101,7 @@ StackAlloc::alloc()
 //
 void StackAlloc::free(void* buf)
 {
-  static thread_lock lock; 
+  static thread_lock lock;
   lock.lock();
   chunks_.available.push_back(buf);
   lock.unlock();

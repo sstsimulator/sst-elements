@@ -129,7 +129,7 @@ libmemHierarchy_la_SOURCES = \
 
 EXTRA_DIST = \
 	membackend/ramulator2/Instructions.md \
-	membackend/ramulator2/sst_frontend.cpp \ 
+	membackend/ramulator2/sst_frontend.cpp \
 	tests/testsuite_default_memHierarchy_hybridsim.py \
 	tests/testsuite_default_memHierarchy_memHA.py \
 	tests/testsuite_default_memHierarchy_sdl.py \
@@ -172,7 +172,7 @@ EXTRA_DIST = \
 	tests/test_coherence_1core.py \
 	tests/test_coherence_2core_3level.py \
 	tests/test_coherence_4core_5level.py \
-	tests/test_coherence_1core.py \
+	tests/test_coherence_none.py \
 	tests/test_backing.py \
 	tests/testBackendChaining.py \
 	tests/testBackendDelayBuffer.py \
@@ -201,7 +201,6 @@ EXTRA_DIST = \
 	tests/testFlushes.py \
 	tests/testFlushes-2.py \
 	tests/testHashXor.py \
-	tests/testIncoherent.py \
 	tests/testKingsley.py \
 	tests/testMemoryCache.py \
 	tests/testNoninclusive-1.py \
@@ -261,8 +260,6 @@ EXTRA_DIST = \
 	tests/refFiles/test_memHA_Flushes.out \
 	tests/refFiles/test_memHA_Flushes_2.out \
 	tests/refFiles/test_memHA_HashXor.out \
-	tests/refFiles/test_memHA_Incoherent.out \
-	tests/refFiles/test_memHA_Incoherent_2.out \
 	tests/refFiles/test_memHA_Kingsley.out \
 	tests/refFiles/test_memHA_MemoryCache.out \
 	tests/refFiles/test_memHA_Noninclusive_1.out \
@@ -329,6 +326,16 @@ EXTRA_DIST = \
 	tests/refFiles/test_memHierarchy_coherence_4core_5level_case2_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_4core_5level_case3_mesi.out \
 	tests/refFiles/test_memHierarchy_coherence_4core_5level_case3_mesi.malloc.mem \
+	tests/refFiles/test_memHierarchy_coherence_none_case0_none.out \
+	tests/refFiles/test_memHierarchy_coherence_none_case0_none.malloc.mem \
+	tests/refFiles/test_memHierarchy_coherence_none_case1_none.out \
+	tests/refFiles/test_memHierarchy_coherence_none_case1_none.malloc.mem \
+	tests/refFiles/test_memHierarchy_coherence_none_case2_none.out \
+	tests/refFiles/test_memHierarchy_coherence_none_case2_none.malloc.mem \
+	tests/refFiles/test_memHierarchy_coherence_none_case3_none.out \
+	tests/refFiles/test_memHierarchy_coherence_none_case3_none.malloc.mem \
+	tests/refFiles/test_memHierarchy_coherence_none_case4_none.out \
+	tests/refFiles/test_memHierarchy_coherence_none_case4_none.malloc.mem \
 	tests/refFiles/test_memHierarchy_memory_backing_out.malloc.mem \
 	tests/refFiles/test_memHierarchy_memory_backing_out.mmap.mem \
 	tests/refFiles/test_memHierarchy_memory_backing_2_mmap_inout.mmap.mem \

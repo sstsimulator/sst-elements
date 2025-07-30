@@ -105,12 +105,12 @@ incast_nic::init(unsigned int phase) {
             UnitAlgebra size = UnitAlgebra("1 b") * packet_size_in_bits;
             UnitAlgebra ser_time = size / bw;
 
-            self_link = configureSelfLink("complete_link", ser_time.toString(), new Event::Handler<incast_nic>(this,&incast_nic::handle_complete));
-            link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler<incast_nic>(this,&incast_nic::handle_event));
+            self_link = configureSelfLink("complete_link", ser_time.toString(), new Event::Handler2<incast_nic,&incast_nic::handle_complete>(this));
+            link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler2<incast_nic,&incast_nic::handle_event>(this));
         }
         else {
-            link_control->setNotifyOnSend(new SST::Interfaces::SimpleNetwork::Handler<incast_nic>(this,&incast_nic::handle_sends));
-            self_link = configureSelfLink("start_link", delay_start.toString(), new Event::Handler<incast_nic>(this,&incast_nic::handle_start));
+            link_control->setNotifyOnSend(new SST::Interfaces::SimpleNetwork::Handler2<incast_nic,&incast_nic::handle_sends>(this));
+            self_link = configureSelfLink("start_link", delay_start.toString(), new Event::Handler2<incast_nic,&incast_nic::handle_start>(this));
         }
     }
 }

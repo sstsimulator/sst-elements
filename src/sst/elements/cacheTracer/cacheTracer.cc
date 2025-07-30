@@ -47,7 +47,7 @@ cacheTracer::cacheTracer( ComponentId_t id, Params& params ): Component( id ) {
 
     string frequency = params.find<std::string>("clock", "1 Ghz");
     out->debug(CALL_INFO, 1, 0, "Registering cacheTracer clock at %s\n", frequency.c_str());
-    registerClock( frequency, new Clock::Handler<cacheTracer>(this, &cacheTracer::clock) );
+    registerClock( frequency, new Clock::Handler2<cacheTracer,&cacheTracer::clock>(this) );
     out->debug(CALL_INFO, 1, 0, "Clock registered\n");
 
     string tracePrefix = params.find<std::string>("tracePrefix", "");
@@ -116,8 +116,8 @@ bool cacheTracer::clock(Cycle_t current){
     unsigned int accessLatency = 0;
     SST::Event *ev = NULL;
     SST::MemHierarchy::Addr addr =0;
-    //uint64_t picoseconds = (uint64_t) picoTimeConv->convertFromCoreTime(getCurrentSimCycle());
-    uint64_t nanoseconds = (uint64_t) nanoTimeConv->convertFromCoreTime(getCurrentSimCycle());
+    //uint64_t picoseconds = (uint64_t) picoTimeConv.convertFromCoreTime(getCurrentSimCycle());
+    uint64_t nanoseconds = (uint64_t) nanoTimeConv.convertFromCoreTime(getCurrentSimCycle());
 
     // process Memevents from north-side to south-side
     while((ev = northBus->recv())){

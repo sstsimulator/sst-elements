@@ -2,7 +2,7 @@
 #
 #
 
-comp_LTLIBRARIES = libmask_mpi.la sendrecv.la reduce.la alltoall.la allgather.la halo3d26.la
+comp_LTLIBRARIES = libmask_mpi.la libsendrecv.la libreduce.la liballtoall.la liballgather.la libhalo3d26.la
 
 compdir = $(pkglibdir)
 
@@ -79,11 +79,11 @@ library_include_HEADERS = \
   mask_mpi_macro.h \
   unusedvariablemacro.h
 
-sendrecv_la_SOURCES = tests/sendrecv.cc
-reduce_la_SOURCES = tests/reduce.cc
-alltoall_la_SOURCES = tests/alltoall.cc
-allgather_la_SOURCES = tests/allgather.cc
-halo3d26_la_SOURCES = skeletons/halo3d-26.cc
+libsendrecv_la_SOURCES = tests/sendrecv.cc
+libreduce_la_SOURCES = tests/reduce.cc
+liballtoall_la_SOURCES = tests/alltoall.cc
+liballgather_la_SOURCES = tests/allgather.cc
+libhalo3d26_la_SOURCES = skeletons/halo3d-26.cc
 
 EXTRA_DIST = \
  tests/testsuite_default_mask_mpi.py \
@@ -100,12 +100,12 @@ EXTRA_DIST = \
  tests/refFiles/test_halo3d26.out
 
 libmask_mpi_la_LDFLAGS = -module -avoid-version
-sendrecv_la_LDFLAGS = -module -avoid-version
-reduce_la_LDFLAGS = -module -avoid-version
-alltoall_la_LDFLAGS = -module -avoid-version
-allgather_la_LDFLAGS = -module -avoid-version
-halo3d26_la_LDFLAGS = -module -avoid-version
+libsendrecv_la_LDFLAGS = -module -avoid-version
+libreduce_la_LDFLAGS = -module -avoid-version
+liballtoall_la_LDFLAGS = -module -avoid-version
+liballgather_la_LDFLAGS = -module -avoid-version
+libhalo3d26_la_LDFLAGS = -module -avoid-version
 
-install-exec-hook: 
+install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     mask-mpi=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      mask-mpi=$(abs_srcdir)/tests

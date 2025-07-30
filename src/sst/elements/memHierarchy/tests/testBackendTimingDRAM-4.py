@@ -47,7 +47,7 @@ for i in range(0,8):
         "memFreq" : (rngseed % 7) + 1 })
 
     iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
-    
+
     l1cache = sst.Component("l1cache" + str(i) + ".mesi", "memHierarchy.Cache")
     l1cache.addParams({
         "access_latency_cycles" : "4",

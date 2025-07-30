@@ -76,7 +76,7 @@ nic::nic(ComponentId_t cid, Params& params) :
         next_seq[i] = 0;
 
     // Register a clock
-    registerClock( "1GHz", new Clock::Handler<nic>(this,&nic::clock_handler), false);
+    registerClock( "1GHz", new Clock::Handler2<nic,&nic::clock_handler>(this), false);
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
@@ -304,7 +304,7 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & seq;
+        SST_SER(seq);
     }
 
     virtual void print(const std::string& header, Output &out) const  override {

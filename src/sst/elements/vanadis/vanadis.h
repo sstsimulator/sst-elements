@@ -127,7 +127,7 @@ public:
         { "core_id", "Identifier for this core. Each core in the system needs a unique ID between 0 and (number of cores) - 1.", 0 },
         { "hardware_threads", "Number of hardware threads in this core", "1" },
         { "clock", "Core clock frequency", "1GHz" },
-        { "reorder_slots", "Number of slots in the reorder buffer", "64"}, 
+        { "reorder_slots", "Number of slots in the reorder buffer", "64"},
         { "physical_integer_registers", "Number of physical integer registers per hardware thread", "128" },
         { "physical_fp_registers", "Number of physical floating point registers per hardware thread", "128" },
         { "integer_arith_units", "Number of integer arithemetic units", "2" },
@@ -137,8 +137,8 @@ public:
         { "fp_arith_units", "Number of floating point arithmetic units", "2" },
         { "fp_arith_cycles", "Cycles per floating point arithmetic", "8" },
         { "fp_div_units", "Number of floating point division units", "1" },
-        { "fp_div_cycles", "Cycles per floating point division", "80" }, 
-        { "branch_units", "Number of branch units", "1" }, 
+        { "fp_div_cycles", "Cycles per floating point division", "80" },
+        { "branch_units", "Number of branch units", "1" },
         { "branch_unit_cycles", "Cycles per branch", "int_arith_cycles"},
         { "issues_per_cycle", "Number of instruction issues per cycle", "2" },
         { "fetches_per_cycle", "Number of instruction fetches per cycle", "2" },
@@ -205,7 +205,7 @@ public:
 
     void handleMisspeculate(const uint32_t hw_thr, const uint64_t new_ip);
     void clearROBMisspeculate(const uint32_t hw_thr);
-    
+
     void clearFuncUnit(const uint32_t hw_thr, std::vector<VanadisFunctionalUnit*>& unit);
 
     void syscallReturn(uint32_t thr);
@@ -242,7 +242,7 @@ private:
     int recoverRetiredRegisters(
         VanadisInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
         VanadisISATable* issue_isa_table, VanadisISATable* retire_isa_table);
-    
+
     int recoverRetiredRegisters(
         VanadisInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
         VanadisISATable* issue_isa_table, VanadisISATable* retire_isa_table, uint16_t sw_thr);
@@ -255,7 +255,7 @@ private:
     int  allocateFunctionalUnit(VanadisInstruction* ins);
     bool mapInstructiontoFunctionalUnit(VanadisInstruction* ins, std::vector<VanadisFunctionalUnit*>& functional_units);
     void printRob(int rob_num, VanadisCircularQueue<VanadisInstruction*>* rob);
-    
+
     bool checkVerboseAddr( uint64_t addr ) {
         for ( auto& it : start_verbose_when_issue_address ) {
             if ( it == addr ) return true;
@@ -340,8 +340,8 @@ private:
     uint64_t dCacheLineWidth;
     uint64_t iCacheLineWidth;
 
-    TimeConverter*                     cpuClockTC;
-    Clock::Handler<VANADIS_COMPONENT>* cpuClockHandler;
+    TimeConverter                      cpuClockTC;
+    Clock::HandlerBase*                cpuClockHandler;
 
     FILE*           pipelineTrace;
 

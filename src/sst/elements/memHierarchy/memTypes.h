@@ -25,7 +25,7 @@
 
 #include "util.h"
 
-namespace SST { 
+namespace SST {
 namespace MemHierarchy {
 
 using namespace std;
@@ -236,7 +236,7 @@ enum class MemEventStatus { OK, Stall, Reject };
 enum class FlushState { Ready, Drain, Forward, Invalidate };
 
 /* Define an address region by start/end & interleaving */
-class MemRegion : public SST::Core::Serialization::serializable {
+class MemRegion {
 public:
     SST::MemHierarchy::Addr start;             // First address that is part of the region
     SST::MemHierarchy::Addr end;               // Last address that is part of the region
@@ -292,7 +292,7 @@ public:
             regions.insert(reg);
             return regions;
         }
-       
+
         // One is interleaved, other is not
         if (interleaveSize == 0) {
             MemRegion reg;
@@ -344,7 +344,7 @@ public:
         // for overlap
         // If overlap, add a region with (start_overlap, min(end, o.end), 1, lcm)
         //  Consecutive regions can be merged
-        uint64_t lcm = std::lcm(interleaveStep, o.interleaveStep); 
+        uint64_t lcm = std::lcm(interleaveStep, o.interleaveStep);
         uint64_t check_start = std::max(start, o.start);
         uint64_t check_end = check_start + lcm;
         uint64_t region_start = check_start;
@@ -395,7 +395,7 @@ public:
 
         // Check interval from max(start, o.start) to lcm + max(start, o.start)
         // for overlap
-        uint64_t lcm = std::lcm(interleaveStep, o.interleaveStep); 
+        uint64_t lcm = std::lcm(interleaveStep, o.interleaveStep);
         uint64_t check_start = std::max(start, o.start);
         uint64_t check_end = check_start + lcm;
         for (uint64_t i = check_start; i < check_end; i++) {
@@ -432,14 +432,13 @@ public:
         return str.str();
     }
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) override {
-        ser & start;
-        ser & end;
-        ser & interleaveSize;
-        ser & interleaveStep;
+    MemRegion() = default;
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        SST_SER(start);
+        SST_SER(end);
+        SST_SER(interleaveSize);
+        SST_SER(interleaveStep);
     }
-private:
-    ImplementSerializable(SST::MemHierarchy::MemRegion)
 };
 
 } /* End namespace MemHierarchy */

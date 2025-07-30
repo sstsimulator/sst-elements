@@ -18,6 +18,7 @@
 #include "zsirius.h"
 
 #include <assert.h>
+#include <memory>
 
 #include "sst/core/params.h"
 
@@ -73,7 +74,7 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
     std::cout << "Set verbosity level to " << verbosityLevel << std::endl;
 
     selfLink = configureSelfLink("Self", "1ns",
-	new Event::Handler<ZodiacSiriusTraceReader>(this, &ZodiacSiriusTraceReader::handleSelfEvent));
+	new Event::Handler2<ZodiacSiriusTraceReader,&ZodiacSiriusTraceReader::handleSelfEvent>(this));
 
     tConv = getTimeConverter("1ns");
 
@@ -97,11 +98,11 @@ void ZodiacSiriusTraceReader::setup() {
 
     eventQ = new std::queue<ZodiacEvent*>();
 
-    char trace_name[trace_file.length() + 20];
-    snprintf(trace_name, trace_file.length() + 20, "%s.%d", trace_file.c_str(), rank);
+    auto trace_name = std::make_unique<char[]>(trace_file.length() + 20);
+    snprintf(trace_name.get(), trace_file.length() + 20, "%s.%d", trace_file.c_str(), rank);
 
-    printf("Opening trace file: %s\n", trace_name);
-    trace = new SiriusReader(trace_name, rank, 64, eventQ, verbosityLevel);
+    printf("Opening trace file: %s\n", trace_name.get());
+    trace = new SiriusReader(trace_name.get(), rank, 64, eventQ, verbosityLevel);
     trace->setOutput(&zOut);
 
     int count = trace->generateNextEvents();

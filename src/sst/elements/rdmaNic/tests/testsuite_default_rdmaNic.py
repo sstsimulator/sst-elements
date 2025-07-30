@@ -22,7 +22,7 @@ def build_rdmaNic_test_matrix():
 
     # Add the SDL file, test dir compiled elf file, and test run timeout to create the testlist
     testlist.append(["runVanadis.py", "app/rdma", "msg", "riscv64", {}, 120])
-    testlist.append(["runVanadis.py", "app/mpi", "IMB-MPI1", "riscv64", 
+    testlist.append(["runVanadis.py", "app/mpi", "IMB-MPI1", "riscv64",
     {
         'VANADIS_EXE_ARGS':"-iter 1 -msglen msglen.txt",
         'RDMANIC_IMB':'True',
@@ -81,6 +81,8 @@ class testcase_rdmaNic(SSTTestCase):
     def test_rdmaNic_short_tests(self, testnum, testname, sdlfile, elftestdir, elffile, arch, env, timeout_sec):
         self._checkSkipConditions()
 
+        if not testing_check_is_nightly() and testnum == 2:
+            self.skipTest("Complete rdmaNic only runs on Nightly builds.")
         log_debug("Running RdmaNic test #{0} ({1}): elffile={4} in dir {3}; using sdl={2}".format(testnum, testname, sdlfile, elftestdir, elffile, env, timeout_sec))
         self.rdmaNic_test_template(testnum, testname, sdlfile, elftestdir, elffile, arch, env, timeout_sec)
 

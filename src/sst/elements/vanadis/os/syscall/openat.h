@@ -24,7 +24,7 @@ namespace Vanadis {
 
 class VanadisOpenatSyscall : public VanadisSyscall {
 public:
-    VanadisOpenatSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallOpenatEvent* event ) 
+    VanadisOpenatSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallOpenatEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "openat" )
     {
         m_output->verbose( CALL_INFO, 16, 0, "[syscall-openat] -> call is openat( %" PRId64 " )\n", event->getPathPointer());
@@ -64,15 +64,15 @@ public:
             if ( myErrno == EROFS ) {
                 myErrno = EACCES;
             }
-            strerror_r(myErrno,buf,100); 
+            strerror_r(myErrno,buf,100);
 #else
-            str = strerror_r(myErrno,buf,100); 
+            str = strerror_r(myErrno,buf,100);
 #endif
             m_output->verbose(CALL_INFO, 16, 0, "[syscall-openat] open of %s failed, errno=%d `%s`\n", m_filename.c_str(), myErrno, str );
 
             setReturnFail( -myErrno );
         } else {
-            setReturnSuccess( fd ); 
+            setReturnSuccess( fd );
         }
 
     }

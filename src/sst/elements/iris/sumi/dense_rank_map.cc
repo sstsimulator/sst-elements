@@ -131,9 +131,9 @@ DenseRankMap::treeFindRank(
   if (sparse_rank < failed_array[middle_index]){
     return treeFindRank(sparse_rank, offset, middle_index, failed_array);
   } else if (sparse_rank > failed_array[middle_index]){
-    return treeFindRank(sparse_rank, 
-        offset +  middle_index, 
-        num_failed - middle_index, 
+    return treeFindRank(sparse_rank,
+        offset +  middle_index,
+        num_failed - middle_index,
         failed_array + middle_index);
   } else {
     sst_hg_throw_printf(SST::Hg::ValueError,

@@ -58,7 +58,7 @@ memctrl.addParams({
     "debug_level" : "10",
     "addr_range_end" : 512*1024*1024-1,
 })
-    
+
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
 memory.addParams({
     "access_time" : "100 ns",

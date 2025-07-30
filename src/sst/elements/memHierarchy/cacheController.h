@@ -197,6 +197,11 @@ public:
     void printStatus(Output & out) override; // Called on SIGUSR2
     void emergencyShutdown() override;       // Called on output.fatal(), SIGINT/SIGTERM
 
+    /* Serialization */
+    Cache() : Component() {}
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::MemHierarchy::Cache)
+
 private:
     /** Cache factory methods **************************************************/
 
@@ -267,10 +272,10 @@ private:
 
     /** Cache structures *******************************************************/
     std::vector<CacheListener*> listeners_; // Cache listeners, including prefetchers
-    MemLinkBase* linkUp_;                   // link manager up (towards CPU)
-    MemLinkBase* linkDown_;                 // link manager down (towards memory)
-    Link* prefetchSelfLink_;                // link to delay prefetch request receive
-    Link* timeoutSelfLink_;                 // link to check for timeouts (possible deadlock)
+    MemLinkBase* linkUp_ = nullptr;         // link manager up (towards CPU)
+    MemLinkBase* linkDown_ = nullptr;       // link manager down (towards memory)
+    Link* prefetchSelfLink_ = nullptr;      // link to delay prefetch request receive
+    Link* timeoutSelfLink_ = nullptr;       // link to check for timeouts (possible deadlock)
     MSHR* mshr_;                            // MSHR
     CoherenceController* coherenceMgr_;     // Coherence protocol - where most of the event handling happens
     std::map<MemEventBase::id_type, std::string> init_requests_;    // Event response routing for untimed/init events
@@ -288,8 +293,8 @@ private:
     bool                banked_;
 
     /** Clocks *****************************************************************/
-    Clock::Handler<Cache>*  clockHandler_;
-    TimeConverter*          defaultTimeBase_;
+    Clock::HandlerBase*     clockHandler_;
+    TimeConverter           defaultTimeBase_;
     bool                    clockIsOn_;     // Whether clock is on or off
     bool                    clockUpLink_;   // Whether link actually needs clock() called or not
     bool                    clockDownLink_; // Whether link actually needs clock() called or not
@@ -309,7 +314,7 @@ private:
     /** Output and debug *******************************************************/
     Output*                 out_;
     Output*                 dbg_;
-    std::set<Addr>          DEBUG_ADDR;
+    std::set<Addr>          debug_addr_filter_;
 
     /** Statistics *************************************************************/
     Statistic<uint64_t>* statMSHROccupancy;

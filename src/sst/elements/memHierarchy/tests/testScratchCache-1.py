@@ -13,7 +13,7 @@ core_clock = "2GHz"
 #######################################################################################################################
 # Define the simulation components
 #######################################################################################################################
-# CPU0 
+# CPU0
 # ---------------------------------------------------------------------------------------------------------------------
 comp_cpu0 = sst.Component("core0", "memHierarchy.ScratchCPU")
 comp_cpu0.addParams({
@@ -37,7 +37,7 @@ iface0.addParams({"debug" : 0, "debug_level" : 10})
 
 
 #######################################################################################################################
-# CPU0 
+# CPU0
 # ---------------------------------------------------------------------------------------------------------------------
 comp_l1_0 = sst.Component("l1_0", "memHierarchy.Cache")
 comp_l1_0.addParams({
@@ -55,7 +55,7 @@ comp_l1_0.addParams({
 #######################################################################################################################
 
 #######################################################################################################################
-# Scratchpad0 
+# Scratchpad0
 # ---------------------------------------------------------------------------------------------------------------------
 comp_scratch0 = sst.Component("scratch0", "memHierarchy.Scratchpad")
 comp_scratch0.addParams({
@@ -77,7 +77,7 @@ scratch0_backend.addParam("access_time", "10ns")
 scratch0_link_mem = comp_scratch0.setSubComponent("lowlink", "memHierarchy.MemNIC")
 scratch0_link_mem.addParam("network_bw", "50GB/s")
 # We put scratchpads in group 0 and memories in group 1 so that routing is (scratchpads -> memories)
-scratch0_link_mem.addParam("group", "0") # Sources are 'group - 1' and destinations are 'group + 1' 
+scratch0_link_mem.addParam("group", "0") # Sources are 'group - 1' and destinations are 'group + 1'
 scratch0_link_mem.addParam("debug", debugNIC)
 scratch0_link_mem.addParam("debug_level", 10)
 #######################################################################################################################
@@ -147,7 +147,7 @@ scratch1_backend.addParam("access_time", "10ns")
 scratch1_link_mem = comp_scratch1.setSubComponent("lowlink", "memHierarchy.MemNIC")
 scratch1_link_mem.addParam("network_bw", "50GB/s")
 # We put scratchpads in group 0 and memories in group 1 so that routing is (scratchpads -> memories)
-scratch1_link_mem.addParam("group", "0") # Sources are 'group - 1' and destinations are 'group + 1' 
+scratch1_link_mem.addParam("group", "0") # Sources are 'group - 1' and destinations are 'group + 1'
 scratch1_link_mem.addParam("debug", debugNIC)
 scratch1_link_mem.addParam("debug_level", 10)
 #######################################################################################################################
@@ -198,7 +198,7 @@ memory0.addParams({
 memNIC0 = memctrl0.setSubComponent("highlink", "memHierarchy.MemNIC")
 memNIC0.addParam("network_bw", "50GB/s")
 # The source for the memory is the scratchpads (group 0) so we are group 0 + 1 = 1
-memNIC0.addParam("group", "1") # Sources are 'group - 1' and destinations are 'group + 1' 
+memNIC0.addParam("group", "1") # Sources are 'group - 1' and destinations are 'group + 1'
 memNIC0.addParam("debug", debugNIC)
 memNIC0.addParam("debug_level", 10)
 #######################################################################################################################
@@ -229,7 +229,7 @@ memory1.addParams({
 memNIC1 = memctrl1.setSubComponent("highlink", "memHierarchy.MemNIC")
 memNIC1.addParam("network_bw", "50GB/s")
 # The source for the memory is the scratchpads (group 0) so we are group 0 + 1 = 1
-memNIC1.addParam("group", "1") # Sources are 'group - 1' and destinations are 'group + 1' 
+memNIC1.addParam("group", "1") # Sources are 'group - 1' and destinations are 'group + 1'
 memNIC1.addParam("debug", debugNIC)
 memNIC1.addParam("debug_level", 10)
 #######################################################################################################################

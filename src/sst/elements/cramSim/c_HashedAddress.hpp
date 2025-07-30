@@ -72,15 +72,15 @@ public:
 
   void serialize_order(SST::Core::Serialization::serializer &ser) override
   {
-    ser & m_channel;
-    ser & m_rank;
-    ser & m_bankgroup;
-    ser & m_bank;
-    ser & m_row;
-    ser & m_col;
-    ser & m_cacheline;
-    ser & m_bankId;
-    ser & m_rankId;
+    SST_SER(m_channel);
+    SST_SER(m_rank);
+    SST_SER(m_bankgroup);
+    SST_SER(m_bank);
+    SST_SER(m_row);
+    SST_SER(m_col);
+    SST_SER(m_cacheline);
+    SST_SER(m_bankId);
+    SST_SER(m_rankId);
   }
 
   ImplementSerializable(c_HashedAddress);

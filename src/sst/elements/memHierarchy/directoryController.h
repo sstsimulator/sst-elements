@@ -158,12 +158,12 @@ public:
 private:
     Output out;
     Output dbg;
-    std::set<Addr> DEBUG_ADDR;
+    std::set<Addr> debug_addr_filter_;
 
     uint32_t    cacheLineSize;
 
     /* Range of addresses supported by this directory */
-    MemRegion   region; 
+    MemRegion   region;
     Addr        memOffset; // Stack addresses if multiple DCs handle the same memory
 
     /* Timestamp & latencies */
@@ -171,10 +171,10 @@ private:
     int         maxRequestsPerCycle;
 
     /* Turn clocks off when idle */
-    bool        clockOn;
-    Clock::Handler<DirectoryController>*  clockHandler;
-    TimeConverter* defaultTimeBase;
-    SimTime_t   lastActiveClockCycle;
+    bool                clockOn;
+    Clock::HandlerBase* clockHandler;
+    TimeConverter       defaultTimeBase;
+    SimTime_t           lastActiveClockCycle;
 
     std::map<SST::Event::id_type, uint64_t> startTimes;
 
@@ -223,15 +223,14 @@ private:
 public:
     DirectoryController(ComponentId_t id, Params &params);
     ~DirectoryController();
-    void init(unsigned int phase);
-    void setup(void);
-    void complete(unsigned int phase);
-    void finish(void);
-
+    void init(unsigned int phase) override;
+    void setup(void) override;
+    void complete(unsigned int phase) override;
+    void finish(void) override;
 
     /** Debug - triggered by output.fatal() or SIGUSR2 */
-    virtual void printStatus(Output &out);
-    virtual void emergencyShutdown();
+    void printStatus(Output &out) override;
+    void emergencyShutdown() override;
 
     /** Event received from higher level caches.
         Insert to work queue so that it is process in the upcoming clock tick */
@@ -243,6 +242,11 @@ public:
 
     /** Clock handler */
     bool clock(SST::Cycle_t cycle);
+
+    /** Serialization */
+    DirectoryController() = default;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::MemHierarchy::DirectoryController)
 
 /* Coherence portion */
 public:
@@ -269,7 +273,7 @@ public:
     bool handleFetchResp(MemEvent* event, bool inMSHR);
     bool handleFetchXResp(MemEvent* event, bool inMSHR);
     bool handleNACK(MemEvent* event, bool inMSHR);
-    
+
     bool handleDirEntryResponse(MemEvent* event);
 
     void sendOutgoingEvents();
@@ -302,15 +306,27 @@ private:
             action = act;
             reason = rea;
         }
+
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(id);
+            SST_SER(cmd);
+            SST_SER(prefetch);
+            SST_SER(addr);
+            SST_SER(oldst);
+            SST_SER(newst);
+            SST_SER(action);
+            SST_SER(reason);
+            SST_SER(verboseline);
+        }
     } eventDI, evictDI;
 
     struct DirEntry {
-        bool                cached;         // whether block is cached or not
-        Addr                addr;           // block address
-        State               state;          // state
-        std::list<DirEntry*>::iterator cacheIter;
-        std::set<std::string> sharers;      // set of sharers for block
-        std::string         owner;          // Owner of block
+        bool                  cached;         // whether block is cached or not
+        Addr                  addr;           // block address
+        State                 state;          // state
+        std::list<DirEntry*>::iterator cacheIter; // Location in cache (or end() if not cached)
+        std::set<std::string> sharers;        // set of sharers for block
+        std::string           owner;          // Owner of block
 
         DirEntry(Addr a) {
             clearEntry();
@@ -373,6 +389,18 @@ private:
         void setState(State nState) { state = nState; }
 
         State getState() { return state; }
+
+        // Serialization
+        DirEntry() = default;
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(cached);
+            SST_SER(addr);
+            SST_SER(state);
+            SST_SER(sharers);
+            SST_SER(owner);
+            // Serialization of iterators isn't supported
+            // Skip serializing and reconstruct on deserialization
+        }
     };
 
     int dlevel;
@@ -402,7 +430,7 @@ private:
     void sendAckInv(MemEvent* event);
     void sendAckPut(MemEvent* event);
     void sendNACK(MemEvent* event);
-    
+
     void processCompleteEvent(MemEventInit* event);
 
     MSHR * mshr;
@@ -416,6 +444,11 @@ private:
         MemMsg(MemEventBase * ev, bool da) {
             event = ev;
             dirAccess = da;
+        }
+        MemMsg() = default;
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(event);
+            SST_SER(dirAccess);
         }
     };
 
@@ -438,9 +471,9 @@ private:
     FlushState flush_state_;
 
     std::map<Addr, std::map<std::string, MemEventBase::id_type> > responses;
-    
+
     std::map<MemEventBase::id_type, Addr> dirMemAccesses;
-    
+
     CoherenceProtocol protocol;
     bool waitWBAck;
     bool sendWBAck;

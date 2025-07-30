@@ -16,7 +16,7 @@
 class NetworkQueue {
     struct Entry {
         Entry( RdmaNicNetworkEvent* ev, int destNode ) : ev(ev), destNode(destNode ) {}
-        RdmaNicNetworkEvent* ev; 
+        RdmaNicNetworkEvent* ev;
         int destNode;
     };
   public:
@@ -24,8 +24,8 @@ class NetworkQueue {
         queues.resize( numVC );
     }
     void process();
-    void add( int vc, int destNode, RdmaNicNetworkEvent* ev ) { 
-        queues[vc].push( Entry( ev, destNode) ); 
+    void add( int vc, int destNode, RdmaNicNetworkEvent* ev ) {
+        queues[vc].push( Entry( ev, destNode) );
     }
     bool full( int vc ) { return queues[vc].size() == maxSize; }
 

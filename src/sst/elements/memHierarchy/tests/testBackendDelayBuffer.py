@@ -5,7 +5,7 @@ from mhlib import componentlist
 # Different simpleDRAM parameters from simpleDRAM tests
 # mru/lru/nmru cache replacement
 # Lower latencies
-# DelayBuffer backend 
+# DelayBuffer backend
 
 # Define the simulation components
 cpu0 = sst.Component("core0", "memHierarchy.standardCPU")

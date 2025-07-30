@@ -12,7 +12,7 @@ class testcase_balar_medium(BalarTestCase):
     @BalarTestCase.balar_basic_unittest
     def test_balar_vanadis_clang_simpleStreams(self):
         self.balar_vanadis_clang_template("simpleStreams", 60 * 60)
-        
+
     @BalarTestCase.balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_backprop_1024(self):
         self.balar_vanadis_clang_template("rodinia-2.0-backprop-1024", 4800)
@@ -24,7 +24,7 @@ class testcase_balar_medium(BalarTestCase):
     @BalarTestCase.balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_lud_64(self):
         self.balar_vanadis_clang_template("rodinia-2.0-lud-64", 2400)
-        
+
     @BalarTestCase.balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_nw_128_10(self):
         self.balar_vanadis_clang_template("rodinia-2.0-nw-128-10", 2400)

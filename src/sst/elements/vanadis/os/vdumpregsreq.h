@@ -25,7 +25,7 @@ class VanadisDumpRegsReq : public SST::Event {
 public:
     VanadisDumpRegsReq() : SST::Event(), thread(0) { }
 
-    VanadisDumpRegsReq( int thread) : 
+    VanadisDumpRegsReq( int thread) :
         SST::Event(), thread(thread) {}
 
     ~VanadisDumpRegsReq() {}
@@ -36,7 +36,7 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        ser& thread;
+        SST_SER(thread);
     }
 
     ImplementSerializable(SST::Vanadis::VanadisDumpRegsReq);

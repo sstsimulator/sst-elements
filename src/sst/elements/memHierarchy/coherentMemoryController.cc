@@ -136,7 +136,7 @@ void CoherentMemController::handleEvent(SST::Event* event) {
 
     if (mem_h_is_debug_event(ev)) {
         mem_h_debug_output(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
-                getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(),
                 ev->getVerboseString(dlevel).c_str());
     }
 
@@ -194,7 +194,7 @@ void CoherentMemController::handleRequest(MemEvent * ev) {
         }
         if (mem_h_is_debug_event(ev)) {
             mem_h_debug_output(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
-                    getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                    getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(),
                     ev->getVerboseString().c_str());
         }
         memBackendConvertor_->handleMemEvent(ev);
@@ -242,7 +242,7 @@ void CoherentMemController::handleReplacement(MemEvent * ev) {
         cacheStatus_.at(ev->getBaseAddr()/lineSize_) = directory_;
         if (mem_h_is_debug_event(ev)) {
             mem_h_debug_output(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
-                    getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                    getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(),
                     ev->getVerboseString().c_str());
         }
         memBackendConvertor_->handleMemEvent(ev);
@@ -255,7 +255,7 @@ void CoherentMemController::handleReplacement(MemEvent * ev) {
                     it->writebacks.insert(ev->getID());
                     if (mem_h_is_debug_event(ev)) {
                         mem_h_debug_output(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
-                                getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                                getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(),
                                 ev->getVerboseString().c_str());
                     }
                     memBackendConvertor_->handleMemEvent(ev);
@@ -327,7 +327,7 @@ void CoherentMemController::handleFlush(MemEvent * ev) {
             mshr_.insert(std::make_pair(put->getBaseAddr(), std::list<MSHREntry>(1, MSHREntry(put->getID(), put->getCmd()))));
             if (mem_h_is_debug_event(put)) {
                 mem_h_debug_output(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
-                        getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                        getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(),
                         put->getVerboseString().c_str());
             }
             memBackendConvertor_->handleMemEvent(put);
@@ -345,7 +345,7 @@ void CoherentMemController::handleFlush(MemEvent * ev) {
         }
         if (mem_h_is_debug_event(put)) {
             mem_h_debug_output(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
-                    getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                    getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(),
                     put->getVerboseString().c_str());
         }
         memBackendConvertor_->handleMemEvent(ev);
@@ -411,7 +411,7 @@ void CoherentMemController::handleFetchResp(MemEvent * ev) {
         outstandingEventList_.insert(std::make_pair(write->getID(), OutstandingEvent(write, baseAddr)));
         if (mem_h_is_debug_event(write)) {
             mem_h_debug_output(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
-                    getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                    getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(),
                     write->getVerboseString().c_str());
         }
         memBackendConvertor_->handleMemEvent(write);
@@ -432,7 +432,7 @@ void CoherentMemController::handleFetchResp(MemEvent * ev) {
  * only request the MemController sends to caches
  */
 void CoherentMemController::handleNack(MemEvent * ev) {
-    MemEvent * nackedEvent = ev->getNACKedEvent();
+    MemEvent * nackedEvent = ev->releaseNACKedEvent();
     Addr baseAddr = nackedEvent->isAddrGlobal() ? translateToLocal(nackedEvent->getBaseAddr()) : nackedEvent->getBaseAddr();
 
     /* NACKed event no longer needed due to race between replacement and Inv */
@@ -586,10 +586,10 @@ void CoherentMemController::finishMemReq(SST::Event::id_type id, uint32_t flags)
         resp->setBaseAddr(translateToGlobal(ev->getBaseAddr()));
         resp->setAddr(translateToGlobal(ev->getAddr()));
     }
-    
+
     if (mem_h_is_debug_event(resp)) {
         mem_h_debug_output(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
-                getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, 
+                getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1,
                 getName().c_str(), resp->getVerboseString(dlevel).c_str());
     }
     link_->send(resp);
@@ -614,7 +614,7 @@ void CoherentMemController::finishCustomReq(SST::Event::id_type id, uint32_t fla
     if (resp != nullptr) {
         if (mem_h_is_debug_event(resp)) {
             mem_h_debug_output(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
-                    getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, 
+                    getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1,
                     getName().c_str(), resp->getVerboseString(dlevel).c_str());
         }
         link_->send(resp);
@@ -669,7 +669,7 @@ void CoherentMemController::updateMSHR(Addr baseAddr) {
 void CoherentMemController::replayMemEvent(MemEvent * ev) {
     if (mem_h_is_debug_event(ev)) {
         mem_h_debug_output(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
-                getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(),
                 ev->getVerboseString().c_str());
     }
 

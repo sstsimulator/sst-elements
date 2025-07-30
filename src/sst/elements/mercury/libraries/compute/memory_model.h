@@ -72,7 +72,7 @@ public:
 private:
 
   int initialize(RequestHandlerBase* handler);
-  
+
   struct FlowRequest : public Request {
     uint32_t flowId;
   };

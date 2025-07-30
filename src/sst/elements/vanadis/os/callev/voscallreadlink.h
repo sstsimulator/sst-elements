@@ -37,9 +37,9 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& readlink_path_ptr;
-        ser& readlink_buff_ptr;
-        ser& readlink_buff_size;
+        SST_SER(readlink_path_ptr);
+        SST_SER(readlink_buff_ptr);
+        SST_SER(readlink_buff_size);
     }
     ImplementSerializable(SST::Vanadis::VanadisSyscallReadLinkEvent);
 

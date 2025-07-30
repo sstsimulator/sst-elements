@@ -26,7 +26,7 @@ namespace Hg {
 
 extern template class  HgBase<SST::Component>;
 extern template class  HgBase<SST::SubComponent>;
-extern template SST::TimeConverter* HgBase<SST::SubComponent>::time_converter_;
+extern template SST::TimeConverter HgBase<SST::SubComponent>::time_converter_;
 
 static thread_lock the_api_lock;
 
@@ -72,7 +72,7 @@ Library::endLibraryCall()
 }
 
 Timestamp
-Library::now() const 
+Library::now() const
 {
   return api_parent_app_->os()->now();
 }

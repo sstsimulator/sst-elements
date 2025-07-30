@@ -1,4 +1,4 @@
-CXX=g++ 
+CXX=g++
 
 ompcritical: ompcritical.o
 	$(CXX) -O3 -o ompcritical -fopenmp ompcritical.o

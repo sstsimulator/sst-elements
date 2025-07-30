@@ -49,8 +49,8 @@ public:
             isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_out[0], phys_int_regs_in[0],
             phys_int_regs_in[1]);
     }
-    virtual void instOp(VanadisRegisterFile* regFile, 
-                            uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
+    virtual void instOp(VanadisRegisterFile* regFile,
+                            uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0,
                             uint16_t phys_int_regs_in_1) override
     {
         uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in_0);

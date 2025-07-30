@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef MEMHIERARHCY_MEMEVENTBASE_H
-#define MEMHIERARHCY_MEMEVENTBASE_H
+#ifndef MEMHIERARCHY_MEMEVENTBASE_H
+#define MEMHIERARCHY_MEMEVENTBASE_H
 
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
@@ -175,7 +175,7 @@ public:
     /** Return size of the event - for calculating bandwidth used */
     virtual uint32_t getEventSize() { return 0; }
 
-    /** Get verbose print of the event */ 
+    /** Get verbose print of the event */
     virtual std::string getVerboseString(int level = 1) {
         std::ostringstream idstring;
         idstring << "<" << eventID_.first << "," << eventID_.second << "> ";
@@ -192,7 +192,7 @@ public:
         idstring << "<" << eventID_.first << "," << eventID_.second << "> ";
         return idstring.str() + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Tid: " + std::to_string(tid_);
     }
-    
+
     /** Get brief print of the event */
     virtual std::string getBriefString() {
         std::string cmdStr(CommandString[(int)cmd_]);
@@ -233,15 +233,15 @@ protected:
 public:
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & eventID_;
-        ser & responseToID_;
-        ser & src_;
-        ser & dst_;
-        ser & rqstr_;
-        ser & tid_;
-        ser & cmd_;
-        ser & flags_;
-        ser & memFlags_;
+        SST_SER(eventID_);
+        SST_SER(responseToID_);
+        SST_SER(src_);
+        SST_SER(dst_);
+        SST_SER(rqstr_);
+        SST_SER(tid_);
+        SST_SER(cmd_);
+        SST_SER(flags_);
+        SST_SER(memFlags_);
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEventBase);
@@ -279,12 +279,12 @@ public:
         me->setResponse(this);
         return me;
     }
-    
+
     InitCommand getInitCmd() { return initCmd_; }
 
     Addr getAddr() { return addr_; }
     void setAddr(Addr addr) { addr_ = addr; }
-    
+
     size_t getSize() { return payload_.empty() ? payload_.size() : size_; }
     std::vector<uint8_t>& getPayload() { return payload_; }
     void setPayload(std::vector<uint8_t> &data) { payload_ = data; }
@@ -296,7 +296,7 @@ public:
     virtual std::string getVerboseString(int level = 1) override {
         std::stringstream str;
         if (initCmd_ == InitCommand::Region) str << " InitCmd: Region";
-        else if (initCmd_ == InitCommand::Data) 
+        else if (initCmd_ == InitCommand::Data)
         {
             str << " InitCmd: Data (0x" <<std::hex << addr_ << ", " << std::dec << size_ << ")";
         }
@@ -336,10 +336,10 @@ protected:
 public:
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
         MemEventBase::serialize_order(ser);
-        ser & initCmd_;
-        ser & addr_;
-        ser & size_;
-        ser & payload_;
+        SST_SER(initCmd_);
+        SST_SER(addr_);
+        SST_SER(size_);
+        SST_SER(payload_);
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEventInit);
@@ -393,12 +393,12 @@ private:
 public:
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
         MemEventInit::serialize_order(ser);
-        ser & type_;
-        ser & inclusive_;
-        ser & sendWBAck_;
-        ser & recvWBAck_;
-        ser & lineSize_;
-        ser & tracksPresence_;
+        SST_SER(type_);
+        SST_SER(inclusive_);
+        SST_SER(sendWBAck_);
+        SST_SER(recvWBAck_);
+        SST_SER(lineSize_);
+        SST_SER(tracksPresence_);
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEventInitCoherence);
@@ -411,11 +411,11 @@ public:
      * type: endpoint type (CPU, MMIO, etc.)
      * name: endpoint name
      * noncacheableRegions: regions that this endpoint is declaring noncacheable
-     * 
+     *
      * TODO: Possibliy merge this with the coherence init messages and broadcast all topology info everywhere
      */
-    
-    MemEventInitEndpoint(std::string src, Endpoint type, MemRegion region, bool cacheable) : 
+
+    MemEventInitEndpoint(std::string src, Endpoint type, MemRegion region, bool cacheable) :
         MemEventInit(src, InitCommand::Endpoint), type_(type), name_(src)  {
         regions_.push_back(std::make_pair(region, cacheable));
     }
@@ -456,9 +456,9 @@ private:
 public:
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
         MemEventInit::serialize_order(ser);
-        ser & type_;
-        ser & name_;
-        ser & regions_;
+        SST_SER(type_);
+        SST_SER(name_);
+        SST_SER(regions_);
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEventInitEndpoint);
@@ -466,14 +466,14 @@ public:
 
 class MemEventInitRegion : public MemEventInit {
 public:
-    
+
     enum class ReachableGroup { Source, Dest, Peer, Unknown };
 
     MemEventInitRegion(std::string src, MemRegion region, ReachableGroup group = ReachableGroup::Unknown) :
         MemEventInit(src, InitCommand::Region), region_(region), group_(group) { }
 
     MemRegion getRegion() { return region_; }
-    
+
     ReachableGroup getGroup() { return group_; }
     void setGroup(ReachableGroup group) { group_ = group; }
 
@@ -498,11 +498,8 @@ private:
 public:
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
         MemEventInit::serialize_order(ser);
-        ser & region_.start;
-        ser & region_.end;
-        ser & region_.interleaveStep;
-        ser & region_.interleaveSize;
-        ser & group_;
+        SST_SER(region_);
+        SST_SER(group_);
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEventInitRegion);
@@ -510,7 +507,7 @@ public:
 
 class MemEventUntimedFlush : public MemEventInit {
 public:
-    
+
     MemEventUntimedFlush(std::string src, bool request = true ) :
         MemEventInit(src, InitCommand::Flush), request_(request) { }
 
@@ -533,7 +530,7 @@ private:
 public:
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
         MemEventInit::serialize_order(ser);
-        ser & request_;
+        SST_SER(request_);
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEventUntimedFlush);
@@ -543,4 +540,4 @@ public:
 }}
 
 
-#endif /* INTERFACES_MEMEVENT_H */
+#endif /* MEMHIERARCHY_MEMEVENTBASE_H */

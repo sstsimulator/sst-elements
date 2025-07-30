@@ -28,7 +28,7 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-pagedMultiMemory::pagedMultiMemory(ComponentId_t id, Params &params) : DRAMSimMemory(id, params), pagesInFast(0), lastMin(0) { 
+pagedMultiMemory::pagedMultiMemory(ComponentId_t id, Params &params) : DRAMSimMemory(id, params), pagesInFast(0), lastMin(0) {
     dbg.init("@R:pagedMultiMemory::@p():@l " + getName() + ": ", 0, 0,
              (Output::output_location_t)params.find<int>("debug", 0));
     dbg.output(CALL_INFO, "making pagedMultiMemory controller\n");
@@ -36,7 +36,7 @@ pagedMultiMemory::pagedMultiMemory(ComponentId_t id, Params &params) : DRAMSimMe
 
     string access = params.find<std::string>("access_time", "35ns");
     self_link = configureSelfLink("Self", access,
-                                        new Event::Handler<pagedMultiMemory>(this, &pagedMultiMemory::handleSelfEvent));
+                                        new Event::Handler2<pagedMultiMemory, &pagedMultiMemory::handleSelfEvent>(this));
 
     maxFastPages = params.find<unsigned int>("max_fast_pages", 256);
     pageShift = params.find<unsigned int>("page_shift", 12);
@@ -46,8 +46,7 @@ pagedMultiMemory::pagedMultiMemory(ComponentId_t id, Params &params) : DRAMSimMe
 
     string clock_freq = params.find<std::string>("quantum", "5ms");
     registerClock(clock_freq,
-                        new Clock::Handler<pagedMultiMemory>(this,
-                                                             &pagedMultiMemory::quantaClock));
+                        new Clock::Handler2<pagedMultiMemory, &pagedMultiMemory::quantaClock>(this));
 
     // determine page replacement / addition strategy
     std::string stratStr = params.find<std::string>("page_replace_strategy", "FIFO");
@@ -99,7 +98,7 @@ pagedMultiMemory::pagedMultiMemory(ComponentId_t id, Params &params) : DRAMSimMe
     scanThreshold = params.find<unsigned int>("scan_threshold", 6);
 
     transferDelay = params.find<unsigned int>("transfer_delay", 250);
-    
+
     nanoConv = getTimeConverter("1ns");
 
     minAccTime = self_link->getDefaultTimeBase()->getFactor() /

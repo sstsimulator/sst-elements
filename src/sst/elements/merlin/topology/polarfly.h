@@ -35,13 +35,13 @@ class topo_polarfly_event : public internal_router_event {
 public:
 
     int hop_count; //Count no of hops this packet has taken so far
-     
+
     bool non_minimal;
     int valiant;
 
     topo_polarfly_event() {}
 
-    topo_polarfly_event(int hcount) : non_minimal(false) {	
+    topo_polarfly_event(int hcount) : non_minimal(false) {
         hop_count = hcount;
     }
 
@@ -54,10 +54,10 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         internal_router_event::serialize_order(ser);
-        
-        ser & hop_count;
-        ser & non_minimal;
-        ser & valiant;
+
+        SST_SER(hop_count);
+        SST_SER(non_minimal);
+        SST_SER(valiant);
     }
 
 protected:
@@ -88,14 +88,14 @@ public:
         topo_polarfly_init_event* tte = new topo_polarfly_init_event(*this);
         //Insert code
         return tte;
-        
+
     }
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         topo_polarfly_event::serialize_order(ser);
-        ser & phase;
-        ser & total_routers;
-        ser & covered;
+        SST_SER(phase);
+        SST_SER(total_routers);
+        SST_SER(covered);
     }
 private:
     ImplementSerializable(SST::Merlin::topo_polarfly_init_event)
@@ -169,7 +169,7 @@ public:
     Statistic<uint32_t>* hopcount3;
     Statistic<uint32_t>* hopcount4;
 
-    
+
 public:
     topo_polarfly(ComponentId_t cid, Params& params, int num_ports, int rtr_id, int num_vns);
     ~topo_polarfly();
@@ -195,7 +195,7 @@ public:
             vcs_per_vn[i] = num_vcs;
         }
     }
-    
+
 protected:
 
 private:
@@ -213,7 +213,7 @@ private:
    void dumpHopCount(topo_polarfly_event* ev);
 
    void setOutputQueueLengthsArray(int const* array, int vcs);
-   void setOutputBufferCreditArray(int const* array, int vcs); 
+   void setOutputBufferCreditArray(int const* array, int vcs);
 
    bool isNeighbor(int node);
 

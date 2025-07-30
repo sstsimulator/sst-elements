@@ -72,15 +72,15 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         internal_router_event::serialize_order(ser);
-        ser & dimensions;
-        ser & last_routing_dim;
+        SST_SER(dimensions);
+        SST_SER(last_routing_dim);
 
         if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
             dest_loc = new int[dimensions];
         }
 
         for ( int i = 0 ; i < dimensions ; i++ ) {
-            ser & dest_loc[i];
+            SST_SER(dest_loc[i]);
         }
 
         if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
@@ -88,12 +88,12 @@ public:
         }
 
         for ( int i = 0 ; i < dimensions ; i++ ) {
-            ser & val_loc[i];
+            SST_SER(val_loc[i]);
         }
 
-        ser & val_route_dest;
-        ser & id;
-        ser & rerouted;
+        SST_SER(val_route_dest);
+        SST_SER(id);
+        SST_SER(rerouted);
     }
 
 protected:
@@ -122,7 +122,7 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         topo_hyperx_event::serialize_order(ser);
-        ser & phase;
+        SST_SER(phase);
     }
 
 private:
@@ -234,7 +234,7 @@ public:
             vcs_per_vn[i] = vns[i].num_vcs;
         }
     }
-    
+
 protected:
     virtual int choose_multipath(int start_port, int num_ports);
 

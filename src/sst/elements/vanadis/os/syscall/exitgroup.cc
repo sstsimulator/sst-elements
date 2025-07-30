@@ -29,11 +29,11 @@ VanadisExitGroupSyscall::VanadisExitGroupSyscall( VanadisNodeOSComponent* os, SS
             event->getCoreID(), event->getThreadID(), process->gettid(), process->getpid(), event->getExitCode() );
 
     // given we are terminating all threads in the group, I'm assuming we don't have to write 0 to the tidAddress
-    
+
     auto threads = process->getThreadList();
     for ( const auto thread : threads) {
 
-        auto tmp = thread.second; 
+        auto tmp = thread.second;
         if ( thread.first == process->gettid() || nullptr == tmp ) {
             continue;
         }
@@ -48,13 +48,13 @@ VanadisExitGroupSyscall::VanadisExitGroupSyscall( VanadisNodeOSComponent* os, SS
         unsigned hwThread = tmp->getHwThread();
 
         // test the hwthread to halt execution
-        coreLink->send( new VanadisExitResponse( -1, hwThread ) ); 
+        coreLink->send( new VanadisExitResponse( -1, hwThread ) );
 
         // remove the process/thread from the map
         os->removeThread( core, hwThread, tmp->gettid() );
 
         // delete the process/thread
-        delete tmp; 
+        delete tmp;
     }
 
     if ( m_os->getNodeNum() >= 0 ) {

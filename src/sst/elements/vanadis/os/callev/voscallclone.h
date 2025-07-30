@@ -42,16 +42,16 @@ private:
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& threadStackAddr;
-        ser& flags;
-        ser& ptid;
-        ser& tls;
-        ser& stackAddr;
-        ser& ctid;
+        SST_SER(threadStackAddr);
+        SST_SER(flags);
+        SST_SER(ptid);
+        SST_SER(tls);
+        SST_SER(stackAddr);
+        SST_SER(ctid);
     }
     ImplementSerializable(SST::Vanadis::VanadisSyscallCloneEvent);
 
-    uint64_t threadStackAddr; 
+    uint64_t threadStackAddr;
     uint64_t flags;
     uint64_t ptid;
     uint64_t tls;

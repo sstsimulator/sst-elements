@@ -70,17 +70,17 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
 
     //set our clock
     std::string clockFreq = params.find<std::string>("clock", "1GHz");
-    clockHandler = new Clock::Handler<trivialCPU>(this, &trivialCPU::clockTic);
+    clockHandler = new Clock::Handler2<trivialCPU, &trivialCPU::clockTic>(this);
     clockTC = registerClock( clockFreq, clockHandler );
 
 
-    memory = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::StandardMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent));
+    memory = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::StandardMem::Handler2<trivialCPU, &trivialCPU::handleEvent>(this));
 
     if (!memory) {
         Params interfaceParams;
         interfaceParams.insert("port", "mem_link");
         memory = loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
-                interfaceParams, clockTC, new Interfaces::StandardMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent));
+                interfaceParams, clockTC, new Interfaces::StandardMem::Handler2<trivialCPU, &trivialCPU::handleEvent>(this));
         //out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.standardInterface subcomponent\n");
     }
 
@@ -136,7 +136,7 @@ bool trivialCPU::clockTic( Cycle_t )
             if (maxReqsPerIssue > 1) reqsToSend += rng.generateNextUInt32() % maxReqsPerIssue;
             if (reqsToSend > (maxOutstanding - requests.size())) reqsToSend = maxOutstanding - requests.size();
             if (reqsToSend > numLS) reqsToSend = numLS;
-            	    
+
 
             for (int i = 0; i < reqsToSend; i++) {
 
@@ -150,10 +150,10 @@ bool trivialCPU::clockTic( Cycle_t )
                 if (do_write && instNum < 2) {
                     cmdString = "Write";
                     addr = ((addr % maxAddr)>>2) << 2;
-                    std::vector<uint8_t> data = { 
-                        static_cast<uint8_t>((addr >> 24) & 0xff), 
-                        static_cast<uint8_t>((addr >> 16) & 0xff), 
-                        static_cast<uint8_t>((addr >> 8) & 0xff), 
+                    std::vector<uint8_t> data = {
+                        static_cast<uint8_t>((addr >> 24) & 0xff),
+                        static_cast<uint8_t>((addr >> 16) & 0xff),
+                        static_cast<uint8_t>((addr >> 8) & 0xff),
                         static_cast<uint8_t>(addr & 0xff)
                     };
                     req = new Interfaces::StandardMem::Write(addr, 4 /* 4 bytes */, data);

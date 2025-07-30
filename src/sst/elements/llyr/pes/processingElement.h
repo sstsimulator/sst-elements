@@ -363,9 +363,9 @@ public:
             dstPe = it->second;
 
             if( output_queues_->at(queueId)->data_queue_->size() > 0 ) {
-                std::cout << " Input Queue Depth at PE-" << dstPe->getProcessorId();
-                std::cout << "(" << queueId << ") " << dstPe->getInputQueueSize(dstPe->getInputQueueId(processor_id_));
-                std::cout << ", max is " << queue_depth_ << std::endl;
+                // std::cout << " Input Queue Depth at PE-" << dstPe->getProcessorId();
+                // std::cout << "(" << queueId << ") " << dstPe->getInputQueueSize(dstPe->getInputQueueId(processor_id_));
+                // std::cout << ", max is " << queue_depth_ << std::endl;
                 if( dstPe->getInputQueueSize(dstPe->getInputQueueId(processor_id_)) < queue_depth_ ) {
                     output_->verbose(CALL_INFO, 8, 0, ">> Sending (%llu)...%" PRIu32 "-%" PRIu32 " to %" PRIu32 "\n",
                                 output_queues_->at(queueId)->data_queue_->front().to_ullong(), processor_id_, queueId,
@@ -436,25 +436,25 @@ protected:
         for( uint32_t i = 0; i < total_num_inputs; ++i) {
             bool routed = 0;
             const std::string rtr_arg = *input_queues_->at(i)->routing_arg_;
-            std::cout << "\trtr_arg " << i << " -- fwd " << rtr_arg << " (" << input_queues_->at(i)->forwarded_ << ")" << std::endl;
+            // std::cout << "\trtr_arg " << i << " -- fwd " << rtr_arg << " (" << input_queues_->at(i)->forwarded_ << ")" << std::endl;
             if( rtr_arg == "" || input_queues_->at(i)->forwarded_ == 1 ) {
-                std::cout << "continue" << std::endl;
+                // std::cout << "continue" << std::endl;
                 continue;
             }
-printOutputQueue();
-            std::cout << "num output queues " << output_queues_->size() << std::endl;
+// printOutputQueue();
+            // std::cout << "num output queues " << output_queues_->size() << std::endl;
             for( uint32_t j = 0; j < output_queues_->size(); ++j) {
-                std::cout << "output queue arg (" << j << ") " << *output_queues_->at(j)->routing_arg_ << std::endl;
+                // std::cout << "output queue arg (" << j << ") " << *output_queues_->at(j)->routing_arg_ << std::endl;
                 if( *output_queues_->at(j)->routing_arg_ == rtr_arg && input_queues_->at(i)->data_queue_->size() > 0) {
-                    std::cout << "Now I'm hereherehere_3 -- " << input_queues_->at(i)->data_queue_->front() << std::endl;
+                    // std::cout << "Now I'm hereherehere_3 -- " << input_queues_->at(i)->data_queue_->front() << std::endl;
 
                     routed = 1;
                     output_queues_->at(j)->data_queue_->push(input_queues_->at(i)->data_queue_->front());
-                    std::cout << "data type arg " << input_queues_->at(i)->argument_ << std::endl;
+                    // std::cout << "data type arg " << input_queues_->at(i)->argument_ << std::endl;
                     output_->verbose(CALL_INFO, 4, 0, "+Routing %s from %" PRIu32 "\n", rtr_arg.c_str(), i);
                 }
             }
-printOutputQueue();
+// printOutputQueue();
             if( routed == 1 ) {
                 if( input_queues_->at(i)->argument_ == -1 ) {
                     input_queues_->at(i)->data_queue_->pop();

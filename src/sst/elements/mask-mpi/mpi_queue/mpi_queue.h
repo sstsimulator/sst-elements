@@ -12,7 +12,7 @@ Copyright (c) 2009-2025, NTESS
 
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, 
+Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
     * Redistributions of source code must retain the above copyright
@@ -50,7 +50,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mercury/operating_system/process/progress_queue.h>
 //#include <mercury/common/event_scheduler_fwd.h>
 
-#include <mercury/common/factory.h>
+#include <sst/core/factory.h>
 
 //#include <mercury/common/event_manager_fwd.h>
 

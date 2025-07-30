@@ -122,6 +122,11 @@ public:
     }
     virtual std::string getAvailableDestinationsAsString() override;
 
+    void recvNotify(SST::Event * ev) { (*recvHandler)(ev); }
+
+    MemLink() = default;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::MemHierarchy::MemLink)
 protected:
     void addRemote(EndpointInfo info);
     void addEndpoint(EndpointInfo info);

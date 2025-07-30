@@ -39,7 +39,7 @@ ramulator2Memory::ramulator2Memory(ComponentId_t id, Params &params) :
     ramulator2_frontend->connect_memory_system(ramulator2_memorysystem);
     ramulator2_memorysystem->connect_frontend(ramulator2_frontend);
 
-    output->output(CALL_INFO, "Instantiated Ramulator2 from config file %s\n", config_path);
+    output->output(CALL_INFO, "Instantiated Ramulator2 from config file %s\n", config_path.c_str());
 }
 
 bool ramulator2Memory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes){

@@ -89,7 +89,7 @@ logicLayer::logicLayer( ComponentId_t id, Params& params ) :
     toMem = 0;
   }
 
-  registerClock( frequency, new Clock::Handler<logicLayer>(this, &logicLayer::clock) );
+  registerClock( frequency, new Clock::Handler2<logicLayer,&logicLayer::clock>(this) );
 
   dbg.output(CALL_INFO, "made logicLayer %d %p %p\n", llID, toMem, toCPU);
 

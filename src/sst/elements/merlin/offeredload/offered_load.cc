@@ -88,8 +88,8 @@ OfferedLoad::OfferedLoad(ComponentId_t cid, Params& params) :
 
 
     // Register functors for the SimpleNetwork IF
-    send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler<OfferedLoad>(this, &OfferedLoad::send_notify);
-    recv_notify_functor = new SST::Interfaces::SimpleNetwork::Handler<OfferedLoad>(this, &OfferedLoad::handle_receives);
+    send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler2<OfferedLoad,&OfferedLoad::send_notify>(this);
+    recv_notify_functor = new SST::Interfaces::SimpleNetwork::Handler2<OfferedLoad,&OfferedLoad::handle_receives>(this);
 
     // link_if->setNotifyOnSend(send_notify_functor);
     link_if->setNotifyOnReceive(recv_notify_functor);
@@ -130,13 +130,13 @@ OfferedLoad::OfferedLoad(ComponentId_t cid, Params& params) :
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
-    // clock_functor = new Clock::Handler<TrafficGen>(this,&TrafficGen::clock_handler);
+    // clock_functor = new Clock::Handler2<TrafficGen,&TrafficGen::clock_handler>(this);
     // clock_tc = registerClock( params.find<std::string>("message_rate", "1GHz"), clock_functor, false);
 
     base_tc = registerTimeBase("1ps",false);
-    timing_link = configureSelfLink("timing_link", base_tc, new Event::Handler<OfferedLoad>(this, &OfferedLoad::output_timing));
+    timing_link = configureSelfLink("timing_link", base_tc, new Event::Handler2<OfferedLoad,&OfferedLoad::output_timing>(this));
 
-    end_link = configureSelfLink("end_link", base_tc, new Event::Handler<OfferedLoad>(this, &OfferedLoad::end_handler));
+    end_link = configureSelfLink("end_link", base_tc, new Event::Handler2<OfferedLoad,&OfferedLoad::end_handler>(this));
 
     complete_event.push_back(new offered_load_complete_event(generation));
 

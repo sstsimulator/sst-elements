@@ -65,13 +65,13 @@ public:
 
 /* Class definition */
 
-    typedef MemEvent::id_type key_t;
-    static const key_t ANY_KEY;
-    static const char BUS_INFO_STR[];
-
     Bus(SST::ComponentId_t id, SST::Params& params);
-    virtual void init(unsigned int phase);
-    virtual void complete(unsigned int phase);
+    virtual void init(unsigned int phase) override;
+    virtual void complete(unsigned int phase) override;
+
+    Bus() {}
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::MemHierarchy::Bus);
 
 private:
 
@@ -95,22 +95,22 @@ private:
     SST::Link* lookupNode(const std::string&);
 
 
-    Output                          dbg_;
-    std::set<Addr>                  DEBUG_ADDR;
-    int                             numHighPorts_;
-    int                             numLowPorts_;
-    uint64_t                        idleCount_;
-    uint64_t                        idleMax_;
-    bool                            broadcast_;
-    bool                            busOn_;
-    bool                            drain_;
-    Clock::Handler<Bus>*            clockHandler_;
-    TimeConverter*                  defaultTimeBase_;
+    Output                      dbg_;
+    std::set<Addr>              debug_addr_filter_;
+    int                         numHighPorts_;
+    int                         numLowPorts_;
+    uint64_t                    idleCount_;
+    uint64_t                    idleMax_;
+    bool                        broadcast_;
+    bool                        busOn_;
+    bool                        drain_;
+    Clock::HandlerBase*         clockHandler_;
+    TimeConverter               defaultTimeBase_;
 
-    std::vector<SST::Link*>         highNetPorts_;
-    std::vector<SST::Link*>         lowNetPorts_;
-    std::map<string,SST::Link*>     nameMap_;
-    std::queue<SST::Event*>         eventQueue_;
+    std::vector<SST::Link*>     highNetPorts_;
+    std::vector<SST::Link*>     lowNetPorts_;
+    std::map<string,SST::Link*> nameMap_;
+    std::queue<SST::Event*>     eventQueue_;
 
 };
 

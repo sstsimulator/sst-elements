@@ -24,7 +24,7 @@
 namespace SST {
 namespace Hg {
 
-extern template SST::TimeConverter* HgBase<SST::SubComponent>::time_converter_;
+extern template SST::TimeConverter HgBase<SST::SubComponent>::time_converter_;
 
 class OperatingSystemCL : public OperatingSystem {
 
@@ -51,7 +51,7 @@ public:
   OperatingSystemCL(SST::ComponentId_t id, SST::Params& params, NodeCL* parent);
 
   ~OperatingSystemCL()
-  { 
+  {
     delete compute_sched_;
   }
 

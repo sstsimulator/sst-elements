@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     topo.config_failed_links = True
     topo.failed_links = [ "2:3:0", "2:3:2", "2:3:1", "2:3:3" ]
-    
+
     # Set up the routers
     router = hr_router()
     router.link_bw = "4GB/s"
@@ -43,11 +43,11 @@ if __name__ == "__main__":
     router.output_buf_size = "4kB"
     router.num_vns = 2
     router.xbar_arb = "merlin.xbar_arb_lru"
-    
+
     topo.router = router
     topo.link_latency = "20ns"
 
-    
+
     ### set up the endpoint
     networkif = LinkControl()
     networkif.link_bw = "4GB/s"
@@ -62,28 +62,28 @@ if __name__ == "__main__":
     # Set up VN remapping
     networkif.vn_remap = [0]
     networkif2.vn_remap = [1]
-    
+
     ep = TestJob(0,topo.getNumNodes() // 2)
     ep.network_interface = networkif
     #ep.num_messages = 10
     #ep.message_size = "8B"
     #ep.send_untimed_bcast = False
-        
+
     ep2 = TestJob(1,topo.getNumNodes() // 2)
     ep2.network_interface = networkif2
     #ep.num_messages = 10
     #ep.message_size = "8B"
     #ep.send_untimed_bcast = False
-        
+
     system = System()
     system.setTopology(topo)
     system.allocateNodes(ep,"linear")
     system.allocateNodes(ep2,"linear")
-    
+
     system.build()
-    
+
     # sst.enableStatisticsForComponentType("merlin.hr_router","send_bit_count")
-    
+
     # sst.setStatisticLoadLevel(9)
 
     # sst.setStatisticOutput("sst.statOutputCSV");

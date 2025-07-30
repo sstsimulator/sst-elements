@@ -15,7 +15,7 @@
 
 typedef Addr_t Context;
 typedef int QueueIndex;
-typedef enum { RdmaDone=0, RdmaSend=1, RdmaRecv, RdmaFini, RdmaCreateCQ, RdmaDestroyCQ, RdmaCreateRQ, 
+typedef enum { RdmaDone=0, RdmaSend=1, RdmaRecv, RdmaFini, RdmaCreateCQ, RdmaDestroyCQ, RdmaCreateRQ,
                     RdmaDestroyRQ, RdmaMemRgnReg, RdmaMemRgnUnreg, RdmaMemWrite, RdmaMemRead, RdmaBarrier } RdmaCmd;
 
 typedef int MemRgnKey;
@@ -119,7 +119,7 @@ typedef struct __attribute__((aligned(64))) {
 			Addr_t tailIndexAddr;
 		} createCQ;
 	} data;
-	// this has to be last as it is the flag to indicate the 
+	// this has to be last as it is the flag to indicate the
 	// NIC has completed the write, the NIC calculates  the offset
 	// of this member and write it to the host after it write data
     volatile uint32_t retval;

@@ -28,10 +28,10 @@ namespace SST {
 namespace Hg {
 
 void
-NicEvent::serialize_order(serializer &ser)
+NicEvent::serialize_order(SST::Core::Serialization::serializer& ser)
 {
   Event::serialize_order(ser);
-  ser & msg_;
+  SST_SER(msg_);
 }
 
 NIC::NIC(uint32_t id, SST::Params& params, NodeBase* parent) :
@@ -64,8 +64,8 @@ NIC::sendManagerMsg(NetworkMessage *msg) {
 void
 NIC::init(unsigned int phase) {
   if (phase == 0) {
-    auto recv_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingPacket);
-    auto send_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC>(this,&SST::Hg::NIC::incomingCredit);
+    auto recv_notify = new SST::Interfaces::SimpleNetwork::Handler2<SST::Hg::NIC,&SST::Hg::NIC::incomingPacket>(this);
+    auto send_notify = new SST::Interfaces::SimpleNetwork::Handler2<SST::Hg::NIC,&SST::Hg::NIC::incomingCredit>(this);
     link_control_->setNotifyOnReceive(recv_notify);
     link_control_->setNotifyOnSend(send_notify);
   }
@@ -205,7 +205,7 @@ NIC::sendWhatYouCan(int vn, Pending& p) {
         ack_queue_[vn].push(nullptr);
       }
       req->givePayload(p.payload);
-    } else {     
+    } else {
       // Use a lightweight event to track flows
       FlowTracker* flow_tracker = new FlowTracker(p.payload->flowId());
       req->givePayload(flow_tracker);
@@ -377,7 +377,7 @@ NIC::finishMemcpy(NetworkMessage* payload)
   sendToNode(payload);
 }
 
-void 
+void
 NIC::recordMessage(NetworkMessage *netmsg) {
 
   std::ostringstream debug_stream;

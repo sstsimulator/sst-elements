@@ -46,7 +46,7 @@ public:
 private:
     int num_ports;
     int num_vns;
-    
+
 public:
     topo_singlerouter(ComponentId_t cid, Params& params, int num_ports, int rtr_id, int nm_vns);
     ~topo_singlerouter();

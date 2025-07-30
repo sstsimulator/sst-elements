@@ -100,8 +100,12 @@ public:
     void writeData(Addr addr, std::vector<uint8_t>* data);
     void readData(Addr addr, size_t size, std::vector<uint8_t>& data);
 
+    // Serialization
+    MemController();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::MemHierarchy::MemController)
+
 protected:
-    MemController();  // for serialization only
     virtual ~MemController() {
         if (backing_)
             delete backing_;
@@ -128,11 +132,11 @@ protected:
 
     Output out;
     Output dbg;
-    std::set<Addr> DEBUG_ADDR;
+    std::set<Addr> debug_addr_filter_;
     int dlevel;
 
     MemBackendConvertor*    memBackendConvertor_;
-    
+
     Backend::Backing*       backing_;
     std::string backing_outfile_;
 
@@ -160,8 +164,8 @@ protected:
     Addr translateToLocal(Addr addr);
     Addr translateToGlobal(Addr addr);
 
-    Clock::Handler<MemController>* clockHandler_;
-    TimeConverter* clockTimeBase_;
+    Clock::HandlerBase* clockHandler_;
+    TimeConverter clockTimeBase_;
 
     CustomCmdMemHandler * customCommandHandler_;
 

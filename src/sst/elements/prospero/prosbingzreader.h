@@ -29,7 +29,7 @@ public:
     ProsperoCompressedBinaryTraceReader( ComponentId_t id, Params& params, Output* out );
     ~ProsperoCompressedBinaryTraceReader();
     ProsperoTraceEntry* readNextEntry();
-    
+
 	SST_ELI_REGISTER_SUBCOMPONENT(
         ProsperoCompressedBinaryTraceReader,
         "prospero",

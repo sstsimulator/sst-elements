@@ -77,7 +77,7 @@ public:
         }
     }
 
-    void instOp(VanadisRegisterFile* regFile,uint16_t phys_fp_regs_in_0, 
+    void instOp(VanadisRegisterFile* regFile,uint16_t phys_fp_regs_in_0,
                         uint16_t phys_fp_regs_in_1, uint16_t phys_fp_regs_out_0,uint16_t phys_fp_regs_out_1)
     {
         clear_IEEE754_except();
@@ -92,7 +92,7 @@ public:
 
             if ( isNaN(result) ) {
                 result = NaN<fp_format>();
-            }   
+            }
 
             WRITE_FP_REGS(phys_fp_regs_out_0, phys_fp_regs_out_1);
 
@@ -114,7 +114,7 @@ public:
                 } else {
                     result |= *(uint32_t*) &tmp;
                 }
-                
+
                 regFile->setFPReg<uint64_t>(phys_fp_regs_out_0, result);
             }
 
@@ -128,7 +128,7 @@ public:
         if ( output->getVerboseLevel() >= verboselevel ) {
             output->verbose(
                 CALL_INFO, verboselevel, 0, "hw_thr=%d sw_thr = %d Execute: 0x%" PRI_ADDR " %s phys: out=%" PRIu16 " in=%" PRIu16 ",isa: out=%" PRIu16
-                    " / in=%" PRIu16 "\n", 
+                    " / in=%" PRIu16 "\n",
                     getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), phys_fp_regs_out_0, phys_fp_regs_in_0,  isa_fp_regs_out[0], isa_fp_regs_in[0]);
         }
         #endif
@@ -140,13 +140,13 @@ public:
         uint16_t phys_fp_regs_in_0 = getPhysFPRegIn(0);
         uint16_t phys_fp_regs_in_1 = 0;
         uint16_t phys_fp_regs_out_1 = 0;
-        if ( sizeof(fp_format) > regFile->getFPRegWidth() ) 
+        if ( sizeof(fp_format) > regFile->getFPRegWidth() )
         {
             phys_fp_regs_in_1 = getPhysFPRegIn(1);
             phys_fp_regs_out_1 = getPhysFPRegOut(1);
         }
         log(output,16, 65535, phys_fp_regs_in_0,phys_fp_regs_out_0);
-        instOp(regFile, phys_fp_regs_in_0, 
+        instOp(regFile, phys_fp_regs_in_0,
                         phys_fp_regs_in_1, phys_fp_regs_out_0,phys_fp_regs_out_1);
 
         markExecuted();

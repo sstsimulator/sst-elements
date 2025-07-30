@@ -46,7 +46,7 @@ class VirtNic : public SST::SubComponent {
     SST_ELI_DOCUMENT_PORTS(
         {"nic", "Connection to upper level nic", {}}
     )
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         {"verboseLevel","Sets the level of output","0"},
         {"maxNicQdepth","Sets maximum number of entries before blocking","32"},
@@ -225,7 +225,7 @@ class VirtNic : public SST::SubComponent {
 	SimTime_t calcDelay() {
 		SimTime_t curTime = getCurrentSimCycle()/1000;
 
-		SimTime_t ret = curTime < m_nextTimeSlot ? m_nextTimeSlot - curTime: 0;	
+		SimTime_t ret = curTime < m_nextTimeSlot ? m_nextTimeSlot - curTime: 0;
 		m_dbg.debug(CALL_INFO,2,0,"curTime_ns=%" PRIu64 " delay_ns=%" PRIu64"\n",curTime,ret);
 		m_nextTimeSlot += m_latPerSend_ns;
 		return ret;

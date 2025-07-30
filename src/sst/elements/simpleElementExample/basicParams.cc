@@ -14,7 +14,7 @@
 // distribution.
 
 
-// This include is ***REQUIRED*** 
+// This include is ***REQUIRED***
 // for ALL SST implementation files
 #include "sst_config.h"
 
@@ -24,7 +24,7 @@
 using namespace SST;
 using namespace SST::simpleElementExample;
 
-/* 
+/*
  * During construction the basicParams component should prepare for simulation
  * - Read parameters
  * - Register clocks
@@ -60,7 +60,7 @@ basicParams::basicParams(ComponentId_t id, Params& params) : Component(id) {
     // Example 2: discover whether a parameter was passed in from the python or not
     bool found;
     int param4 = params.find<int>("int_param", 0, found);
-    
+
     if (!found) {
         out->fatal(CALL_INFO, -1, "Uh oh, in '%s', int_param is a required parameter, but it wasn't found in the parameter set.\n",
                 getName().c_str());
@@ -79,7 +79,7 @@ basicParams::basicParams(ComponentId_t id, Params& params) : Component(id) {
     // The formatting is based on Python lists, see params.h/.cc in sst-core for a detailed description
     std::vector<int> intArray;
     params.find_array<int>("array_param", intArray);
-    
+
     out->output("Read an array from array_param. Elements are: \n");
     for (std::vector<int>::iterator it = intArray.begin(); it != intArray.end(); it++) {
         out->output("%d, ", *it);
@@ -105,7 +105,7 @@ basicParams::~basicParams()
 }
 
 
-/* 
+/*
  * This example is about parameters so the clock doesn't do anything useful
  * Just exits after 20 cycles
  */
@@ -115,7 +115,7 @@ bool basicParams::tick( Cycle_t cycles)
         primaryComponentOKToEndSim();
         return true;
     }
-    
+
     return false;
 }
 

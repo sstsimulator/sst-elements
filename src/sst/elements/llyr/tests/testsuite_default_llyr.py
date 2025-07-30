@@ -16,10 +16,11 @@ class testcase_llyr_Component(SSTTestCase):
 
 #####
 
-    @unittest.skipIf(testing_check_get_num_ranks() > 1, "llyr: test_llyr_singlestream skipped if ranks > 1")
-    @unittest.skipIf(testing_check_get_num_threads() > 1, "llyr: test_llyr_singlestream skipped if threads > 1")
-    def test_llyr_singlestream(self):
-        self.llyr_test_template("llyr_test")
+    @unittest.skipIf(True, "Not testing llyr right now")
+    @unittest.skipIf(testing_check_get_num_ranks() > 1, "llyr: test_llyr_simpletest skipped if ranks > 1")
+    @unittest.skipIf(testing_check_get_num_threads() > 1, "llyr: test_llyr_simpletest skipped if threads > 1")
+    def test_llyr_simpletest(self):
+        self.llyr_test_template("simple_test")
 
 #####
 

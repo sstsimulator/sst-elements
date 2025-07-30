@@ -92,17 +92,17 @@ class TLB : public ComponentExtension
 
     // === Holds a copy of requests that have missed in this level, and have been sent into the next level down.
     //  events are erased when they are fulfilled, and returned into `this->pushed_back`
-	std::vector<MemHierarchy::MemEventBase *> pending_misses; 
+	std::vector<MemHierarchy::MemEventBase *> pending_misses;
 
     // === Holds requests that have gotten the data they need, but we need to wait the duration of the latency before returning
-	std::map<MemHierarchy::MemEventBase *, SST::Cycle_t, MemEventPtrCompare> ready_by; 
+	std::map<MemHierarchy::MemEventBase *, SST::Cycle_t, MemEventPtrCompare> ready_by;
 	std::map<MemHierarchy::MemEventBase *, long long int, MemEventPtrCompare> ready_by_size; // keeps track of requests' sizes inside this structure
 
 
     // === Buffers for sending requests up/down TLB hierarchy:
-    
+
     // When we miss, we send requests to next level down through `next_level->push_request()` or `PTW->push_request()`
-    
+
     // completed requests from deeper in TLB hierarchy will be returned into `this->pushed_back`
 	std::vector<MemHierarchy::MemEventBase *> pushed_back; // translation for requests, returned from lower-level structures
 	std::map<MemHierarchy::MemEventBase *, long long int, MemEventPtrCompare> pushed_back_size; // page_sizes of the returned translations

@@ -51,7 +51,7 @@ class NicEvent :
     return msg_;
   }
 
-  void serialize_order(serializer& ser) override;
+  void serialize_order(SST::Core::Serialization::serializer& ser) override;
 
  private:
   NicEvent(){} //for serialization

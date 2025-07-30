@@ -84,14 +84,14 @@ c_TxnGenBase::c_TxnGenBase(ComponentId_t x_id, Params& x_params) :
     //// send token chg to txn unit
     m_memLink = configureLink(
             "memLink",
-            new Event::Handler<c_TxnGenBase>(this, &c_TxnGenBase::handleResEvent));
+            new Event::Handler2<c_TxnGenBase,&c_TxnGenBase::handleResEvent>(this));
 
     // get configured clock frequency
     std::string l_controllerClockFreqStr = (std::string)x_params.find<std::string>("strControllerClockFrequency", "1GHz", l_found);
 
     //set our clock
     registerClock(l_controllerClockFreqStr,
-                  new Clock::Handler<c_TxnGenBase>(this, &c_TxnGenBase::clockTic));
+                  new Clock::Handler2<c_TxnGenBase,&c_TxnGenBase::clockTic>(this));
 
     // Statistics
     s_readTxnsCompleted = registerStatistic<uint64_t>("readTxnsCompleted");
@@ -208,7 +208,8 @@ void c_TxnGenBase::handleResEvent(SST::Event* ev) {
         s_txnsLatency->addData(l_latency);
 
 #ifdef __SST_DEBUG_OUTPUT__
-        debug->verbose(CALL_INFO,1,0,"[cycle:%" PRIu64 "] addr: 0x%lx isRead:%d seqNum:%lu birthTime:%lu latency:%lu \n",l_currentCycle,l_txn->getAddress(),l_txn->isRead(), l_seqnum,m_outstandingReqs[l_seqnum],l_latency);
+        debug->verbose(CALL_INFO,1,0,"[cycle:%" PRIu64 "] addr: 0x%lx isRead:%d seqNum:%" PRIu64 " birthTime:%" PRIu64 " latency:%" PRIu64 " \n",
+            l_currentCycle, l_txn->getAddress(), l_txn->isRead(), l_seqnum, m_outstandingReqs[l_seqnum], l_latency);
 #endif
 
 
@@ -265,7 +266,8 @@ bool c_TxnGenBase::sendRequest()
 
         c_Transaction *l_txn=l_txnReqEvPtr->m_payload;
     #ifdef __SST_DEBUG_OUTPUT__
-        debug->verbose(CALL_INFO,1,0,"[cycle:%" PRIu64 "] addr: 0x%" PRIx64 " isRead:%d seqNum:%lu\n",l_cycle,l_txn->getAddress(),l_txn->isRead(),l_txn->getSeqNum());
+        debug->verbose(CALL_INFO,1,0,"[cycle:%" PRIu64 "] addr: 0x%lx isRead:%d seqNum:%lu\n",
+            l_cycle, l_txn->getAddress(), l_txn->isRead(), l_txn->getSeqNum());
     #endif
 
         m_outstandingReqs.insert(std::pair<uint64_t, uint64_t>(l_txn->getSeqNum(),l_cycle));

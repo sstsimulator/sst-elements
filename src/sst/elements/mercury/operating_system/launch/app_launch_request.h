@@ -41,9 +41,9 @@ class AppLaunchRequest : public SST::Event
   serialize_order(Core::Serialization::serializer& ser) override
   {
     Event::serialize_order(ser);
-    ser & (aid_);
-    ser & (name_);
-    ser & (param_string_);
+    SST_SER(aid_);
+    SST_SER(name_);
+    SST_SER(param_string_);
   }
 
   SST::Params params();

@@ -42,9 +42,9 @@ public:
         if(sizeof(register_format) == 4) {
             return "ADDIU32";
         } else if( sizeof(register_format) == 8) {
-            return "ADDIU64"; 
+            return "ADDIU64";
         } else {
-            return "ADDIUERR"; 
+            return "ADDIUERR";
         }
     }
 
@@ -66,14 +66,14 @@ public:
 
     void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
-        if( std::is_same<register_format, uint64_t>::value || std::is_same<register_format, uint32_t>::value ) 
+        if( std::is_same<register_format, uint64_t>::value || std::is_same<register_format, uint32_t>::value )
         {
             uint16_t phys_int_regs_out_0 = phys_int_regs_out[0];
             uint16_t phys_int_regs_in_0 = phys_int_regs_in[0];
             instOp(regFile,phys_int_regs_out_0,phys_int_regs_in_0);
             log(output, 16, 65535, phys_int_regs_out_0,phys_int_regs_in_0,0);
-        } 
-        else 
+        }
+        else
         {
             flagError();
             output->verbose(CALL_INFO, 16, 0, "hw_thr=%d sw_thr = %d Execute: (addr=%p) ADDIU setting traperror = true\n", getHWThread(), 65535, (void*)getInstructionAddress());

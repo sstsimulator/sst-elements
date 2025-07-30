@@ -59,7 +59,7 @@ def build_vanadis_test_matrix():
         for arch in arch_list:
             testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
 
-    # misc 
+    # misc
     location="small/misc"
     tests = ["stream","gettime","splitLoad","mt-dgemm","stream-fortran","uname"]
     #tests = []
@@ -159,6 +159,9 @@ class testcase_vanadis(SSTTestCase):
 
         if MakeTests:
             self.makeTest( testname, isa, elftestdir, elffile )
+        # Only run the first 15 tests if we are not in a Nightly test
+        if not testing_check_is_nightly() and testnum > 15:
+            self.skipTest("Complete vanadis_short_tests only runs on Nightly builds.")
         log_debug("Running Vanadis test #{0} ({1}): elffile={4} in dir {3}, isa {5}; using sdl={2}".format(testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec))
         self.vanadis_test_template(testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, goldfiledir, timeout_sec )
 
@@ -287,10 +290,10 @@ class testcase_vanadis(SSTTestCase):
 
         test_path = self.get_testsuite_dir()
 
-        sourcedirpath = "{0}/{1}/{2}".format( test_path, elftestdir, elffile ) 
+        sourcedirpath = "{0}/{1}/{2}".format( test_path, elftestdir, elffile )
         makefilepath = "{0}/Makefile".format(sourcedirpath)
 
-        cmd = "make ARCH=" + isa 
+        cmd = "make ARCH=" + isa
         rtn = OSCommand(cmd, set_cwd=sourcedirpath).run()
         log_debug("Vanadis tests source - Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
         self.assertTrue(rtn.result() == 0, "{0} failed to build properly".format(makefilepath))

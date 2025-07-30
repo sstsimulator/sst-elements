@@ -48,10 +48,11 @@ struct lineTrack {
 class cacheLineTrack : public SST::MemHierarchy::CacheListener {
 public:
     cacheLineTrack(ComponentId_t, Params& params);
+    cacheLineTrack() : SST::MemHierarchy::CacheListener() { }
     ~cacheLineTrack() {};
 
-    void notifyAccess(const CacheListenerNotification& notify);
-    void registerResponseCallback(Event::HandlerBase *handler);
+    void notifyAccess(const CacheListenerNotification& notify) override;
+    void registerResponseCallback(Event::HandlerBase *handler) override;
 
     SST_ELI_REGISTER_SUBCOMPONENT(
         cacheLineTrack,

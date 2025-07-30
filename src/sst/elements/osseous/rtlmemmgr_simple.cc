@@ -27,10 +27,10 @@ RtlMemoryManagerSimple::RtlMemoryManagerSimple(ComponentId_t id, Params& params)
 RtlMemoryManagerSimple::~RtlMemoryManagerSimple() { /*free((void*)(&freePages));*/ }
 
 void RtlMemoryManagerSimple::AssignRtlMemoryManagerSimple(std::unordered_map<uint64_t, uint64_t> pagetable, std::deque<uint64_t>* freepages, uint64_t pagesize) {
-    pageTable = pagetable; 
+    pageTable = pagetable;
     freePages = freepages;
     pageSize = pagesize;
-    return; 
+    return;
 }
 
 void RtlMemoryManagerSimple::allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress) {

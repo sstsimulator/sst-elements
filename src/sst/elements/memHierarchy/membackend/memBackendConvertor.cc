@@ -246,3 +246,42 @@ size_t MemBackendConvertor::getMemSize() {
 uint32_t MemBackendConvertor::getRequestWidth() {
     return m_backend->getRequestWidth();
 }
+
+void MemBackendConvertor::serialize_order(SST::Core::Serialization::serializer& ser) {
+    SubComponent::serialize_order(ser);
+
+    SST_SER(m_backend);
+    SST_SER(m_backendRequestWidth);
+    SST_SER(m_clockBackend);
+    SST_SER(m_dbg);
+    SST_SER(m_cycleCount);
+    SST_SER(m_clockOn);
+    SST_SER(m_reqId);
+    SST_SER(m_requestQueue);
+    SST_SER(m_pendingRequests);
+    SST_SER(m_frontendRequestWidth);
+    SST_SER(m_waitingFlushes);
+    SST_SER(m_dependentRequests);
+    SST_SER(stat_GetSLatency);
+    SST_SER(stat_GetSXLatency);
+    SST_SER(stat_GetXLatency);
+    SST_SER(stat_WriteLatency);
+    SST_SER(stat_PutMLatency);
+    SST_SER(stat_GetSReqReceived);
+    SST_SER(stat_GetXReqReceived);
+    SST_SER(stat_WriteReqReceived);
+    SST_SER(stat_PutMReqReceived);
+    SST_SER(stat_GetSXReqReceived);
+    SST_SER(stat_cyclesWithIssue);
+    SST_SER(stat_cyclesAttemptIssueButRejected);
+    SST_SER(stat_totalCycles);
+    SST_SER(stat_outstandingReqs);
+
+    if (ser.mode() == SST::Core::Serialization::serializer::UNPACK) {
+        using std::placeholders::_1;
+        m_backend->setGetRequestorHandler( std::bind( &MemBackendConvertor::getRequestor, this, _1 )  );
+    }
+    // These are reset by the MemController during unpack
+    //std::function<Cycle_t()> m_enableClock; // Re-enable parent's clock
+    //std::function<void(Event::id_type id, uint32_t)> m_notifyResponse; // notify parent of response
+}

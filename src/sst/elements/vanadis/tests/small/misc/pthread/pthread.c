@@ -59,7 +59,7 @@ static void* thread_start2( void* arg ) {
     return 0;
 }
 
-int main( int argc, char* argv[] ) 
+int main( int argc, char* argv[] )
 {
     printf("%s() gettid()=%d getpid()=%d %lx\n",__func__,gettid(),getpid(), __get_tp());
 
@@ -85,4 +85,4 @@ int main( int argc, char* argv[] )
 
     pthread_join(thread_id2,&ret);
     printf("thread2 has exited\n");
-} 
+}

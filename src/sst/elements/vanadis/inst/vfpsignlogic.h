@@ -127,21 +127,21 @@ public:
         return src1;
     }
 
-    void log(SST::Output* output,int verboselevel, uint16_t sw_thr,  uint16_t phys_fp_regs_in_0, 
-                uint16_t phys_fp_regs_in_1, uint16_t phys_fp_regs_in_2, uint16_t phys_fp_regs_in_3, 
+    void log(SST::Output* output,int verboselevel, uint16_t sw_thr,  uint16_t phys_fp_regs_in_0,
+                uint16_t phys_fp_regs_in_1, uint16_t phys_fp_regs_in_2, uint16_t phys_fp_regs_in_3,
                 uint16_t phys_fp_regs_out_0,uint16_t phys_fp_regs_out_1)
 
     {
         #ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= verboselevel ) 
+        if(output->getVerboseLevel() >= verboselevel )
         {
-            if((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode())) 
+            if((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
             {
                 output->verbose(CALL_INFO, verboselevel, 0, "hw_thr=%d sw_thr = %d Execute: (addr=0x%" PRI_ADDR ") %s / phys-in: { %" PRIu16 ", %" PRIu16 " } / { %" PRIu16 ", %" PRIu16 " } -> phys-out: { %" PRIu16 ", %" PRIu16 " }\n",
                     getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), phys_fp_regs_in_0, phys_fp_regs_in_1,
                     phys_fp_regs_in_2, phys_fp_regs_in_3, phys_fp_regs_out_0, phys_fp_regs_out_1);
-            } 
-            else 
+            }
+            else
             {
                 output->verbose(CALL_INFO, verboselevel, 0, "hw_thr=%d sw_thr = %d Execute: (addr=0x%" PRI_ADDR ") %s / phys-in: %" PRIu16 " / %" PRIu16 " -> phys-out: %" PRIu16 "\n",
                     getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), phys_fp_regs_in_0, phys_fp_regs_in_1, phys_fp_regs_out_0);
@@ -150,14 +150,14 @@ public:
         #endif
     }
 
-    void instOp(VanadisRegisterFile* regFile, uint16_t phys_fp_regs_in_0, uint16_t phys_fp_regs_in_1, 
-                        uint16_t phys_fp_regs_in_2, uint16_t phys_fp_regs_in_3, 
+    void instOp(VanadisRegisterFile* regFile, uint16_t phys_fp_regs_in_0, uint16_t phys_fp_regs_in_1,
+                        uint16_t phys_fp_regs_in_2, uint16_t phys_fp_regs_in_3,
                         uint16_t phys_fp_regs_out_0,uint16_t phys_fp_regs_out_1)
     {
-        uint64_t src_1; 
-        uint64_t src_2; 
-        if ((sizeof(fp_format)==8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))  
-        {            
+        uint64_t src_1;
+        uint64_t src_2;
+        if ((sizeof(fp_format)==8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
+        {
 			src_1 = combineFromRegisters<uint64_t>(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1);
 			src_2 = combineFromRegisters<uint64_t>(regFile, phys_fp_regs_in_2, phys_fp_regs_in_3);
         } else {
@@ -203,7 +203,7 @@ public:
         // Sign-injection instructions do not set floating-point exception flags
 
         if ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode())) {
-            
+
             fractureToRegisters<uint64_t>(regFile, phys_fp_regs_out_0, phys_fp_regs_out_1, result);
         } else {
             if ( 8 == regFile->getFPRegWidth() ) {
@@ -211,7 +211,7 @@ public:
             } else {
 				regFile->setFPReg<uint32_t>(phys_fp_regs_out_0, static_cast<uint32_t>(result));
             }
-        
+
         }
     }
 
@@ -225,7 +225,7 @@ public:
         uint16_t phys_fp_regs_in_2 =0;
         uint16_t phys_fp_regs_in_3 =0;
 
-        if ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))  
+        if ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
         {
             phys_fp_regs_in_2 =getPhysFPRegIn(2);
             phys_fp_regs_in_3 =getPhysFPRegIn(3);

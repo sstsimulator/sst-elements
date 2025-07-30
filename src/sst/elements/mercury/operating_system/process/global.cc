@@ -156,17 +156,3 @@ GlobalVariableContext::initGlobalSpace(void* ptr, int size, int offset)
 
 }
 }
-
-#include <dlfcn.h>
-
-extern "C" void *sstmac_dlopen(const char* filename, int flag)
-{
-  void* ret = dlopen(filename, flag);
-  return ret;
-}
-
-extern "C" void sstmac_init_global_space(void* ptr, int size, int offset, bool tls)
-{
-  if (tls) SST::Hg::GlobalVariable::tlsCtx.initGlobalSpace(ptr, size, offset);
-  else SST::Hg::GlobalVariable::glblCtx.initGlobalSpace(ptr, size, offset);
-}

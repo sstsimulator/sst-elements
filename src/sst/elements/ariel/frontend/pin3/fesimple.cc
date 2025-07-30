@@ -57,6 +57,23 @@
 
 #undef __STDC_FORMAT_MACROS
 
+// Undo some Clang-specific changes possibly made by the libc++ bundled with
+// PinCRT
+#ifdef __LP64__
+# ifdef __clang__
+#  if defined(PIN_VERSION_MINOR) && PIN_VERSION_MINOR > 29
+// Allow usage of the warnmacros header without modifying it
+#   ifdef UNUSED
+#   undef UNUSED
+#   endif
+#   include <sst/core/warnmacros.h>
+DIAG_DISABLE(macro-redefined)
+#   define __PRI_64_prefix  "l"
+#   define __PRI_PTR_prefix "l"
+REENABLE_WARNING
+#  endif
+# endif
+#endif
 
 using namespace SST::ArielComponent;
 using namespace std;
@@ -193,7 +210,7 @@ VOID ariel_print_stack(UINT32 thr, UINT64 allocSize, UINT64 allocAddr, UINT64 al
 {
 
     unsigned int depth = arielStack[thr].size() - 1;
-    BT_PRINTF("Malloc,0x%" PRIx64 ",%lu,%" PRIu64 "\n", allocAddr, allocSize, allocIndex);
+    BT_PRINTF("Malloc,0x%" PRIx64 ",%" PRIu64 ",%" PRIu64 "\n", allocAddr, allocSize, allocIndex);
 
     vector<ADDRINT> newMappings;
     for (vector<StackRecord>::reverse_iterator rit = arielStack[thr].rbegin(); rit != arielStack[thr].rend(); rit++) {
@@ -538,12 +555,12 @@ VOID InstrumentInstruction(INS ins, VOID *v)
             }
         }
     }
-   
+
     UINT32 operands = INS_MemoryOperandCount(ins);
     for (UINT32 op = 0; op < operands; op++) {
         BOOL first = (op == 0);
         BOOL last = (op == (operands - 1));
-        
+
         if (INS_MemoryOperandIsRead(ins, op)) {
             INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
                     WriteInstructionReadOnly,
@@ -1151,14 +1168,14 @@ void mapped_ariel_malloc_flag(int64_t mallocLocId, int count, int level)
 }
 
 void ariel_start_RTL_sim(RTL_shmem_info* rtl_shmem) {
-    
-    ArielCommand acRtl; 
+
+    ArielCommand acRtl;
     acRtl.command = ARIEL_ISSUE_RTL;
     acRtl.shmem.inp_size = rtl_shmem->get_inp_size();
     acRtl.shmem.ctrl_size = rtl_shmem->get_ctrl_size();
     acRtl.shmem.updated_rtl_params_size = rtl_shmem->get_params_size();
 
-    acRtl.shmem.inp_ptr = rtl_shmem->get_inp_ptr(); 
+    acRtl.shmem.inp_ptr = rtl_shmem->get_inp_ptr();
     acRtl.shmem.ctrl_ptr = rtl_shmem->get_ctrl_ptr();
     acRtl.shmem.updated_rtl_params = rtl_shmem->get_updated_rtl_params();
 
@@ -1168,7 +1185,7 @@ void ariel_start_RTL_sim(RTL_shmem_info* rtl_shmem) {
     #ifdef ARIEL_DEBUG
     fprintf(stderr, "\nMessage to add RTL Event into Ariel Event Queue successfully delivered via ArielTunnel");
     #endif
-    
+
     return;
 }
 
@@ -1179,7 +1196,7 @@ void ariel_update_RTL_signals(RTL_shmem_info* rtl_shmem) {
     acRtl.shmem.inp_size = rtl_shmem->get_inp_size();
     acRtl.shmem.ctrl_size = rtl_shmem->get_ctrl_size();
     acRtl.shmem.updated_rtl_params_size = rtl_shmem->get_params_size();
-    acRtl.shmem.inp_ptr = rtl_shmem->get_inp_ptr(); 
+    acRtl.shmem.inp_ptr = rtl_shmem->get_inp_ptr();
     acRtl.shmem.ctrl_ptr = rtl_shmem->get_ctrl_ptr();
     acRtl.shmem.updated_rtl_params = rtl_shmem->get_updated_rtl_params();
 
@@ -1189,7 +1206,7 @@ void ariel_update_RTL_signals(RTL_shmem_info* rtl_shmem) {
     #ifdef ARIEL_DEBUG
     fprintf(stderr, "\nMessage to add RTL Event into Ariel Event Queue to update RTL signals successfully delivered via ArielTunnel");
     #endif
-    
+
     return;
 }
 
@@ -1251,12 +1268,12 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
 #endif
     } else if (RTN_Name(rtn) == "start_RTL_sim") {
         fprintf(stderr,"Identified routine: start_RTL_sim, replacing with Ariel equivalent...\n");
-        RTN_Replace(rtn, (AFUNPTR) ariel_start_RTL_sim); 
+        RTN_Replace(rtn, (AFUNPTR) ariel_start_RTL_sim);
         fprintf(stderr,"Replacement complete.\n");
         return;
     } else if(RTN_Name(rtn) == "update_RTL_sig") {
         fprintf(stderr,"Identified routine: update_RTL_signals, replacing with Ariel equivalent...\n");
-        RTN_Replace(rtn, (AFUNPTR) ariel_update_RTL_signals); 
+        RTN_Replace(rtn, (AFUNPTR) ariel_update_RTL_signals);
         fprintf(stderr,"Replacement complete.\n");
         return;
 

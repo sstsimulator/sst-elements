@@ -28,9 +28,9 @@ MemLink::MemLink(ComponentId_t id, Params &params, TimeConverter* tc) : MemLinkB
     std::string port = params.find<std::string>("port", "port");
 
     if (found) {
-        link_ = configureLink(port, latency, new Event::Handler<MemLink>(this, &MemLink::recvNotify));
+        link_ = configureLink(port, latency, new Event::Handler2<MemLinkBase, &MemLinkBase::recvNotify>(this));
     } else {
-        link_ = configureLink(port, new Event::Handler<MemLink>(this, &MemLink::recvNotify));
+        link_ = configureLink(port, new Event::Handler2<MemLinkBase, &MemLinkBase::recvNotify>(this));
     }
 
     if (!link_)
@@ -47,7 +47,7 @@ void MemLink::init(unsigned int phase) {
         // Anonymous subcomponents don't have the slot name in their name. For now, we don't strictly have to differentiate
         // Dest & Source, so just always put Dest. If there's a bus between this component and the component on the other side,
         // the bus will update the group to the correct one since it has a notion of "high" (source) vs "low" (dest) ports.
-        // Otherwise, the group will be incorrect if this MemLink is loaded into a 'highlink' subcomponent slot. 
+        // Otherwise, the group will be incorrect if this MemLink is loaded into a 'highlink' subcomponent slot.
         // Not a problem unless we start treating source & dest differently.
         MemEventInitRegion * ev = new MemEventInitRegion(info.name, info.region, MemEventInitRegion::ReachableGroup::Dest);
         dbg.debug(_L10_, "%s sending region init message: %s\n", getName().c_str(), ev->getVerboseString().c_str());
@@ -81,7 +81,7 @@ void MemLink::init(unsigned int phase) {
 
                 }
                 delete ev;
-            } else if (mEv->getInitCmd() == MemEventInit::InitCommand::Endpoint) { 
+            } else if (mEv->getInitCmd() == MemEventInit::InitCommand::Endpoint) {
                 // Intercept and record so that we know how to find this endpoint.
                 // We don't need to record whether a particular region
                 // is noncacheable because the StandardMem interfaces will enforce
@@ -103,7 +103,7 @@ void MemLink::init(unsigned int phase) {
         } else
             delete ev;
     }
-    
+
     // Attempt to drain send Q
     for (auto it = init_send_queue_.begin(); it != init_send_queue_.end(); ) {
         std::string dst = findTargetDestination((*it)->getRoutingAddress());
@@ -123,10 +123,10 @@ void MemLink::init(unsigned int phase) {
 void MemLink::setup() {
     dbg.debug(_L10_, "Routing information for %s\n", getName().c_str());
     for (auto it = remotes_.begin(); it != remotes_.end(); it++) {
-        dbg.debug(_L10_, "    Remote: %s\n", it->toString().c_str()); 
+        dbg.debug(_L10_, "    Remote: %s\n", it->toString().c_str());
     }
     for (auto it = endpoints_.begin(); it != endpoints_.end(); it++) {
-        dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str()); 
+        dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str());
     }
     auto sources = getSources();
     if (sources->empty()) dbg.debug(_L10_, "    Source: NONE\n");
@@ -149,7 +149,7 @@ void MemLink::setup() {
 }
 
 void MemLink::complete(unsigned int phase) {
-    
+
     // Receive events
     SST::Event * ev;
     while ((ev = link_->recvUntimedData())) {
@@ -162,7 +162,7 @@ void MemLink::complete(unsigned int phase) {
  * send untimed data
  */
 void MemLink::sendUntimedData(MemEventInit * event, bool broadcast = true, bool lookup_dst = true) {
-    
+
     if (!broadcast && lookup_dst) {
         std::string dst = findTargetDestination(event->getRoutingAddress());
         if (dst == "") {
@@ -273,4 +273,16 @@ std::string MemLink::getAvailableDestinationsAsString() {
         str << it->toString() << std::endl;
     }
     return str.str();
+}
+
+void MemLink::serialize_order(SST::Core::Serialization::serializer& ser) {
+    MemLinkBase::serialize_order(ser);
+
+    SST_SER(link_);
+    SST_SER(remotes_);
+    SST_SER(peers_);
+    SST_SER(endpoints_);
+    SST_SER(reachable_names_);
+    SST_SER(peer_names_);
+    SST_SER(init_send_queue_); // Doesn't actually need to be included
 }

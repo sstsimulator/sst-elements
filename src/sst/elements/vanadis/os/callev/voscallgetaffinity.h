@@ -24,9 +24,9 @@ namespace Vanadis {
 
 class VanadisSyscallGetaffinityEvent : public VanadisSyscallEvent {
 public:
-    VanadisSyscallGetaffinityEvent() : VanadisSyscallEvent() {} 
-    VanadisSyscallGetaffinityEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, int64_t pid, int64_t cpusetsize, uint64_t maskAddr ) 
-        : VanadisSyscallEvent(core, thr, bittype), pid(pid), cpusetsize(cpusetsize), maskAddr(maskAddr) {} 
+    VanadisSyscallGetaffinityEvent() : VanadisSyscallEvent() {}
+    VanadisSyscallGetaffinityEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, int64_t pid, int64_t cpusetsize, uint64_t maskAddr )
+        : VanadisSyscallEvent(core, thr, bittype), pid(pid), cpusetsize(cpusetsize), maskAddr(maskAddr) {}
 
     VanadisSyscallOp getOperation() override { return SYSCALL_OP_SCHED_GETAFFINITY; }
 
@@ -38,9 +38,9 @@ private:
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& pid;
-        ser& cpusetsize;
-        ser& maskAddr;
+        SST_SER(pid);
+        SST_SER(cpusetsize);
+        SST_SER(maskAddr);
     }
     ImplementSerializable(SST::Vanadis::VanadisSyscallGetaffinityEvent);
 

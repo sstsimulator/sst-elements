@@ -15,6 +15,7 @@
 
 #include <sst/core/params.h>
 #include <sst/core/event.h>
+#include <sst/core/factory.h>
 #include <iris/sumi/transport.h>
 #include <iris/sumi/allreduce.h>
 #include <iris/sumi/reduce_scatter.h>
@@ -207,13 +208,16 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent) :
   rdma_page_delay_ = TimeDelta(params.find<SST::UnitAlgebra>("rdma_page_delay", "0s").getValue().toDouble());
   pin_delay_ = rdma_pin_latency_.ticks() || rdma_page_delay_.ticks();
   page_size_ = params.find<SST::UnitAlgebra>("rdma_page_size", "4096 B").getRoundedValue();
-  
+
   output.output("%d", sid().app_);
   nproc_ = os_->nranks();
 
   auto qos_params = params.get_scoped_params("qos");
   auto qos_name = qos_params.find<std::string>("name", "null");
-  qos_analysis_ = SST::Hg::create<QoSAnalysis>("macro", qos_name, qos_params);
+  if (qos_name != "null") {
+    auto factory = Factory::getFactory();
+    qos_analysis_ = factory->Create<QoSAnalysis>("sumi." + qos_name, qos_params);
+  }
 
   out_->debug(CALL_INFO, 1, 0,
               "registering proc %d\n", rank_);
@@ -993,7 +997,7 @@ CollectiveEngine::incoming(Message* msg)
       //message for collective we haven't started yet
       pending_collective_msgs_[ty][tag].push_back(cmsg);
       return nullptr;
-  } 
+  }
 
   Collective* coll = it->second;
   auto* dmsg = coll->recv(cmsg);

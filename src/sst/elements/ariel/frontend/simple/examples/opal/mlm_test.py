@@ -46,7 +46,7 @@ memory_network_bandwidth = "96GiB/s"
 
 mem_interleave_size = 64 #64	# Do 64B cache-line level interleaving
 memory_capacity = 16384 	# Size of memory in MBs
-page_size = 4                   # In KB 
+page_size = 4                   # In KB
 num_pages = memory_capacity * 1024 // page_size
 
 streamN = 1000000
@@ -336,7 +336,7 @@ for next_group in range(groups):
 	for next_active_core in range(cores_per_group):
 		for next_l3_cache_block in range(l3_cache_per_core):
 			print("Creating L3 cache block " + str(next_l3_cache_id) + "...")
-			
+
 			l3cache = sst.Component("l3cache_" + str(next_l3_cache_id), "memHierarchy.Cache")
 			l3cache.addParams(l3_params)
 
@@ -348,11 +348,11 @@ for next_group in range(groups):
             l3_nic.addParam("group", 2)
 
 			l3_ring_link = sst.Link("l3_" + str(next_l3_cache_id) + "_link")
-			l3_ring_link.connect( (l3_nic, "port", ring_latency), (router_map["rtr." + str(next_network_id)], "port2", ring_latency) )		
+			l3_ring_link.connect( (l3_nic, "port", ring_latency), (router_map["rtr." + str(next_network_id)], "port2", ring_latency) )
 
 			next_l3_cache_id = next_l3_cache_id + 1
 			next_network_id = next_network_id + 1
-		
+
 		print("Creating Core " + str(next_active_core) + " in Group " + str(next_group))
 
 		l1 = sst.Component("l1cache_" + str(next_core_id), "memHierarchy.Cache")
@@ -371,7 +371,7 @@ for next_group in range(groups):
 			l2.addParams(l2_params)
 		else:
 			l2.addParams(l2_dummy_params)
-        
+
         l2_nic = l2.setSubComponent("lowlink", "memHierarchy.MemNIC")
         l2_nic.addParams(nic_params)
         l2_nic.addParam("group", 1)
@@ -409,7 +409,7 @@ for next_group in range(groups):
 
 
 		l2_core_link = sst.Link("l2cache_" + str(next_core_id) + "_link")
-       		l2_core_link.connect((l1, "lowlink", ring_latency), (l2, "highlink", ring_latency))				
+       		l2_core_link.connect((l1, "lowlink", ring_latency), (l2, "highlink", ring_latency))
 		l2_core_link.setNoCut()
 
 		l2_ring_link = sst.Link("l2_ring_link_" + str(next_core_id))
@@ -427,18 +427,18 @@ for next_group in range(groups):
 		l3cache.addParams({
 			"slice_id" : str(next_l3_cache_id)
      		})
-        
+
         l3_nic = l3cache.setSubComponent("highlink", "memHierarchy.MemNIC")
         l3_nic.addParams(nic_params)
         l3_nic.addParam("group", 2)
 
 		l3_ring_link = sst.Link("l3_" + str(next_l3_cache_id) + "_link")
-		l3_ring_link.connect( (l3_nic, "port", ring_latency), (router_map["rtr." + str(next_network_id)], "port2", ring_latency) )		
+		l3_ring_link.connect( (l3_nic, "port", ring_latency), (router_map["rtr." + str(next_network_id)], "port2", ring_latency) )
 
 		next_l3_cache_id = next_l3_cache_id + 1
 		next_network_id = next_network_id + 1
 
-	for next_mem_ctrl in range(memory_controllers_per_group):	
+	for next_mem_ctrl in range(memory_controllers_per_group):
 		local_size = memory_capacity // (groups * memory_controllers_per_group)
 
 		mem = sst.Component("memory_" + str(next_memory_ctrl_id), "memHierarchy.MemController")

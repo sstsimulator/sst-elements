@@ -25,7 +25,7 @@ class _VanadisStartThreadBaseReq : public SST::Event {
 public:
     _VanadisStartThreadBaseReq() : SST::Event(), thread(0), instPtr(0), stackAddr(0), argAddr(0), tlsAddr(0) { }
 
-    _VanadisStartThreadBaseReq( int thread, uint64_t instPtr, uint64_t stackAddr, uint64_t argAddr, uint64_t tlsAddr ) : 
+    _VanadisStartThreadBaseReq( int thread, uint64_t instPtr, uint64_t stackAddr, uint64_t argAddr, uint64_t tlsAddr ) :
         SST::Event(), thread(thread), stackAddr(stackAddr), instPtr(instPtr), argAddr(argAddr), tlsAddr(tlsAddr) {}
 
     virtual ~_VanadisStartThreadBaseReq() {}
@@ -35,8 +35,8 @@ public:
     int64_t getStackAddr() { return stackAddr; }
     int64_t getArgAddr() { return argAddr; }
     int64_t getTlsAddr() { return tlsAddr; }
-    void setIntRegs( std::vector<uint64_t>& regs ) { intRegs = regs; } 
-    void setFpRegs( std::vector<uint64_t>& regs ) { fpRegs = regs; } 
+    void setIntRegs( std::vector<uint64_t>& regs ) { intRegs = regs; }
+    void setFpRegs( std::vector<uint64_t>& regs ) { fpRegs = regs; }
     std::vector<uint64_t>& getIntRegs() { return intRegs; }
     std::vector<uint64_t>& getFpRegs() { return fpRegs; }
 
@@ -44,13 +44,13 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        ser& thread;
-        ser& instPtr;
-        ser& stackAddr;
-        ser& argAddr;
-        ser& tlsAddr;
-        ser& intRegs;
-        ser& fpRegs;
+        SST_SER(thread);
+        SST_SER(instPtr);
+        SST_SER(stackAddr);
+        SST_SER(argAddr);
+        SST_SER(tlsAddr);
+        SST_SER(intRegs);
+        SST_SER(fpRegs);
     }
 
     ImplementSerializable(SST::Vanadis::_VanadisStartThreadBaseReq);
@@ -69,8 +69,8 @@ class VanadisStartThreadFirstReq : public _VanadisStartThreadBaseReq {
 public:
     VanadisStartThreadFirstReq() : _VanadisStartThreadBaseReq() {}
 
-    VanadisStartThreadFirstReq( int thread, uint64_t instPtr, uint64_t stackAddr ) : 
-        _VanadisStartThreadBaseReq( thread, instPtr, stackAddr, 0, 0 ) {} 
+    VanadisStartThreadFirstReq( int thread, uint64_t instPtr, uint64_t stackAddr ) :
+        _VanadisStartThreadBaseReq( thread, instPtr, stackAddr, 0, 0 ) {}
 
 private:
     ImplementSerializable(SST::Vanadis::VanadisStartThreadFirstReq);
@@ -80,8 +80,8 @@ class VanadisStartThreadForkReq : public _VanadisStartThreadBaseReq {
 public:
     VanadisStartThreadForkReq() : _VanadisStartThreadBaseReq() {}
 
-    VanadisStartThreadForkReq( int thread, uint64_t instPtr, uint64_t tlsAddr ) : 
-        _VanadisStartThreadBaseReq( thread, instPtr, 0, 0, tlsAddr ) {} 
+    VanadisStartThreadForkReq( int thread, uint64_t instPtr, uint64_t tlsAddr ) :
+        _VanadisStartThreadBaseReq( thread, instPtr, 0, 0, tlsAddr ) {}
 
 private:
     ImplementSerializable(SST::Vanadis::VanadisStartThreadForkReq);
@@ -91,8 +91,8 @@ class VanadisStartThreadCloneReq : public _VanadisStartThreadBaseReq {
 public:
     VanadisStartThreadCloneReq() : _VanadisStartThreadBaseReq() {}
 
-    VanadisStartThreadCloneReq( int thread, uint64_t instPtr, uint64_t stackAddr, uint64_t tlsAddr, uint64_t argAddr ) : 
-        _VanadisStartThreadBaseReq( thread, instPtr, stackAddr, argAddr, tlsAddr ) {} 
+    VanadisStartThreadCloneReq( int thread, uint64_t instPtr, uint64_t stackAddr, uint64_t tlsAddr, uint64_t argAddr ) :
+        _VanadisStartThreadBaseReq( thread, instPtr, stackAddr, argAddr, tlsAddr ) {}
 
 private:
     ImplementSerializable(SST::Vanadis::VanadisStartThreadCloneReq);

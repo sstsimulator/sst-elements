@@ -108,7 +108,7 @@ class bisection_test_event : public Event {
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & start_time;
+        SST_SER(start_time);
     }
 
 private:

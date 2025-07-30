@@ -71,6 +71,13 @@ public:
             str << std::dec << " ID: " << id << " Region: " << region.toString();
             return str.str();
         }
+
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(name);
+            SST_SER(addr);
+            SST_SER(id);
+            SST_SER(region);
+        }
     };
 
     // Identifiers that can be attached to init messages to detect memory system topology
@@ -87,10 +94,10 @@ public:
         std::vector<uint64_t> addrArray;
         params.find_array<uint64_t>("debug_addr", addrArray);
         for (std::vector<uint64_t>::iterator it = addrArray.begin(); it != addrArray.end(); it++) {
-            DEBUG_ADDR.insert(*it);
+            debug_addr_filter_.insert(*it);
         }
 
-        setDefaultTimeBase(tc);
+        setDefaultTimeBase(*tc);
 
         // Set up address region TODO deprecate in the next major release (SST 10)
         bool found, foundany;
@@ -131,18 +138,18 @@ public:
     }
 
     /* Destructor */
-    virtual ~MemLinkBase() { }
+    virtual ~MemLinkBase() = default;
 
     /* Initialization functions for parent */
     virtual void setRecvHandler(Event::HandlerBase * handler) { recvHandler = handler; }
     virtual bool isClocked() { return false; }
-    virtual void init(unsigned int UNUSED(phase)) { }
-    virtual void complete(unsigned int UNUSED(phase)) { }
-    virtual void finish() { }
-    virtual void setup() { }
+    virtual void init(unsigned int UNUSED(phase)) override { }
+    virtual void complete(unsigned int UNUSED(phase)) override { }
+    virtual void finish() override { }
+    virtual void setup() override { }
 
     /* Debug - triggered by output.fatal() or SIGUSR2 */
-    virtual void printStatus(Output &out) {
+    virtual void printStatus(Output &out) override {
         out.output("  MemHierarchy::MemLinkBase: No status given\n");
     }
 
@@ -191,11 +198,23 @@ public:
     // a specific implementation may require a different setting
     void setName(std::string name) { info.name = name; }
 
+    MemLinkBase() = default;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::SubComponent::serialize_order(ser);
+
+        SST_SER(dbg);
+        SST_SER(debug_addr_filter_);
+        SST_SER(dlevel);
+        SST_SER(info);
+        SST_SER(recvHandler);
+        SST_SER(untimed_receive_queue_);
+    }
+    ImplementVirtualSerializable(SST::MemHierarchy::MemLinkBase)
 protected:
 
     // Debug stuff
     Output dbg;
-    std::set<Addr> DEBUG_ADDR;
+    std::set<Addr> debug_addr_filter_;
     int dlevel;
 
     // Local EndpointInfo

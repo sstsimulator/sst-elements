@@ -23,7 +23,7 @@ namespace SST {
 namespace Hg {
 
 ComputeLibrary::ComputeLibrary(SST::Params &params, App *parent)
-    : Library(params, parent) 
+    : Library(params, parent)
 {
   parent_os_ = dynamic_cast<OperatingSystemCL*>(parent->os());
 
@@ -33,8 +33,8 @@ ComputeLibrary::ComputeLibrary(SST::Params &params, App *parent)
   loop_overhead_ = params.find<double>("compute_library_loop_overhead", 1.0);
 }
 
-void 
-ComputeLibrary::compute(TimeDelta time) 
+void
+ComputeLibrary::compute(TimeDelta time)
 {
   if (time.sec() < 0) {
     sst_hg_abort_printf("ComputeLibrary can't compute for less than zero time");
@@ -48,8 +48,8 @@ ComputeLibrary::sleep(TimeDelta time)
   parent_os_->blockTimeout(time);
 }
 
-void ComputeLibrary::computeBlockMemcpy(uint64_t bytes) { 
-  copy(bytes); 
+void ComputeLibrary::computeBlockMemcpy(uint64_t bytes) {
+  copy(bytes);
 }
 
 void

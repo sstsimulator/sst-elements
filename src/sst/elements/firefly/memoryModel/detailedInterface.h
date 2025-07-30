@@ -86,11 +86,11 @@ private:
     	m_maxRequestsPending[Write] = params.find<uint32_t>("maxstorememreqpending", 16);
 
 		UnitAlgebra freq = params.find<SST::UnitAlgebra>( "freq", "1Ghz" );
-		m_clock_handler = new Clock::Handler<DetailedInterface>(this,&DetailedInterface::clock_handler);
+		m_clock_handler = new Clock::Handler2<DetailedInterface,&DetailedInterface::clock_handler>(this);
 		m_clock = registerClock( freq, m_clock_handler);
 
 		m_mem_link = loadUserSubComponent<Interfaces::StandardMem>("standardInterface", ComponentInfo::SHARE_NONE,
-			m_clock , new Interfaces::StandardMem::Handler<DetailedInterface>(this, &DetailedInterface::handleEvent) );
+			&m_clock , new Interfaces::StandardMem::Handler2<DetailedInterface,&DetailedInterface::handleEvent>(this) );
 
 	    if( m_mem_link ) {
 			m_dbg.verbose(CALL_INFO, 1, MY_MASK, "Loaded memory interface successfully.\n");
@@ -120,7 +120,7 @@ private:
 
         // Some models use the same address space for each PID. To map each processes address
         // to a unique address the upper 8 bits contain the PID. The detailed model uses unique addresses
-        // at the source and sizes the memHierarchy accordingly so we must remove the PID 
+        // at the source and sizes the memHierarchy accordingly so we must remove the PID
         req->addr &= ~0x0f00000000000000;
 		if ( m_inFlightCnt[Write] + m_pendingReqQ[Write].size() < m_maxRequestsPending[Write] - 1 ) {
 			src = NULL;
@@ -139,7 +139,7 @@ private:
 
         // Some models use the same address space for each PID. To map each processes address
         // to a unique address the upper 8 bits contain the PID. The detailed model uses unique addresses
-        // at the source and sizes the memHierarchy accordingly so we must remove the PID 
+        // at the source and sizes the memHierarchy accordingly so we must remove the PID
         req->addr &= ~0x0f00000000000000;
        if ( m_inFlightCnt[Read] + m_pendingReqQ[Read].size() < m_maxRequestsPending[Read] - 1 ) {
             src = NULL;
@@ -250,9 +250,9 @@ private:
 		return false;
 	}
 
-	Clock::Handler<DetailedInterface>* 	m_clock_handler;
-	TimeConverter* 				m_clock;
-	Interfaces::StandardMem* 		m_mem_link;
+	Clock::HandlerBase*      m_clock_handler;
+	TimeConverter            m_clock;
+	Interfaces::StandardMem* m_mem_link;
 
 	std::map< Interfaces::StandardMem::Request::id_t, Entry* > m_inflight;
 	std::set< uint64_t > m_inFlightAddr;

@@ -64,7 +64,7 @@ public:
         virtual void handle(SST::Interfaces::StandardMem::ReadResp* rsp) override;
         virtual void handle(SST::Interfaces::StandardMem::WriteResp* rsp) override;
         virtual void handle(SST::Interfaces::StandardMem::CustomResp* rsp) override;
-        
+
         RequestGenCPU* cpu;
     };
 
@@ -138,7 +138,7 @@ private:
 
     Output* out;
 
-    TimeConverter* timeConverter;
+    TimeConverter timeConverter;
     Clock::HandlerBase* clockHandler;
     RequestGenerator* reqGen;
     std::map<StandardMem::Request::id_t, CPURequest*> requestsInFlight;

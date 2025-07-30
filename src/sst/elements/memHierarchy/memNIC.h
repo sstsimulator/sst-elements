@@ -81,7 +81,7 @@ public:
     /* Callback to notify when link_control receives a message */
     bool recvNotify(int);
 
-    /* Internal clock function to send events that we weren't able 
+    /* Internal clock function to send events that we weren't able
      * to send immediately */
     bool clock(SimTime_t cycle);
 
@@ -111,8 +111,8 @@ private:
     std::queue<SST::Interfaces::SimpleNetwork::Request*> sendQueue; // Queue of events waiting to be sent (sent on clock)
 
     // Clocks
-    Clock::Handler<MemNIC>* clockHandler;
-    TimeConverter* clockTC;
+    Clock::HandlerBase* clockHandler;
+    TimeConverter clockTC;
 };
 
 } //namespace memHierarchy

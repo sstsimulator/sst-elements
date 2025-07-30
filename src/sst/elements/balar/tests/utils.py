@@ -41,7 +41,7 @@ def get_opt(args, envname, argname:dict, env_default=""):
         return args.get(argname, "")
     else:
         return env
-    
+
 
 # GPU Memory system config
 ddr4 = 2666 # Alternative is 2400
@@ -160,7 +160,7 @@ class Config:
             # Not neccessary for simple cases:
             #"maxRequestDelay" : "1000000",
             })
-    
+
     def get_GPU_mem_params(self, numParts, startAddr, endAddr):
         return dict({
             "verbose" : 0,
@@ -174,7 +174,7 @@ class Config:
             "interleave_size" : "256B",
             "interleave_step" : str(numParts * 256) + "B",
             })
-    
+
     def get_GPU_simple_mem_params(self):
         return dict({
             "access_time" : "45ns",

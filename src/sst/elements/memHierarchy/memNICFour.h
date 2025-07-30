@@ -139,7 +139,7 @@ public:
 
             void serialize_order(SST::Core::Serialization::serializer &ser) override {
                 MemRtrEvent::serialize_order(ser);
-                ser & tag;
+                SST_SER(tag);
             }
 
             ImplementSerializable(SST::MemHierarchy::MemNICFour::OrderedMemRtrEvent);
@@ -160,8 +160,8 @@ private:
     std::array<SST::Interfaces::SimpleNetwork*, 4> link_control;
 
     // Clocks
-    Clock::Handler<MemNICFour>* clockHandler;
-    TimeConverter* clockTC;
+    Clock::HandlerBase* clockHandler;
+    TimeConverter clockTC;
     bool clockOn;
 
     // Event queues

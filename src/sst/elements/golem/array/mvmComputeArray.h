@@ -26,7 +26,7 @@ template<typename T>
 class MVMComputeArray : public ComputeArray {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(
-            MVMComputeArray<T>, 
+            MVMComputeArray<T>,
             SST::Golem::ComputeArray,
             TimeConverter*,
             Event::HandlerBase*
@@ -37,8 +37,8 @@ public:
                          Event::HandlerBase* handler)
         : ComputeArray(id, params, tc, handler) {
         // Configure selfLink
-        selfLink = configureSelfLink("Self", tc, new Event::Handler<MVMComputeArray>(this, &MVMComputeArray::handleSelfEvent));
-        selfLink->setDefaultTimeBase(latencyTC);
+        selfLink = configureSelfLink("Self", *tc, new Event::Handler2<MVMComputeArray,&MVMComputeArray::handleSelfEvent>(this));
+        selfLink->setDefaultTimeBase(*latencyTC);
 
         // Initialize vectors
         inputVectors.resize(numArrays);
@@ -128,7 +128,7 @@ protected:
 
     void printValue(const T& value) {
         if constexpr (std::is_same<T, int64_t>::value) {
-            out.verbose(CALL_INFO, 2, 0, "%ld ", value);
+            out.verbose(CALL_INFO, 2, 0, "%" PRId64 " ", value);
         } else if constexpr (std::is_same<T, float>::value) {
             out.verbose(CALL_INFO, 2, 0, "%f ", value);
         }
@@ -138,4 +138,4 @@ protected:
 } // namespace Golem
 } // namespace SST
 
-#endif 
+#endif

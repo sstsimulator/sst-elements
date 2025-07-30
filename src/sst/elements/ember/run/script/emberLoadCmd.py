@@ -6,10 +6,10 @@ import jobInfo
 import emberLoadBase
 import rtrConfig
 
-myOptions = jobInfo.getOptions() 
+myOptions = jobInfo.getOptions()
 myOptions += topoConfig.getOptions()
-myOptions += platConfig.getOptions() 
-myOptions += emberLoadBase.getOptions() 
+myOptions += platConfig.getOptions()
+myOptions += emberLoadBase.getOptions()
 myOptions += ['detailedModel=']
 myOptions += ['detailedModelParams=']
 
@@ -40,10 +40,10 @@ numNodes, ranksPerNode, motifs, random = jobInfo.parseOptions(opts)
 job = jobInfo.JobInfoCmd( 0, numNodes, ranksPerNode, motifs )
 
 if detailedModel and detailedModelParams:
-	job.setDetailed( [detailedModel, detailedModelParams, detailedModelNodes ] ) 
-	
+	job.setDetailed( [detailedModel, detailedModelParams, detailedModelNodes ] )
+
 
 if random:
 	job.setRandom()
 
-emberLoadBase.run( opts, params, topo, shape, [ job ], {} ) 
+emberLoadBase.run( opts, params, topo, shape, [ job ], {} )

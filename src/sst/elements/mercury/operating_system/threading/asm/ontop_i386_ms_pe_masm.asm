@@ -25,10 +25,10 @@
 .code
 
 ontop_fcontext PROC BOOST_CONTEXT_EXPORT
-    push  ebp  ; save EBP 
-    push  ebx  ; save EBX 
-    push  esi  ; save ESI 
-    push  edi  ; save EDI 
+    push  ebp  ; save EBP
+    push  ebx  ; save EBX
+    push  esi  ; save ESI
+    push  edi  ; save EDI
 
     assume  fs:nothing
     ; load NT_TIB into EDX
@@ -72,7 +72,7 @@ ontop_fcontext PROC BOOST_CONTEXT_EXPORT
 
     ; third arg of ontop_fcontext() == ontop-function
     mov  ecx, [esp+030h]
-    
+
     ; restore ESP (pointing to context-data) from EAX
     mov  esp, eax
 
@@ -101,9 +101,9 @@ ontop_fcontext PROC BOOST_CONTEXT_EXPORT
     pop  eax
     mov  [edx], eax
 
-    pop  edi  ; save EDI 
-    pop  esi  ; save ESI 
-    pop  ebx  ; save EBX 
+    pop  edi  ; save EDI
+    pop  esi  ; save ESI
+    pop  ebx  ; save EBX
     pop  ebp  ; save EBP
 
     ; jump to context

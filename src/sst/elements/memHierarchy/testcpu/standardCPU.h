@@ -66,7 +66,7 @@ public:
         {"addressoffset",           "(uint) Apply an offset to a calculated address to check for non-alignment issues", "0"},
         {"test_init",               "(uint) Number of write messages to initialize memory with", "0"} )
 
-    SST_ELI_DOCUMENT_STATISTICS( 
+    SST_ELI_DOCUMENT_STATISTICS(
         {"pendCycle", "Number of pending requests per cycle", "count", 1},
         {"reads", "Number of reads issued (including noncacheable)", "count", 1},
         {"writes", "Number of writes issued (including noncacheable)", "count", 1},
@@ -89,6 +89,11 @@ public:
     void setup() override;
     void finish() override;
     void emergencyShutdown() override;
+
+    // Serialization
+    standardCPU();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::MemHierarchy::standardCPU)
 
 private:
     void handleEvent( Interfaces::StandardMem::Request *ev );
@@ -136,7 +141,7 @@ private:
     SST::RNG::MarsagliaRNG rng_;
     SST::RNG::MarsagliaRNG rng_comm_;
 
-    TimeConverter *clock_timeconverter_;
+    TimeConverter clock_timeconverter_;
     Clock::HandlerBase *clock_handler_;
 
     /* Functions for creating the requests tested by this CPU */

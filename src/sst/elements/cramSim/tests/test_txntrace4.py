@@ -30,7 +30,7 @@ def read_arguments():
                 exit(-1)
             override_list.append(arg)
             print("Override: ", override_list[-1])
-            
+
     return [boolUseRandomTrace, trace_file, boolUseDefaultConfig, config_file_list, override_list]
 
 def setup_config_params():
@@ -101,7 +101,7 @@ def setup_config_params():
         l_tokens = override.split("=")
         print("Override cfg", l_tokens[0], l_tokens[1])
         l_params[l_tokens[0]] = l_tokens[1]
-        
+
     if not g_boolUseRandomTrace:
         l_params["traceFile"] = g_trace_file
     else:

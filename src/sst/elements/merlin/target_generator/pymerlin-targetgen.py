@@ -34,7 +34,7 @@ class TargetGenerator(TemplateBase):
         params = self._getGroupParams("params");
         for (key,value) in params.items():
             comp.addParam(prefix + key, value)
-        
+
     # Function used if instancing as UserSubComponent
     # If the child puts their parameters in the "params" group, then
     # they won't have to implement this function themselves

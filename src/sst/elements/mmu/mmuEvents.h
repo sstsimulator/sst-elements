@@ -36,7 +36,7 @@ class TlbInitEvent  : public SST::Event {
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        ser& pageShift;
+        SST_SER(pageShift);
     }
 
     ImplementSerializable(TlbInitEvent);
@@ -62,12 +62,12 @@ class TlbMissEvent  : public SST::Event {
   private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        ser& id;
-        ser& hwThread;
-        ser& vpn;
-        ser& perms;
-        ser& instPtr;
-        ser& memAddr;
+        SST_SER(id);
+        SST_SER(hwThread);
+        SST_SER(vpn);
+        SST_SER(perms);
+        SST_SER(instPtr);
+        SST_SER(memAddr);
     }
         ImplementSerializable(TlbMissEvent);
 
@@ -97,16 +97,16 @@ class TlbMissEvent  : public SST::Event {
   private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        ser& id;
-        ser& perms;
-        ser& ppn;
-        ser& success;
+        SST_SER(id);
+        SST_SER(perms);
+        SST_SER(ppn);
+        SST_SER(success);
     }
     ImplementSerializable(TlbFillEvent);
 
     RequestID id;
     uint32_t ppn;
-    uint32_t perms; 
+    uint32_t perms;
     bool success;
 
 };
@@ -123,7 +123,7 @@ class TlbFlushReqEvent  : public SST::Event {
   private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        ser& hwThread;
+        SST_SER(hwThread);
     }
     ImplementSerializable(TlbFlushReqEvent);
 
@@ -143,7 +143,7 @@ class TlbFlushRespEvent  : public SST::Event {
   private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        ser& hwThread;
+        SST_SER(hwThread);
     }
     ImplementSerializable(TlbFlushRespEvent);
 
