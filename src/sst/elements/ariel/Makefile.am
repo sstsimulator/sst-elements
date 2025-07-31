@@ -73,13 +73,20 @@ EXTRA_DIST = \
 	frontend/simple/examples/stream/malloc.txt \
 	frontend/simple/examples/stream/stream.c \
 	frontend/simple/examples/stream/stream_malloc.c \
-	frontend/simple/examples/stream/tests/refFiles/test_Ariel_ariel_ivb.out \
-	frontend/simple/examples/stream/tests/refFiles/test_Ariel_ariel_snb.out \
-	frontend/simple/examples/stream/tests/refFiles/test_Ariel_ariel_snb_mlm.out \
-	frontend/simple/examples/stream/tests/refFiles/test_Ariel_memHstream.out \
-	frontend/simple/examples/stream/tests/refFiles/test_Ariel_runstream.out \
-	frontend/simple/examples/stream/tests/refFiles/test_Ariel_runstreamNB.out \
-	frontend/simple/examples/stream/tests/refFiles/test_Ariel_runstreamSt.out \
+	frontend/simple/examples/stream/tests/refFiles/test_Ariel_ariel_ivb_pin.out \
+	frontend/simple/examples/stream/tests/refFiles/test_Ariel_ariel_snb_pin.out \
+	frontend/simple/examples/stream/tests/refFiles/test_Ariel_ariel_snb_mlm_pin.out \
+	frontend/simple/examples/stream/tests/refFiles/test_Ariel_memHstream_pin.out \
+	frontend/simple/examples/stream/tests/refFiles/test_Ariel_runstream_pin.out \
+	frontend/simple/examples/stream/tests/refFiles/test_Ariel_runstreamNB_pin.out \
+	frontend/simple/examples/stream/tests/refFiles/test_Ariel_runstreamSt_pin.out \
+	frontend/simple/examples/stream/tests/refFiles/test_Ariel_ariel_ivb_epa.out \
+	frontend/simple/examples/stream/tests/refFiles/test_Ariel_ariel_snb_epa.out \
+	frontend/simple/examples/stream/tests/refFiles/test_Ariel_ariel_snb_mlm_epa.out \
+	frontend/simple/examples/stream/tests/refFiles/test_Ariel_memHstream_epa.out \
+	frontend/simple/examples/stream/tests/refFiles/test_Ariel_runstream_epa.out \
+	frontend/simple/examples/stream/tests/refFiles/test_Ariel_runstreamNB_epa.out \
+	frontend/simple/examples/stream/tests/refFiles/test_Ariel_runstreamSt_epa.out \
 	tests/testsuite_default_Ariel.py \
 	tests/testsuite_testio_Ariel.py \
 	tests/testsuite_mpi_Ariel.py \
