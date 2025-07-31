@@ -1,0 +1,21 @@
+0:TimingDRAM::TimingDRAM():52:mc=0: number of channels: 1
+0:TimingDRAM::TimingDRAM():53:mc=0: address mapper:     memHierarchy.simpleAddrMapper
+0:TimingDRAM:Channel:Channel():111:mc=0:chan=0: max pending trans: 32
+0:TimingDRAM:Channel:Channel():112:mc=0:chan=0: number of ranks:   2
+0:TimingDRAM:Rank:Rank():221:mc=0:chan=0:rank=0: number of banks: 8
+0:TimingDRAM:Bank:Bank():289:mc=0:chan=0:rank=0:bank=0: CL:           10
+0:TimingDRAM:Bank:Bank():290:mc=0:chan=0:rank=0:bank=0: CL_WR:        12
+0:TimingDRAM:Bank:Bank():291:mc=0:chan=0:rank=0:bank=0: RCD:          10
+0:TimingDRAM:Bank:Bank():292:mc=0:chan=0:rank=0:bank=0: TRP:          14
+0:TimingDRAM:Bank:Bank():293:mc=0:chan=0:rank=0:bank=0: dataCycles:   2
+0:TimingDRAM:Bank:Bank():294:mc=0:chan=0:rank=0:bank=0: transactionQ: memHierarchy.reorderTransactionQ
+0:TimingDRAM:Bank:Bank():295:mc=0:chan=0:rank=0:bank=0: pagePolicy:   memHierarchy.simplePagePolicy
+CORE ID: 0 PROCESSED AN EXIT EVENT
+
+Ariel Memory Management Statistics:
+---------------------------------------------------------------------
+Page Table Sizes:
+- Map entries         16
+Page Table Coverages:
+- Bytes               65536
+Simulation is complete, simulated time: 131.433 us
