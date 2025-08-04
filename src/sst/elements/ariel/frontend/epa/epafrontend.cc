@@ -1,3 +1,7 @@
+// Copyright 2025 EP Analytics
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Authors: Allyson Cauble-Chantrenne
 
 #include <sst_config.h>
 

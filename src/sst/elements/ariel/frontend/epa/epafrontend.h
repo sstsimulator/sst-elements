@@ -1,4 +1,8 @@
-// TODO  copyright infpo
+// Copyright 2025 EP Analytics
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Authors: Allyson Cauble-Chantrenne
+
 #ifndef _H_EPA_FRONTEND
 #define _H_EPA_FRONTEND
 
