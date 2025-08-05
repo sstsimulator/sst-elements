@@ -19,6 +19,8 @@
 
 #include "arielevent.h"
 
+#include <cstdint>
+
 using namespace SST;
 
 namespace SST {

@@ -54,6 +54,8 @@
 #include "shmem/emberFamAddEv.h"
 #include "shmem/emberFamCswapEv.h"
 
+#include <queue>
+
 using namespace Hermes;
 
 namespace SST {
