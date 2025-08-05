@@ -47,6 +47,7 @@ class ArielCPU : public SST::Component {
         {"verbose", "Verbosity for debugging. Increased numbers for increased verbosity.", "0"},
         {"profilefunctions", "Profile functions for Ariel execution, 0 = none, >0 = enable", "0" },
         {"corecount", "Number of CPU cores to emulate", "1"},
+        {"frontend", "Specify an ariel frontend to use, set to ariel.frontend.pin for PIN3 (default), set to ariel.frontend.epa for PEBIL or EPAX", "ariel.frontend.pin"},
         {"checkaddresses", "Verify that addresses are valid with respect to cache lines", "0"},
         {"maxissuepercycle", "Maximum number of requests to issue per cycle, per core", "1"},
         {"maxcorequeue", "Maximum queue depth per core", "64"},
