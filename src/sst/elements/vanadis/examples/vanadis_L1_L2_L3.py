@@ -60,7 +60,7 @@
 #                                                               | This component represents the L3 cache in the model |
 #                                                               |_____________________________________________________|
 #
-# This example relies on several environemental variables, which allow for costumization. A full list of 
+# This example relies on several environmental variables, which allow for costumization. A full list of 
 # the available customizations, including default values, is provided below. Note that the default values 
 # may be specific to this example, and therefore differ from the default values built into the Vanadis source.
 # 
