@@ -42,6 +42,12 @@ else:
 if not os.path.exists(app):
     app = os.getenv( "OMP_EXE" )
 
+frontend_type = os.getenv("ARIEL_TEST_FRONTEND")
+if frontend_type == None:
+    frontend = "ariel.frontend.pin"
+else:
+    frontend = "ariel.frontend." + str(frontend_type)
+
 ## Application Info:
 ## Executable  -> exe_file
 ## appargcount -> Number of commandline arguments after <exec_file> name
@@ -60,6 +66,7 @@ ariel = sst.Component("A0", "ariel.ariel")
 ## ariel.addParams(AppArgs)
 ariel.addParams({
    "verbose"             : "0",
+   "frontend"            : frontend,
    "maxcorequeue"        : "256",
    "maxissuepercycle"    : "2",
    "pipetimeout"         : "0",

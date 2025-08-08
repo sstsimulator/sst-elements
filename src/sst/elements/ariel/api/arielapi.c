@@ -27,9 +27,13 @@ void ariel_enable() {
     printf("ARIEL: ENABLE called in Ariel API.\n");
 }
 
+void ariel_enable_() { ariel_enable(); }
+
 void ariel_disable() {
     printf("ARIEL: DISABLE called in Ariel API.\n");
 }
+
+void ariel_disable_() { ariel_disable(); }
 
 void ariel_fence() {
     printf("ARIEL: FENCE called in Ariel API.\n");

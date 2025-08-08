@@ -4,5 +4,6 @@ fesimple.dylib
 tests/testIO/rank_0_thread_0
 tests/testMPI/rank_0_thread_0
 tests/testopenMP/ompmybarrier/ompmybarrier
+tests/testopenMP/ompmybarrier/ompmybarrier.arielinst*
 frontend/simple/malloc.txt
 api/*.a
