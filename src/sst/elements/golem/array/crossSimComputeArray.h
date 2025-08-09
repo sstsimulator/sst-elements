@@ -116,8 +116,12 @@ public:
                 static_cast<npy_intp>(outputSize),
                 static_cast<npy_intp>(inputSize)
             };
+
             int arrayInNumDims = 1;
             npy_intp arrayInDim[1] = { static_cast<npy_intp>(inputSize) };
+
+            int arrayOutNumDims = 1;
+            npy_intp arrayOutDim[1] = { static_cast<npy_intp>(outputSize) };
 
             int numpyType = getNumpyType();
 
@@ -128,6 +132,9 @@ public:
 
                 pyArrayIn[i] = PyArray_SimpleNew(arrayInNumDims, arrayInDim, numpyType);
                 npArrayIn[i] = reinterpret_cast<PyArrayObject*>(pyArrayIn[i]);
+
+                pyArrayOut[i] = PyArray_SimpleNew(arrayOutNumDims, arrayOutDim, numpyType);
+                npArrayOut[i] = reinterpret_cast<PyArrayObject*>(pyArrayOut[i]);
             }
 
             // Import CrossSim (simulator.py) module
