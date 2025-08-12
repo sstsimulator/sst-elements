@@ -125,10 +125,21 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     int_register_stack = new VanadisRegisterStack(int_reg_count);
     fp_register_stack = new VanadisRegisterStack(fp_reg_count);
 
+    SubComponentSlotInfo * decoders = getSubComponentSlotInfo("decoder");
     for ( uint32_t i = 0; i < hw_threads; ++i ) {
+        VanadisDecoder* thr_decoder = nullptr;
+        if ( decoders && decoders->isPopulated(i) ) {
+            thr_decoder = decoders->create<VanadisDecoder>(i, ComponentInfo::SHARE_NONE);
+        } else {
+            snprintf(decoder_name, 64, "decoder%" PRIu32 "", i);
+            thr_decoder = loadUserSubComponent<SST::Vanadis::VanadisDecoder>(decoder_name);
+            output->output("%s, Warning: the '%s' subcomponent slot is deprecated. Use index %" PRIu32 " of the 'decoder' subcomponent slot instead\n",
+                    getName().c_str(), decoder_name, i);
+        }
 
-        snprintf(decoder_name, 64, "decoder%" PRIu32 "", i);
-        VanadisDecoder* thr_decoder = loadUserSubComponent<SST::Vanadis::VanadisDecoder>(decoder_name);
+        if ( !thr_decoder ) {
+            output->fatal(CALL_INFO, -1, "%s, Error: No VanadisDecoder subcomponent found for thread %u\n", getName().c_str(), i); 
+        }
 
         if ( nullptr == thr_decoder ) {
             output->fatal(CALL_INFO, -1, "Error: was unable to load %s on thread %" PRIu32 "\n", decoder_name, i);
