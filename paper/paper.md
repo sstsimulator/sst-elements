@@ -106,14 +106,14 @@ At the heart of any computing system is some type of processor, such as a CPU or
 
 All of these processors are not complete without a memory system, which is what `memHierarchy` is for, and no memory system is complete without a DRAM simulator. Those wanting a simple DRAM model can use the ones included in SST-Elements, and those needing maximum accuracy can use one of the state of the art DRAM simulators integrated with SST, such as `Ramulator 2` [@ramulator2].
 
-In \autoref{fig:miranda}, we can see an example of a simulation that has 2 `miranda` cores, each with an L1 cache, connected to a shared L2 and a DRAM simulator. 
+In \autoref{fig:miranda}, we can see an example of a simulation that has 2 `miranda` cores, each with an L1 cache, connected to a shared L2 and a DRAM simulator.
 
 ![Example single node simulation with components and subcomponents from the miranda and memHierarchy elements.\label{fig:miranda}](figures/miranda.png){ width=60% }
 
 ## Network Simulations
 In addition to single-node simulations, SST is often used for network simulations, a key component in supercomputers. It is useful to think of a network simulation consisting of two parts: (1) a traffic generator, such as an MPI program, and (2) a network simulator that simulates the time it takes for packets to move between nodes. To generate traffic, users with a simple problem in mind may use `Ember` to quickly simulate MPI calls using a state-machine representation. Users wanting something more like direct execution may opt for `Mercury`, which can simulate entire MPI programs using lightweight threads and a sekelonization process.
 
-To actually simulate the data moving around in a network, `Kingsley` or `Merlin` can be used. `Kingsley` is best suited for 2D-grid networks such as those in a NoC, while `Merlin` is much more general and can be used for simulating anything from a NoC to a complex supercomputer network. 
+To actually simulate the data moving around in a network, `Kingsley` or `Merlin` can be used. `Kingsley` is best suited for 2D-grid networks such as those in a NoC, while `Merlin` is much more general and can be used for simulating anything from a NoC to a complex supercomputer network.
 
 # Related Work
 
