@@ -170,6 +170,11 @@ if ( CHECKPOINT_LOAD != m_checkpoint ) {
         "mem_interface", ComponentInfo::SHARE_NONE,
         getTimeConverter("1ps"),
         new StandardMem::Handler2<SST::Vanadis::VanadisNodeOSComponent,&VanadisNodeOSComponent::handleIncomingMemoryCallback>(this));
+
+    if (mem_if == nullptr) {
+        output->fatal(CALL_INFO, -1, "Error: failed to load mem interface subcomponent!\n");
+    }
+
     output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_INIT, "Configuring for %" PRIu32 " core links...\n", m_coreCount);
     core_links.reserve(m_coreCount);
 

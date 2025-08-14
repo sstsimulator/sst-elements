@@ -31,11 +31,13 @@ extern "C" {
  * Must set ariel's 'arielmode' parameter to 0 or 2
  */
 void ariel_enable();
+void ariel_enable_();
 
 /* Disable simulation when this fucntion is encountered.
  * Works regardless of the 'arielmode' parameter.
  */
 void ariel_disable();
+void ariel_disable_();
 
 /* Execute a fence */
 void ariel_fence();
