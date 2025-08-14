@@ -443,26 +443,26 @@ class CPU_Builder:
 
         # CPU (data) -> processor_bus
         link_lsq_l1dcache_link = sst.Link(prefix+".link_cpu_dbus_link")
-        link_lsq_l1dcache_link.connect( (cpuDcacheIf, "lowlink", "1ns"), (processor_bus, "high_network_0", "1ns") )
+        link_lsq_l1dcache_link.connect( (cpuDcacheIf, "lowlink", "1ns"), (processor_bus, "highlink0", "1ns") )
         link_lsq_l1dcache_link.setNoCut()
 
         # RoCC (data) -> processor_bus
         link_rocc0_l1dcache_link = sst.Link(prefix+".link_rocc0_dbus_link")
 
         link_rocc0_l1dcache_link.connect( (rocc0DcacheIf, "lowlink", "1ns"),
-                                        (processor_bus, "high_network_1", "1ns"))
+                                        (processor_bus, "highlink1", "1ns"))
         link_rocc0_l1dcache_link.setNoCut()
 
         # RoCC (data) -> processor_bus
         link_rocc1_l1dcache_link = sst.Link(prefix+".link_rocc1_dbus_link")
 
         link_rocc1_l1dcache_link.connect( (rocc1DcacheIf, "lowlink", "1ns"),
-                                        (processor_bus, "high_network_2", "1ns"))
+                                        (processor_bus, "highlink2", "1ns"))
         link_rocc1_l1dcache_link.setNoCut()
 
         # processor_bus -> L1 cache
         link_bus_l1cache_link = sst.Link(prefix+".link_bus_l1cache_link")
-        link_bus_l1cache_link.connect( (processor_bus, "low_network_0", "1ns"), (dtlbWrapper, "cpu_if", "1ns") )
+        link_bus_l1cache_link.connect( (processor_bus, "lowlink0", "1ns"), (dtlbWrapper, "cpu_if", "1ns") )
         link_bus_l1cache_link.setNoCut()
 
         # data TLB -> data L1
@@ -482,17 +482,17 @@ class CPU_Builder:
 
         # data L1 -> bus
         link_l1dcache_l2cache_link = sst.Link(prefix+".link_l1dcache_l2cache_link")
-        link_l1dcache_l2cache_link.connect( (l1dcache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_0", "1ns") )
+        link_l1dcache_l2cache_link.connect( (l1dcache_2_l2cache, "port", "1ns"), (cache_bus, "highlink0", "1ns") )
         link_l1dcache_l2cache_link.setNoCut()
 
         # instruction L1 -> bus
         link_l1icache_l2cache_link = sst.Link(prefix+".link_l1icache_l2cache_link")
-        link_l1icache_l2cache_link.connect( (l1icache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_1", "1ns") )
+        link_l1icache_l2cache_link.connect( (l1icache_2_l2cache, "port", "1ns"), (cache_bus, "highlink1", "1ns") )
         link_l1icache_l2cache_link.setNoCut()
 
         # BUS to L2 cache
         link_bus_l2cache_link = sst.Link(prefix+".link_bus_l2cache_link")
-        link_bus_l2cache_link.connect( (cache_bus, "low_network_0", "1ns"), (l2cache_2_l1caches, "port", "1ns") )
+        link_bus_l2cache_link.connect( (cache_bus, "lowlink0", "1ns"), (l2cache_2_l1caches, "port", "1ns") )
         link_bus_l2cache_link.setNoCut()
 
         return (cpu, "os_link", "5ns"), (l2cache_2_mem, "port", "1ns") , (dtlb, "mmu", "1ns"), (itlb, "mmu", "1ns")

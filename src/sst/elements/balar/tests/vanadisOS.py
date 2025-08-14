@@ -126,10 +126,10 @@ class Builder:
             "debug_addr": debug_addr
         })
 
-        l1cache_2_cpu = l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
+        l1cache_2_cpu = l1cache.setSubComponent("highlink", "memHierarchy.MemLink")
 
         link = sst.Link(self.prefix + ".link_os_l1cache")
-        link.connect( (mem_if, "port", "1ns"), (l1cache_2_cpu, "port", "1ns") )
+        link.connect( (mem_if, "lowlink", "1ns"), (l1cache_2_cpu, "port", "1ns") )
 
         return l1cache
 

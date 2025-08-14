@@ -344,7 +344,7 @@ class CPU_Builder:
 
         # CPU.decoder
         for n in range(numThreads):
-            decode     = cpu.setSubComponent( "decoder"+str(n), vanadis_decoder )
+            decode     = cpu.setSubComponent( "decoder", vanadis_decoder, n )
             decode.addParams( decoderParams )
 
             decode.enableAllStatistics()

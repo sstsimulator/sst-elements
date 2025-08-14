@@ -268,7 +268,7 @@ dirctrl.addParams({
       "debug_level" : 10,
       "debug_addr" : dbg_addr,
 })
-dirtoM = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
+dirtoM = dirctrl.setSubComponent("lowlink", "memHierarchy.MemLink")
 
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
