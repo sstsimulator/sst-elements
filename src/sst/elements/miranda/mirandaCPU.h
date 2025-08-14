@@ -42,6 +42,11 @@ public:
     uint64_t getIssueTime() const { return issueTime; }
     uint64_t getOriginalReqID() const { return originalID; }
     uint32_t countParts() const { return outstandingParts; }
+    void serialize_order(SST::Core::Serialization::serializer& ser) {
+        SST_SER(originalID);
+        SST_SER(issueTime);
+        SST_SER(outstandingParts);
+    }
 protected:
     uint64_t originalID;
     uint64_t issueTime;
@@ -65,8 +70,13 @@ public:
         virtual void handle(SST::Interfaces::StandardMem::WriteResp* rsp) override;
         virtual void handle(SST::Interfaces::StandardMem::CustomResp* rsp) override;
 
+        void serialize_order(SST::Core::Serialization::serializer& ser) override;
+
         RequestGenCPU* cpu;
     };
+
+    //void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    //ImplementSerializable(SST::Miranda::RequestGenCPU);
 
 	SST_ELI_REGISTER_COMPONENT(
         RequestGenCPU,
