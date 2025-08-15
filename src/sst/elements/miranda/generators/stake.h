@@ -77,6 +77,7 @@ public:
             bool Read, bool Write, bool Atomic, bool Custom,
             uint32_t Code );
 
+    NotSerializable(SST::Miranda::Stake)
 
 private:
     bool done;          // holds the completion code of the sim
