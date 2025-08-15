@@ -95,10 +95,10 @@ coreCacheBus.addParams({
 
 # Connect the mem links for coreTLB and balarTLB
 connect("coreTLB_coreCacheBus_link", balarTlbWrapper, "cache_if",
-        coreCacheBus, "high_network_0", "1ns")
+        coreCacheBus, "highlink0", "1ns")
 connect("balarTLB_coreCacheBus_link", coredtlbWrapper, "cache_if",
-        coreCacheBus, "high_network_1", "1ns")
-connect("coreCacheBus_l1cache_link", coreCacheBus, "low_network_0",
+        coreCacheBus, "highlink1", "1ns")
+connect("coreCacheBus_l1cache_link", coreCacheBus, "lowlink0",
         l1dcache_2_cpu, "port", "1ns")
 # End balar connection
 

@@ -228,6 +228,7 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
     bool highlink = isPortConnected("highlink");
     bool lowlink = isPortConnected("lowlink");
 
+    // highlink subcomponent or cpulink subcomponent or highlink port
     linkUp_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, tc);
     if (!linkUp_) {
         linkUp_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, tc);

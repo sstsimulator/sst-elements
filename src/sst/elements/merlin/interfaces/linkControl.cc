@@ -76,6 +76,9 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     }
 
     rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler2<LinkControl,&LinkControl::handle_input>(this));
+    if (!rtr_link) {
+        merlin_abort.fatal(CALL_INFO,-1,"In %s, port '%s' must be connected\n", getName().c_str(), port_name.c_str());
+    }
 
     output_timing = configureSelfLink(port_name + "_output_timing", "1GHz",
             new Event::Handler2<LinkControl,&LinkControl::handle_output>(this));

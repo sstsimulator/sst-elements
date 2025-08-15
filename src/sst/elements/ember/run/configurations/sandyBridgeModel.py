@@ -46,7 +46,7 @@ class SandyBridgeModel(DetailedModel):
             link = sst.Link( name + "_l1_link" )
 
             link.setNoCut();
-            link.connect( ( cpu, "cache_link", "100ps" ) , (cpuL1s[i],"high_network_0","1000ps") )
+            link.connect( ( cpu, "cache_link", "100ps" ) , (cpuL1s[i],"highlink","1000ps") )
 
             link = sst.Link( name + "_src_link" )
             link.setNoCut();
@@ -64,7 +64,7 @@ class SandyBridgeModel(DetailedModel):
 
         link = sst.Link( name + "cpu_l1_link")
         link.setNoCut();
-        link.connect( ( cpu, "cache_link", "100ps" ) , (nicL1,"high_network_0","1000ps") )
+        link.connect( ( cpu, "cache_link", "100ps" ) , (nicL1,"highlink","1000ps") )
 
         link = sst.Link( name + "src_link" )
         link.setNoCut();

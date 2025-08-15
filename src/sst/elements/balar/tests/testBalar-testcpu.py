@@ -63,20 +63,20 @@ clock = "2GHz"
 balarBuilder = balarBlock.Builder(args)
 balar_mmio_iface, balar_mmio_testcpu_addr, dma_mem_if, dma_mmio_if = balarBuilder.buildTestCPU(cfgFile, verbosity, dma_verbosity)
 
-mmio_nic = balar_mmio_iface.setSubComponent("memlink", "memHierarchy.MemNIC")
+mmio_nic = balar_mmio_iface.setSubComponent("lowlink", "memHierarchy.MemNIC")
 mmio_nic.addParams({"group": mmio_group,
                     "sources": mmio_src,
                     "destinations": mmio_dst,
                     "network_bw": network_bw})
 
 # DMA's mem_iface like a core
-dma_mem_nic = dma_mem_if.setSubComponent("memlink", "memHierarchy.MemNIC")
+dma_mem_nic = dma_mem_if.setSubComponent("lowlink", "memHierarchy.MemNIC")
 dma_mem_nic.addParams({"group": core_group,
                     "destinations": core_dst,
                     "network_bw": network_bw})
 
 # DMA's mmio_iface like memory
-dma_mmio_nic = dma_mmio_if.setSubComponent("memlink", "memHierarchy.MemNIC")
+dma_mmio_nic = dma_mmio_if.setSubComponent("lowlink", "memHierarchy.MemNIC")
 dma_mmio_nic.addParams({"group": memory_group,
                     "sources": memory_src,
                     "network_bw": network_bw})
@@ -96,7 +96,7 @@ cpu.addParams({
 })
 iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 iface.addParams(debug_params)
-cpu_nic = iface.setSubComponent("memlink", "memHierarchy.MemNIC")
+cpu_nic = iface.setSubComponent("lowlink", "memHierarchy.MemNIC")
 cpu_nic.addParams({"group": core_group,
                    "destinations": core_dst,
                    "network_bw": network_bw})
@@ -121,7 +121,7 @@ memctrl.addParams({
     "clock": "1GHz",
     "addr_range_end": balar_mmio_testcpu_addr - 1,
 })
-mem_nic = memctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+mem_nic = memctrl.setSubComponent("highlink", "memHierarchy.MemNIC")
 mem_nic.addParams({"group": memory_group,
                    "sources" : memory_src,
                    "network_bw": network_bw})

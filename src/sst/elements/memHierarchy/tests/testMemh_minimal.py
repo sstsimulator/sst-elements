@@ -43,4 +43,4 @@ sst.enableAllStatisticsForAllComponents()
 
 # Define the simulation links
 link_cpu_mem = sst.Link("link_cpu_mem")
-link_cpu_mem.connect( (iface, "port", "1000ps"), (memctrl, "direct_link", "1000ps") )
+link_cpu_mem.connect( (iface, "port", "1000ps"), (memctrl, "highlink", "1000ps") )

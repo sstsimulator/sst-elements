@@ -82,10 +82,10 @@ class Builder():
             l1g.addParams(gpuconfig.getGPUL1Params())
             l1g.addParams(debug_params)
 
-            l1g_gpulink = l1g.setSubComponent("cpulink", "memHierarchy.MemLink")
-            l1g_memlink = l1g.setSubComponent("memlink", "memHierarchy.MemNIC")
-            l1g_memlink.addParams({"group": l1g_group})
-            l1g_linkctrl = l1g_memlink.setSubComponent(
+            l1g_gpulink = l1g.setSubComponent("highlink", "memHierarchy.MemLink")
+            l1g_lowlink = l1g.setSubComponent("lowlink", "memHierarchy.MemNIC")
+            l1g_lowlink.addParams({"group": l1g_group})
+            l1g_linkctrl = l1g_lowlink.setSubComponent(
                 "linkcontrol", "shogun.ShogunNIC")
 
             connect("gpu_cache_link_%d" % next_core_id,
@@ -198,8 +198,8 @@ class Builder():
                     " End Address: " + str(hex(endAddr)))
 
                 connect("bus_mem_link_%d" % next_mem,
-                        mem_l2_bus, "low_network_%d" % sub_group_id,
-                        mem, "direct_link",
+                        mem_l2_bus, "lowlink%d" % sub_group_id,
+                        mem, "highlink",
                         "50ps").setNoCut()
 
                 next_mem = next_mem + 1
@@ -216,11 +216,11 @@ class Builder():
 
                 l2g = sst.Component("l2gcache_%d" % (next_cache), "memHierarchy.Cache")
                 l2g.addParams(gpuconfig.getGPUL2Params(cacheStartAddr, endAddr))
-                l2g_gpulink = l2g.setSubComponent("cpulink", "memHierarchy.MemNIC")
+                l2g_gpulink = l2g.setSubComponent("highlink", "memHierarchy.MemNIC")
                 l2g_gpulink.addParams({"group": l2g_group})
                 l2g_linkctrl = l2g_gpulink.setSubComponent(
                     "linkcontrol", "shogun.ShogunNIC")
-                l2g_memlink = l2g.setSubComponent("memlink", "memHierarchy.MemLink")
+                l2g_lowlink = l2g.setSubComponent("lowlink", "memHierarchy.MemLink")
 
                 connect("l2g_xbar_link_%d" % (next_cache),
                         GPUrouter, "port%d" % (gpuconfig.gpu_cores+(next_cache)),
@@ -228,8 +228,8 @@ class Builder():
                         gpuconfig.default_link_latency).setNoCut()
 
                 connect("l2g_mem_link_%d" % (next_cache),
-                        l2g_memlink, "port",
-                        mem_l2_bus, "high_network_%d" % (next_mem_id),
+                        l2g_lowlink, "port",
+                        mem_l2_bus, "highlink%d" % (next_mem_id),
                         gpuconfig.default_link_latency).setNoCut()
 
                 print("++ %d-%d (%d)..." %
@@ -317,7 +317,7 @@ class Builder():
         balarTlb.addParams(balarTlbParams)
 
         # Connect the data link for dmaEngine to TLB
-        connect("balar_balarBus_link", dma_mem_if, "port",
+        connect("balar_balarBus_link", dma_mem_if, "lowlink",
                 balarTlbWrapper, "cpu_if", "1ns")
 
         # mem_iface replaced by TLB, keep mmio_iface
