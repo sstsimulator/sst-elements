@@ -137,12 +137,12 @@ vanadis_os_hdlr = "vanadis.Vanadis" + vanadis_isa + "OSHandler"
 if vanadis_isa == "MIPS":
 	lsq_mask = 0xFFFFFFFF
 
-decode0     = v_cpu_0.setSubComponent( "decoder0", vanadis_decoder )
-os_hdlr     = decode0.setSubComponent( "os_handler", vanadis_os_hdlr )
-#os_hdlr     = decode0.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
-branch_pred = decode0.setSubComponent( "branch_unit", "vanadis.VanadisBasicBranchUnit" )
+decode     = v_cpu_0.setSubComponent( "decoder", vanadis_decoder )
+os_hdlr     = decode.setSubComponent( "os_handler", vanadis_os_hdlr )
+#os_hdlr     = decode.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
+branch_pred = decode.setSubComponent( "branch_unit", "vanadis.VanadisBasicBranchUnit" )
 
-decode0.addParams({
+decode.addParams({
 	"uop_cache_entries" : 1536,
 	"predecode_cache_entries" : 4
 })
@@ -291,7 +291,7 @@ memory.addParams({
 
 sst.setStatisticOutput("sst.statOutputConsole")
 v_cpu_0.enableAllStatistics()
-decode0.enableAllStatistics()
+decode.enableAllStatistics()
 v_cpu_0_lsq.enableAllStatistics()
 branch_pred.enableAllStatistics()
 
