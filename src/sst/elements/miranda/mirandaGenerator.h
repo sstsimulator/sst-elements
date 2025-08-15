@@ -28,16 +28,12 @@
 namespace SST {
 namespace Miranda {
 
-// OPCOUNT is used to by stats to know how many distinct types
-// of operations to track. INVALID is placed after OPCOUNT
-// as these operations should never be tracked.
 typedef enum {
 	READ,
 	WRITE,
 	REQ_FENCE,
-	CUSTOM,
-	OPCOUNT,
-	INVALID
+        CUSTOM,
+        OPCOUNT
 } ReqOperation;
 
 
@@ -47,8 +43,8 @@ public:
 		reqID = nextGeneratorRequestID++;
 	}
 
-	~GeneratorRequest() {}
-	ReqOperation getOperation() const { return op; };
+	virtual ~GeneratorRequest() {}
+	virtual ReqOperation getOperation() const = 0;
 	uint64_t getRequestID() const { return reqID; }
 
 	void addDependency(uint64_t depReq) {
@@ -81,22 +77,10 @@ public:
 	void setIssueTime(const uint64_t now) {
 		issueTime = now;
 	}
-
-	void serialize_order(SST::Core::Serialization::serializer& ser) {
-		SST_SER(reqID);
-		SST_SER(issueTime);
-		SST_SER(dependsOn);
-		SST_SER(nextGeneratorRequestID);
-		SST_SER(op);
-	}
-	//ImplementSerializable(SST::Miranda::GeneratorRequest);
-
 protected:
 	uint64_t reqID;
 	uint64_t issueTime;
 	std::vector<uint64_t> dependsOn;
-	ReqOperation op = INVALID;
-
 private:
 	static std::atomic<uint64_t> nextGeneratorRequestID;
 };
@@ -184,13 +168,6 @@ public:
                 theQ[curSize] = t;
                 curSize++;
         }
-
-	void serialize_order(SST::Core::Serialization::serializer& ser) {
-		SST_SER(theQ);
-		SST_SER(maxCapacity);
-		SST_SER(curSize);
-	}
-
 private:
         QueueType* theQ;
         uint32_t maxCapacity;
@@ -203,28 +180,20 @@ public:
 		const uint64_t cLength,
 		const ReqOperation cOpType) :
 		GeneratorRequest(),
-		addr(cAddr), length(cLength)
-	{
-		op = cOpType;
-		assert (op == READ || op == WRITE);
-	}
+		addr(cAddr), length(cLength), op(cOpType)
+	{ assert (op == READ || op == WRITE); }
 
-	MemoryOpRequest() = default;
 	~MemoryOpRequest() {}
+	ReqOperation getOperation() const { return op; }
 	bool isRead() const { return op == READ; }
 	bool isWrite() const { return op == WRITE; }
 	uint64_t getAddress() const { return addr; }
 	uint64_t getLength() const { return length; }
 
-	void serialize_order(SST::Core::Serialization::serializer& ser) {
-		SST::Miranda::GeneratorRequest::serialize_order(ser);
-		SST_SER(addr);
-		SST_SER(length);
-	}
-
 protected:
 	uint64_t addr;
 	uint64_t length;
+	ReqOperation op;
 };
 
 class CustomOpRequest : public GeneratorRequest {
@@ -233,6 +202,7 @@ public:
         GeneratorRequest(), data(cData) {}
     ~CustomOpRequest() {}
 
+    ReqOperation getOperation() const { return CUSTOM; }
     Interfaces::StandardMem::CustomData* getPayload() { return data; }
 
 protected:
@@ -243,6 +213,7 @@ class FenceOpRequest : public GeneratorRequest {
 public:
 	FenceOpRequest() : GeneratorRequest() {}
 	~FenceOpRequest() {}
+	ReqOperation getOperation() const { return REQ_FENCE; }
 };
 
 class RequestGenerator : public SubComponent {
@@ -258,15 +229,15 @@ public:
 	virtual void completed() { }
 
 	virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
-		SST::SubComponent::serialize_order(ser);
-	}
+        SST::SubComponent::serialize_order(ser);
+    }
 
-	ImplementSerializable(SST::Miranda::RequestGenerator)
+    ImplementSerializable(SST::Miranda::RequestGenerator)
+
 
 };
 
 }
 }
-
 
 #endif
