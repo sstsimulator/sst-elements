@@ -30,12 +30,6 @@ namespace Miranda {
 class EmptyGenerator : public RequestGenerator {
 
 public:
-	EmptyGenerator( ComponentId_t id, Params& params ) : RequestGenerator(id, params) {}
-	~EmptyGenerator() { }
-	void generate(MirandaRequestQueue<GeneratorRequest*>* q) { }
-	bool isFinished() { return true; }
-	void completed() { }
-
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmptyGenerator,
         "miranda",
@@ -47,6 +41,20 @@ public:
 
 	SST_ELI_DOCUMENT_PARAMS(
     )
+
+	EmptyGenerator( ComponentId_t id, Params& params ) : RequestGenerator(id, params) {}
+    EmptyGenerator() = default;
+	~EmptyGenerator() { }
+	void generate(MirandaRequestQueue<GeneratorRequest*>* q) { }
+	bool isFinished() { return true; }
+	void completed() { }
+
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::Miranda::RequestGenerator::serialize_order(ser);
+    }
+
+    ImplementSerializable(SST::Miranda::EmptyGenerator)
+
 
 };
 

@@ -28,13 +28,6 @@ namespace Miranda {
 class STREAMBenchGenerator : public RequestGenerator {
 
 public:
-	STREAMBenchGenerator( ComponentId_t id, Params& params );
-        void build(Params& params);
-	~STREAMBenchGenerator();
-	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
-	bool isFinished();
-	void completed();
-
 	SST_ELI_REGISTER_SUBCOMPONENT(
         STREAMBenchGenerator,
         "miranda",
@@ -53,6 +46,31 @@ public:
         { "start_b",          "Sets the start address of the array b", "1024" },
         { "start_c",          "Sets the start address of the array c", "2048" }
     )
+
+	STREAMBenchGenerator( ComponentId_t id, Params& params );
+	STREAMBenchGenerator() = default;
+	~STREAMBenchGenerator();
+	void build(Params& params);
+	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
+	bool isFinished();
+	void completed();
+
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::Miranda::RequestGenerator::serialize_order(ser);
+		SST_SER(reqLength);
+
+		SST_SER(start_a);
+		SST_SER(start_b);
+		SST_SER(start_c);
+
+		SST_SER(n);
+		SST_SER(n_per_call);
+		SST_SER(i);
+
+		SST_SER(out);
+    }
+
+    ImplementSerializable(SST::Miranda::STREAMBenchGenerator)
 
 private:
 	uint64_t reqLength;
