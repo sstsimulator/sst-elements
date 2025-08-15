@@ -138,7 +138,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
         }
 
         if ( !thr_decoder ) {
-            output->fatal(CALL_INFO, -1, "%s, Error: No VanadisDecoder subcomponent found for thread %u\n", getName().c_str(), i); 
+            output->fatal(CALL_INFO, -1, "%s, Error: No VanadisDecoder subcomponent found for thread %u\n", getName().c_str(), i);
         }
 
         if ( nullptr == thr_decoder ) {
@@ -1364,9 +1364,13 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
         // if all theads have halted
         if ( ! should_process ) {
             lsq->tick((uint64_t)cycle);
+            #ifdef VANADIS_BUILD_DEBUG
             output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT, "checkpointing store=%zu load=%zu\n", lsq->storeSize(), lsq->loadSize());
+            #endif
             if ( 0 == lsq->storeSize() && 0 == lsq->loadSize() ) {
+                #ifdef VANADIS_BUILD_DEBUG
                 output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"checkingpoint core %d all threads have halted\n",core_id);
+                #endif
                 VanadisCheckpointResp* resp = new VanadisCheckpointResp( core_id );
                 os_link->send( resp );
                 return true;
