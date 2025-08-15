@@ -32,6 +32,7 @@
 
 // global includes
 #include <assert.h>
+#include <vector>
 
 // local includes
 #include "c_BankGroup.hpp"

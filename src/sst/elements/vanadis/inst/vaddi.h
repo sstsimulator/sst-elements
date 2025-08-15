@@ -17,6 +17,9 @@
 #define _H_VANADIS_ADDI
 
 #include "inst/vinst.h"
+
+#include <cstdint>
+#include <sstream>
 //#include <string.h>
 
 namespace SST {
