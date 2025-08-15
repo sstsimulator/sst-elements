@@ -31,13 +31,6 @@ namespace Miranda {
 class RandomGenerator : public RequestGenerator {
 
 public:
-	RandomGenerator( ComponentId_t id, Params& params );
-        void build(Params& params);
-	~RandomGenerator();
-	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
-	bool isFinished();
-	void completed();
-
 	SST_ELI_REGISTER_SUBCOMPONENT(
         RandomGenerator,
         "miranda",
@@ -54,6 +47,27 @@ public:
         { "max_address",	  "Maximum address allowed for generation", "16384" },
         { "issue_op_fences",  "Issue operation fences, \"yes\" or \"no\", default is yes", "yes" }
     )
+
+	RandomGenerator( ComponentId_t id, Params& params );
+	RandomGenerator() = default;
+	~RandomGenerator();
+	void build(Params& params);
+	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
+	bool isFinished();
+	void completed();
+
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::Miranda::RequestGenerator::serialize_order(ser);
+		SST_SER(reqLength);
+		SST_SER(maxAddr);
+		SST_SER(issueCount);
+		SST_SER(issueOpFences);
+		SST_SER(rng);
+		SST_SER(out);
+    }
+
+    ImplementSerializable(SST::Miranda::RandomGenerator)
+
 private:
 	uint64_t reqLength;
 	uint64_t maxAddr;
