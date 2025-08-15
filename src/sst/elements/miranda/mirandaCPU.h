@@ -151,6 +151,7 @@ public:
         SST_SER(srcReqEvent);
         SST_SER(stdMemHandlers);
 
+        // TODO - fails as there is no serialize_impl for GeneratorRequest
         //SST_SER(pendingRequests);
         SST_SER(memMgr);
 
