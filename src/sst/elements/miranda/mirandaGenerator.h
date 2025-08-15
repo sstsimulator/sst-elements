@@ -257,10 +257,11 @@ public:
 	virtual bool isFinished() { return true; }
 	virtual void completed() { }
 
-	void serialize_order(SST::Core::Serialization::serializer& ser) override {
+	virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
 		SST::SubComponent::serialize_order(ser);
 	}
-	ImplementSerializable(SST::Miranda::RequestGenerator);
+
+	ImplementSerializable(SST::Miranda::RequestGenerator)
 
 };
 
