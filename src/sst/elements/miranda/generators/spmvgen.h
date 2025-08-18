@@ -30,113 +30,6 @@ namespace Miranda {
 class SPMVGenerator : public RequestGenerator {
 
 public:
-
-    SPMVGenerator( ComponentId_t id, Params& params ) : RequestGenerator(id, params) { build(params); }
-
-    void build(Params& params) {
-		const uint32_t verbose = params.find<uint32_t>("verbose", 0);
-		out = new Output("SPMVGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
-
-		matrixNx        = params.find<uint64_t>("matrix_nx", 10);
-		matrixNy        = params.find<uint64_t>("matrix_ny", 10);
-
-		elementWidth    = params.find<uint64_t>("element_width", 8);
-
-		uint64_t nextStartAddr = 0;
-
-                // LHS vector has Nx elements of size elementWidth
-		lhsVecStartAddr = params.find<uint64_t>("lhs_start_addr", nextStartAddr);
-		nextStartAddr += matrixNx * elementWidth;
-
-                // RHS vector has Ny elements of size elementWidth
-		rhsVecStartAddr = params.find<uint64_t>("rhs_start_addr", nextStartAddr);
-		nextStartAddr += matrixNy * elementWidth;
-
-		localRowStart   = params.find<uint64_t>("local_row_start", 0);
-		localRowEnd     = params.find<uint64_t>("local_row_end", matrixNy);
-
-		ordinalWidth    = params.find<uint64_t>("ordinal_width", 8);
-		matrixNNZPerRow = params.find<uint64_t>("matrix_nnz_per_row", 4);
-
-                // Row-index vector has Ny+1 elements of size ordinalWidth
-		matrixRowIndicesStartAddr = params.find<uint64_t>("matrix_row_indices_start_addr", nextStartAddr);
-		nextStartAddr  += (ordinalWidth * (matrixNy + 1));
-
-                // Col-index vector has Ny * NNZ elements of size ordinalWidth
-		matrixColumnIndicesStartAddr = params.find<uint64_t>("matrix_col_indices_start_addr", nextStartAddr);
-		nextStartAddr  += (matrixNy * ordinalWidth * matrixNNZPerRow);
-
-                // Matrix vector has Ny * NNZ elements of size elementWidth
-		matrixElementsStartAddr = params.find<uint64_t>("matrix_element_start_addr", nextStartAddr);
-
-		iterations = params.find<uint64_t>("iterations", 1);
-	}
-
-	~SPMVGenerator() {
-		delete out;
-	}
-
-	void generate(MirandaRequestQueue<GeneratorRequest*>* q) {
-		for(uint64_t row = localRowStart; row < localRowEnd; row++) {
-			out->verbose(CALL_INFO, 2, 0, "Generating access for row %" PRIu64 "\n", row);
-
-                        MemoryOpRequest* readStart = new MemoryOpRequest(matrixRowIndicesStartAddr + (ordinalWidth * row), ordinalWidth, READ);
-                        MemoryOpRequest* readEnd   = new MemoryOpRequest(matrixRowIndicesStartAddr + (ordinalWidth * (row + 1)), ordinalWidth, READ);
-
-			q->push_back(readStart);
-			q->push_back(readEnd);
-
-                        MemoryOpRequest* readResultCurrentValue = new MemoryOpRequest(rhsVecStartAddr +
-				(row * elementWidth), elementWidth, WRITE);
-                        MemoryOpRequest* writeResult = new MemoryOpRequest(rhsVecStartAddr +
-				(row * elementWidth), elementWidth, WRITE);
-
-			writeResult->addDependency(readResultCurrentValue->getRequestID());
-
-			q->push_back(readResultCurrentValue);
-
-                        // Putting non-zeros on the diagonal
-			for(uint64_t j = 0; j < matrixNNZPerRow; j++) {
-                                uint64_t col = j + row;
-                                if (col >= matrixNx)
-                                    break;
-
-				out->verbose(CALL_INFO, 4, 0, "Generating access for row %" PRIu64 ", column: %" PRIu64 "\n",
-					row, col);
-
-                                MemoryOpRequest* readMatElement = new MemoryOpRequest(matrixElementsStartAddr +
-                                        (row * matrixNNZPerRow + j) * elementWidth, elementWidth, READ);
-                                MemoryOpRequest* readCol = new MemoryOpRequest(matrixColumnIndicesStartAddr +
-					(row * matrixNNZPerRow + j) * ordinalWidth, ordinalWidth, READ);
-                                MemoryOpRequest* readLHSElem = new MemoryOpRequest(lhsVecStartAddr +
-					col * elementWidth, elementWidth, READ);
-
-				readCol->addDependency(readStart->getRequestID());
-				readCol->addDependency(readEnd->getRequestID());
-                                readMatElement->addDependency(readStart->getRequestID());
-                                readMatElement->addDependency(readEnd->getRequestID());
-				readLHSElem->addDependency(readCol->getRequestID());
-
-                                writeResult->addDependency(readLHSElem->getRequestID());
-				writeResult->addDependency(readMatElement->getRequestID());
-
-				q->push_back(readCol);
-				q->push_back(readMatElement);
-				q->push_back(readLHSElem);
-			}
-
-			q->push_back(writeResult);
-		}
-
-		iterations--;
-	}
-
-	bool isFinished() {
-		return (0 == iterations);
-	}
-
-	void completed() {}
-
 	SST_ELI_REGISTER_SUBCOMPONENT(
         SPMVGenerator,
         "miranda",
@@ -161,9 +54,138 @@ public:
         { "iterations",     "Sets the number of repeats to perform" },
         { "matrix_nnz_per_row", "Sets the number of non-zero elements per row", "9" }
     )
-private:
-	Output*  out;
 
+    SPMVGenerator( ComponentId_t id, Params& params ) : RequestGenerator(id, params) { build(params); }
+	SPMVGenerator() = default;
+
+    void build(Params& params) {
+		const uint32_t verbose = params.find<uint32_t>("verbose", 0);
+		out = new Output("SPMVGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
+
+		matrixNx        = params.find<uint64_t>("matrix_nx", 10);
+		matrixNy        = params.find<uint64_t>("matrix_ny", 10);
+
+		elementWidth    = params.find<uint64_t>("element_width", 8);
+
+		uint64_t nextStartAddr = 0;
+
+		// LHS vector has Nx elements of size elementWidth
+		lhsVecStartAddr = params.find<uint64_t>("lhs_start_addr", nextStartAddr);
+		nextStartAddr += matrixNx * elementWidth;
+
+		// RHS vector has Ny elements of size elementWidth
+		rhsVecStartAddr = params.find<uint64_t>("rhs_start_addr", nextStartAddr);
+		nextStartAddr += matrixNy * elementWidth;
+
+		localRowStart   = params.find<uint64_t>("local_row_start", 0);
+		localRowEnd     = params.find<uint64_t>("local_row_end", matrixNy);
+
+		ordinalWidth    = params.find<uint64_t>("ordinal_width", 8);
+		matrixNNZPerRow = params.find<uint64_t>("matrix_nnz_per_row", 4);
+
+		// Row-index vector has Ny+1 elements of size ordinalWidth
+		matrixRowIndicesStartAddr = params.find<uint64_t>("matrix_row_indices_start_addr", nextStartAddr);
+		nextStartAddr  += (ordinalWidth * (matrixNy + 1));
+
+		// Col-index vector has Ny * NNZ elements of size ordinalWidth
+		matrixColumnIndicesStartAddr = params.find<uint64_t>("matrix_col_indices_start_addr", nextStartAddr);
+		nextStartAddr  += (matrixNy * ordinalWidth * matrixNNZPerRow);
+
+		// Matrix vector has Ny * NNZ elements of size elementWidth
+		matrixElementsStartAddr = params.find<uint64_t>("matrix_element_start_addr", nextStartAddr);
+
+		iterations = params.find<uint64_t>("iterations", 1);
+	}
+
+	~SPMVGenerator() {
+		delete out;
+	}
+
+	void generate(MirandaRequestQueue<GeneratorRequest*>* q) {
+		for(uint64_t row = localRowStart; row < localRowEnd; row++) {
+			out->verbose(CALL_INFO, 2, 0, "Generating access for row %" PRIu64 "\n", row);
+
+			MemoryOpRequest* readStart = new MemoryOpRequest(matrixRowIndicesStartAddr + (ordinalWidth * row), ordinalWidth, READ);
+			MemoryOpRequest* readEnd   = new MemoryOpRequest(matrixRowIndicesStartAddr + (ordinalWidth * (row + 1)), ordinalWidth, READ);
+
+			q->push_back(readStart);
+			q->push_back(readEnd);
+
+			MemoryOpRequest* readResultCurrentValue = new MemoryOpRequest(rhsVecStartAddr +
+					(row * elementWidth), elementWidth, WRITE);
+			MemoryOpRequest* writeResult = new MemoryOpRequest(rhsVecStartAddr +
+					(row * elementWidth), elementWidth, WRITE);
+
+			writeResult->addDependency(readResultCurrentValue->getRequestID());
+
+			q->push_back(readResultCurrentValue);
+
+			// Putting non-zeros on the diagonal
+			for(uint64_t j = 0; j < matrixNNZPerRow; j++) {
+				uint64_t col = j + row;
+				if (col >= matrixNx) {
+					break;
+				}
+
+				out->verbose(CALL_INFO, 4, 0, "Generating access for row %" PRIu64 ", column: %" PRIu64 "\n",
+						row, col);
+
+				MemoryOpRequest* readMatElement = new MemoryOpRequest(matrixElementsStartAddr +
+						(row * matrixNNZPerRow + j) * elementWidth, elementWidth, READ);
+				MemoryOpRequest* readCol = new MemoryOpRequest(matrixColumnIndicesStartAddr +
+						(row * matrixNNZPerRow + j) * ordinalWidth, ordinalWidth, READ);
+				MemoryOpRequest* readLHSElem = new MemoryOpRequest(lhsVecStartAddr +
+						col * elementWidth, elementWidth, READ);
+
+				readCol->addDependency(readStart->getRequestID());
+				readCol->addDependency(readEnd->getRequestID());
+				readMatElement->addDependency(readStart->getRequestID());
+				readMatElement->addDependency(readEnd->getRequestID());
+				readLHSElem->addDependency(readCol->getRequestID());
+
+				writeResult->addDependency(readLHSElem->getRequestID());
+				writeResult->addDependency(readMatElement->getRequestID());
+
+				q->push_back(readCol);
+				q->push_back(readMatElement);
+				q->push_back(readLHSElem);
+			}
+
+			q->push_back(writeResult);
+		}
+
+		iterations--;
+	}
+
+	bool isFinished() {
+		return (0 == iterations);
+	}
+
+	void completed() {}
+
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::Miranda::RequestGenerator::serialize_order(ser);
+		SST_SER(iterations);
+		SST_SER(matrixNx);
+		SST_SER(matrixNy);
+		SST_SER(elementWidth);
+		SST_SER(lhsVecStartAddr);
+		SST_SER(rhsVecStartAddr);
+		SST_SER(ordinalWidth);
+		SST_SER(matrixNNZPerRow);
+		SST_SER(matrixRowIndicesStartAddr);
+		SST_SER(localRowStart);
+		SST_SER(localRowEnd);
+		SST_SER(matrixColumnIndicesStartAddr);
+		SST_SER(matrixElementsStartAddr);
+
+		SST_SER(out);
+    }
+
+    ImplementSerializable(SST::Miranda::SPMVGenerator)
+
+
+private:
 	uint64_t iterations;
 	uint64_t matrixNx;
 	uint64_t matrixNy;
@@ -177,6 +199,8 @@ private:
 	uint64_t localRowEnd;
 	uint64_t matrixColumnIndicesStartAddr;
 	uint64_t matrixElementsStartAddr;
+
+	Output* out;
 
 };
 
