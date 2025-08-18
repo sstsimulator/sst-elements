@@ -44,6 +44,9 @@ MemNIC::MemNIC(ComponentId_t id, Params &params, TimeConverter* tc) : MemNICBase
                     getName().c_str());
 
         link_control = loadAnonymousSubComponent<SimpleNetwork>(link_control_class, "linkcontrol", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, netparams, 1);
+        if (!link_control) {
+            dbg.fatal(CALL_INFO, -1, "%s, Error: MemNIC is unable to load the default merlin.linkcontrol subcomponent. Ensure merlin library is available or load a linkcontrol in the MemNIC's 'linkcontrol' subcomponent slot\n", getName().c_str());
+        }
     }
     link_control->setNotifyOnReceive(new SimpleNetwork::Handler2<MemNIC, &MemNIC::recvNotify>(this));
 

@@ -98,8 +98,8 @@ cpu1_cache_link.setNoCut()
 
 l1cache0_bus_link = sst.Link("l1cache0_bus_link")
 l1cache1_bus_link = sst.Link("l1cache1_bus_link")
-l1cache0_bus_link.connect( (l1cache0, "lowlink", "50ps"), (bus, "highlink", "50ps") )
-l1cache1_bus_link.connect( (l1cache1, "lowlink", "50ps"), (bus, "high_network_1", "50ps") )
+l1cache0_bus_link.connect( (l1cache0, "lowlink", "50ps"), (bus, "highlink0", "50ps") )
+l1cache1_bus_link.connect( (l1cache1, "lowlink", "50ps"), (bus, "highlink1", "50ps") )
 bus_l2cache_link = sst.Link("bus_l2cache_link")
 bus_l2cache_link.connect( (bus, "lowlink", "50ps"), (l2cache, "highlink", "50ps") )
 

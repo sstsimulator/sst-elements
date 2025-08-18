@@ -180,7 +180,8 @@ public:
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         { "lsq", "Load-Store Queue for Memory Access", "SST::Vanadis::VanadisLoadStoreQueue" },
-        { "rocc", "RoCC accelerator interface(s)", "SST::Vanadis::VanadisRoCCInterface" },
+        { "decoder", "Decoder to use", "SST::Vanadis::VanadisDecoder" },
+        { "rocc", "RoCC accelerator interface(s), optional", "SST::Vanadis::VanadisRoCCInterface" },
         { "mem_interface_inst", "Interface to memory system for instructions", "SST::Interfaces::StandardMem" },
     )
 
