@@ -34,18 +34,19 @@
 #define _GNU_SOURCE
 #endif /* _GNU_SOURCE */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
+#include <string.h>
 
 #include "ofi.h"
 #include "ofi_osd.h"
 
-#include <net/if.h>
-#include <sys/types.h>
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
+#include <net/if.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
 
 ssize_t ofi_get_hugepage_size(void)
 {

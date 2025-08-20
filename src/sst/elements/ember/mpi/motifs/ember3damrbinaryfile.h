@@ -17,9 +17,11 @@
 #ifndef _H_SST_ELEMENTS_EMBER_AMR_BINARY_FILE
 #define _H_SST_ELEMENTS_EMBER_AMR_BINARY_FILE
 
+#include <cstdint>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <utility>
 #include "ember3damrfile.h"
 #include "ember3damrblock.h"
 

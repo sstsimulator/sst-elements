@@ -19,6 +19,9 @@
 #include "os/syscall/syscall.h"
 #include "os/callev/voscallfstat.h"
 
+#include <cstdint>
+#include <vector>
+
 struct timespec_64 {
     uint64_t tv_sec;
     uint64_t tv_nsec;

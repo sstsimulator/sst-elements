@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <stdint.h>
 #include <stdlib.h>
 #include "hook_prov.h"
 
