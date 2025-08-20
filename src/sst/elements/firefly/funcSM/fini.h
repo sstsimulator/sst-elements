@@ -18,6 +18,8 @@
 
 #include "funcSM/barrier.h"
 
+#include <string>
+
 namespace SST {
 namespace Firefly {
 

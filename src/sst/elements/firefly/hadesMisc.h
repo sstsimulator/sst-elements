@@ -20,6 +20,8 @@
 #include "sst/elements/hermes/miscapi.h"
 #include "hades.h"
 
+#include <string>
+
 using namespace Hermes;
 
 namespace SST {

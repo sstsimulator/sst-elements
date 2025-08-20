@@ -13,6 +13,13 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <queue>
+#include <string>
+
 class SharedTlbUnit : public Unit {
     std::string m_prefix;
     const char* prefix() { return m_prefix.c_str(); }

@@ -25,8 +25,9 @@
 #include "util/vsignx.h"
 #include "vinsloader.h"
 
-#include <list>
+#include <cstdint>
 #include <functional>
+#include <list>
 #include <sys/types.h>
 #include <unistd.h>
 

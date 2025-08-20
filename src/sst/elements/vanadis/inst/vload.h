@@ -18,6 +18,10 @@
 
 #include "inst/vmemflagtype.h"
 
+#include <cassert>
+#include <cstdint>
+#include <cstdio>
+
 #ifndef PRI_ADDR
 #define PRI_ADDR PRIx64
 #endif

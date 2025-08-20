@@ -17,10 +17,12 @@
 #include "sst_config.h"
 
 #include <assert.h>
+#include <cinttypes>
+#include <cmath>
+#include <cstdint>
+#include <ctime>
 #include <iostream>
 #include <string>
-#include <ctime>
-#include <cmath>
 
 //local includes
 #include "c_TxnGen.hpp"

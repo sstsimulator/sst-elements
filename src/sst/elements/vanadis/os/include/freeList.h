@@ -19,6 +19,11 @@
 //#include <iterator>
 //#include <string>
 
+#include <cassert>
+#include <cstdint>
+#include <iterator>
+#include <map>
+
 namespace SST {
 namespace Vanadis {
 
