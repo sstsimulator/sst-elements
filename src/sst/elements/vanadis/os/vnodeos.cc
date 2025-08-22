@@ -88,7 +88,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
     UnitAlgebra physMemSize = UnitAlgebra(params.find<std::string>("physMemSize", "0B", found));
 
     if ( ! found ) {
-        output->fatal(CALL_INFO, -1, "physMemSize was not specifed\n");
+        output->fatal(CALL_INFO, -1, "physMemSize was not specified\n");
     }
 
     if( 0 == physMemSize.getRoundedValue() ) {
@@ -101,7 +101,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
     if ( params.find<bool>("useMMU",false) ) { ;
         m_mmu = loadUserSubComponent<SST::MMU_Lib::MMU>("mmu");
         if ( nullptr == m_mmu ) {
-            output->fatal(CALL_INFO, -1, "Error: was unable to load subComponent `mmu`\n");
+            output->fatal(CALL_INFO, -1, "Error: %s was unable to load subComponent `mmu`\n", getName().c_str());
         }
         MMU_Lib::MMU::Callback callback = std::bind(&VanadisNodeOSComponent::pageFaultHandler, this,
             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6,
@@ -119,39 +119,39 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
 
     int numProcess = 0;
 
-if ( CHECKPOINT_LOAD != m_checkpoint ) {
-    while( 1 ) {
-        std::string name("process" + std::to_string(numProcess) );
-        Params tmp = params.get_scoped_params(name);
+    if ( CHECKPOINT_LOAD != m_checkpoint ) {
+        while( 1 ) {
+            std::string name("process" + std::to_string(numProcess) );
+            Params tmp = params.get_scoped_params(name);
 
-        if ( ! tmp.empty() ) {
-            std::string exe = tmp.find<std::string>("exe", "");
+            if ( ! tmp.empty() ) {
+                std::string exe = tmp.find<std::string>("exe", "");
 
-            if ( exe.empty() ) {
-                output->fatal( CALL_INFO, -1, "--> error - exe is not specified\n");
-            }
-
-            auto iter = m_elfMap.find( exe );
-            if ( iter == m_elfMap.end() ) {
-                VanadisELFInfo* elfInfo = readBinaryELFInfo(output, exe.c_str());
-                // readBinaryELFInfo does not return if fatal error is encountered
-                if ( elfInfo->isDynamicExecutable() ) {
-                    output->fatal( CALL_INFO, -1, "--> error - exe %s is not staticlly linked\n",exe.c_str());
+                if ( exe.empty() ) {
+                    output->fatal( CALL_INFO, -1, "--> error - exe is not specified\n");
                 }
-                m_elfMap[exe] = elfInfo;
+
+                auto iter = m_elfMap.find( exe );
+                if ( iter == m_elfMap.end() ) {
+                    VanadisELFInfo* elfInfo = readBinaryELFInfo(output, exe.c_str());
+                    // readBinaryELFInfo does not return if fatal error is encountered
+                    if ( elfInfo->isDynamicExecutable() ) {
+                        output->fatal( CALL_INFO, -1, "--> error - exe %s is not statically linked\n",exe.c_str());
+                    }
+                    m_elfMap[exe] = elfInfo;
+                }
+
+                unsigned tid = getNewTid();
+                m_threadMap[tid] = new OS::ProcessInfo( m_mmu, m_physMemMgr, m_nodeNum, tid, m_elfMap[exe], m_processDebugLevel, m_pageSize, m_numLogicalCores, tmp );
+                ++numProcess;
+            } else {
+                break;
             }
-
-            unsigned tid = getNewTid();
-            m_threadMap[tid] = new OS::ProcessInfo( m_mmu, m_physMemMgr, m_nodeNum, tid, m_elfMap[exe], m_processDebugLevel, m_pageSize, m_numLogicalCores, tmp );
-            ++numProcess;
-        } else {
-          break;
         }
-    }
 
-} else {
-    numProcess = checkpointLoad(m_checkpointDir);
-}
+    } else {
+        numProcess = checkpointLoad(m_checkpointDir);
+    }
 
     // make sure we have a thread for each process
     assert( m_availHwThreads.size() >= m_threadMap.size() );
@@ -348,7 +348,7 @@ int VanadisNodeOSComponent::checkpointLoad( std::string dir )
         VanadisELFInfo* elfInfo = readBinaryELFInfo(output, key);
         // readBinaryELFInfo does not return if fatal error is encountered
         if ( elfInfo->isDynamicExecutable() ) {
-            output->fatal( CALL_INFO, -1, "--> error - exe %s is not staticlly linked\n",key);
+            output->fatal( CALL_INFO, -1, "--> error - exe %s is not statically linked\n",key);
         }
         m_elfMap[key] = elfInfo;
     }
@@ -648,7 +648,7 @@ VanadisNodeOSComponent::handleIncomingSyscallEvent(SST::Event* ev) {
 
 		    processSyscallPost( syscall );
 	    } else {
-		    printf("no active process for core %d, hwthread %d\n", sys_ev->getCoreID(), sys_ev->getThreadID() );
+		    output->output("%s: no active process for core %d, hwthread %d\n", getName().c_str(), sys_ev->getCoreID(), sys_ev->getThreadID() );
 		    delete ev;
 	    }
     }
