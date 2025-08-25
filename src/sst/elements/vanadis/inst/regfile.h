@@ -42,7 +42,7 @@ public:
 		int_reg_width(8),
 		fp_reg_width( (fp_rmode == VANADIS_REGISTER_MODE_FP32) ? 4 : 8 )
     {
-        // Registers are always 64-bits
+        // Int registers are always 64-bits
 
         int_reg_storage = new char[int_reg_width * count_int_regs];
         fp_reg_storage = new char[fp_reg_width * count_fp_regs];
