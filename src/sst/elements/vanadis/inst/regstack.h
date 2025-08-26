@@ -19,99 +19,83 @@
 namespace SST {
 namespace Vanadis {
 
+/*
+    A stack to manage allocation of registers. Registers on the stack are available.
+    The stack holds indices of available registers as a uint16_t.
+
+    The stack begins in 'full' (all registers available) state.
+    pop() removes a register from the stack
+    push() places a register back on the stack
+
+    USAGE NOTES
+     - push() and pop() do not do bounds checks. Caller must check if needed.
+*/
 class VanadisRegisterStack
 {
 public:
-    VanadisRegisterStack(const size_t count) : max_capacity(count)
+    // count - number of registers to manage
+    VanadisRegisterStack(const size_t count) : max_capacity_(count)
     {
-        regs = new uint16_t[max_capacity];
+        regs_ = new uint16_t[max_capacity_];
         reset();
     }
 
     ~VanadisRegisterStack() {
-        delete[] regs;
+        delete[] regs_;
     }
 
+    // Pop a free register off the stack (reserve/fill it)
     uint16_t pop()
     {
-/*
-        if(stack_top < 0) {
-            printf("LOGIC-ERROR - stack_top=%" PRId32 " / capacity=%" PRId32 "\n", stack_top, max_capacity);
-            int32_t* address = 0;
-            *address = 0;
-            printf("address=%" PRId32 "\n", *address);
-        }
-        assert(stack_top >= 0);
-*/
-        const uint16_t temp = regs[stack_top];
-        stack_top--;
-        return temp;
+        stack_top_--;
+        return regs_[stack_top_];
     }
 
+    // Push a free register back onto the stack, record its ptr
     void push(const uint16_t v)
     {
-#if 0
-        check( v );
-#endif
-/*
-        if(stack_top >= max_capacity) {
-            printf("LOGIC-ERROR - stack_top=%" PRId32 " / capacity=%" PRId32 "\n", stack_top, max_capacity);
-            int32_t* address = 0;
-            *address = 0;
-            printf("address=%" PRId32 "\n", *address);
-        } else {
-            printf("-> stack_top=%" PRId32 " / capacity=%" PRId32 "\n", stack_top, max_capacity);
-        }
-        assert(stack_top < max_capacity);
-*/
-        stack_top++;
-        regs[stack_top] = v;
+        regs_[stack_top_] = v;
+        stack_top_++;
     }
 
-    size_t capacity() const { return max_capacity; }
-    size_t unused() const { return (stack_top > 0) ? stack_top : 0; }
+    // Returns the total number of registers
+    size_t capacity() const { return max_capacity_; }
 
-    bool full() { return (stack_top == (max_capacity - 1)); }
-    bool empty() { return -1 == stack_top; }
+    // Returns how many registers are free/unallocated
+    size_t unused() const { return stack_top_; }
+
+    // Returns whether all registers are available (reg stack is full)
+    bool full() { return (max_capacity_ == stack_top_); }
+
+    // Returns whether no registers are available (stack is empty)
+    bool empty() { return ( max_capacity_ == 0); }
+
+    // For debug
+    void print(Output& out) {
+        out.output("----> free registers = { ");
+
+        for(size_t i = 0; i < stack_top_; ++i) {
+            out.output("%" PRIu16 ", ", regs_[i]);
+        }
+
+        out.output("}\n");
+    }
 
 private:
 
-#if 0
-    void check(int v) {
-
-        for(auto i = 0; i <= stack_top; ++i) {
-            if ( regs[i] == v ) {
-                printf("check() pos=%d v=%d %d\n",i,v,regs[i]);
-                assert(0);
-            }
-        }
-    }
-#endif
-
+    // Reset the register stack to all available
     void reset() {
-        stack_top = max_capacity - 1;
+        stack_top_ = max_capacity_;
 
-        for(auto i = 0; i < max_capacity; ++i) {
-            regs[i] = i;
+        for(auto i = 0; i < max_capacity_; ++i) {
+            regs_[i] = i;
         }
     }
 
-public:
-    void print() {
-        printf("----> free registers = { ");
+    const size_t    max_capacity_; // Total number of registers
+    size_t          stack_top_;    // Stack index of the most recently allocated (pop'd) entry
 
-        for(size_t i = 0; i < stack_top; ++i) {
-            printf("%" PRIu16 ", ", regs[i]);
-        }
-
-        printf("}\n");
-    }
-
-private:
-    const int32_t    max_capacity;
-    int32_t          stack_top;
-
-    uint16_t* regs;
+    uint16_t* regs_; // Indices of available registers
 };
 
 } // namespace Vanadis

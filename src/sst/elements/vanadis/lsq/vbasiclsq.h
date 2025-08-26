@@ -135,7 +135,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
         {
             op_q[store_me->getHWThread()].push_back( new VanadisBasicStoreEntry(store_me) );
             op_q_size++;
-            stat_store_issued->addData(1);
+            stat_stores_issued->addData(1);
         }
 
         void push(VanadisLoadInstruction* load_me) override
@@ -263,8 +263,6 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                 if (issued) break; // one per cycle TODO: parameterize
             }
         }
-
-
 
     protected:
 

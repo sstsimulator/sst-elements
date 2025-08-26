@@ -341,9 +341,8 @@ private:
     uint64_t dCacheLineWidth;
     uint64_t iCacheLineWidth;
 
-    TimeConverter                      cpuClockTC;
-    Clock::HandlerBase*                cpuClockHandler;
-
+    TimeConverter           clock_tc_;
+    Clock::HandlerBase*     clock_handler_;
     FILE*           pipelineTrace;
 
     Statistic<uint64_t>* stat_ins_retired;
