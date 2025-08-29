@@ -479,9 +479,9 @@ public:
 
     std::string toString() const {
         std::ostringstream str;
-        str << showbase << hex;
+        str << std::showbase << hex;
         str << "Start: " << start << " End: " << end;
-        str << noshowbase << dec;
+        str << std::noshowbase << dec;
         str << " InterleaveSize: " << interleaveSize;
         str << " InterleaveStep: " << interleaveStep;
         return str.str();
