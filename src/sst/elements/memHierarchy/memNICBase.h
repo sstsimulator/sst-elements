@@ -267,7 +267,7 @@ class MemNICBase : public MemLinkBase {
         }
 
         virtual void processInitMemRtrEvent(InitMemRtrEvent* imre) {
-
+            // TODO: figure out how group 5 ended up in sources for OS cache
             if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
                 addSource(imre->info);
                 dbg.debug(_L10_, "%s (memNICBase) received source imre. Name: %s, Addr: %" PRIu64 ", ID: %" PRIu32 ", start: %" PRIu64 ", end: %" PRIu64 ", size: %" PRIu64 ", step: %" PRIu64 "\n",
@@ -434,6 +434,10 @@ class MemNICBase : public MemLinkBase {
             dbg.debug(_L10_, "Routing information for %s\n", getName().c_str());
 #endif
             // Filters each destEndpointInfo region by the reachable endpointInfo
+            dbg.debug(_L10_, "    Endpoint Info Size before merge: %d\n",destEndpointInfo.size());
+            for (auto it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
+                dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str());
+            }
             for (auto it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
                 //dbg.debug(_L10_, "    Orig Dest: %s\n", it->toString().c_str());
                 if (known_endpoints_.find(it->name) != known_endpoints_.end()) { // Dest does not have an endpoint behind it
@@ -470,6 +474,10 @@ class MemNICBase : public MemLinkBase {
                 }
             }
             destEndpointInfo = newDests;
+            dbg.debug(_L10_, "    Endpoint Info Size after merge: %d\n",destEndpointInfo.size());
+            for (auto it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
+                dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str());
+            }
 
             // This algorithm can take an extremely long time for some memory configurations.
             if (range_check > 0) {
@@ -633,14 +641,15 @@ class MemNICBase : public MemLinkBase {
                 dbg.fatal(CALL_INFO, -1, "Param not specified(%s): group - group ID (or hierarchy level) for this NIC's component. Example: L2s in group 1, directories in group 2, memories (on network) in group 3.\n",
                         getName().c_str());
             }
-
-            if (params.is_value_array("sources")) {
+            bool srcs_passed = false;
+            if (srcs_passed = params.is_value_array("sources")) {
                 std::vector<uint32_t> srcArr;
                 params.find_array<uint32_t>("sources", srcArr);
                 sourceIDs = std::unordered_set<uint32_t>(srcArr.begin(), srcArr.end());
-
             }
-            if (params.is_value_array("destinations")) {
+
+            bool dests_passed = false;
+            if (dests_passed = params.is_value_array("destinations")) {
                 std::vector<uint32_t> dstArr;
                 params.find_array<uint32_t>("destinations", dstArr);
                 destIDs = std::unordered_set<uint32_t>(dstArr.begin(), dstArr.end());
@@ -654,25 +663,45 @@ class MemNICBase : public MemLinkBase {
             uint32_t id;
 
             if (sourceIDs.empty()) {
-                sources.str(params.find<std::string>("sources", ""));
-                while (sources >> id) {
-                    sourceIDs.insert(id);
-                    while (sources.peek() == ',' || sources.peek() == ' ')
-                        sources.ignore();
+                if (!dests_passed){
+#ifdef __SST_DEBUG_OUTPUT__
+                    dbg.debug(_L10_, "No sources array passed to NIC -- defaulting to group - 1.\n");
+#endif                    
+                    sources.str(params.find<std::string>("sources", ""));
+                    while (sources >> id) {
+                        sourceIDs.insert(id);
+                        while (sources.peek() == ',' || sources.peek() == ' ')
+                            sources.ignore();
+                    }
+                    if (sourceIDs.empty())
+                        sourceIDs.insert(info.id - 1);
+                } 
+#ifdef __SST_DEBUG_OUTPUT__
+                else {
+                    dbg.debug(_L10_,"Empty sources array passed to NIC.\n");
                 }
-                if (sourceIDs.empty())
-                    sourceIDs.insert(info.id - 1);
+#endif                    
             }
 
             if (destIDs.empty()) {
-                destinations.str(params.find<std::string>("destinations", ""));
-                while (destinations >> id) {
-                    destIDs.insert(id);
-                    while (destinations.peek() == ',' || destinations.peek() == ' ')
-                        destinations.ignore();
+                if (!dests_passed){
+#ifdef __SST_DEBUG_OUTPUT__
+                    dbg.debug(_L10_, "No dests array passed to NIC -- defaulting to group + 1.\n");
+#endif                
+                    destinations.str(params.find<std::string>("destinations", ""));
+                    while (destinations >> id) {
+                        destIDs.insert(id);
+                        while (destinations.peek() == ',' || destinations.peek() == ' ')
+                            destinations.ignore();
+                    }
+                    if (destIDs.empty())
+                        destIDs.insert(info.id + 1);
                 }
-                if (destIDs.empty())
-                    destIDs.insert(info.id + 1);
+#ifdef __SST_DEBUG_OUTPUT__
+                else {
+                    dbg.debug(_L10_,"Empty dests array passed to NIC.\n");
+                }
+#endif  
             }
             initMsgSent = false;
 
