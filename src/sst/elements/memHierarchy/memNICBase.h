@@ -694,7 +694,7 @@ class MemNICBase : public MemLinkBase {
                 if (!dests_passed){
 #ifdef __SST_DEBUG_OUTPUT__
                     dbg.debug(_L10_, "No dests array passed to NIC -- defaulting to group + 1.\n");
-#endif                
+#endif
                     destinations.str(params.find<std::string>("destinations", ""));
                     while (destinations >> id) {
                         destIDs.insert(id);
