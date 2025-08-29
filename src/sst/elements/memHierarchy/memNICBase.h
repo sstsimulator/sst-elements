@@ -682,7 +682,7 @@ class MemNICBase : public MemLinkBase {
                     }
                     if (sourceIDs.empty())
                         sourceIDs.insert(info.id - 1);
-                
+
 #ifdef __SST_DEBUG_OUTPUT__
                 else {
                     dbg.debug(_L10_,"Empty sources array passed to NIC.\n");
