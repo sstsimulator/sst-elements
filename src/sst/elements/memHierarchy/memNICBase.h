@@ -521,7 +521,7 @@ class MemNICBase : public MemLinkBase {
                 dbg.debug(_L10_, "    Peer: %s\n", it->toString().c_str());
             }
             if (peerEndpointInfo.empty()) dbg.debug(_L10_, "    Peer: NONE\n");
-            for (auto const& [key, val]: known_endpoints_) {//it = known_endpoints_.begin(); it != known_endpoints_.end(); it++) {
+            for (auto const& [key, val]: known_endpoints_) {
                 for (auto it = val.begin(); it != val.end(); it++) {
                     dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str());
                 }
