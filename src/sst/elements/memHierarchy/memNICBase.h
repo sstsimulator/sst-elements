@@ -666,7 +666,7 @@ class MemNICBase : public MemLinkBase {
                 if (!dests_passed){
 #ifdef __SST_DEBUG_OUTPUT__
                     dbg.debug(_L10_, "No sources array passed to NIC -- defaulting to group - 1.\n");
-#endif                    
+#endif
                     sources.str(params.find<std::string>("sources", ""));
                     while (sources >> id) {
                         sourceIDs.insert(id);
@@ -675,12 +675,12 @@ class MemNICBase : public MemLinkBase {
                     }
                     if (sourceIDs.empty())
                         sourceIDs.insert(info.id - 1);
-                } 
+                
 #ifdef __SST_DEBUG_OUTPUT__
                 else {
                     dbg.debug(_L10_,"Empty sources array passed to NIC.\n");
                 }
-#endif                    
+#endif
             }
 
             if (destIDs.empty()) {
@@ -701,7 +701,7 @@ class MemNICBase : public MemLinkBase {
                 else {
                     dbg.debug(_L10_,"Empty dests array passed to NIC.\n");
                 }
-#endif  
+#endif
             }
             initMsgSent = false;
 
