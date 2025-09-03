@@ -333,7 +333,6 @@ bool MESIL1::handleWrite(MemEvent* event, bool in_mshr) {
  * Handle cacheable GetX/Write requests
  * May also be store-conditional or write-unlock
  */
-// TODO: Find why GetX is sending a GetX back towards the core
 bool MESIL1::handleGetX(MemEvent* event, bool in_mshr) {
     Addr addr = event->getBaseAddr();
     L1CacheLine* line = cache_array_->lookup(addr, true);
