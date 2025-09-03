@@ -522,17 +522,10 @@ class MemNICBase : public MemLinkBase {
                 dbg.debug(_L10_, "    Peer: %s\n", it->toString().c_str());
             }
             if (peerEndpointInfo.empty()) dbg.debug(_L10_, "    Peer: NONE\n");
-<<<<<<< HEAD
             for (const auto& [name, regions] : known_endpoints_) {
                 dbg.debug(_L10_, "    Endpoint: %s\n", name.c_str());
                 for(const MemRegion& region : regions)
                     dbg.debug(_L10_, "        %s\n", region.toString().c_str());
-=======
-            for (auto const& [key, val]: known_endpoints_) {
-                for (auto it = val.begin(); it != val.end(); it++) {
-                    dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str());
-                }
->>>>>>> 290463004 (remove comment)
             }
 #endif
             if (!initWaitForDst.empty()) {
@@ -679,6 +672,11 @@ class MemNICBase : public MemLinkBase {
                     sourceIDs.insert(info.id - 1);
                 }
             }
+#ifdef __SST_DEBUG_OUTPUT__
+            if (sourceIDs.empty()) {
+                dbg.debug(_L10_,"Sources set to NONE.\n");
+            }
+#endif
 
             bool dests_passed;
             if (dests_passed = params.is_value_array("destinations")) {
@@ -708,11 +706,11 @@ class MemNICBase : public MemLinkBase {
                     destIDs.insert(info.id + 1);
                 }
             }
-
-            // range_check current is off(0) or on(1) but is using a uint32_t to
-            // allow for future selection of different algorithms.
-            range_check=params.find<uint32_t>("range_check", 1);
-
+#ifdef __SST_DEBUG_OUTPUT__
+            if (destIDs.empty()) {
+                dbg.debug(_L10_,"Destinations set to NONE.\n");
+            }
+#endif
             initMsgSent = false;
 
             dbg.debug(_L10_, "%s memNICBase info is: Name: %s, group: %" PRIu32 "\n",
