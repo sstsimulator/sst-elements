@@ -33,6 +33,15 @@ public:
     ~FaultBase() {}
 
     virtual void faultLogic(Event*& ev);
+
+protected:
+    // TODO: Figure out how to properly set up serialization for this
+    // void serialize_order(SST::Core::Serialization::serializer& ser) 
+    // {
+    //     SST::PortModule::serialize_order(ser);
+    //     // serialize parameters like `SST_SER(<param>)
+    // }
+    // ImplementSerializable(SST::Carcosa::FaultBase)
 };
 }
 

@@ -63,8 +63,8 @@ public:
         delete fault;
     }
 
-    void eventSent(uintptr_t key, Event*& ev) override;
-    void interceptHandler(uintptr_t key, Event*& data, bool& cancel) override;
+    void virtual eventSent(uintptr_t key, Event*& ev) override;
+    void virtual interceptHandler(uintptr_t key, Event*& data, bool& cancel) override;
 
     bool installOnReceive() override
     {
@@ -97,7 +97,7 @@ protected:
     {
         SST::PortModule::serialize_order(ser);
         // serialize parameters like `SST_SER(<param_member>)`
-        SST_SER(fault);
+        // SST_SER(fault);
         SST_SER(installDirection_);
         SST_SER(injectionProbability_);
     }
