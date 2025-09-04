@@ -24,7 +24,6 @@ namespace SST::Carcosa {
 enum installDirection {
     Send = 0,
     Receive,
-    //Both,
     Invalid
 };
 
@@ -73,7 +72,6 @@ public:
             case Send:
                 return false;
             case Receive:
-            //case Both:
             default:
                 return true;
         }
@@ -82,7 +80,6 @@ public:
     {
         switch (installDirection_) {
             case Send:
-            //case Both:
                 return true;
             case Receive:
             default:

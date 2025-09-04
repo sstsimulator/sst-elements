@@ -25,8 +25,6 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
     if ( install_dir != "Receive" ) {
         if ( install_dir == "Send" ) {
             installDirection_ = installDirection::Send;
-        //} else if ( install_dir == "Both" ) {
-        //    installDirection_ = installDirection::Both;
         } else {
             installDirection_ = installDirection::Receive;
         }
@@ -43,7 +41,7 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
     getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "\tInjection Probability: %d\n", injectionProbability_);
 #endif
     
-    fault = new faultBase(params);
+    fault = new FaultBase(params);
 }
 
 void

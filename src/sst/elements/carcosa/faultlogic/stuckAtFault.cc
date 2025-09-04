@@ -22,6 +22,6 @@ StuckAtFault::StuckAtFault(Params& params) : FaultBase(params)
 #endif
 }
 
-void faultLogic(Event&* ev) {
+void faultLogic(SST::Event*& ev) {
     // see comment in header file
 }
