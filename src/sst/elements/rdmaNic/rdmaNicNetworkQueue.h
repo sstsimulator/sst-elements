@@ -13,6 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <queue>
+#include <vector>
+
 class NetworkQueue {
     struct Entry {
         Entry( RdmaNicNetworkEvent* ev, int destNode ) : ev(ev), destNode(destNode ) {}

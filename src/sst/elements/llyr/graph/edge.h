@@ -17,6 +17,7 @@
 #ifndef _LLYR_G_EDGE_H
 #define _LLYR_G_EDGE_H
 
+#include <cstddef>
 #include <cstdint>
 
 namespace SST {
