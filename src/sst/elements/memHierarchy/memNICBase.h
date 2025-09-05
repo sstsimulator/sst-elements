@@ -513,8 +513,10 @@ class MemNICBase : public MemLinkBase {
                 dbg.debug(_L10_, "    Peer: %s\n", it->toString().c_str());
             }
             if (peerEndpointInfo.empty()) dbg.debug(_L10_, "    Peer: NONE\n");
-            for (auto it = known_endpoints_.begin(); it != known_endpoints_.end(); it++) {
-                dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str());
+            for (const auto& [name, regions] : known_endpoints_) {
+                dbg.debug(_L10_, "    Endpoint: %s\n", name.c_str());
+                for(const MemRegion& region : regions)
+                    dbg.debug(_L10_, "        %s\n", region.toString().c_str());
             }
 #endif
             if (!initWaitForDst.empty()) {
