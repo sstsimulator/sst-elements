@@ -64,7 +64,7 @@ public:
 
         virtual void faultLogic(Event*& ev) {}
 
-        SST::MemHierarchy::MemEventBase* convertMemEvent(Event*& ev);
+        SST::MemHierarchy::MemEvent* convertMemEvent(Event*& ev);
 
     protected:
 

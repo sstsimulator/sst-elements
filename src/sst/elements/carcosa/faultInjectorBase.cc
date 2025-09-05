@@ -22,8 +22,8 @@ FaultInjectorBase::FaultBase::FaultBase(Params& params, FaultInjectorBase* injec
     // what do we need in here?
 }
 
-SST::MemHierarchy::MemEventBase* FaultInjectorBase::FaultBase::convertMemEvent(Event*& ev) {
-    SST::MemHierarchy::MemEventBase* mem_ev = dynamic_cast<SST::MemHierarchy::MemEventBase*>(ev);
+SST::MemHierarchy::MemEvent* FaultInjectorBase::FaultBase::convertMemEvent(Event*& ev) {
+    SST::MemHierarchy::MemEvent* mem_ev = dynamic_cast<SST::MemHierarchy::MemEvent*>(ev);
 
     if (mem_ev == nullptr) {
         _injector->getSimulationOutput().fatal(CALL_INFO_LONG, -1, "Attempting to inject mem fault on a non-MemEvent type.\n");

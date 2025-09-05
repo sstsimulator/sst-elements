@@ -24,5 +24,13 @@ StuckAtFault::StuckAtFault(Params& params, FaultInjectorBase* injector) : FaultB
 
 void StuckAtFault::faultLogic(SST::Event*& ev) {
     // Convert to memEvent
-    SST::MemHierarchy::MemEventBase* mem_ev = this->convertMemEvent(ev);
+    SST::MemHierarchy::MemEvent* mem_ev = this->convertMemEvent(ev);
+
+    // check for the addr in question in the fault map
+    if (stuckAtMap.count(mem_ev->getAddr()) >= 1) {
+        // need to determine direction message is going 
+        std::string dst = mem_ev->getDst();
+        std::string src = mem_ev->getSrc();
+        // how can these compared in a standard way?
+    }
 }
