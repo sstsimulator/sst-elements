@@ -109,6 +109,7 @@
 #define VANADIS_SYSCALL_RISCV64_HWPROBE 258
 #define VANADIS_SYSCALL_RISCV64_PRLIMIT 261
 #define VANADIS_SYSCALL_RISCV64_GETRANDOM 278
+#define VANADIS_SYSCALL_RISCV64_RSEQ 293
 #define VANADIS_SYSCALL_RISCV64_CHECKPOINT 500
 
 #define VANADIS_SYSCALL_RISCV_RET_REG 10
@@ -140,6 +141,7 @@ public:
         InstallRISCV64FuncPtr( FSTATAT );
         InstallRISCV64FuncPtr( LSEEK );
         InstallRISCV64FuncPtr( HWPROBE );
+        InstallRISCV64FuncPtr( RSEQ );
         InstallRISCV64FuncPtr( CHECKPOINT );
     }
 
@@ -284,7 +286,13 @@ public:
     }
 
     VanadisSyscallEvent* HWPROBE( int hw_thr ) {
-        printf("Warning: VANADIS_SYSCALL_RISCV64_HWPROBE not implemented return success\n");
+        output->output("Warning: VANADIS_SYSCALL_RISCV64_HWPROBE not implemented return success\n");
+        recvSyscallResp(new VanadisSyscallResponse(0));
+        return nullptr;
+    }
+
+    VanadisSyscallEvent* RSEQ( int hw_thr ) {
+        output->output("Warning: VANADIS_SYSCALL_RISCV64_RSEQ not implemented return success\n");
         recvSyscallResp(new VanadisSyscallResponse(0));
         return nullptr;
     }

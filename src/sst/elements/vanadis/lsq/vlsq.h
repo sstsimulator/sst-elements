@@ -47,11 +47,6 @@ public:
                             { "dbgAddrs", "Comma-separated list of addresses to debug", ""},
             )
 
-    SST_ELI_DOCUMENT_STATISTICS({ "bytes_read", "Count all the bytes read for data operations", "bytes", 1 },
-                                { "bytes_stored", "Count all the bytes written for data operations", "bytes", 1 },
-                                { "loads_issued", "Count the number of loads issued", "operations", 1 },
-                                { "stores_issued", "Count the number of stores issued", "operations", 1 })
-
     /*
      * Constructor takes two additional parameters
      * coreid - an integer specifying the core ID for the core that loaded this LSQ
@@ -72,11 +67,6 @@ public:
         core_id = coreid;
         hw_threads = hwthreads;
         registerFiles = nullptr;
-
-        stat_load_issued = registerStatistic<uint64_t>("loads_issued", "1");
-        stat_store_issued = registerStatistic<uint64_t>("stores_issued", "1");
-        stat_data_bytes_read = registerStatistic<uint64_t>("bytes_read", "1");
-        stat_data_bytes_written = registerStatistic<uint64_t>("bytes_stored", "1");
     }
 
     virtual ~VanadisLoadStoreQueue() { delete output; }
@@ -107,7 +97,6 @@ public:
     virtual void push(VanadisFenceInstruction* fence) = 0;
 
     virtual void tick(uint64_t cycle) = 0;
-
     virtual void clearLSQByThreadID(const uint32_t thread) = 0;
 
     virtual void init(unsigned int phase) = 0;
@@ -172,11 +161,6 @@ protected:
     int hw_threads;
     std::vector<VanadisRegisterFile*>* registerFiles;
     SST::Output* output;
-
-    Statistic<uint64_t>* stat_load_issued;
-    Statistic<uint64_t>* stat_store_issued;
-    Statistic<uint64_t>* stat_data_bytes_read;
-    Statistic<uint64_t>* stat_data_bytes_written;
 };
 
 } // namespace Vanadis

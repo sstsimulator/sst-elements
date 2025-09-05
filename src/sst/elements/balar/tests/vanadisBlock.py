@@ -92,7 +92,7 @@ class Vanadis_Builder:
         })
         cpu.enableAllStatistics()
 
-        decode = cpu.setSubComponent( "decoder0", "vanadis.Vanadis" + vanadis_isa + "Decoder" )
+        decode = cpu.setSubComponent( "decoder", "vanadis.Vanadis" + vanadis_isa + "Decoder" )
 
         decode.addParams({
             "uop_cache_entries" : 1536,
@@ -154,8 +154,8 @@ class Vanadis_Builder:
             "debug_addr" : debug_addr,
         })
 
-        l1dcache_2_cpu     = l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-        l1dcache_2_l2cache = l1cache.setSubComponent("memlink", "memHierarchy.MemLink")
+        l1dcache_2_cpu     = l1cache.setSubComponent("highlink", "memHierarchy.MemLink")
+        l1dcache_2_l2cache = l1cache.setSubComponent("lowlink", "memHierarchy.MemLink")
 
         # L1 I-Cache
         l1icache = sst.Component(prefix + ".l1icache", "memHierarchy.Cache")
@@ -197,7 +197,7 @@ class Vanadis_Builder:
             "debug_addr" : debug_addr,
         })
 
-        l2cache_2_cpu = l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
+        l2cache_2_cpu = l2cache.setSubComponent("highlink", "memHierarchy.MemLink")
 
         # CPU D-TLB
         dtlbWrapper = sst.Component(prefix+".dtlb", "mmu.tlb_wrapper")
@@ -214,14 +214,14 @@ class Vanadis_Builder:
 
         # CPU (data) -> D-TLB
         link = sst.Link(prefix+".link_cpu_dtlb")
-        link.connect( (dcache_if, "port", "1ns"), (dtlbWrapper, "cpu_if", "1ns") )
+        link.connect( (dcache_if, "lowlink", "1ns"), (dtlbWrapper, "cpu_if", "1ns") )
 
         # CPU (instruction) -> I-TLB
         link = sst.Link(prefix+".link_cpu_itlb")
-        link.connect( (icache_if, "port", "1ns"), (itlbWrapper, "cpu_if", "1ns") )
+        link.connect( (icache_if, "lowlink", "1ns"), (itlbWrapper, "cpu_if", "1ns") )
 
-        l1icache_2_cpu     = l1icache.setSubComponent("cpulink", "memHierarchy.MemLink")
-        l1icache_2_l2cache = l1icache.setSubComponent("memlink", "memHierarchy.MemLink")
+        l1icache_2_cpu     = l1icache.setSubComponent("highlink", "memHierarchy.MemLink")
+        l1icache_2_l2cache = l1icache.setSubComponent("lowlink", "memHierarchy.MemLink")
 
         # D-TLB -> D-L1
         # Weili: Add a bus to connect two tlbs (balar and core) to the same l1dcache
@@ -234,14 +234,14 @@ class Vanadis_Builder:
 
         # L1 I-Cache to bus
         link = sst.Link(prefix + ".link_l1dcache_l2cache")
-        link.connect( (l1dcache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_0", "1ns") )
+        link.connect( (l1dcache_2_l2cache, "port", "1ns"), (cache_bus, "highlink0", "1ns") )
 
         # L1 D-Cache to bus
         link = sst.Link(prefix + ".link_l1icache_l2cache")
-        link.connect( (l1icache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_1", "1ns") )
+        link.connect( (l1icache_2_l2cache, "port", "1ns"), (cache_bus, "highlink1", "1ns") )
 
         # BUS to L2 cache
         link = sst.Link(prefix+".link_bus_l2cache")
-        link.connect( (cache_bus, "low_network_0", "1ns"), (l2cache_2_cpu, "port", "1ns") )
+        link.connect( (cache_bus, "lowlink0", "1ns"), (l2cache_2_cpu, "port", "1ns") )
 
         return cpu, l1cache, l1dcache_2_cpu, l2cache, dtlb, dtlbWrapper, itlb

@@ -270,15 +270,37 @@ public:
     // TODO clean this up to something more succinct
     // We need to compute the set intersection of this MemRegion with MemRegion 'o'
     // The intersection may not be describable as a single MemRegion, so a set is returned
+    //
+    // Note: This check is potentially expensive and every MemNIC in the system calls
+    // it with the same/similar set of arguments. Therefore, we cache the result of the
+    // function and return it for any MemNICs running on the same SST thread. While this
+    // *technically* violates SST's requirement that components do not interact outside of
+    // events, the interaction is solely a performance optimization and has no impact on
+    // simulation progression. The cache is thread-safe and no components rely on others being
+    // co-located on the same rank/thread.
+    //
+    // TODO: Delete the cache after setup() completes if possible
     std::set<MemRegion> intersect(const MemRegion &o) const {
+        thread_local std::map<std::pair<MemRegion, MemRegion>, std::set<MemRegion>> intersect_cache_;
+
+        // Check cache
+        auto cache_key = std::make_pair(*this, o);
+        auto cache_it = intersect_cache_.find(cache_key);
+        if (cache_it != intersect_cache_.end()) {
+            return cache_it->second;
+        }
+
         std::set<MemRegion> regions;
         // Easy case, regions don't overlap
-        if (o.end < start || end < o.start)
+        if (o.end < start || end < o.start) {
+            intersect_cache_.insert(std::make_pair(cache_key, regions));
             return regions; // Empty
+        }
 
         // Easy case, they're equal
         if (*this == o) {
             regions.insert(*this);
+            intersect_cache_.insert(std::make_pair(cache_key, regions));
             return regions;
         }
 
@@ -290,6 +312,7 @@ public:
             reg.interleaveSize = 0;
             reg.interleaveStep = 0;
             regions.insert(reg);
+            intersect_cache_.insert(std::make_pair(cache_key, regions));
             return regions;
         }
 
@@ -315,6 +338,7 @@ public:
                 reg.interleaveStep = o.interleaveStep;
             }
             regions.insert(reg);
+            intersect_cache_.insert(std::make_pair(cache_key, regions));
             return regions;
         } else if (o.interleaveSize == 0) {
             MemRegion reg;
@@ -337,6 +361,7 @@ public:
                 reg.interleaveStep = interleaveStep;
             }
             regions.insert(reg);
+            intersect_cache_.insert(std::make_pair(cache_key, regions));
             return regions;
         }
 
@@ -375,6 +400,7 @@ public:
             reg.interleaveStep = lcm;
             regions.insert(reg);
         }
+        intersect_cache_.insert(std::make_pair(cache_key, regions));
         return regions;
     }
 
@@ -393,14 +419,43 @@ public:
             return true;
         }
 
+        // See note on intersect() function re use of thread_local in components
+        thread_local std::map<std::pair<MemRegion, MemRegion>, bool> does_intersect_cache_;
+        auto cache_key = std::make_pair(*this, o);
+        auto cache_it = does_intersect_cache_.find(cache_key);
+        if (cache_it != does_intersect_cache_.end()) {
+            return cache_it->second;
+        }
+
         // Check interval from max(start, o.start) to lcm + max(start, o.start)
         // for overlap
         uint64_t lcm = std::lcm(interleaveStep, o.interleaveStep);
         uint64_t check_start = std::max(start, o.start);
         uint64_t check_end = check_start + lcm;
         for (uint64_t i = check_start; i < check_end; i++) {
-            if ( (*this).contains(i) && o.contains(i) )
+            if ( (*this).contains(i) && o.contains(i) ) {
+                does_intersect_cache_.insert(std::make_pair(cache_key, true));
                 return true;
+            }
+        }
+        does_intersect_cache_.insert(std::make_pair(cache_key, false));
+        return false;
+    }
+
+    bool merge(const MemRegion &o) {
+        // Two regions can definitely merge if they have the same end and if the interleavings are adjacent
+        // Not all merageable regions can be merged by this function - it just captures the most common
+        // pattern caused by distributed caches
+        // If mergeable, merge o into this and return true
+        // else return false
+        if ( o.interleaveStep != interleaveStep ) return false;
+        if ( o.end != end ) return false;
+
+        if ( o.start == (start + interleaveSize) || start == (o.start + o.interleaveSize) ) {
+            // Mergeable
+            interleaveSize += o.interleaveSize;
+            if (o.start < start) start = o.start;
+            return true;
         }
         return false;
     }
@@ -424,9 +479,9 @@ public:
 
     std::string toString() const {
         std::ostringstream str;
-        str << showbase << hex;
+        str << std::showbase << hex;
         str << "Start: " << start << " End: " << end;
-        str << noshowbase << dec;
+        str << std::noshowbase << dec;
         str << " InterleaveSize: " << interleaveSize;
         str << " InterleaveStep: " << interleaveStep;
         return str.str();
@@ -438,8 +493,10 @@ public:
         SST_SER(end);
         SST_SER(interleaveSize);
         SST_SER(interleaveStep);
+        // Thread local vars are *only* used during setup and are only for performance - do not need to be saved
     }
 };
+
 
 } /* End namespace MemHierarchy */
 } /* End namespace SST */

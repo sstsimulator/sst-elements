@@ -75,8 +75,8 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     std::string clock_rate = params.find<std::string>("clock", "1GHz");
     output->verbose(CALL_INFO, 2, 0, "Registering clock at %s.\n", clock_rate.c_str());
-    cpuClockHandler = new Clock::Handler2<VANADIS_COMPONENT,&VANADIS_COMPONENT::tick>(this);
-    cpuClockTC      = registerClock(clock_rate, cpuClockHandler);
+    clock_handler_   = new Clock::Handler2<VANADIS_COMPONENT,&VANADIS_COMPONENT::tick>(this);
+    clock_tc_        = registerClock(clock_rate, clock_handler_);
 
     const uint32_t rob_count = params.find<uint32_t>("reorder_slots", 64);
     dCacheLineWidth          = params.find<uint64_t>("dcache_line_width", 64);
@@ -122,33 +122,39 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     char* decoder_name = new char[64];
 
+    // Create register stacks to manage allocation of available registers
     int_register_stack = new VanadisRegisterStack(int_reg_count);
     fp_register_stack = new VanadisRegisterStack(fp_reg_count);
 
+    // Create the decoder(s) - one per HW thread
+    SubComponentSlotInfo * decoders = getSubComponentSlotInfo("decoder");
     for ( uint32_t i = 0; i < hw_threads; ++i ) {
-
-        snprintf(decoder_name, 64, "decoder%" PRIu32 "", i);
-        VanadisDecoder* thr_decoder = loadUserSubComponent<SST::Vanadis::VanadisDecoder>(decoder_name);
-
-        if ( nullptr == thr_decoder ) {
-            output->fatal(CALL_INFO, -1, "Error: was unable to load %s on thread %" PRIu32 "\n", decoder_name, i);
+        VanadisDecoder* thr_decoder = nullptr;
+        if ( decoders && decoders->isPopulated(i) ) {
+            thr_decoder = decoders->create<VanadisDecoder>(i, ComponentInfo::SHARE_NONE);
+        } else {
+            // Input configuration uses the decoder%d slot name (which is an invalid name)
+            // This is deprecated but supported until at least SST 16.0
+            snprintf(decoder_name, 64, "decoder%" PRIu32 "", i);
+            thr_decoder = loadUserSubComponent<SST::Vanadis::VanadisDecoder>(decoder_name);
+            output->output("%s, Warning: the '%s' subcomponent slot is deprecated. Use index %" PRIu32 " of the 'decoder' subcomponent slot instead\n",
+                    getName().c_str(), decoder_name, i);
         }
-        else {
+
+        if ( !thr_decoder ) {
+            output->fatal(CALL_INFO, -1, "%s, Error: No VanadisDecoder subcomponent found for thread %u\n", getName().c_str(), i);
+        } else {
             output->verbose(CALL_INFO, 8, 0, "-> Decoder configured for %s\n", thr_decoder->getISAName());
         }
 
+        // Decoder loaded, finish configuring it
         fp_flags.push_back(new VanadisFloatingPointFlags());
         thr_decoder->setFPFlags(fp_flags[i]);
-        output->verbose(
-            CALL_INFO, 8, 0, "Loading decoder%" PRIu32 ": %s.\n", i,
-            (nullptr == thr_decoder) ? "failed" : "successful");
-
         thr_decoder->setHardwareThread(i);
         thread_decoders.push_back(thr_decoder);
-
-
         thread_decoders[i]->getOSHandler()->setOS_link(os_link);
 
+        // Configure the instruction cache line size
         if ( 0 == thread_decoders[i]->getInsCacheLineWidth() ) {
             output->verbose(
                 CALL_INFO, 2, 0, "Auto-setting icache line width in decoder to %" PRIu64 "\n", iCacheLineWidth);
@@ -161,7 +167,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
                     "Decoder for thr %" PRIu32 " has an override icache-line-width of %" PRIu64
                     ", this exceeds the core icache-line-with of %" PRIu64
                     " and is likely to result in cache load failures. Set "
-                    "this to less than equal to %" PRIu64 "\n",
+                    "this to less than or equal to %" PRIu64 "\n",
                     i, thread_decoders[i]->getInsCacheLineWidth(), iCacheLineWidth, iCacheLineWidth);
             }
             else {
@@ -181,10 +187,13 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
             thread_decoders[i]->getISAName(), thread_decoders[i]->countISAIntReg(),
             thread_decoders[i]->countISAFPReg());
 
+        // Create a register file for the thread
         register_files.push_back(new VanadisRegisterFile( i, thread_decoders[i]->getDecoderOptions(), int_reg_count, fp_reg_count, thr_decoder->getFPRegisterMode(), output));
         output->verbose(
             CALL_INFO, 8, 0, "Reorder buffer set to %" PRIu32 " entries, these are shared by all threads.\n",
             rob_count);
+
+        // Create an ROB for the thread
         rob.push_back(new VanadisCircularQueue<VanadisInstruction*>(rob_count));
         // WE NEED ISA INTEGER AND FP COUNTS HERE NOT ZEROS
         issue_isa_tables.push_back(new VanadisISATable( "issue",
@@ -193,10 +202,12 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
         thread_decoders[i]->setThreadROB(rob[i]);
 
+        // Reserve ISA registers
         for ( uint16_t j = 0; j < thread_decoders[i]->countISAIntReg(); ++j ) {
             issue_isa_tables[i]->setIntPhysReg(j, int_register_stack->pop());
         }
 
+        // Reserve ISA registers
         for ( uint16_t j = 0; j < thread_decoders[i]->countISAFPReg(); ++j ) {
             issue_isa_tables[i]->setFPPhysReg(j, fp_register_stack->pop());
         }
@@ -232,10 +243,10 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     //	memDataInterface =
     // loadUserSubComponent<Interfaces::SimpleMem>("mem_interface_data",
-    // ComponentInfo::SHARE_NONE, cpuClockTC, 		new
+    // ComponentInfo::SHARE_NONE, clock_tc_, 		new
     //&VanadisComponent::handleIncomingDataCacheEvent ));
     memInstInterface = loadUserSubComponent<Interfaces::StandardMem>(
-        "mem_interface_inst", ComponentInfo::SHARE_NONE, &cpuClockTC,
+        "mem_interface_inst", ComponentInfo::SHARE_NONE, &clock_tc_,
         new StandardMem::Handler2<SST::Vanadis::VANADIS_COMPONENT,&VANADIS_COMPONENT::handleIncomingInstCacheEvent>(this));
 
     if ( nullptr == memInstInterface ) {
@@ -414,8 +425,8 @@ VANADIS_COMPONENT::~VANADIS_COMPONENT()
 }
 
 void
-VANADIS_COMPONENT::startThread(int thr, uint64_t stackStart, uint64_t instructionPointer ) {
-
+VANADIS_COMPONENT::startThread(int thr, uint64_t stackStart, uint64_t instructionPointer )
+{
     halted_masks[thr]            = false;
     uint64_t initial_config_ip = thread_decoders[thr]->getInstructionPointer();
 
@@ -1353,9 +1364,13 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
         // if all theads have halted
         if ( ! should_process ) {
             lsq->tick((uint64_t)cycle);
+            #ifdef VANADIS_BUILD_DEBUG
             output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT, "checkpointing store=%zu load=%zu\n", lsq->storeSize(), lsq->loadSize());
+            #endif
             if ( 0 == lsq->storeSize() && 0 == lsq->loadSize() ) {
+                #ifdef VANADIS_BUILD_DEBUG
                 output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"checkingpoint core %d all threads have halted\n",core_id);
+                #endif
                 VanadisCheckpointResp* resp = new VanadisCheckpointResp( core_id );
                 os_link->send( resp );
                 return true;
@@ -1552,19 +1567,8 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     #endif
     current_cycle++;
 
-    uint64_t used_phys_int = 0;
-    uint64_t used_phys_fp  = 0;
-
-    for ( uint16_t i = 0; i < hw_threads; ++i ) {
-        VanadisRegisterStack* thr_reg_stack = int_register_stack;
-        used_phys_int += (thr_reg_stack->capacity() - thr_reg_stack->unused());
-
-        thr_reg_stack = fp_register_stack;
-        used_phys_fp += (thr_reg_stack->capacity() - thr_reg_stack->unused());
-    }
-
-    stat_int_phys_regs_in_use->addData(used_phys_int);
-    stat_fp_phys_regs_in_use->addData(used_phys_fp);
+    stat_int_phys_regs_in_use->addData(int_register_stack->capacity() - int_register_stack->unused());
+    stat_fp_phys_regs_in_use->addData(fp_register_stack->capacity() - fp_register_stack->unused());
 
     if ( current_cycle >= max_cycle ) {
         output->verbose(CALL_INFO, 16, 0, "Reached maximum cycle %" PRIu64 ". Core stops processing.\n", current_cycle);
@@ -1788,6 +1792,7 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
                     ins_isa_reg, int_reg_count);
             }
 
+            // Acquire the next free register for output
             const uint16_t out_reg        = int_regs->pop();
 
             #ifdef VANADIS_BUILD_DEBUG
@@ -1814,6 +1819,7 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
                     ins_isa_reg, fp_reg_count);
             }
 
+            // Acquire the next free register for output
             const uint16_t out_reg     = fp_regs->pop();
 
             #ifdef VANADIS_BUILD_DEBUG
@@ -1946,10 +1952,12 @@ VANADIS_COMPONENT::recoverRetiredRegisters(
     }
     #endif
 
+    // Return recovered int registers to the stack of available registers
     for ( uint16_t next_reg : recovered_phys_reg_int ) {
         int_regs->push(next_reg);
     }
 
+    // Return recovered fp registers to the stack of available registers
     for ( uint16_t next_reg : recovered_phys_reg_fp ) {
         fp_regs->push(next_reg);
     }

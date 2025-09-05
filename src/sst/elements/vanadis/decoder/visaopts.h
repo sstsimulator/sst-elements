@@ -53,8 +53,8 @@ public:
 
 protected:
     const uint16_t              reg_ignore_writes;
-    const uint16_t              isa_int_reg_count;
-    const uint16_t              isa_fp_reg_count;
+    const uint16_t              isa_int_reg_count; // Int registers specified by the ISA
+    const uint16_t              isa_fp_reg_count;  // FP registers specified by the ISA
     const uint16_t              isa_syscall_code_reg;
     const VanadisFPRegisterMode fp_reg_mode;
 };

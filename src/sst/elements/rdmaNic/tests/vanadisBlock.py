@@ -110,7 +110,7 @@ class Vanadis_Builder:
             if (verbosity > 0):
                 print( "No application arguments found, continuing with argc=0" )
 
-        decode = cpu.setSubComponent( "decoder0", "vanadis.Vanadis" + vanadis_isa + "Decoder" )
+        decode = cpu.setSubComponent( "decoder", "vanadis.Vanadis" + vanadis_isa + "Decoder" )
 
         decode.addParams({
             "uop_cache_entries" : 1536,
