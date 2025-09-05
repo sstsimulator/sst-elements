@@ -11,8 +11,6 @@ comp_LTLIBRARIES = libcarcosa.la
 libcarcosa_la_SOURCES =         \
     faultInjectorBase.cc        \
     faultInjectorBase.h         \
-    faultlogic/faultBase.cc     \
-    faultlogic/faultBase.h      \
     faultlogic/stuckAtFault.cc  \
     faultlogic/stuckAtFault.h
 

@@ -9,9 +9,27 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include "faultInjectorBase.h"
+#include <sst_config.h>
+#include "sst/elements/carcosa/faultInjectorBase.h"
+#include "sst/core/params.h"
 
 using namespace SST::Carcosa;
+
+/************** FaultBase **************/
+
+FaultInjectorBase::FaultBase::FaultBase(Params& params, FaultInjectorBase* injector) : _injector(injector)
+{
+    // what do we need in here?
+}
+
+SST::MemHierarchy::MemEventBase* FaultInjectorBase::FaultBase::convertMemEvent(Event*& ev) {
+    SST::MemHierarchy::MemEventBase* mem_ev = dynamic_cast<SST::MemHierarchy::MemEventBase*>(ev);
+
+    if (mem_ev == nullptr) {
+        _injector->getSimulationOutput().fatal(CALL_INFO_LONG, -1, "Attempting to inject mem fault on a non-MemEvent type.\n");
+    }
+    return mem_ev;
+}
 
 /********** FaultInjectorBase **********/
 
@@ -41,7 +59,7 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
     getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "\tInjection Probability: %d\n", injectionProbability_);
 #endif
     
-    fault = new FaultBase(params);
+    fault = new FaultBase(params, this);
 }
 
 void

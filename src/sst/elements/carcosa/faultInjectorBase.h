@@ -12,13 +12,16 @@
 #ifndef SST_ELEMENTS_CARCOSA_FAULTINJECTORBASE_H
 #define SST_ELEMENTS_CARCOSA_FAULTINJECTORBASE_H
 
-#include "sst/core/component.h"
+#include "sst/core/portModule.h"
 #include "sst/core/event.h"
+#include "sst/core/output.h"
 #include "sst/elements/memHierarchy/memEvent.h"
-#include "faultlogic/faultBase.h"
-#include "faultlogic/stuckAtFault.h"
 
 namespace SST::Carcosa {
+
+class FaultInjectorBase;
+
+/********** FaultInjectorBase **********/
 
 // NOTE: currently unsure if BOTH is actually valid
 enum installDirection {
@@ -43,6 +46,38 @@ enum injectorLogic {
 class FaultInjectorBase : public SST::PortModule
 {
 public:
+    /************** FaultBase **************/
+
+    /** TODO:
+     * Parameters for switching between interface-driven and normal instantiation
+     * A way to read in data to choose which logic to use
+     *  - Might be possible to parameterize the entirety of the logic, but would be easier if I can 
+     *    build a "library" of functions that are loaded dynamically
+    */
+
+    class FaultBase {
+    public:
+        FaultBase(Params& params, FaultInjectorBase* injector);
+
+        FaultBase() = default;
+        ~FaultBase() {}
+
+        virtual void faultLogic(Event*& ev) {}
+
+        SST::MemHierarchy::MemEventBase* convertMemEvent(Event*& ev);
+
+    protected:
+
+        FaultInjectorBase* _injector = nullptr;
+        // TODO: Figure out how to properly set up serialization for this
+        // void serialize_order(SST::Core::Serialization::serializer& ser) 
+        // {
+        //     SST::PortModule::serialize_order(ser);
+        //     // serialize parameters like `SST_SER(<param>)
+        // }
+        // ImplementSerializable(SST::Carcosa::FaultBase)
+    };
+
     SST_ELI_REGISTER_PORTMODULE(
         FaultInjectorBase,
         "carcosa",
@@ -55,6 +90,12 @@ public:
         {"installDirection", "Flag which direction the injector should read from on a port. Valid optins are \'Send\', \'Receive\', and \'Both\'. Default is \'Receive\'."},
         {"injectionProbability", "The probability with which an injection should occur. Valid inputs range from 0 to 1. Default = 0.5."},
     )
+
+    // SST_ELI_DOCUMENT_STATISTICS(
+    //     // Trigger Statistics
+    //     {"EventsArrived",           "Number of events that passed through the fault injector", "count", 1},
+    //     {"FaultsTriggered",         "Number of events that triggered a fault", "count", 1}
+    // )
 
     FaultInjectorBase(Params& params);
 
@@ -87,6 +128,8 @@ public:
         }
     }
 
+    SST::MemHierarchy::MemEventBase*& convertMemEvent(Event*& ev);
+
 protected:
     FaultBase* fault;
 
@@ -102,6 +145,10 @@ protected:
         SST_SER(injectionProbability_);
     }
     ImplementSerializable(SST::Carcosa::FaultInjectorBase)
+
+    // Statistics
+    // Statistic<uint64_t> stat_eventsArrived;
+    // Statistic<uint64_t> stat_faultsTriggered;
 };
 
 } // namespace SST::FaultInjectorBase

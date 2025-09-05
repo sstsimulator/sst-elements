@@ -12,17 +12,17 @@
 #ifndef SST_ELEMENTS_CARCOSA_STUCKATFAULT_H
 #define SST_ELEMENTS_CARCOSA_STUCKATFAULT_H
 
-#include "faultBase.h"
+#include "sst/elements/carcosa/faultInjectorBase.h"
 #include <map>
 #include <utility>
 
 namespace SST::Carcosa {
 
-class StuckAtFault : public SST::Carcosa::FaultBase
+class StuckAtFault : public FaultInjectorBase::FaultBase
 {
 public:
 
-    StuckAtFault(Params& params);
+    StuckAtFault(Params& params, FaultInjectorBase* injector);
 
     StuckAtFault() = default;
     ~StuckAtFault() {}
@@ -40,6 +40,6 @@ protected:
     std::map<SST::MemHierarchy::Addr, std::vector<std::pair<int, bool>>> stuckAtMap;
 };
 
-}
+} // namespace SST::Carcosa
 
 #endif // SST_ELEMENTS_CARCOSA_STUCKATFAULT_H

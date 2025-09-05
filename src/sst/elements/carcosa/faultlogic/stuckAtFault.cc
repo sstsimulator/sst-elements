@@ -9,19 +9,20 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include "stuckAtFault.h"
+#include "sst/elements/carcosa/faultlogic/stuckAtFault.h"
 
 using namespace SST::Carcosa;
 
 /********** StuckAtFault **********/
 
-StuckAtFault::StuckAtFault(Params& params) : FaultBase(params) 
+StuckAtFault::StuckAtFault(Params& params, FaultInjectorBase* injector) : FaultBase(params, injector) 
 {
 #ifdef DEBUG
     getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "\Fault Type: Stuck-At Fault");
 #endif
 }
 
-void faultLogic(SST::Event*& ev) {
-    // see comment in header file
+void StuckAtFault::faultLogic(SST::Event*& ev) {
+    // Convert to memEvent
+    SST::MemHierarchy::MemEventBase* mem_ev = this->convertMemEvent(ev);
 }
