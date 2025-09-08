@@ -324,7 +324,12 @@ TrafficGen::send_notify(int vn)
 
 int TrafficGen::getPacketDest(void)
 {
-    int dest = packetDestGen->getNextValue();
+    int dest = id;
+    while (dest == id)
+    {
+        dest = packetDestGen->getNextValue();
+    }
+    
     assert ( dest >= 0 );
     return dest;
 }
