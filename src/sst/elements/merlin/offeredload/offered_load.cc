@@ -323,7 +323,12 @@ void
 OfferedLoad::progress_messages(SimTime_t current_time) {
     while ( (next_time <= current_time) && link_if->spaceToSend(0,packet_size) ) {
         offered_load_event* ev = new offered_load_event(next_time);
-        SimpleNetwork::Request* req = new SimpleNetwork::Request(packetDestGen->getNextValue(), id, packet_size, true, true, ev);
+        int dest_id=id;
+        while (dest_id == id)
+        {   // Make sure the endpoint is not sending to itself
+            dest_id = packetDestGen->getNextValue();
+        }
+        SimpleNetwork::Request* req = new SimpleNetwork::Request(dest_id, id, packet_size, true, true, ev);
         link_if->send(req,0);
 
         next_time += send_interval;

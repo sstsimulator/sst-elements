@@ -175,7 +175,7 @@ class _topoMeshBase(Topology):
                 nodeID = local_ports * i + n
                 (ep, port_name) = endpoint.build(nodeID, {})
                 if ep:
-                    nicLink = sst.Link("nic.%d:%d"%(i, n))
+                    nicLink = sst.Link("nic_%d_%d"%(i, n))
                     if self.bundleEndpoints:
                        nicLink.setNoCut()
                     nicLink.connect( (ep, port_name, self.host_link_latency), (rtr, "port%d"%port, self.host_link_latency) )
@@ -240,7 +240,7 @@ class topoSingle(Topology):
         for l in range(self.num_ports):
             (ep, portname) = endpoint.build(l, {})
             if ep:
-                link = sst.Link("link%d"%l)
+                link = sst.Link("link_%d"%l)
                 if self.bundleEndpoints:
                     link.setNoCut()
                 link.connect( (ep, portname, self.link_latency), (rtr, "port%d"%l, self.link_latency) )
