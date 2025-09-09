@@ -42,6 +42,7 @@
 #include "os/callev/voscallreadlinkat.h"
 #include "os/callev/voscallmprotect.h"
 #include "os/callev/voscallclone.h"
+#include "os/callev/voscallclone3.h"
 #include "os/callev/voscallfutex.h"
 #include "os/callev/voscalluname.h"
 #include "os/callev/voscallfork.h"

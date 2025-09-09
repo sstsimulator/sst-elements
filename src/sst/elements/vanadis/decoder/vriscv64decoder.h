@@ -240,7 +240,7 @@ public:
                     const bool predecode_bytes =
                         ins_loader->getPredecodeBytes(output, ip, (uint8_t*)&temp_ins, sizeof(temp_ins));
 
-                    if ( predecode_bytes ) {
+                    if ( LIKELY(predecode_bytes) ) {
                         output->verbose(CALL_INFO, 16, 0, "---> performing a decode for ip=0x%" PRI_ADDR "\n", ip);
 
                         decode(output, ip, temp_ins, decoded_bundle);
@@ -270,7 +270,7 @@ public:
                     }
                 }
                 else {
-                    // Not in micro or predecode cache, so we have to regenrata a request
+                    // Not in micro or predecode cache, so we have to regenerate a request
                     // and stop further processing
                     if(output->getVerboseLevel() >= 16) {
                         output->verbose(
@@ -289,7 +289,7 @@ public:
                 output->verbose(
                     CALL_INFO, 16, 0,
                     "---> Decode pending queue (ROB) is full, no more "
-                    "decoded permitted this cycle.\n");
+                    "decodes permitted this cycle.\n");
                 break;
             }
         }

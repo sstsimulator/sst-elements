@@ -162,6 +162,7 @@ os/callev/voscallall.h \
 os/callev/voscallbrk.h \
 os/callev/voscallcheckpoint.h \
 os/callev/voscallclone.h \
+os/callev/voscallclone3.h \
 os/callev/voscallclose.h \
 os/callev/voscallexitgrp.h \
 os/callev/voscallexit.h \
@@ -204,6 +205,8 @@ os/syscall/brk.h \
 os/syscall/checkpoint.h \
 os/syscall/clone.cc \
 os/syscall/clone.h \
+os/syscall/clone3.cc \
+os/syscall/clone3.h \
 os/syscall/close.h \
 os/syscall/exit.h \
 os/syscall/exit.cc \

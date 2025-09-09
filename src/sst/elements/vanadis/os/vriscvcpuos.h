@@ -110,6 +110,7 @@
 #define VANADIS_SYSCALL_RISCV64_PRLIMIT 261
 #define VANADIS_SYSCALL_RISCV64_GETRANDOM 278
 #define VANADIS_SYSCALL_RISCV64_RSEQ 293
+#define VANADIS_SYSCALL_RISCV64_CLONE3 435
 #define VANADIS_SYSCALL_RISCV64_CHECKPOINT 500
 
 #define VANADIS_SYSCALL_RISCV_RET_REG 10
@@ -132,6 +133,7 @@ public:
 
         InstallRISCV64FuncPtr( MMAP );
         InstallRISCV64FuncPtr( CLONE );
+        InstallRISCV64FuncPtr( CLONE3 );
         InstallRISCV64FuncPtr( FUTEX );
         InstallRISCV64FuncPtr( CLOCK_GETTIME );
         InstallRISCV64FuncPtr( SET_ROBUST_LIST );
@@ -164,6 +166,17 @@ public:
                     instPtr,threadStack,flags,ptid,tls,ctid);
         return new VanadisSyscallCloneEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, instPtr,
                     threadStack, flags, ptid, tls, ctid );
+    }
+
+    VanadisSyscallEvent* CLONE3( int hw_thr ) {
+        uint64_t cl_args_addr  = getArgRegister( 0 ); // struct clone_args *cl_args
+        uint64_t cl_args_size = getArgRegister( 1 );  // size_t size
+
+        output->verbose(CALL_INFO, 8, 0,
+                    "clone3( %#" PRIx64 ", %#" PRIx64 ", %" PRIu64 ")\n",
+                    instPtr,cl_args_addr, cl_args_size);
+        return new VanadisSyscallClone3Event(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, instPtr,
+                    cl_args_addr, cl_args_size);
     }
 
     VanadisSyscallEvent* GETRANDOM( int hw_thr ) {

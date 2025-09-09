@@ -19,6 +19,7 @@
 
 #include "os/syscall/fork.h"
 #include "os/syscall/clone.h"
+#include "os/syscall/clone3.h"
 #include "os/syscall/futex.h"
 #include "os/syscall/exit.h"
 #include "os/syscall/exitgroup.h"
@@ -111,6 +112,9 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
         } break;
         case SYSCALL_OP_CLONE: {
             syscall = new VanadisCloneSyscall( this, coreLink, process, convertEvent<VanadisSyscallCloneEvent*>( "clone", sys_ev ) );
+        } break;
+        case SYSCALL_OP_CLONE3: {
+            syscall = new VanadisClone3Syscall( this, coreLink, process, convertEvent<VanadisSyscallClone3Event*>( "clone3", sys_ev ) );
         } break;
         case SYSCALL_OP_FUTEX: {
             syscall = new VanadisFutexSyscall( this, coreLink, process, convertEvent<VanadisSyscallFutexEvent*>( "futex", sys_ev ) );
