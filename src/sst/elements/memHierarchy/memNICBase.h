@@ -267,7 +267,6 @@ class MemNICBase : public MemLinkBase {
         }
 
         virtual void processInitMemRtrEvent(InitMemRtrEvent* imre) {
-            // TODO: figure out how group 5 ended up in sources for OS cache
             if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
                 addSource(imre->info);
                 dbg.debug(_L10_, "%s (memNICBase) received source imre. Name: %s, Addr: %" PRIu64 ", ID: %" PRIu32 ", start: %" PRIu64 ", end: %" PRIu64 ", size: %" PRIu64 ", step: %" PRIu64 "\n",
@@ -432,7 +431,7 @@ class MemNICBase : public MemLinkBase {
 
 #ifdef __SST_DEBUG_OUTPUT__
             dbg.debug(_L10_, "Routing information for %s\n", getName().c_str());
-            dbg.debug(_L10_, "    Endpoint Info Size before merge: %d\n",destEndpointInfo.size());
+            dbg.debug(_L10_, "    Endpoint Info Size before merge: %zu\n",destEndpointInfo.size());
             for (auto it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
                 dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str());
             }
@@ -475,7 +474,7 @@ class MemNICBase : public MemLinkBase {
             }
             destEndpointInfo = newDests;
 #ifdef __SST_DEBUG_OUTPUT__
-            dbg.debug(_L10_, "    Endpoint Info Size after merge: %d\n",destEndpointInfo.size());
+            dbg.debug(_L10_, "    Endpoint Info Size after merge: %zu\n",destEndpointInfo.size());
             for (auto it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
                 dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str());
             }
@@ -715,6 +714,10 @@ class MemNICBase : public MemLinkBase {
 
             dbg.debug(_L10_, "%s memNICBase info is: Name: %s, group: %" PRIu32 "\n",
                     getName().c_str(), info.name.c_str(), info.id);
+            
+            // range_check current is off(0) or on(1) but is using a uint32_t to
+            // allow for future selection of different algorithms
+            this->range_check=params.find<uint32_t>("range_check", 1);
         }
 };
 
