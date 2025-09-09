@@ -714,7 +714,7 @@ class MemNICBase : public MemLinkBase {
 
             dbg.debug(_L10_, "%s memNICBase info is: Name: %s, group: %" PRIu32 "\n",
                     getName().c_str(), info.name.c_str(), info.id);
-            
+
             // range_check current is off(0) or on(1) but is using a uint32_t to
             // allow for future selection of different algorithms
             this->range_check=params.find<uint32_t>("range_check", 1);
