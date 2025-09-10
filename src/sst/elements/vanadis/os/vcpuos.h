@@ -45,53 +45,53 @@ public:
     VanadisCPUOSHandler(ComponentId_t id, Params& params) : SubComponent(id) {
 
         const uint32_t verbosity = params.find<uint32_t>("verbose", 0);
-        output = new SST::Output("[os_hdlr]:@p() ", verbosity, 1, Output::STDOUT);
+        output_ = new SST::Output("[os_hdlr]:@p() ", verbosity, 1, Output::STDOUT);
 
-        regFile = nullptr;
-        isaTable = nullptr;
-        tls_address = nullptr;
+        reg_file_ = nullptr;
+        isa_table_ = nullptr;
+        tls_address_ = nullptr;
 
-        hw_thr = 0;
-        core_id = 0;
+        hw_thr_ = 0;
+        core_id_ = 0;
     }
 
-    virtual ~VanadisCPUOSHandler() { delete output; }
+    virtual ~VanadisCPUOSHandler() { delete output_; }
 
-    void setThreadLocalStoragePointer(uint64_t* new_tls_ptr) { tls_address = new_tls_ptr; }
+    void setThreadLocalStoragePointer(uint64_t* new_tls_ptr) { tls_address_ = new_tls_ptr; }
 
-    void setCoreID(const uint32_t newCoreID) { core_id = newCoreID; }
-    void setHWThread(const uint32_t newThr) { hw_thr = newThr; }
-    void setRegisterFile(VanadisRegisterFile* newFile) { regFile = newFile; }
-    void setISATable(VanadisISATable* newTable) { isaTable = newTable; }
+    void setCoreID(const uint32_t newCoreID) { core_id_ = newCoreID; }
+    void setHWThread(const uint32_t newThr) { hw_thr_ = newThr; }
+    void setRegisterFile(VanadisRegisterFile* newFile) { reg_file_ = newFile; }
+    void setISATable(VanadisISATable* newTable) { isa_table_ = newTable; }
 
     virtual std::tuple<bool,bool> handleSysCall(VanadisSysCallInstruction* syscallIns) = 0;
     virtual void recvSyscallResp( VanadisSyscallResponse* os_resp ) = 0;
 
     void setOS_link( SST::Link* link ) {
-        os_link = link;
+        os_link_ = link;
     }
 
 protected:
 
     void sendSyscallEvent( VanadisSyscallEvent* ev ) {
-        os_link->send( ev );
+        os_link_->send( ev );
     }
 
     void sendEvent( Event* ev ) {
-        os_link->send( ev );
+        os_link_->send( ev );
     }
 
-    SST::Output* output;
-    uint32_t core_id;
-    uint32_t hw_thr;
+    SST::Output* output_;
+    uint32_t core_id_;
+    uint32_t hw_thr_;
 
-    VanadisRegisterFile* regFile;
-    VanadisISATable* isaTable;
+    VanadisRegisterFile* reg_file_;
+    VanadisISATable* isa_table_;
 
-    uint64_t* tls_address;
+    uint64_t* tls_address_;
 
 private:
-    SST::Link* os_link;
+    SST::Link* os_link_;
 };
 
 } // namespace Vanadis

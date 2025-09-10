@@ -141,9 +141,9 @@ void VanadisClone3Syscall::memReqIsDone(bool)
             if ( event->getCloneArgsSize() > 80 ) {
                 cgroup_ = *((uint64_t*)buffer_.data() + 10);
             }
-            stack_ = stack_ + stack_size_;  // stack_ is passed as lowest byte mem address, 
+            stack_ = stack_ + stack_size_;  // stack_ is passed as lowest byte mem address,
                                             // stack grows down so swap to highest
-            parseCloneArgs(event); 
+            parseCloneArgs(event);
             break;
 
         case State::ChildSetTid:
@@ -174,7 +174,7 @@ void VanadisClone3Syscall::parseCloneArgs(VanadisSyscallClone3Event* event)
     } else {
         // We only handle the common combination of flags for now (ignoring irrelevant ones)
         if ( ( flags_ & ~CLONE_INVALID_FLAGS ) != CLONE_VALID_FLAGS ) {
-            m_output->fatal(CALL_INFO, -1, 
+            m_output->fatal(CALL_INFO, -1,
                 "Error: clone3, syscall implementation missing support for flags: %#" PRIx64 "\n", flags_);
         }
         // Create a new thread context
@@ -215,7 +215,7 @@ void VanadisClone3Syscall::setTidAtParent(VanadisSyscallClone3Event* event)
     buffer_.resize(sizeof(uint32_t));
     *((uint32_t*)buffer_.data()) = new_thread_->gettid();
 
-    m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"PARENT_SETTID addr %#" PRIx64 " tid=%d\n", 
+    m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"PARENT_SETTID addr %#" PRIx64 " tid=%d\n",
         parent_tid_,  new_thread_->gettid());
 
     writeMemory( parent_tid_, buffer_ );

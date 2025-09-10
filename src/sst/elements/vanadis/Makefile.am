@@ -193,6 +193,7 @@ os/callev/voscallsetaffinity.h \
 os/callev/voscallsetrobustlist.h \
 os/callev/voscallsettidaddr.h \
 os/callev/voscallstatx.h \
+os/callev/voscalltgkill.h \
 os/callev/voscalluname.h \
 os/callev/voscallunlinkat.h \
 os/callev/voscallunlink.h \
@@ -248,6 +249,7 @@ os/syscall/settidaddress.h \
 os/syscall/statx.h \
 os/syscall/syscall.h \
 os/syscall/syscall.cc \
+os/syscall/tgkill.h \
 os/syscall/uname.h \
 os/syscall/unlinkat.h \
 os/syscall/unlink.h \

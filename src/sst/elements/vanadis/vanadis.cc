@@ -2253,7 +2253,7 @@ void VANADIS_COMPONENT::recvOSEvent(SST::Event* ev) {
     if (nullptr != req ) {
         dumpRegs(req);
     } else { // Case 8
-                           
+
     VanadisCheckpointReq* req = dynamic_cast<VanadisCheckpointReq*>(ev);
     if ( nullptr != req ) {
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,

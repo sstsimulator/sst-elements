@@ -24,6 +24,7 @@
 #include "os/syscall/exit.h"
 #include "os/syscall/exitgroup.h"
 #include "os/syscall/kill.h"
+#include "os/syscall/tgkill.h"
 #include "os/syscall/settidaddress.h"
 #include "os/syscall/setrobustlist.h"
 #include "os/syscall/mprotect.h"
@@ -121,6 +122,9 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
         } break;
         case SYSCALL_OP_KILL: {
             syscall = new VanadisKillSyscall( this, coreLink, process, convertEvent<VanadisSyscallKillEvent*>( "kill", sys_ev ) );
+        } break;
+        case SYSCALL_OP_TGKILL: {
+            syscall = new VanadisTgKillSyscall( this, coreLink, process, convertEvent<VanadisSyscallTgKillEvent*>( "tgkill", sys_ev ) );
         } break;
         case SYSCALL_OP_EXIT: {
             syscall = new VanadisExitSyscall( this, coreLink, process, convertEvent<VanadisSyscallExitEvent*>( "exit", sys_ev ) );
