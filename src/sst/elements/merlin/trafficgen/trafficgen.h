@@ -202,7 +202,7 @@ private:
         {
 		gen = new SST::RNG::MersenneRNG();
 
-		dist_size = std::max(1, max-min);
+		dist_size = std::max(1, max-min+1);
 		dist = new SSTUniformDistribution(dist_size, gen);
 	}
 

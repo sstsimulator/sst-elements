@@ -24,7 +24,7 @@ sst.merlin._params["input_latency"] = "0.0ns"
 sst.merlin._params["output_latency"] = "0.0ns"
 sst.merlin._params["input_buf_size"] = "16.0KB"
 sst.merlin._params["output_buf_size"] = "16.0KB"
-sst.merlin._params["link_lat"] = "5000ns"
+sst.merlin._params["link_lat"] = "1ns"
 
 merlintorusparams = {}
 merlintorusparams["num_dims"]=1
