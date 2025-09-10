@@ -67,7 +67,7 @@ public:
                 // delete thread
                 delete thr_process;
             }
-            
+
         } else {
             m_output->fatal(CALL_INFO, -1, "tgkill not implemented for signal [%d]", event->getSig());
 
