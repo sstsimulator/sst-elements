@@ -22,6 +22,10 @@ FaultInjectorBase::FaultBase::FaultBase(Params& params, FaultInjectorBase* injec
     // what do we need in here?
 }
 
+SST::Output& FaultInjectorBase::FaultBase::getSimulationOutput() {
+    return _injector->getSimulationOutput();
+}
+
 SST::MemHierarchy::MemEvent* FaultInjectorBase::FaultBase::convertMemEvent(Event*& ev) {
     SST::MemHierarchy::MemEvent* mem_ev = dynamic_cast<SST::MemHierarchy::MemEvent*>(ev);
 
@@ -29,6 +33,44 @@ SST::MemHierarchy::MemEvent* FaultInjectorBase::FaultBase::convertMemEvent(Event
         _injector->getSimulationOutput().fatal(CALL_INFO_LONG, -1, "Attempting to inject mem fault on a non-MemEvent type.\n");
     }
     return mem_ev;
+}
+
+dataVec& FaultInjectorBase::FaultBase::getMemEventPayload(Event*& ev) {
+    return convertMemEvent(ev)->getPayload();
+}
+
+void FaultInjectorBase::FaultBase::setMemEventPayload(Event*& ev, dataVec newPayload) {
+#ifdef DEBUG
+    _injector->getSimulationOutput().debug(_L10_, "Payload before replacement:\n");
+    for (int i: convertMemEvent(ev)->getPayload()) {
+        _injector->getSimulationOutput().debug(_L10_, "%d\t");
+    }
+    _injector->getSimulationOutput().debug(_L10_, "\n");
+#endif
+    convertMemEvent(ev)->setPayload(newPayload);
+
+#ifdef DEBUG
+    _injector->getSimulationOutput().debug(_L10_, "Payload after replacement:\n");
+    for (int i: convertMemEvent(ev)->getPayload()) {
+        _injector->getSimulationOutput().debug(_L10_, "%d\t");
+    }
+    _injector->getSimulationOutput().debug(_L10_, "\n");
+#endif
+}
+
+FaultInjectorBase::FaultBase::memEventType FaultInjectorBase::FaultBase::getMemEventCommandType(Event*& ev) {
+    SST::MemHierarchy::MemEvent* mem_ev = convertMemEvent(ev);
+    if (mem_ev->isDataRequest()) {
+        return FaultBase::memEventType::DataRequest;
+    } else if (mem_ev->isResponse()) {
+        return FaultBase::memEventType::Response;
+    } else if (mem_ev->isWriteback()) {
+        return FaultBase::memEventType::Writeback;
+    } else if (mem_ev->isRoutedByAddress()) {
+        return FaultBase::memEventType::RoutedByAddr;
+    } else {
+        return FaultBase::memEventType::Invalid;
+    }
 }
 
 /********** FaultInjectorBase **********/

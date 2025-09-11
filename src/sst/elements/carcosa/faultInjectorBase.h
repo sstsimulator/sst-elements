@@ -19,11 +19,12 @@
 
 namespace SST::Carcosa {
 
+typedef std::vector<uint8_t> dataVec;
+
 class FaultInjectorBase;
 
 /********** FaultInjectorBase **********/
 
-// NOTE: currently unsure if BOTH is actually valid
 enum installDirection {
     Send = 0,
     Receive,
@@ -57,6 +58,15 @@ public:
 
     class FaultBase {
     public:
+        
+        enum memEventType {
+            DataRequest = 0,
+            Response,
+            Writeback,
+            RoutedByAddr,
+            Invalid
+        };
+
         FaultBase(Params& params, FaultInjectorBase* injector);
 
         FaultBase() = default;
@@ -64,7 +74,15 @@ public:
 
         virtual void faultLogic(Event*& ev) {}
 
+        SST::Output& getSimulationOutput();
+
         SST::MemHierarchy::MemEvent* convertMemEvent(Event*& ev);
+
+        dataVec& getMemEventPayload(Event*& ev);
+
+        void setMemEventPayload(Event*& ev, dataVec newPayload);
+
+        memEventType getMemEventCommandType(Event*& ev);
 
     protected:
 
@@ -127,8 +145,6 @@ public:
                 return false;
         }
     }
-
-    SST::MemHierarchy::MemEventBase*& convertMemEvent(Event*& ev);
 
 protected:
     FaultBase* fault;
