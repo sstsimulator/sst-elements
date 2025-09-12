@@ -267,7 +267,6 @@ class MemNICBase : public MemLinkBase {
         }
 
         virtual void processInitMemRtrEvent(InitMemRtrEvent* imre) {
-
             if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
                 addSource(imre->info);
                 dbg.debug(_L10_, "%s (memNICBase) received source imre. Name: %s, Addr: %" PRIu64 ", ID: %" PRIu32 ", start: %" PRIu64 ", end: %" PRIu64 ", size: %" PRIu64 ", step: %" PRIu64 "\n",
@@ -432,6 +431,10 @@ class MemNICBase : public MemLinkBase {
 
 #ifdef __SST_DEBUG_OUTPUT__
             dbg.debug(_L10_, "Routing information for %s\n", getName().c_str());
+            dbg.debug(_L10_, "    Endpoint Info Size before merge: %zu\n",destEndpointInfo.size());
+            for (auto it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
+                dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str());
+            }
 #endif
             // Filters each destEndpointInfo region by the reachable endpointInfo
             for (auto it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
@@ -470,7 +473,12 @@ class MemNICBase : public MemLinkBase {
                 }
             }
             destEndpointInfo = newDests;
-
+#ifdef __SST_DEBUG_OUTPUT__
+            dbg.debug(_L10_, "    Endpoint Info Size after merge: %zu\n",destEndpointInfo.size());
+            for (auto it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
+                dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str());
+            }
+#endif
             // This algorithm can take an extremely long time for some memory configurations.
             if (range_check > 0) {
                 int stopAfter = 20; // This is error checking, if it takes too long, stop
@@ -627,57 +635,89 @@ class MemNICBase : public MemLinkBase {
             // Get source/destination parameters
             // Each NIC has a group ID and talks to those with IDs in sources and destinations
             // If no source/destination provided, source = group ID - 1, destination = group ID + 1
+            std::stringstream sources, destinations;
+            uint32_t id;
             bool found;
             info.id = params.find<uint32_t>("group", 0, found);
             if (!found) {
                 dbg.fatal(CALL_INFO, -1, "Param not specified(%s): group - group ID (or hierarchy level) for this NIC's component. Example: L2s in group 1, directories in group 2, memories (on network) in group 3.\n",
                         getName().c_str());
             }
-
-            if (params.is_value_array("sources")) {
+            bool srcs_passed;
+            if (srcs_passed = params.is_value_array("sources")) {
+#ifdef __SST_DEBUG_OUTPUT__
+                dbg.debug(_L10_,"Array passed to sources; read it in.\n");
+#endif
                 std::vector<uint32_t> srcArr;
                 params.find_array<uint32_t>("sources", srcArr);
                 sourceIDs = std::unordered_set<uint32_t>(srcArr.begin(), srcArr.end());
-
+            } else {
+                bool str_passed;
+                sources.str(params.find<std::string>("sources","", str_passed));
+                if (str_passed) {
+#ifdef __SST_DEBUG_OUTPUT__
+                    dbg.debug(_L10_, "String passed as sources; read it in.\n");
+#endif
+                    while (sources >> id) {
+                    sourceIDs.insert(id);
+                        while (sources.peek() == '.' || sources.peek() == ',') {
+                            sources.ignore();
+                        }
+                    }
+                } else {
+#ifdef __SST_DEBUG_OUTPUT__
+                    dbg.debug(_L10_, "No array or string passed as sources; defaulting to group - 1.\n");
+#endif
+                    sourceIDs.insert(info.id - 1);
+                }
             }
-            if (params.is_value_array("destinations")) {
+#ifdef __SST_DEBUG_OUTPUT__
+            if (sourceIDs.empty()) {
+                dbg.debug(_L10_,"Sources set to NONE.\n");
+            }
+#endif
+
+            bool dests_passed;
+            if (dests_passed = params.is_value_array("destinations")) {
+#ifdef __SST_DEBUG_OUTPUT__
+                dbg.debug(_L10_,"Array passed to destinations; read it in.\n");
+#endif
                 std::vector<uint32_t> dstArr;
                 params.find_array<uint32_t>("destinations", dstArr);
                 destIDs = std::unordered_set<uint32_t>(dstArr.begin(), dstArr.end());
-            }
-
-            // range_check current is off(0) or on(1) but is using a uint32_t to
-            // allow for future selection of different algorithms.
-            range_check=params.find<uint32_t>("range_check", 1);
-
-            std::stringstream sources, destinations;
-            uint32_t id;
-
-            if (sourceIDs.empty()) {
-                sources.str(params.find<std::string>("sources", ""));
-                while (sources >> id) {
-                    sourceIDs.insert(id);
-                    while (sources.peek() == ',' || sources.peek() == ' ')
-                        sources.ignore();
-                }
-                if (sourceIDs.empty())
-                    sourceIDs.insert(info.id - 1);
-            }
-
-            if (destIDs.empty()) {
-                destinations.str(params.find<std::string>("destinations", ""));
-                while (destinations >> id) {
-                    destIDs.insert(id);
-                    while (destinations.peek() == ',' || destinations.peek() == ' ')
-                        destinations.ignore();
-                }
-                if (destIDs.empty())
+            } else {
+                bool str_passed;
+                destinations.str(params.find<std::string>("destinations","", str_passed));
+                if (str_passed) {
+#ifdef __SST_DEBUG_OUTPUT__
+                    dbg.debug(_L10_, "String passed as sources; read it in.\n");
+#endif
+                    while (destinations >> id) {
+                        destIDs.insert(id);
+                        while (destinations.peek() == '.' || destinations.peek() == ',') {
+                            destinations.ignore();
+                        }
+                    }
+                } else {
+#ifdef __SST_DEBUG_OUTPUT__
+                    dbg.debug(_L10_, "No array or string passed as destinations; defaulting to group + 1.\n");
+#endif
                     destIDs.insert(info.id + 1);
+                }
             }
+#ifdef __SST_DEBUG_OUTPUT__
+            if (destIDs.empty()) {
+                dbg.debug(_L10_,"Destinations set to NONE.\n");
+            }
+#endif
             initMsgSent = false;
 
             dbg.debug(_L10_, "%s memNICBase info is: Name: %s, group: %" PRIu32 "\n",
                     getName().c_str(), info.name.c_str(), info.id);
+
+            // range_check current is off(0) or on(1) but is using a uint32_t to
+            // allow for future selection of different algorithms
+            this->range_check=params.find<uint32_t>("range_check", 1);
         }
 };
 

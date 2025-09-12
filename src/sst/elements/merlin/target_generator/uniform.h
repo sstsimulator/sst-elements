@@ -64,7 +64,7 @@ public:
 
         gen = new SST::RNG::MersenneRNG(id);
 
-        int dist_size = std::max(1, max-min);
+        int dist_size = std::max(1, max-min+1);
         dist = new SSTUniformDistribution(dist_size, gen);
 
     }
@@ -80,7 +80,7 @@ public:
         if ( min == -1 ) min = 0;
         if ( max == -1 ) max = num_peers;
 
-        int dist_size = std::max(1, max-min);
+        int dist_size = std::max(1, max-min+1);
         dist = new SSTUniformDistribution(dist_size, gen);
     }
 
@@ -93,7 +93,7 @@ public:
         delete dist;
         delete gen;
         gen = new SST::RNG::MersenneRNG((unsigned int) val);
-        dist = new SSTUniformDistribution(std::max(1, max-min),gen);
+        dist = new SSTUniformDistribution(std::max(1, max-min+1),gen);
     }
 };
 
