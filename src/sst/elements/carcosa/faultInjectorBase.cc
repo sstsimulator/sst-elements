@@ -12,6 +12,7 @@
 #include <sst_config.h>
 #include "sst/elements/carcosa/faultInjectorBase.h"
 #include "sst/core/params.h"
+#include "sst/elements/carcosa/faultlogic/stuckAtFault.h"
 
 using namespace SST::Carcosa;
 
@@ -40,7 +41,7 @@ dataVec& FaultInjectorBase::FaultBase::getMemEventPayload(Event*& ev) {
 }
 
 void FaultInjectorBase::FaultBase::setMemEventPayload(Event*& ev, dataVec newPayload) {
-#ifdef DEBUG
+#ifdef __SST_DEBUG_OUTPUT__
     _injector->getSimulationOutput().debug(_L10_, "Payload before replacement:\n");
     for (int i: convertMemEvent(ev)->getPayload()) {
         _injector->getSimulationOutput().debug(_L10_, "%d\t");
@@ -49,7 +50,7 @@ void FaultInjectorBase::FaultBase::setMemEventPayload(Event*& ev, dataVec newPay
 #endif
     convertMemEvent(ev)->setPayload(newPayload);
 
-#ifdef DEBUG
+#ifdef __SST_DEBUG_OUTPUT__
     _injector->getSimulationOutput().debug(_L10_, "Payload after replacement:\n");
     for (int i: convertMemEvent(ev)->getPayload()) {
         _injector->getSimulationOutput().debug(_L10_, "%d\t");
@@ -77,8 +78,8 @@ FaultInjectorBase::FaultBase::memEventType FaultInjectorBase::FaultBase::getMemE
 
 FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
 {
-#ifdef DEBUG
-    getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "Initializing FaultInjector:\n")
+#ifdef __SST_DEBUG_OUTPUT__
+    getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "Initializing FaultInjector:\n");
 #endif
     std::string install_dir = params.find<string>("installDirection", "Receive");
 
@@ -89,7 +90,7 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
             installDirection_ = installDirection::Receive;
         }
     }
-#ifdef DEBUG
+#ifdef __SST_DEBUG_OUTPUT__
     getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "\tInstall Direction: %s\n", install_dir);
 #endif
 
@@ -97,11 +98,11 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
     if ( injectionProbability_ < 0.0 || injectionProbability_ > 1.0 ) {
         getSimulationOutput().fatal(CALL_INFO_LONG, -1, "\tInjection probability outside of bounds. Must be in the following range: [0.0,1.0].\n");
     }
-#ifdef DEBUG
+#ifdef __SST_DEBUG_OUTPUT__
     getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "\tInjection Probability: %d\n", injectionProbability_);
 #endif
     
-    fault = new FaultBase(params, this);
+    fault = new StuckAtFault(params, this);//FaultBase(params, this);
 }
 
 void

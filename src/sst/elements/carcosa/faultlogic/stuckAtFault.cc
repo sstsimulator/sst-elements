@@ -17,7 +17,7 @@ using namespace SST::Carcosa;
 
 StuckAtFault::StuckAtFault(Params& params, FaultInjectorBase* injector) : FaultBase(params, injector) 
 {
-#ifdef DEBUG
+#ifdef __SST_DEBUG_OUTPUT__
     getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "\Fault Type: Stuck-At Fault");
 #endif
     // read in masks
@@ -47,7 +47,7 @@ StuckAtFault::StuckAtFault(Params& params, FaultInjectorBase* injector) : FaultB
                 getSimulationOutput().fatal(CALL_INFO_LONG, -1, "Failed to insert mask.\n");
             }
         }
-#ifdef DEBUG
+#ifdef __SST_DEBUG_OUTPUT__
         getSimulationOutput().debug(_L10_, "Finished inserting zero-masks for 0x%zu.\n", addr);
 #endif
         if (stuckAtOneMask.count(addr) == 1) {
@@ -60,7 +60,7 @@ StuckAtFault::StuckAtFault(Params& params, FaultInjectorBase* injector) : FaultB
                 getSimulationOutput().fatal(CALL_INFO_LONG, -1, "Failed to insert mask.\n");
             }
         }
-#ifdef DEBUG
+#ifdef __SST_DEBUG_OUTPUT__
         getSimulationOutput().debug(_L10_, "Finished inserting one-masks for 0x%zu.\n", addr);
 #endif
     }
@@ -74,20 +74,20 @@ void StuckAtFault::faultLogic(SST::Event*& ev) {
 
     // check for the addr in question in the fault map
     if (stuckAtZeroMask.count(addr) == 1 || stuckAtOneMask.count(addr) == 1) {
-#ifdef DEBUG
+#ifdef __SST_DEBUG_OUTPUT__
         getSimulationOutput().debug(_L10_, "Addr 0x%x found in stuck map.\n", addr);
 #endif
         // replace data if necessary
         dataVec payload = this->getMemEventPayload(ev);
 
         uint8_t mask = 0b00000000;
-#ifdef DEBUG
+#ifdef __SST_DEBUG_OUTPUT__
         getSimulationOutput().debug(_L10_, "Begin zero mask for address: 0x%zu\n", addr);
 #endif
         if (stuckAtZeroMask.count(addr) == 1) {
             for (auto maskPair: stuckAtZeroMask.at(addr)) {
                 mask = maskPair.second;
-#ifdef DEBUG
+#ifdef __SST_DEBUG_OUTPUT__
                 getSimulationOutput().debug(_L10_, "\tbyte %d, value: %d, mask: %d, new value: %d\n",
                                             maskPair.first, (int)payload[maskPair.first], (int) mask, 
                                             (int)(payload[maskPair.first] &= (!mask)));
@@ -95,21 +95,21 @@ void StuckAtFault::faultLogic(SST::Event*& ev) {
                 payload[maskPair.first] &= (!mask);
             }
         }
-#ifdef DEBUG
+#ifdef __SST_DEBUG_OUTPUT__
         getSimulationOutput().debug(_L10_, "End zero mask for address: 0x%zu\n", addr);
         getSimulationOutput().debug(_L10_, "Begin one mask for address: 0x%zu\n", addr);
 #endif
         if (stuckAtOneMask.count(addr) == 1) {
             for (auto maskPair: stuckAtOneMask.at(addr)) {
                 mask = maskPair.second;
-#ifdef DEBUG
+#ifdef __SST_DEBUG_OUTPUT__
                 getSimulationOutput().debug(_L10_, "\tbyte %d, value: %d, mask: %d, new value: %d\n",
                                             maskPair.first, (int)payload[maskPair.first], (int) mask, 
                                             (int)(payload[maskPair.first] |= mask));
 #endif
                 payload[maskPair.first] |= mask;
             }
-#ifdef DEBUG
+#ifdef __SST_DEBUG_OUTPUT__
             getSimulationOutput().debug(_L10_, "End one mask for address: 0x%zu\n", addr);
 #endif
         }
@@ -143,6 +143,9 @@ std::vector<StuckAtFault::maskParam_t> StuckAtFault::convertString(std::vector<s
         if (stream.peek() == ',') {
             stream.ignore();
         }
+#ifdef __SST_DEBUG_OUTPUT__
+        getSimulationOutput().debug(_L10_, "Masks for addr 0x%zu, byte %d: %d %d", addr, byte, (int)zeroMask, (int)oneMask);
+#endif
         // insert maskParam
         paramVec.push_back({addr, byte, zeroMask, oneMask});
     }
