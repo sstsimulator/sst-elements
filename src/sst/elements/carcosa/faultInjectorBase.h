@@ -16,6 +16,7 @@
 #include "sst/core/event.h"
 #include "sst/core/output.h"
 #include "sst/elements/memHierarchy/memEvent.h"
+#include <sst_config.h>
 
 namespace SST::Carcosa {
 
@@ -74,7 +75,9 @@ public:
 
         virtual void faultLogic(Event*& ev) {}
 
-        SST::Output& getSimulationOutput();
+        SST::Output*& getSimulationOutput();
+
+        SST::Output*& getSimulationDebug();
 
         SST::MemHierarchy::MemEvent* convertMemEvent(Event*& ev);
 
@@ -151,6 +154,9 @@ protected:
 
     installDirection installDirection_ = installDirection::Receive;
     double injectionProbability_ = 0.5;
+
+    SST::Output* out_;
+    SST::Output* dbg_;
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override
     {

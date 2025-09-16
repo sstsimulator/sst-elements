@@ -69,7 +69,7 @@ sst.setProgramOption("stop-at", "0 ns")
 sst.setStatisticLoadLevel(4)
 sst.setStatisticOutput("sst.statOutputConsole")
 
-full_exe_name = "../../vanadis/tests/small/basic-io/hello-world/riscv64/hello-world"#os.getenv("VANADIS_EXE", "./small/" + testDir + "/" + exe +  "/" + isa + "/" + exe )
+full_exe_name = "../../vanadis/tests/small/basic-math/sqrt-double/riscv64/sqrt-double"#os.getenv("VANADIS_EXE", "./small/" + testDir + "/" + exe +  "/" + isa + "/" + exe )
 exe_name= full_exe_name.split("/")[-1]
 
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
@@ -381,11 +381,18 @@ class CPU_Builder:
         cpu_l2cache = sst.Component(prefix+".l2cache", "memHierarchy.Cache")
         cpu_l2cache.addParams( l2cacheParams )
         cpu_l2cache.addPortModule("highlink","carcosa.faultInjectorBase", {
-            "installDirection": "Send",
+            "installDirection": "Receive",
             "injectionProbability": 1,
-            "masks": ["10, 3, 11110000, 00001111"],
+            "masks": ["11264, 3, 11110000, 00001111"],
             "debug" : 1,
-            "debug_level": 10
+            "debug_level": 1
+        })
+        cpu_l2cache.addPortModule("lowlink","carcosa.faultInjectorBase", {
+            "installDirection": "Receive",
+            "injectionProbability": 1,
+            "masks": ["11264, 3, 11110000, 00001111"],
+            "debug" : 1,
+            "debug_level": 1
         })
 
         # L2 cache mem interface

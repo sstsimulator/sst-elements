@@ -17,6 +17,7 @@
 #include <utility>
 #include <vector>
 #include <sstream>
+#include <bitset>
 
 namespace SST::Carcosa {
 
