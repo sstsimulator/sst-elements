@@ -18,6 +18,7 @@
 
 #include "inst/vinst.h"
 
+#include <cstdint>
 #include <functional>
 
 namespace SST {

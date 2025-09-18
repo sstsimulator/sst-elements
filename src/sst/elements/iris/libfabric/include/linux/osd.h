@@ -36,11 +36,12 @@
 
 /*#define _GNU_SOURCE*/
 
+#include <assert.h>
 #include <byteswap.h>
 #include <endian.h>
-#include <sys/mman.h>
+#include <errno.h>
 #include <string.h>
-#include <assert.h>
+#include <sys/mman.h>
 
 #include <ifaddrs.h>
 #include "unix/osd.h"

@@ -35,6 +35,8 @@
 #include "c_CmdResEvent.hpp"
 #include "c_HashedAddress.hpp"
 
+#include <deque>
+
 using namespace SST;
 using namespace SST::CramSim;
 

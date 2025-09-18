@@ -20,8 +20,12 @@
 #include "inst/vinstall.h"
 #include "os/vriscvcpuos.h"
 
+#include <cassert>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
+#include <functional>
+#include <string>
 
 #define VANADIS_RISCV_OPCODE_MASK 0x7F
 #define VANADIS_RISCV_RD_MASK     0xF80

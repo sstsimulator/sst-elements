@@ -40,6 +40,9 @@
 /*******************************************************************************
  * GNI API Functions
  ******************************************************************************/
+#include <stddef.h>
+#include <stdint.h>
+
 extern int sumi_setname(fid_t fid, void *addr, size_t addrlen);
 
 extern int sumi_getname(fid_t fid, void *addr, size_t *addrlen);

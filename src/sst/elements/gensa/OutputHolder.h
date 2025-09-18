@@ -25,10 +25,14 @@ This is a pure header implementation. No need to build/link extra libraries.
 #define output_holder_h
 
 
-#include <fstream>
 #include <cmath>
+#include <fstream>
+#include <iostream>
+#include <map>
 #include <stdlib.h>
 #include <time.h>
+#include <unordered_map>
+#include <vector>
 
 
 inline void split (const std::string & source, const std::string & delimiter, std::string & first, std::string & second)
