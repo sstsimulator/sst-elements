@@ -37,7 +37,7 @@ gen1.addParams({
 })
 
 # Tell SST what statistics handling we want
-sst.setStatisticLoadLevel(4)
+sst.setStatisticLoadLevel(6)
 
 # Enable statistics outputs
 cpu0.enableAllStatistics({"type":"sst.AccumulatorStatistic"})

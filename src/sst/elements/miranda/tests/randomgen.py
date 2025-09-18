@@ -1,10 +1,7 @@
 import sst
 
-# Define SST core options
-sst.setProgramOption("timebase", "1ps")
-
 # Tell SST what statistics handling we want
-sst.setStatisticLoadLevel(4)
+sst.setStatisticLoadLevel(6)
 
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")

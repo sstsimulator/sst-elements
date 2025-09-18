@@ -6,11 +6,8 @@ try:
 except ImportError:
     import configparser as ConfigParser
 
-# Define SST core options
-sst.setProgramOption("timebase", "1ps")
-
 # Tell SST what statistics handling we want
-sst.setStatisticLoadLevel(4)
+sst.setStatisticLoadLevel(6)
 
 globalDebug = 0
 globalVerbose = 10
