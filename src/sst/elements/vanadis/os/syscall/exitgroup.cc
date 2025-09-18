@@ -47,7 +47,7 @@ VanadisExitGroupSyscall::VanadisExitGroupSyscall( VanadisNodeOSComponent* os, SS
         unsigned core = tmp->getCore();
         unsigned hwThread = tmp->getHwThread();
 
-        // test the hwthread to halt execution
+        // tell the hwthread to halt execution
         coreLink->send( new VanadisExitResponse( -1, hwThread ) );
 
         // remove the process/thread from the map

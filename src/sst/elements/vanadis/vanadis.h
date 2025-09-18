@@ -214,6 +214,7 @@ public:
     void startThread(int thr, uint64_t stackStart, uint64_t instructionPointer );
     void startThreadFork( VanadisStartThreadForkReq* req );
     void startThreadClone( VanadisStartThreadCloneReq* req );
+    void startThreadClone3( VanadisStartThreadClone3Req* req );
     void getThreadState( VanadisGetThreadStateReq* req );
     void dumpRegs( VanadisDumpRegsReq* req );
 
@@ -230,7 +231,7 @@ private:
 
     virtual bool tick(SST::Cycle_t);
 
-    void resetRegisterUseTemps(const uint16_t i_reg, const uint16_t f_reg);
+    void resetRegisterUseTemps(const int hw_thr, const uint16_t i_reg, const uint16_t f_reg);
 
     int assignRegistersToInstruction(
         const uint16_t int_reg_count, const uint16_t fp_reg_count, VanadisInstruction* ins,
@@ -368,8 +369,6 @@ private:
     uint64_t stop_verbose_when_retire_address;
 
     std::vector<VanadisFloatingPointFlags*> fp_flags;
-    std::vector<VanadisStartThreadCloneReq*> cloneReqs;
-
     SST::Link* os_link;
 
     bool* m_checkpointing;

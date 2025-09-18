@@ -117,6 +117,14 @@ public:
         branch_predictor = loadUserSubComponent<SST::Vanadis::VanadisBranchUnit>("branch_unit");
         os_handler       = loadUserSubComponent<SST::Vanadis::VanadisCPUOSHandler>("os_handler");
 
+        if ( !branch_predictor ) {
+            fatal(CALL_INFO, -1, "Error: Unable to load a branch predictor from the decoder's 'branch_unit' subcomponent slot\n");
+        }
+
+        if ( !os_handler ) {
+            fatal(CALL_INFO, -1, "Error: Unable to load an OS handler from the decoder's 'os_handler' subcomponent slot\n");
+        }
+
         hw_thr = 0;
 
         os_handler->setThreadLocalStoragePointer(&tls_ptr);

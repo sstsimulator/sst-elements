@@ -107,6 +107,7 @@
 #define VANADIS_SYSCALL_MIPS_SCHED_GETAFFINITY 4240
 #define VANADIS_SYSCALL_MIPS_EXIT_GROUP 4246
 #define VANADIS_SYSCALL_MIPS_SET_TID_ADDRESS 4252
+#define VANADIS_SYSCALL_MIPS_TGKILL 4266
 #define VANADIS_SYSCALL_MIPS_SET_THREAD_AREA 4283
 #define VANADIS_SYSCALL_MIPS_RM_INOTIFY 4286
 #define VANADIS_SYSCALL_MIPS_OPENAT 4288
@@ -152,17 +153,17 @@ public:
         T1 buf_ptr    = getArgRegister(1);
         T1 size        = getArgRegister(2);
 
-        output->verbose(CALL_INFO, 8, 0, "readLink( %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 ")\n",path,buf_ptr,size);
-        return new VanadisSyscallReadLinkEvent(core_id, hw_thr, BitType, path, buf_ptr, size);
+        output_->verbose(CALL_INFO, 8, 0, "readLink( %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 ")\n",path,buf_ptr,size);
+        return new VanadisSyscallReadLinkEvent(core_id_, hw_thr, BitType, path, buf_ptr, size);
     }
 
 
     VanadisSyscallEvent* UNLINK( int hw_thr ) {
         T1 path_addr = getArgRegister( 0 );
 
-        output->verbose(CALL_INFO, 8, 0, "unlink( %" PRId32 " )\n",path_addr);
+        output_->verbose(CALL_INFO, 8, 0, "unlink( %" PRId32 " )\n",path_addr);
 
-        return new VanadisSyscallUnlinkEvent(core_id, hw_thr, BitType, path_addr);
+        return new VanadisSyscallUnlinkEvent(core_id_, hw_thr, BitType, path_addr);
     }
 
     VanadisSyscallEvent* OPEN( int hw_thr ) {
@@ -170,17 +171,17 @@ public:
         T1 flags      = getArgRegister(1);
         T1 mode       = getArgRegister(2);
 
-        output->verbose(CALL_INFO, 8, 0, "open( %#" PRIx32 ", %" PRIu32 ", %" PRIu32 " )\n", path_ptr, flags, mode);
+        output_->verbose(CALL_INFO, 8, 0, "open( %#" PRIx32 ", %" PRIu32 ", %" PRIu32 " )\n", path_ptr, flags, mode);
 
-        return new VanadisSyscallOpenEvent(core_id, hw_thr, BitType, path_ptr, convertFlags(flags), mode);
+        return new VanadisSyscallOpenEvent(core_id_, hw_thr, BitType, path_ptr, convertFlags(flags), mode);
     }
 
     VanadisSyscallEvent* ACCESS( int hw_thr ) {
         T1 path_ptr       = getArgRegister(0);
         T1 access_mode    = getArgRegister(1);
 
-        output->verbose(CALL_INFO, 8, 0, "access( %#" PRIx32 ", %" PRId32 " )\n", path_ptr, access_mode);
-        return new VanadisSyscallAccessEvent(core_id, hw_thr, BitType, path_ptr, access_mode);
+        output_->verbose(CALL_INFO, 8, 0, "access( %#" PRIx32 ", %" PRId32 " )\n", path_ptr, access_mode);
+        return new VanadisSyscallAccessEvent(core_id_, hw_thr, BitType, path_ptr, access_mode);
     }
 
     VanadisSyscallEvent* CLONE( int hw_thr ) {
@@ -192,25 +193,25 @@ public:
 
         assert( stackPtr );
 
-        output->verbose(CALL_INFO, 8, 0,
+        output_->verbose(CALL_INFO, 8, 0,
                 "clone( %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 " )\n",
                 flags, threadStack, ptid, tls, stackPtr );
 
-        return new VanadisSyscallCloneEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, instPtr, threadStack, flags, ptid, tls, 0, stackPtr );
+        return new VanadisSyscallCloneEvent(core_id_, hw_thr, VanadisOSBitType::VANADIS_OS_32B, instPtr, threadStack, flags, ptid, tls, 0, stackPtr );
     }
 
     VanadisSyscallEvent* FORK( int hw_thr ) {
-        output->verbose(CALL_INFO, 8, 0, "fork()\n");
-        return new VanadisSyscallForkEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B);
+        output_->verbose(CALL_INFO, 8, 0, "fork()\n");
+        return new VanadisSyscallForkEvent(core_id_, hw_thr, VanadisOSBitType::VANADIS_OS_32B);
     }
 
     VanadisSyscallEvent* SET_THREAD_AREA( int hw_thr ) {
         T1 ptr = getArgRegister(0);
 
-        output->verbose(CALL_INFO, 8, 0, "set_thread_area( %#" PRIx32 ")\n", ptr);
+        output_->verbose(CALL_INFO, 8, 0, "set_thread_area( %#" PRIx32 ")\n", ptr);
 
-        if (tls_address != nullptr) {
-            (*tls_address) = ptr;
+        if (tls_address_ != nullptr) {
+            (*tls_address_) = ptr;
         } else {
             assert(0);
         }
@@ -231,10 +232,10 @@ public:
        }
 #endif
 
-        output->verbose(CALL_INFO, 8, 0, "statx( %" PRId32 ", %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 " )\n",
+        output_->verbose(CALL_INFO, 8, 0, "statx( %" PRId32 ", %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 " )\n",
                         dirfd, pathname, flags, mask, stackPtr );
 
-        return new VanadisSyscallStatxEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, dirfd, pathname, flags, mask, stackPtr);
+        return new VanadisSyscallStatxEvent(core_id_, hw_thr, VanadisOSBitType::VANADIS_OS_32B, dirfd, pathname, flags, mask, stackPtr);
     }
 
     VanadisSyscallEvent* FUTEX( int hw_thr ) {
@@ -244,10 +245,10 @@ public:
         uint32_t timeout_addr   = getArgRegister(3);
         uint32_t stack_ptr      = getSP();
 
-        output->verbose(CALL_INFO, 8, 0, "futex( %#" PRIx32 ", %" PRId32 ", %" PRIu32 ", %" PRIu32 ", sp: %#" PRIx32 " (arg-count is greater than 4))\n",
+        output_->verbose(CALL_INFO, 8, 0, "futex( %#" PRIx32 ", %" PRId32 ", %" PRIu32 ", %" PRIu32 ", sp: %#" PRIx32 " (arg-count is greater than 4))\n",
                             addr, op, val, timeout_addr, stack_ptr);
 
-        return new VanadisSyscallFutexEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, addr, op, val, timeout_addr, stack_ptr );
+        return new VanadisSyscallFutexEvent(core_id_, hw_thr, VanadisOSBitType::VANADIS_OS_32B, addr, op, val, timeout_addr, stack_ptr );
     }
 
     VanadisSyscallEvent* MMAP2( int hw_thr ) {
@@ -257,17 +258,17 @@ public:
         int32_t  flags      = getArgRegister(3);
         uint32_t stack_ptr  = getSP();
 
-        output->verbose(CALL_INFO, 8, 0, "mmap2( %#" PRIx32 ", %" PRIu32 ", %" PRId32 ", %" PRId32 ", sp: %#" PRIx32 " (> 4 arguments) )\n",
+        output_->verbose(CALL_INFO, 8, 0, "mmap2( %#" PRIx32 ", %" PRIu32 ", %" PRId32 ", %" PRId32 ", sp: %#" PRIx32 " (> 4 arguments) )\n",
                             addr, len, prot, flags, stack_ptr);
 
         if ( flags & MIPS_MAP_FIXED ) {
-            output->verbose(CALL_INFO, 8, 0,"mmap2() we don't support MAP_FIXED return error EEXIST\n");
+            output_->verbose(CALL_INFO, 8, 0,"mmap2() we don't support MAP_FIXED return error EEXIST\n");
 
             recvSyscallResp(new VanadisSyscallResponse(-EEXIST));
             return nullptr;
         } else {
 
-            return new VanadisSyscallMemoryMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B,
+            return new VanadisSyscallMemoryMapEvent(core_id_, hw_thr, VanadisOSBitType::VANADIS_OS_32B,
                 addr, len, prot, mmapConvertFlags(flags), /*fd*/ 0, /*offset*/ 0, stack_ptr, 4096);
         }
     }
@@ -276,30 +277,30 @@ public:
         int32_t  clk_type   = getArgRegister(0);
         uint32_t time_addr  = getArgRegister(1);
 
-        output->verbose(CALL_INFO, 8, 0, "clock_gettime64( %" PRId32 ", %#" PRIx32 ")\n", clk_type, time_addr);
+        output_->verbose(CALL_INFO, 8, 0, "clock_gettime64( %" PRId32 ", %#" PRIx32 ")\n", clk_type, time_addr);
 
-        return new VanadisSyscallGetTime64Event(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, clk_type, time_addr);
+        return new VanadisSyscallGetTime64Event(core_id_, hw_thr, VanadisOSBitType::VANADIS_OS_32B, clk_type, time_addr);
     }
 
 #if 0
         case VANADIS_SYSCALL_MIPS_RM_INOTIFY: {
-            output->verbose(CALL_INFO, 8, 0, "inotify_rm_watch(), by-passing and removing.\n");
-            const uint16_t rc_reg = isaTable->getIntPhysReg(7);
-            regFile->setIntReg(rc_reg, (uint32_t)0);
+            output_->verbose(CALL_INFO, 8, 0, "inotify_rm_watch(), by-passing and removing.\n");
+            const uint16_t rc_reg = isa_table_->getIntPhysReg(7);
+            reg_file_->setIntReg(rc_reg, (uint32_t)0);
 
             writeSyscallResult(true);
         } break;
 #endif
 
     void recvSyscallResp( VanadisSyscallResponse* os_resp ) {
-        output->verbose(CALL_INFO, 8, 0, "syscall return-code: %" PRId64 " (success: %3s)\n",
+        output_->verbose(CALL_INFO, 8, 0, "syscall return-code: %" PRId64 " (success: %3s)\n",
                             os_resp->getReturnCode(), os_resp->isSuccessful() ? "yes" : "no");
-        output->verbose(CALL_INFO, 8, 0, "-> issuing call-backs to clear syscall ROB stops...\n");
+        output_->verbose(CALL_INFO, 8, 0, "-> issuing call-backs to clear syscall ROB stops...\n");
 
         // Set up the return code (according to ABI, this goes in r2)
-        const uint16_t rc_reg = isaTable->getIntPhysReg(2);
+        const uint16_t rc_reg = isa_table_->getIntPhysReg(2);
         const int32_t rc_val = (int32_t)os_resp->getReturnCode();
-        regFile->setIntReg(rc_reg, rc_val);
+        reg_file_->setIntReg(rc_reg, rc_val);
 
         if (os_resp->isSuccessful()) {
             if (rc_val < 0) {
@@ -318,22 +319,22 @@ private:
     void writeSyscallResult(const bool success) {
         const uint32_t os_success = 0;
         const uint32_t os_failed = 1;
-        const uint16_t succ_reg = isaTable->getIntPhysReg(7);
+        const uint16_t succ_reg = isa_table_->getIntPhysReg(7);
 
         if (success) {
-            output->verbose(CALL_INFO, 8, 0,
+            output_->verbose(CALL_INFO, 8, 0,
                             "syscall - generating successful (v: 0) result (isa-reg: "
                             "7, phys-reg: %" PRIu16 ")\n",
                             succ_reg);
 
-            regFile->setIntReg(succ_reg, os_success);
+            reg_file_->setIntReg(succ_reg, os_success);
         } else {
-            output->verbose(CALL_INFO, 8, 0,
+            output_->verbose(CALL_INFO, 8, 0,
                             "syscall - generating failed (v: 1) result (isa-reg: 7, "
                             "phys-reg: %" PRIu16 ")\n",
                             succ_reg);
 
-            regFile->setIntReg(succ_reg, os_failed);
+            reg_file_->setIntReg(succ_reg, os_failed);
         }
     }
 
@@ -382,7 +383,7 @@ private:
 		return out;
 	}
     uint32_t getSP( ) {
-        return regFile->template getIntReg<uint32_t>( isaTable->getIntPhysReg( 29 ) );
+        return reg_file_->template getIntReg<uint32_t>( isa_table_->getIntPhysReg( 29 ) );
     }
 };
 

@@ -98,6 +98,17 @@ private:
     ImplementSerializable(SST::Vanadis::VanadisStartThreadCloneReq);
 };
 
+class VanadisStartThreadClone3Req : public _VanadisStartThreadBaseReq {
+public:
+    VanadisStartThreadClone3Req() : _VanadisStartThreadBaseReq() {}
+
+    VanadisStartThreadClone3Req( int thread, uint64_t instPtr, uint64_t stackAddr, uint64_t tlsAddr ) :
+        _VanadisStartThreadBaseReq( thread, instPtr, stackAddr, 0, tlsAddr ) {}
+
+private:
+    ImplementSerializable(SST::Vanadis::VanadisStartThreadClone3Req);
+};
+
 } // namespace Vanadis
 } // namespace SST
 

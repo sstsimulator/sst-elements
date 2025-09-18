@@ -296,6 +296,7 @@ class ProcessInfo {
     void setTidAddress(  uint64_t addr ) {
         m_tidAddress = addr;
     }
+
     uint64_t getTidAddress( ) {
         return m_tidAddress;
     }

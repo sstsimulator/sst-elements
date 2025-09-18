@@ -100,6 +100,7 @@ private:
         uint64_t m_addr;
     };
 
+    /* Accesses a block of memory */
     class BlockMemoryHandler : public MemoryHandler {
     public:
         BlockMemoryHandler( VanadisSyscall* obj, SST::Output* out, uint64_t addr, std::vector<uint8_t>& data, bool lock )
