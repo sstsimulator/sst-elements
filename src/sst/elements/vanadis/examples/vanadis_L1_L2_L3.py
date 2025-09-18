@@ -1,23 +1,23 @@
 #
 # This example demonstrates a how to model a single node and CPU on a RISC-V architecture in vanadis.
-# The node modeled has L1D, L1I, L2, and L3 caches. 
-# 
+# The node modeled has L1D, L1I, L2, and L3 caches.
+#
 #  In order to accomplish this structure in SST, we create the following comoponenents and links.
 #
 # _______________________________________________________           ______________________________________________________________________________________________________
-# | Component: OS                                       |           | Component: CPU                                                                                     |                                     
+# | Component: OS                                       |           | Component: CPU                                                                                     |
 # | Type: vanadis.VanadisNodeOs                         |           | Type: vanadis.dbg_vanadisCPU                                                                       |
 # | This represents the hardware node being modeled.    |           | This component represents the CPU being modeled. It has links ot the OS component to represent     |
 # | It contains an mmu (memory management unit, which   |           | the operating system running on the node, as well as links to the L1D and L1I caches for the node. |
 # | also provides TLB capabilities) and  a memory       |           |                                                                                                    |
 # | interface.                                          |----Link---|  ________________________________________________                                                  |
-# |  _______________________                            |           |  | Sub Component: decoder0                      |                                                  | 
+# |  _______________________                            |           |  | Sub Component: decoder0                      |                                                  |
 # |  | Sub Component: mmu  |                            |           |  | Type: vanadis.VanadisRISCV64Decoder          |                                                  |
 # |  | Type: mmu.simpleMMU |                            |           |  | This subcomponent represents the instruction |                                                  |
 # |  |_____________________|                            |           |  | decoder of the CPU                           |                                                  |
 # |  ____________________________________________       |           |  |  _________________________________________   |                                                  |
 # |  | Sub Component: mem_interface             |       |           |  |  | Sub Component: os_handler             |   |                                                  |
-# |  | Type: memHierarchy.standardInterface     |       |           |  |  | Type:vanadis.VanadisRISCV64DOSHandler |   |                                                  | 
+# |  | Type: memHierarchy.standardInterface     |       |           |  |  | Type:vanadis.VanadisRISCV64DOSHandler |   |                                                  |
 # |  | This subcomponent represents the         |       |           |  |  |_______________________________________|   |                                                  |
 # |  | interface from the Node OS to the cache. |       |           |  |  _________________________________________   |                                                  |
 # |  |__________________________________________|       |           |  |  | Sub Component: branch_unit            |   |                                                  |
@@ -28,15 +28,15 @@
 #         | Type: memHierarchy.Cache           |                    |  | Sub Component: lsq                           |                                                  |
 #         | This componenet represents the L1D |                    |  | Type: vanadis.VanadisBasicLoadStoreQueue     |                                                  |
 #         | cache for the hardware node.       |                    |  |  __________________________________________  |    __________________________________________    |
-#         |____________________________________|                    |  |  | Sub Component: memory_interface        |  |    | Sub Component: mem_interface_inst      |    |                                              
-#                            |                                      |  |  | Type: memHierarchy.standardInterface   |  |    | Type: memHierarchy.standardInterface   |    |                                              
-#                            |                                      |  |  | This subcomponent represents the CPU's |  |    | This subcomponent represents the CPU's |    |                                             
+#         |____________________________________|                    |  |  | Sub Component: memory_interface        |  |    | Sub Component: mem_interface_inst      |    |
+#                            |                                      |  |  | Type: memHierarchy.standardInterface   |  |    | Type: memHierarchy.standardInterface   |    |
+#                            |                                      |  |  | This subcomponent represents the CPU's |  |    | This subcomponent represents the CPU's |    |
 #                            |                                      |  |  | interface to the L1D cache             |  |    | interface to the L1I cache             |    |
 #                            |                                      |  |  |________________________________________|  |    |________________________________________|    |
 #                            |                                      |  |___________________|__________________________|                        |                         |
 #                            | Link                                 |______________________|___________________________________________________|_________________________|
-#                            |                                                             |                                                   | 
-#                            |                                                             |                                                   | 
+#                            |                                                             |                                                   |
+#                            |                                                             |                                                   |
 #                            |                                                             | Link                                              | Link
 #                            |                                                             |                                                   |
 #                          __|_____________________________________________________________|___________________________________________________|__
@@ -54,26 +54,26 @@
 #                                                               |_____________________________________________________|
 #                                                                                          |
 #                                                                                          | Link
-#                                                               ___________________________|___________________________                           |     
+#                                                               ___________________________|___________________________                           |
 #                                                               | Component: cpu_l3cache                              |
 #                                                               | Type: memHierarchy.Cache                            |
 #                                                               | This component represents the L3 cache in the model |
 #                                                               |_____________________________________________________|
 #
-# This example relies on several environmental variables, which allow for costumization. A full list of 
-# the available customizations, including default values, is provided below. Note that the default values 
+# This example relies on several environmental variables, which allow for costumization. A full list of
+# the available customizations, including default values, is provided below. Note that the default values
 # may be specific to this example, and therefore differ from the default values built into the Vanadis source.
-# 
+#
 # VANADIS_ISA
 #   The ISA the CPU will use.
 #   Possible Values: MIPSEL, RISCV64
 #   Default: RISCV64
 # VANADIS_LOADER_MODE
 #   Describes the operation of the loader for the vanadis decoder
-#   Possible Values: 0 (use LRU, which is more accurate), 1 (use an infinite cache, which allows for a faster simulation)  
+#   Possible Values: 0 (use LRU, which is more accurate), 1 (use an infinite cache, which allows for a faster simulation)
 #   Default: 0 (LRU)
 # VANADIS_VERBOSE
-#   Defines the verbosity of the output from multiple components. 
+#   Defines the verbosity of the output from multiple components.
 #   Possible Values: integers >= 0, higher numbers indicate more verbose output
 #   Default: 0
 # VANADIS_OS_VERBOSE
@@ -119,7 +119,7 @@
 # VANADIS_FP_ARITH_CYCLES
 #   Defines the number of cycles per instruction the CPU requires for performing floating piont arithmetic
 #   Possible values: integers >= 0
-#   Default: 8 
+#   Default: 8
 # VANADIS_FP_ARITH_UNITS
 #   Defines the number of floating point division units
 #   Possible values: integers >= 0
@@ -137,7 +137,7 @@
 #   Possible values: integers > 0
 #   Default: 1
 # VANADIS_NUM_HW_THREADS
-#   Defines the number of hardware threads per CPU core. 
+#   Defines the number of hardware threads per CPU core.
 #   Possible Values: integers >= 0
 #   Default: 1
 # VANADIS_CPU_ELEMENT_NAME - default: dbg_VanadisCPU
@@ -404,17 +404,17 @@ l2cacheParams = {
 }
 
 # Bus paremeters (connecting L1 caches to L2 cache)
-busParams = { 
-    "bus_frequency" : cpu_clock, 
+busParams = {
+    "bus_frequency" : cpu_clock,
 }
 
 # l2 cache  memory link parameters
-l2memLinkParams = { 
+l2memLinkParams = {
     "group" : 1,
-    "network_bw" : "25GB/s" 
+    "network_bw" : "25GB/s"
 }
 
-# The parameters for processes are sub-parameters, and need to be keyed differently. 
+# The parameters for processes are sub-parameters, and need to be keyed differently.
 # This function accomplishes prefixing the keys.
 def addParamsPrefix(prefix,params):
     ret = {}
@@ -423,13 +423,13 @@ def addParamsPrefix(prefix,params):
 
     return ret
 
-# This creates the hardware Node and OS for the model. It has its own memory managument 
+# This creates the hardware Node and OS for the model. It has its own memory managument
 # unit and memory interface. It is also connected to its own L1D cache
 node_os = sst.Component("os", "vanadis.VanadisNodeOS")
 node_os.addParams(osParams)
 
 # Define the application the CPU will run in this simulation and the number of threads it will use
-processList = ( 
+processList = (
     ( 1, {
         "env_count" : 1,
         "env0" : "OMP_NUM_THREADS={}".format(numCpus*numThreads),
@@ -440,17 +440,17 @@ processList = (
 
 processList[0][1].update(app_params)
 
-# Create the parameters for the processes on the node. The process parameters were created 
-# above, but to be successfully be applied, they need to be prefixed in the node_os params 
-# correctly, which ties the parameters to a specific process on the node. In this example, 
+# Create the parameters for the processes on the node. The process parameters were created
+# above, but to be successfully be applied, they need to be prefixed in the node_os params
+# correctly, which ties the parameters to a specific process on the node. In this example,
 # we only have 1 process, so all parameters are prefixed with "process0."
 num=0
-for i,process in processList: 
+for i,process in processList:
     for y in range(i):
         node_os.addParams( addParamsPrefix( "process" + str(num), process ) )
         num+=1
 
-# Create the memory management unit sub component for the node. 
+# Create the memory management unit sub component for the node.
 node_os_mmu = node_os.setSubComponent( "mmu", "mmu." + mmuType )
 node_os_mmu.addParams(mmuParams)
 
@@ -465,7 +465,7 @@ os_cache_2_cpu = os_cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 os_cache_2_mem = os_cache.setSubComponent("memlink", "memHierarchy.MemNIC")
 os_cache_2_mem.addParams( l2memLinkParams )
 
-# node memory router 
+# node memory router
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
 comp_chiprtr.addParams(memRtrParams)
 comp_chiprtr.setSubComponent("topology","merlin.singlerouter")
@@ -488,7 +488,7 @@ memctrl.addParams( memCtrlParams )
 # node memory controller port to directory controller
 memToDir = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
 
-# node memory controller backend 
+# node memory controller backend
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
 memory.addParams(memParams)
 
@@ -497,7 +497,7 @@ link_dir_2_rtr = sst.Link("link_dir_2_rtr")
 link_dir_2_rtr.connect( (comp_chiprtr, "port"+str(numCpus), "1ns"), (dirNIC, "port", "1ns") )
 link_dir_2_rtr.setNoCut()
 
-# Directory controller to memory controller 
+# Directory controller to memory controller
 link_dir_2_mem = sst.Link("link_dir_2_mem")
 link_dir_2_mem.connect( (dirtoM, "port", "1ns"), (memToDir, "port", "1ns") )
 link_dir_2_mem.setNoCut()
@@ -542,7 +542,7 @@ cpu_lsq = cpu.setSubComponent( "lsq", "vanadis.VanadisBasicLoadStoreQueue" )
 cpu_lsq.addParams(lsqParams)
 cpu_lsq.enableAllStatistics()
 
-# Create the memory interface on the CPU's load store queue, which defines 
+# Create the memory interface on the CPU's load store queue, which defines
 # how the load store queue connects to memory
 cpuDcacheIf = cpu_lsq.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
 
@@ -559,13 +559,13 @@ l1dcache_2_cpu     = cpu_l1dcache.setSubComponent("cpulink", "memHierarchy.MemLi
 # in turn, connects to tje L21 cache.
 l1dcache_2_l2cache = cpu_l1dcache.setSubComponent("memlink", "memHierarchy.MemLink")
 
-# Create the L1 I cache 
+# Create the L1 I cache
 cpu_l1icache = sst.Component( prefix + ".l1icache", "memHierarchy.Cache")
 cpu_l1icache.addParams( l1icacheParams )
 
 # Define how the L1 I cache will connect to the CPU
 l1icache_2_cpu     = cpu_l1icache.setSubComponent("cpulink", "memHierarchy.MemLink")
-# Define how the L1 I cache will connect towards memory; i.e., how the L1 I cache 
+# Define how the L1 I cache will connect towards memory; i.e., how the L1 I cache
 # connects to the bus, to then connect to the L2 cache
 l1icache_2_l2cache = cpu_l1icache.setSubComponent("memlink", "memHierarchy.MemLink")
 
@@ -578,7 +578,7 @@ cpu_l2cache.addParams( l2cacheParams )
 # a bus in between them, which will be what the link actually connects to.
 l2cache_2_l1caches = cpu_l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 
-# Defines how the L2 cache will connect towards memory - which in this case is 
+# Defines how the L2 cache will connect towards memory - which in this case is
 # a connection to the L3 cache
 l2cache_2_l3cache = cpu_l2cache.setSubComponent("memlink", "memHierarchy.MemLink")
 l2cache_2_l3cache.addParams( l2memLinkParams )
@@ -603,12 +603,12 @@ cpu_l3cache.addParams({
 # cache will be linked directly, instead of through a bus.
 l3cache_2_l2cache = cpu_l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 
-# Define how the L3 cache will connect towards memory. The L3 cache is the final 
+# Define how the L3 cache will connect towards memory. The L3 cache is the final
 # cache, so it will connect directly to memory.
 l3cache_2_mem = cpu_l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
-l3cache_2_mem.addParams({ 
+l3cache_2_mem.addParams({
     "group" : 1,
-    "network_bw" : "25GB/s" 
+    "network_bw" : "25GB/s"
 })
 
 # Create and configure the bus for connecting the L1 caches to the L2 cache
