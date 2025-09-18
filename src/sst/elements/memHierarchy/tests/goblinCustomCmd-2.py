@@ -14,7 +14,7 @@ comp_cpu.addParams({
 })
 
 # Tell SST what statistics handling we want
-sst.setStatisticLoadLevel(4)
+sst.setStatisticLoadLevel(6)
 
 # Enable statistics outputs
 comp_cpu.enableAllStatistics({"type":"sst.AccumulatorStatistic"})

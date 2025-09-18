@@ -643,21 +643,15 @@ class MemNICBase : public MemLinkBase {
                 dbg.fatal(CALL_INFO, -1, "Param not specified(%s): group - group ID (or hierarchy level) for this NIC's component. Example: L2s in group 1, directories in group 2, memories (on network) in group 3.\n",
                         getName().c_str());
             }
-            bool srcs_passed;
-            if (srcs_passed = params.is_value_array("sources")) {
-#ifdef __SST_DEBUG_OUTPUT__
-                dbg.debug(_L10_,"Array passed to sources; read it in.\n");
-#endif
+            bool srcs_passed = params.is_value_array("sources");
+            if (srcs_passed) {
                 std::vector<uint32_t> srcArr;
                 params.find_array<uint32_t>("sources", srcArr);
                 sourceIDs = std::unordered_set<uint32_t>(srcArr.begin(), srcArr.end());
             } else {
                 bool str_passed;
-                sources.str(params.find<std::string>("sources","", str_passed));
+                sources.str(params.find<std::string>("sources", "", str_passed));
                 if (str_passed) {
-#ifdef __SST_DEBUG_OUTPUT__
-                    dbg.debug(_L10_, "String passed as sources; read it in.\n");
-#endif
                     while (sources >> id) {
                     sourceIDs.insert(id);
                         while (sources.peek() == '.' || sources.peek() == ',') {
@@ -665,9 +659,7 @@ class MemNICBase : public MemLinkBase {
                         }
                     }
                 } else {
-#ifdef __SST_DEBUG_OUTPUT__
-                    dbg.debug(_L10_, "No array or string passed as sources; defaulting to group - 1.\n");
-#endif
+                    // default setting, group - 1
                     sourceIDs.insert(info.id - 1);
                 }
             }
@@ -677,21 +669,15 @@ class MemNICBase : public MemLinkBase {
             }
 #endif
 
-            bool dests_passed;
-            if (dests_passed = params.is_value_array("destinations")) {
-#ifdef __SST_DEBUG_OUTPUT__
-                dbg.debug(_L10_,"Array passed to destinations; read it in.\n");
-#endif
+            bool dests_passed = params.is_value_array("destinations");
+            if (dests_passed) {
                 std::vector<uint32_t> dstArr;
                 params.find_array<uint32_t>("destinations", dstArr);
                 destIDs = std::unordered_set<uint32_t>(dstArr.begin(), dstArr.end());
             } else {
                 bool str_passed;
-                destinations.str(params.find<std::string>("destinations","", str_passed));
+                destinations.str(params.find<std::string>("destinations", "", str_passed));
                 if (str_passed) {
-#ifdef __SST_DEBUG_OUTPUT__
-                    dbg.debug(_L10_, "String passed as sources; read it in.\n");
-#endif
                     while (destinations >> id) {
                         destIDs.insert(id);
                         while (destinations.peek() == '.' || destinations.peek() == ',') {
@@ -699,9 +685,6 @@ class MemNICBase : public MemLinkBase {
                         }
                     }
                 } else {
-#ifdef __SST_DEBUG_OUTPUT__
-                    dbg.debug(_L10_, "No array or string passed as destinations; defaulting to group + 1.\n");
-#endif
                     destIDs.insert(info.id + 1);
                 }
             }
