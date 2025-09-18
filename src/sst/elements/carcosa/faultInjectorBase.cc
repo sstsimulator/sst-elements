@@ -11,7 +11,7 @@
 
 #include "sst/elements/carcosa/faultInjectorBase.h"
 #include "sst/core/params.h"
-#include "sst/elements/carcosa/faultlogic/stuckAtFault.h"
+#include "sst/elements/carcosa/faultlogic/corruptMemRegion.h"
 
 using namespace SST::Carcosa;
 
@@ -49,20 +49,20 @@ dataVec& FaultInjectorBase::FaultBase::getMemEventPayload(Event*& ev) {
 
 void FaultInjectorBase::FaultBase::setMemEventPayload(Event*& ev, dataVec newPayload) {
 #ifdef __SST_DEBUG_OUTPUT__
-    _injector->getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "Payload before replacement:\n");
+    _injector->getSimulationOutput().debug(CALL_INFO_LONG, 2, 0, "Payload before replacement:\n[");
     for (int i: convertMemEvent(ev)->getPayload()) {
-        _injector->getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "%d\t");
+        _injector->getSimulationOutput().debug(CALL_INFO_LONG, 2, 0, "%d\t", i);
     }
-    _injector->getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "\n");
+    _injector->getSimulationOutput().debug(CALL_INFO_LONG, 2, 0, "]\n");
 #endif
     convertMemEvent(ev)->setPayload(newPayload);
 
 #ifdef __SST_DEBUG_OUTPUT__
-    _injector->getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "Payload after replacement:\n");
+    _injector->getSimulationOutput().debug(CALL_INFO_LONG, 2, 0, "Payload after replacement:\n[");
     for (int i: convertMemEvent(ev)->getPayload()) {
-        _injector->getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "%d\t");
+        _injector->getSimulationOutput().debug(CALL_INFO_LONG, 2, 0, "%d\t", i);
     }
-    _injector->getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "\n");
+    _injector->getSimulationOutput().debug(CALL_INFO_LONG, 2, 0, "]\n");
 #endif
 }
 
@@ -115,7 +115,7 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
     dbg_->debug(CALL_INFO_LONG, 1, 0, "\tInjection Probability: %f\n", injectionProbability_);
 #endif
     
-    fault = new StuckAtFault(params, this);//FaultBase(params, this);
+    fault = new CorruptMemRegion(params, this);//FaultBase(params, this);
 }
 
 void

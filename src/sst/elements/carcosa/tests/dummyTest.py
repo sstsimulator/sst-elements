@@ -380,20 +380,6 @@ class CPU_Builder:
         # L2 cache
         cpu_l2cache = sst.Component(prefix+".l2cache", "memHierarchy.Cache")
         cpu_l2cache.addParams( l2cacheParams )
-        cpu_l2cache.addPortModule("highlink","carcosa.faultInjectorBase", {
-            "installDirection": "Receive",
-            "injectionProbability": 1,
-            "masks": ["11264, 3, 11110000, 00001111"],
-            "debug" : 1,
-            "debug_level": 1
-        })
-        cpu_l2cache.addPortModule("lowlink","carcosa.faultInjectorBase", {
-            "installDirection": "Receive",
-            "injectionProbability": 1,
-            "masks": ["11264, 3, 11110000, 00001111"],
-            "debug" : 1,
-            "debug_level": 1
-        })
 
         # L2 cache mem interface
         l2cache_2_mem = cpu_l2cache.setSubComponent("lowlink", "memHierarchy.MemNIC")
@@ -510,6 +496,13 @@ dirNIC.addParams(dirNicParams)
 # node memory controller
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams( memCtrlParams )
+memctrl.addPortModule("highlink", "carcosa.faultInjectorBase", {
+    "intallDirection": "Receive",
+    "injectionProbability": 1.
+    "debug" : 1,
+    "debug_level": 2,
+    "regions": ["ABCDEFAB, DEADBEEF"]
+})
 
 # node memory controller backend 
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")

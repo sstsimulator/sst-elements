@@ -110,6 +110,8 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
         {"installDirection", "Flag which direction the injector should read from on a port. Valid optins are \'Send\', \'Receive\', and \'Both\'. Default is \'Receive\'."},
         {"injectionProbability", "The probability with which an injection should occur. Valid inputs range from 0 to 1. Default = 0.5."},
+        {"debug", "Integer determining if debug should be active. 0 disables, 1 sends output to STDOUT, 2 to STDERR. Default = 0"},
+        {"debug_level", "Integer determining verbosity of debug output. 1 enables basic text output, 2 enables signficant activity output."}
     )
 
     // SST_ELI_DOCUMENT_STATISTICS(

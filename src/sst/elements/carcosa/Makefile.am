@@ -8,18 +8,22 @@ AM_CPPFLAGS += \
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libcarcosa.la
-libcarcosa_la_SOURCES =         \
-    faultInjectorBase.cc        \
-    faultInjectorBase.h         \
-    faultlogic/stuckAtFault.cc  \
-    faultlogic/stuckAtFault.h
+libcarcosa_la_SOURCES =             \
+    faultInjectorBase.cc            \
+    faultInjectorBase.h             \
+    faultlogic/stuckAtFault.cc      \
+    faultlogic/stuckAtFault.h       \
+    faultlogic/corruptMemRegion.cc  \
+    faultlogic/corruptMemRegion.h
 
 EXTRA_DIST = \
     dummyTest.py
 
 sstdir = $(includedir)/sst/elements/carcosa
-nobase_sst_HEADERS = \
-    faultInjectorBase.h
+nobase_sst_HEADERS =                \
+    faultInjectorBase.h             \
+    faultlogic/stuckAtFault.h       \
+    faultlogic/corruptMemRegion.h
 
 libcarcosa_la_LDFLAGS = -module -avoid-version
 libcarcosa_la_LIBADD =
