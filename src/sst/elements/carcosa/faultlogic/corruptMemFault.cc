@@ -9,11 +9,11 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include "sst/elements/carcosa/faultlogic/corruptMemRegion.h"
+#include "sst/elements/carcosa/faultlogic/corruptMemFault.h"
 
 using namespace SST::Carcosa;
 
-CorruptMemRegion::CorruptMemRegion(Params& params, FaultInjectorBase* injector) : FaultBase(params, injector) {
+CorruptMemFault::CorruptMemFault(Params& params, FaultInjectorBase* injector) : FaultBase(params, injector) {
 #ifdef __SST_DEBUG_OUTPUT__
     getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Fault type: Corrupt Memory Region\n");
 #endif
@@ -42,7 +42,7 @@ CorruptMemRegion::CorruptMemRegion(Params& params, FaultInjectorBase* injector) 
     distribution = std::uniform_int_distribution<uint8_t>(0,255);
 }
 
-void CorruptMemRegion::faultLogic(Event*& ev) {
+void CorruptMemFault::faultLogic(Event*& ev) {
     SST::MemHierarchy::MemEvent* mem_ev = convertMemEvent(ev);
 
     Addr ev_addr = mem_ev->getAddr();
@@ -58,7 +58,7 @@ void CorruptMemRegion::faultLogic(Event*& ev) {
     }
 }
 
-std::pair<uint64_t,uint64_t> CorruptMemRegion::convertString(std::string& region) {
+std::pair<uint64_t,uint64_t> CorruptMemFault::convertString(std::string& region) {
     std::stringstream ss(region);
     uint64_t addr0, addr1;
 

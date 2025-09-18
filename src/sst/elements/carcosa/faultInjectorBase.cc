@@ -11,7 +11,7 @@
 
 #include "sst/elements/carcosa/faultInjectorBase.h"
 #include "sst/core/params.h"
-#include "sst/elements/carcosa/faultlogic/corruptMemRegion.h"
+#include "sst/elements/carcosa/faultlogic/corruptMemFault.h"
 
 using namespace SST::Carcosa;
 
@@ -115,7 +115,7 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
     dbg_->debug(CALL_INFO_LONG, 1, 0, "\tInjection Probability: %f\n", injectionProbability_);
 #endif
     
-    fault = new CorruptMemRegion(params, this);//FaultBase(params, this);
+    fault = new CorruptMemFault(params, this);//FaultBase(params, this);
 }
 
 void

@@ -9,8 +9,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef SST_ELEMENTS_CARCOSA_CORRUPTMEMREGION_H
-#define SST_ELEMENTS_CARCOSA_CORRUPTMEMREGION_H
+#ifndef SST_ELEMENTS_CARCOSA_CORRUPTMEMFAULT_H
+#define SST_ELEMENTS_CARCOSA_CORRUPTMEMFAULT_H
 
 #include "sst/elements/carcosa/faultInjectorBase.h"
 #include <vector>
@@ -31,14 +31,14 @@ typedef SST::MemHierarchy::Addr Addr;
  * module's parameters, will have their payloads randomly altered
  * to simulate corruption in the affected region of memory.
  */
-class CorruptMemRegion : public FaultInjectorBase::FaultBase 
+class CorruptMemFault : public FaultInjectorBase::FaultBase 
 {
 public:
 
-    CorruptMemRegion(Params& params, FaultInjectorBase* injector);
+    CorruptMemFault(Params& params, FaultInjectorBase* injector);
 
-    CorruptMemRegion() = default;
-    ~CorruptMemRegion() {}
+    CorruptMemFault() = default;
+    ~CorruptMemFault() {}
 
     /**
      * 1. Read in event
@@ -55,7 +55,7 @@ protected:
     std::uniform_int_distribution<uint8_t> distribution;
 
     std::pair<uint64_t,uint64_t> convertString(std::string& region);
-}; // CorruptMemRegion
+}; // CorruptMemFault
 } // namespace SST::Carcosa
 
-#endif // SST_ELEMENTS_CARCOSA_CORRUPTMEMREGION_H
+#endif // SST_ELEMENTS_CARCOSA_CORRUPTMEMFAULT_H
