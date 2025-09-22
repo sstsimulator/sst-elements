@@ -24,7 +24,9 @@ repos:
               patch\.txt|
               \.xml
           )
-  - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
-    rev: "v1.6.26.11"
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.7
     hooks:
       - id: actionlint
+        additional_dependencies:
+          - "github.com/wasilibs/go-shellcheck/cmd/shellcheck@latest"
