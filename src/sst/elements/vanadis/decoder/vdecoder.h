@@ -267,7 +267,7 @@ protected:
 
     bool canIssueStores;
     bool canIssueLoads;
-    
+
     SST::Output* output_;
 
     Statistic<uint64_t>* stat_uop_hit;

@@ -260,7 +260,7 @@ class ProcessInfo {
         fprintf(fp,"m_hwThread: %d\n",m_hwThread);
         fprintf(fp,"m_tidAddress: %#" PRIx64 "\n",m_tidAddress);
 
-        m_virtMemMap->checkpoint(fp);
+        m_virtMemMap->snapshot(fp);
         m_fileTable->checkpoint(fp);
 
         #if 0

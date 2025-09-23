@@ -506,8 +506,8 @@ VANADIS_COMPONENT::performDecode(const uint64_t cycle)
             const int64_t rob_before_decode = (int64_t)rob[decode_start_thread_]->size();
             bool decode_or_fetch = false;
             // If thread is not masked then attempt decode from it
-            if ( !halted_masks[decode_start_thread_] ) { 
-                decode_or_fetch = thread_decoders[decode_start_thread_]->tick(cycle); 
+            if ( !halted_masks[decode_start_thread_] ) {
+                decode_or_fetch = thread_decoders[decode_start_thread_]->tick(cycle);
                 const int64_t rob_after_decode = (int64_t)rob[decode_start_thread_]->size();
                 const int64_t decoded_cycle    = (rob_after_decode - rob_before_decode);
                 ins_decoded_this_cycle += (decoded_cycle > 0) ? static_cast<uint64_t>(decoded_cycle) : 0;

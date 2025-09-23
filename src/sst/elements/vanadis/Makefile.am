@@ -11,6 +11,7 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libvanadis.la
 
 VANADIS_SRC_FILES = \
+utils.h \
 datastruct/cqueue.h \
 datastruct/vcache.h \
 decoder/vauxvec.h \
@@ -156,6 +157,7 @@ os/include/page.h \
 os/include/process.h \
 os/include/threadGrp.h \
 os/include/virtMemMap.h \
+os/include/virtMemMap.cc \
 \
 os/callev/voscallaccessev.h \
 os/callev/voscallall.h \
