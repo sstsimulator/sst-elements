@@ -75,7 +75,7 @@ class VanadisInstruction
             isa_fp_regs_out = (count_isa_fp_reg_out > 0) ? new uint16_t[count_isa_fp_reg_out] : nullptr;
             std::memset(isa_fp_regs_out, 0, count_isa_fp_reg_out * sizeof( uint16_t ));
 
-            trapError             = false;
+            trap_error_           = false;
             hasExecuted           = false;
             hasIssued             = false;
             enduOpGroup           = false;
@@ -109,7 +109,7 @@ class VanadisInstruction
             count_isa_fp_reg_in(copy_me.count_isa_fp_reg_in),
             count_isa_fp_reg_out(copy_me.count_isa_fp_reg_out)
         {
-            trapError             = copy_me.trapError;
+            trap_error_           = copy_me.trap_error_;
             hasExecuted           = copy_me.hasExecuted;
             hasIssued             = copy_me.hasIssued;
             enduOpGroup           = copy_me.enduOpGroup;
@@ -306,7 +306,7 @@ class VanadisInstruction
 
         void markEndOfMicroOpGroup() { enduOpGroup = true; }
         bool endsMicroOpGroup() const { return enduOpGroup; }
-        bool trapsError() const { return trapError; }
+        bool trapsError() const { return trap_error_; }
 
         uint64_t getInstructionAddress() const { return ins_address; }
         uint32_t getHWThread() const { return hw_thread; }
@@ -416,7 +416,7 @@ class VanadisInstruction
 
         const VanadisDecoderOptions* getISAOptions() const { return isa_options; }
 
-        void flagError() { trapError = true; }
+        void flagError() { trap_error_ = true; }
 
         virtual bool performIntRegisterRecovery() const { return true; }
         virtual bool performFPRegisterRecovery() const { return true; }
@@ -457,7 +457,7 @@ class VanadisInstruction
         uint16_t count_phys_fp_reg_in;
         uint16_t count_phys_fp_reg_out;
 
-        bool trapError;
+        bool trap_error_ = false;
         bool hasExecuted;
         bool hasIssued;
         bool enduOpGroup;

@@ -250,7 +250,7 @@ private:
         VanadisISATable* issue_isa_table, VanadisISATable* retire_isa_table, uint16_t sw_thr);
 
     int  performFetch(const uint64_t cycle);
-    int  performDecode(const uint64_t cycle);
+    void performDecode(const uint64_t cycle);
     int  performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_start, int& unallocated_memory_op_seen);
     int  performExecute(const uint64_t cycle);
     int  performRetire(int rob_num, VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle);
@@ -328,6 +328,8 @@ private:
 
     std::vector<VanadisRoCCInterface*> roccs_;
     std::vector<std::deque<VanadisInstruction*>> rocc_queues_;
+
+    uint32_t decode_start_thread_ = 0;
 
     bool* halted_masks;
     bool  print_int_reg;

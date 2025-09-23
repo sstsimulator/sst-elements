@@ -64,7 +64,7 @@ namespace Vanadis {
 class VanadisDecoder : public SST::SubComponent
 {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Vanadis::VanadisDecoder)
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Vanadis::VanadisDecoder, SST::Output*)
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS({ "os_handler", "Handler for SYSCALL instructions",
                                           "SST::Vanadis::VanadisCPUOSHandler" },
@@ -86,7 +86,7 @@ public:
 				VANADIS_DECODER_ELI_STATISTICS
 				)
 
-    VanadisDecoder(ComponentId_t id, Params& params) : SubComponent(id)
+    VanadisDecoder(ComponentId_t id, Params& params, SST::Output* output) : SubComponent(id)
     {
         ip      = 0;
         tls_ptr = 0;
@@ -99,7 +99,7 @@ public:
         const size_t uop_cache_size          = params.find<size_t>("uop_cache_entries", 128);
         const size_t predecode_cache_entries = params.find<size_t>("predecode_cache_entries", 4);
 
-        ins_loader = new VanadisInstructionLoader(uop_cache_size, predecode_cache_entries, icache_line_width);
+        ins_loader = new VanadisInstructionLoader(uop_cache_size, predecode_cache_entries, icache_line_width, output);
 
         const uint32_t loader_mode = params.find<uint32_t>("loader_mode", 0);
         switch(loader_mode) {
@@ -131,6 +131,8 @@ public:
 
         canIssueStores = true;
         canIssueLoads  = true;
+
+        output_ = output;
 
         stat_uop_hit          = registerStatistic<uint64_t>("uop_cache_hit", "1");
         stat_predecode_hit    = registerStatistic<uint64_t>("predecode_cache_hit", "1");
@@ -178,9 +180,9 @@ public:
 		fpflags = new_fpflags;
 	 }
 
-    bool acceptCacheResponse(SST::Output* output, SST::Interfaces::StandardMem::Request* req)
+    bool acceptCacheResponse( SST::Interfaces::StandardMem::Request* req )
     {
-        return ins_loader->acceptResponse(output, req);
+        return ins_loader->acceptResponse(req);
     }
 
     uint64_t getInsCacheLineWidth() const { return icache_line_width; }
@@ -190,7 +192,7 @@ public:
     virtual const char*                  getISAName() const                        = 0;
     virtual uint16_t                     countISAIntReg() const                    = 0;
     virtual uint16_t                     countISAFPReg() const                     = 0;
-    virtual void                         tick(SST::Output* output, uint64_t cycle) = 0;
+    virtual bool                         tick( uint64_t cycle ) = 0;
     virtual const VanadisDecoderOptions* getDecoderOptions() const                 = 0;
 
     uint64_t getInstructionPointer() const { return ip; }
@@ -202,23 +204,23 @@ public:
         // Do we need to clear here or not?
     }
 
-    virtual void setStackPointer( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t stack_start_address ) {assert(0);}
-    virtual void setThreadPointer( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t stack_start_address ) {}
-    virtual void setArg1Register( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {assert(0);}
-    virtual void setFuncPointer( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {}
-    virtual void setReturnRegister( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {assert(0);}
-    virtual void setSuccessRegister( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {}
+    virtual void setStackPointer( VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t stack_start_address ) {assert(0);}
+    virtual void setThreadPointer( VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t stack_start_address ) {}
+    virtual void setArg1Register( VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {assert(0);}
+    virtual void setFuncPointer( VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {}
+    virtual void setReturnRegister( VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {assert(0);}
+    virtual void setSuccessRegister( VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {}
 
-    void setInstructionPointerAfterMisspeculate(SST::Output* output, const uint64_t newIP)
+    void setInstructionPointerAfterMisspeculate(const uint64_t newIP)
     {
         ip = newIP;
 
-        output->verbose(CALL_INFO, 16, 0, "[decoder] -> clear decode-q and set new ip: 0x%" PRI_ADDR "\n", newIP);
+        output_->verbose(CALL_INFO, 16, 0, "[decoder] -> clear decode-q and set new ip: 0x%" PRI_ADDR "\n", newIP);
 
         // Clear out the decode queue, need to restart
         // decoded_q->clear();
 
-        clearDecoderAfterMisspeculate(output);
+        clearDecoderAfterMisspeculate();
     }
 
     void setThreadLocalStoragePointer(uint64_t new_tls) { tls_ptr = new_tls; }
@@ -243,7 +245,7 @@ public:
     virtual VanadisCPUOSHandler* getOSHandler() { return os_handler; }
 
 protected:
-    virtual void clearDecoderAfterMisspeculate(SST::Output* output) {};
+    virtual void clearDecoderAfterMisspeculate() {};
 
     uint64_t ip;
     uint64_t icache_line_width;
@@ -265,6 +267,8 @@ protected:
 
     bool canIssueStores;
     bool canIssueLoads;
+    
+    SST::Output* output_;
 
     Statistic<uint64_t>* stat_uop_hit;
     Statistic<uint64_t>* stat_uop_delayed_rob_full;
