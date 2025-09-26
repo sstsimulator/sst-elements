@@ -76,12 +76,12 @@ class VanadisInstruction
             std::memset(isa_fp_regs_out, 0, count_isa_fp_reg_out * sizeof( uint16_t ));
 
             trap_error_           = false;
-            hasExecuted           = false;
-            hasIssued             = false;
-            enduOpGroup           = false;
-            isFrontOfROB          = false;
-            hasROBSlot            = false;
-            sw_thread = hw_thr;
+            has_executed_         = false;
+            has_issued_           = false;
+            end_uop_group_        = false;
+            is_front_of_rob_      = false;
+            has_rob_slot_         = false;
+            sw_thread             = hw_thr;
         }
 
         virtual ~VanadisInstruction()
@@ -110,11 +110,11 @@ class VanadisInstruction
             count_isa_fp_reg_out(copy_me.count_isa_fp_reg_out)
         {
             trap_error_           = copy_me.trap_error_;
-            hasExecuted           = copy_me.hasExecuted;
-            hasIssued             = copy_me.hasIssued;
-            enduOpGroup           = copy_me.enduOpGroup;
-            isFrontOfROB          = false;
-            hasROBSlot            = false;
+            has_executed_         = copy_me.has_executed_;
+            has_issued_           = copy_me.has_issued_;
+            end_uop_group_        = copy_me.end_uop_group_;
+            is_front_of_rob_      = false;
+            has_rob_slot_         = false;
             sw_thread             = copy_me.sw_thread;
 
             phys_int_regs_in  = (count_phys_int_reg_in > 0) ? new uint16_t[count_phys_int_reg_in] : nullptr;
@@ -304,8 +304,8 @@ class VanadisInstruction
 
         virtual VanadisInstruction* clone() = 0;
 
-        void markEndOfMicroOpGroup() { enduOpGroup = true; }
-        bool endsMicroOpGroup() const { return enduOpGroup; }
+        void markEndOfMicroOpGroup() { end_uop_group_ = true; }
+        bool endsMicroOpGroup() const { return end_uop_group_; }
         bool trapsError() const { return trap_error_; }
 
         uint64_t getInstructionAddress() const { return ins_address; }
@@ -402,17 +402,17 @@ class VanadisInstruction
         // but branches and jumps will get predicte
         virtual bool isSpeculated() const { return false; }
 
-        bool completedExecution() const { return hasExecuted; }
-        bool completedIssue() const { return hasIssued; }
+        bool completedExecution() const { return has_executed_; }
+        bool completedIssue() const { return has_issued_; }
 
-        virtual void markExecuted() { hasExecuted = true; }
-        void markIssued() { hasIssued = true; }
+        virtual void markExecuted() { has_executed_ = true; }
+        void markIssued() { has_issued_ = true; }
 
-        bool checkFrontOfROB() const { return isFrontOfROB; }
-        void markFrontOfROB() { isFrontOfROB = true; }
+        bool checkFrontOfROB() const { return is_front_of_rob_; }
+        void markFrontOfROB() { is_front_of_rob_ = true; }
 
-        bool hasROBSlotIssued() const { return hasROBSlot; }
-        void markROBSlotIssued() { hasROBSlot = true; }
+        bool has_rob_slot_Issued() const { return has_rob_slot_; }
+        void markROBSlotIssued() { has_rob_slot_ = true; }
 
         const VanadisDecoderOptions* getISAOptions() const { return isa_options; }
 
@@ -458,11 +458,11 @@ class VanadisInstruction
         uint16_t count_phys_fp_reg_out;
 
         bool trap_error_ = false;
-        bool hasExecuted;
-        bool hasIssued;
-        bool enduOpGroup;
-        bool isFrontOfROB;
-        bool hasROBSlot;
+        bool has_executed_;
+        bool has_issued_;
+        bool end_uop_group_;
+        bool is_front_of_rob_;
+        bool has_rob_slot_;
 
         const VanadisDecoderOptions* isa_options;
         uint32_t sw_thread;

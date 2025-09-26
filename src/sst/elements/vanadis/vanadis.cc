@@ -488,19 +488,19 @@ VANADIS_COMPONENT::setHalt(uint32_t thr, int64_t halt_code)
     }
 }
 
-int
+void
 VANADIS_COMPONENT::performFetch(const uint64_t cycle)
 {
     // This is handled by the decoder step, so just keep it empty.
-    return 0;
 }
 
 void
 VANADIS_COMPONENT::performDecode(const uint64_t cycle)
 {
     bool blocked = true;
+    uint32_t start_thr = decode_start_thread_;
     for ( uint32_t i = 0; i < decodes_per_cycle; ++i ) {
-        if ( i == 1 && blocked ) return;
+        if ( i == 1 && blocked ) break; // Means every hw_thread is blocked, stop trying
         // Locate next decodable thread
         for ( uint32_t t = 0; t < hw_threads; ++t) {
             const int64_t rob_before_decode = (int64_t)rob[decode_start_thread_]->size();
@@ -511,13 +511,17 @@ VANADIS_COMPONENT::performDecode(const uint64_t cycle)
                 const int64_t rob_after_decode = (int64_t)rob[decode_start_thread_]->size();
                 const int64_t decoded_cycle    = (rob_after_decode - rob_before_decode);
                 ins_decoded_this_cycle += (decoded_cycle > 0) ? static_cast<uint64_t>(decoded_cycle) : 0;
-                decode_start_thread_ = (decode_start_thread_ + 1) % hw_threads;
                 if (decode_or_fetch) {
                     blocked = false;
                     break; // found one, go to next decodes_per_cycle
                 }
             }
+            decode_start_thread_++;
+            if (decode_start_thread_ == hw_threads) decode_start_thread_ = 0;
         }
+    }
+    if ( blocked ) { // If all threads are blocked, attempt next thread first on next cycle
+        decode_start_thread_ = ( start_thr + 1 ) % hw_threads;
     }
 }
 
@@ -727,7 +731,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
     return issued_an_ins ? 0 : 1;
 }
 
-int
+void
 VANADIS_COMPONENT::performExecute(const uint64_t cycle)
 {
 
@@ -796,8 +800,6 @@ VANADIS_COMPONENT::performExecute(const uint64_t cycle)
         roccs_[i]->tick((uint64_t)cycle);
 
     }
-
-    return 0;
 }
 
 void VANADIS_COMPONENT::printRob(int rob_num, VanadisCircularQueue<VanadisInstruction*>* rob)
@@ -1388,7 +1390,7 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     if(output_verbosity >= 2)
     {
         output->verbose(
-            CALL_INFO, 8, 0, "============================ Cycle %12" PRIu64 " ============================\n",
+            CALL_INFO, 2, 0, "============================ Cycle %12" PRIu64 " ============================\n",
             current_cycle);
     }
 
@@ -1550,7 +1552,7 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     }
     #endif
     for ( uint32_t i = 0; i < fetches_per_cycle; ++i ) {
-        if ( performFetch(cycle) != 0 ) { break; }
+        performFetch(cycle);
     }
 
     uint64_t rob_total_count = 0;

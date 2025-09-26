@@ -249,10 +249,10 @@ private:
         VanadisInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
         VanadisISATable* issue_isa_table, VanadisISATable* retire_isa_table, uint16_t sw_thr);
 
-    int  performFetch(const uint64_t cycle);
+    void performFetch(const uint64_t cycle);
     void performDecode(const uint64_t cycle);
     int  performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_start, int& unallocated_memory_op_seen);
-    int  performExecute(const uint64_t cycle);
+    void performExecute(const uint64_t cycle);
     int  performRetire(int rob_num, VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle);
     int  allocateFunctionalUnit(VanadisInstruction* ins);
     bool mapInstructiontoFunctionalUnit(VanadisInstruction* ins, std::vector<VanadisFunctionalUnit*>& functional_units);

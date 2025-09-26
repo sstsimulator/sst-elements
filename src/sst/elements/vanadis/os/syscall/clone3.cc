@@ -16,53 +16,24 @@
 #include <sst_config.h>
 
 #include "os/syscall/clone3.h"
+#include "os/syscall/syscall_defines.h"
 #include "os/vnodeos.h"
 #include "os/vgetthreadstate.h"
 
 using namespace SST::Vanadis;
 
-// Some of this is shared with clone, but replicated here (from sched.h)
-#define RISCV_SIGCHLD       17
-#define RISCV_CSIGNAL       0x000000ff /* Replaced by cl_args.exit_signal */
-#define RISCV_CLONE_VM      0x00000100 /* Set if VM shared between processes.  */
-#define RISCV_CLONE_FS      0x00000200 /* Set if fs info shared between processes.  */
-#define RISCV_CLONE_FILES   0x00000400 /* Set if open files shared between processes.  */
-#define RISCV_CLONE_SIGHAND 0x00000800 /* Set if signal handlers shared.  */
-#define RISCV_CLONE_PIDFD   0x00001000 /* Set if pidfd should be set in parent. */
-#define RISCV_CLONE_PTRACE  0x00002000 /* Set to continue trace on child too. */
-#define RISCV_CLONE_VFORK   0x00004000 /* Set to have child wake parent on mm_release */
-#define RISCV_CLONE_PARENT  0x00008000 /* Set to have same parent as cloner */
-#define RISCV_CLONE_THREAD  0x00010000 /* Set to add to same thread group.  */
-#define RISCV_CLONE_NEWNS   0x00020000 /* Set to create new namespace.  */
-#define RISCV_CLONE_SYSVSEM 0x00040000 /* Set to shared SVID SEM_UNDO semantics.  */
-#define RISCV_CLONE_SETTLS  0x00080000 /* Set TLS info.  */
-#define RISCV_CLONE_PARENT_SETTID  0x00100000 /* Store TID in userlevel buffer before MM copy.  */
-#define RISCV_CLONE_CHILD_CLEARTID 0x00200000 /* Register exit futex and memory location to clear.  */
-#define RISVC_CLONE_DETACHED       0x00400000 /* Create clone detached - not valid  for clone3 */
-#define RISCV_CLONE_CHILD_SETTID   0x01000000 /* Store TID in userlevel buffer in the child.  */
-#define RISCV_CLONE_NEWCGROUP      0x02000000  /* New cgroup namespace */
-#define RISCV_CLONE_NEWUTS         0x04000000  /* New utsname namespace */
-#define RISCV_CLONE_NEWIPC         0x08000000  /* New ipc namespace */
-#define RISCV_CLONE_NEWUSER        0x10000000  /* New user namespace */
-#define RISCV_CLONE_NEWPID         0x20000000  /* New pid namespace */
-#define RISCV_CLONE_NEWNET         0x40000000  /* New network namespace */
-#define RISCV_CLONE_IO             0x80000000  /* Clone io context */
-#define RISCV_CLONE_CLEAR_SIGHAND  0x100000000ULL /* Clear any signal handler and reset to SIG_DFL. */
-#define RISCV_CLONE_INTO_CGROUP    0x200000000ULL /* Clone into a specific cgroup given the right permissions. */
-#define RISCV_CLONE_NEWTIME        0x00000080     /* New time namespace */
-
-#define CLONE_INVALID_FLAGS     ( RISCV_CSIGNAL | RISVC_CLONE_DETACHED )
+#define CLONE3_INVALID_FLAGS     ( VANADIS_LINUX_CSIGNAL | VANADIS_LINUX_CLONE_DETACHED )
 
 // Corresponds to flags = 0x000f3d00
-#define CLONE_VALID_FLAGS ( RISCV_CLONE_VM | \
-                        RISCV_CLONE_FS | \
-                        RISCV_CLONE_FILES | \
-                        RISCV_CLONE_SIGHAND | \
-                        RISCV_CLONE_THREAD | \
-                        RISCV_CLONE_SYSVSEM | \
-                        RISCV_CLONE_SETTLS | \
-                        RISCV_CLONE_PARENT_SETTID | \
-                        RISCV_CLONE_CHILD_CLEARTID \
+#define CLONE3_VALID_FLAGS ( VANADIS_LINUX_CLONE_VM | \
+                        VANADIS_LINUX_CLONE_FS | \
+                        VANADIS_LINUX_CLONE_FILES | \
+                        VANADIS_LINUX_CLONE_SIGHAND | \
+                        VANADIS_LINUX_CLONE_THREAD | \
+                        VANADIS_LINUX_CLONE_SYSVSEM | \
+                        VANADIS_LINUX_CLONE_SETTLS | \
+                        VANADIS_LINUX_CLONE_PARENT_SETTID | \
+                        VANADIS_LINUX_CLONE_CHILD_CLEARTID \
                     )
 
 VanadisClone3Syscall::VanadisClone3Syscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallClone3Event* event )
@@ -100,7 +71,7 @@ void VanadisClone3Syscall::handleEvent( VanadisCoreEvent* ev )
 
     _VanadisStartThreadBaseReq* req;
 
-    if ( exit_signal_ == RISCV_SIGCHLD ) {
+    if ( exit_signal_ == VANADIS_LINUX_SIGCHLD ) {
         req = new VanadisStartThreadForkReq( hw_thread_id_->hwThread, resp->getInstPtr(), resp->getTlsPtr() );
     } else {
         req = new VanadisStartThreadClone3Req( hw_thread_id_->hwThread, resp->getInstPtr(), stack_, tls_);
@@ -156,7 +127,7 @@ void VanadisClone3Syscall::memReqIsDone(bool)
 void VanadisClone3Syscall::parseCloneArgs(VanadisSyscallClone3Event* event)
 {
     // Only exit_signal handled right now...
-    if ( exit_signal_ == RISCV_SIGCHLD ) {
+    if ( exit_signal_ == VANADIS_LINUX_SIGCHLD ) {
         // do this before we create the child becuase the child gets a copy of the parents page table
         // and we want the child to fault on write as well
         m_os->getMMU()->removeWrite( m_process->getpid() );
@@ -173,7 +144,7 @@ void VanadisClone3Syscall::parseCloneArgs(VanadisSyscallClone3Event* event)
 
     } else {
         // We only handle the common combination of flags for now (ignoring irrelevant ones)
-        if ( ( flags_ & ~CLONE_INVALID_FLAGS ) != CLONE_VALID_FLAGS ) {
+        if ( ( flags_ & ~CLONE3_INVALID_FLAGS ) != CLONE3_VALID_FLAGS ) {
             m_output->fatal(CALL_INFO, -1,
                 "Error: clone3, syscall implementation missing support for flags: %#" PRIx64 "\n", flags_);
         }
@@ -202,7 +173,7 @@ void VanadisClone3Syscall::parseCloneArgs(VanadisSyscallClone3Event* event)
     setTidAtParent(event);
 }
 
-// State 2: Handle the RISCV_CLONE_PARENT_SETTID flag
+// State 2: Handle the VANADIS_LINUX_CLONE_PARENT_SETTID flag
 void VanadisClone3Syscall::setTidAtParent(VanadisSyscallClone3Event* event)
 {
     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"setTidAddress %#" PRIx64 " \n", child_tid_);

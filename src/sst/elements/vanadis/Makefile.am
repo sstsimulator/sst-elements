@@ -251,6 +251,7 @@ os/syscall/settidaddress.h \
 os/syscall/statx.h \
 os/syscall/syscall.h \
 os/syscall/syscall.cc \
+os/syscall/syscall_defines.h \
 os/syscall/tgkill.h \
 os/syscall/uname.h \
 os/syscall/unlinkat.h \
