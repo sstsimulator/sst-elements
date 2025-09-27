@@ -1,8 +1,5 @@
 import sst
 
-# Define SST core options
-#sst.setProgramOption("timebase", "1ps")
-
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
@@ -20,7 +17,7 @@ gen.addParams({
 })
 
 # Tell SST what statistics handling we want
-sst.setStatisticLoadLevel(4)
+sst.setStatisticLoadLevel(6)
 
 # Enable statistics outputs
 comp_cpu.enableAllStatistics({"type":"sst.AccumulatorStatistic"})

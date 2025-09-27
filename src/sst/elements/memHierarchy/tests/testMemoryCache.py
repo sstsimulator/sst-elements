@@ -313,8 +313,6 @@ class HBMBuilder:
         membk.addParams(hbm_td_backend_params)
         membk.addParams({ "mem_size" : str(self.memCapacity // self.hbm_count) + "B" })
 
-        lowlink = sst.Link("hbm_link_" + str(self.next_hbm_id))
-
         mem.addParams({
             "num_caches" : self.hbm_count,
             "cache_num" : self.next_hbm_id,
