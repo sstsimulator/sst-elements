@@ -20,6 +20,9 @@ StuckAtFault::StuckAtFault(Params& params, FaultInjectorBase* injector) : FaultB
 #ifdef __SST_DEBUG_OUTPUT__
     getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Fault Type: Stuck-At Fault\n");
 #endif
+    // set valid install direction
+    valid_installation_.push_back(installDirection::Send);
+    valid_installation_.push_back(installDirection::Receive);
     // read in masks
     // parameter format: {masks: ["addr, byte, zeroMask, oneMask"]}
     std::vector<std::string> paramVecStr;

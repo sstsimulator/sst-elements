@@ -13,8 +13,12 @@ libcarcosa_la_SOURCES =             \
     faultInjectorBase.h             \
     faultlogic/stuckAtFault.cc      \
     faultlogic/stuckAtFault.h       \
-    faultlogic/corruptMemFault.cc  \
-    faultlogic/corruptMemFault.h
+    faultlogic/corruptMemFault.cc   \
+    faultlogic/corruptMemFault.h    \
+    faultlogic/randomDropFault.cc   \
+    faultlogic/randomDropFault.h    \
+    faultlogic/randomFlipFault.cc   \
+    faultlogic/randomFlipFault.h
 
 EXTRA_DIST = \
     dummyTest.py
@@ -23,7 +27,9 @@ sstdir = $(includedir)/sst/elements/carcosa
 nobase_sst_HEADERS =                \
     faultInjectorBase.h             \
     faultlogic/stuckAtFault.h       \
-    faultlogic/corruptMemFault.h
+    faultlogic/corruptMemFault.h    \
+    faultlogic/randomDropFault.h    \
+    faultlogic/randomFlipFault.h
 
 libcarcosa_la_LDFLAGS = -module -avoid-version
 libcarcosa_la_LIBADD =

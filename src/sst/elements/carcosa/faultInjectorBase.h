@@ -17,6 +17,9 @@
 #include "sst/core/output.h"
 #include "sst/elements/memHierarchy/memEvent.h"
 #include <sst_config.h>
+#include <vector>
+#include <string>
+#include <random>
 
 namespace SST::Carcosa {
 
@@ -30,15 +33,6 @@ enum installDirection {
     Send = 0,
     Receive,
     Invalid
-};
-
-// Enum to select basic fault injection logic or indicate a custom input
-enum injectorLogic {
-    StuckAt = 0,
-    RandomFlip,
-    RandomDrop,
-    CorruptMemRegion,
-    Custom
 };
 
 /**
@@ -79,6 +73,8 @@ public:
 
         SST::Output*& getSimulationDebug();
 
+        installDirection setInstallDirection(std::string param);
+
         SST::MemHierarchy::MemEvent* convertMemEvent(Event*& ev);
 
         dataVec& getMemEventPayload(Event*& ev);
@@ -87,9 +83,15 @@ public:
 
         memEventType getMemEventCommandType(Event*& ev);
 
+        bool doInjection();
+
     protected:
 
-        FaultInjectorBase* _injector = nullptr;
+        FaultInjectorBase* injector_ = nullptr;
+
+        std::vector<installDirection> valid_installation_;
+        std::default_random_engine generator_;
+        std::uniform_real_distribution<double> distribution_;
         // TODO: Figure out how to properly set up serialization for this
         // void serialize_order(SST::Core::Serialization::serializer& ser) 
         // {
@@ -151,8 +153,22 @@ public:
         }
     }
 
+    double getInjectionProb() {
+        return injectionProbability_;
+    }
+
+    void cancelDelivery() {
+        *cancel_ = true;
+    }
+
+    installDirection getInstallDirection() {
+        return installDirection_;
+    }
+
 protected:
     FaultBase* fault;
+
+    bool* cancel_;
 
     installDirection installDirection_ = installDirection::Receive;
     double injectionProbability_ = 0.5;
