@@ -17,6 +17,6 @@ RandomFlipFault::RandomFlipFault(Params& params, FaultInjectorBase* injector) : 
     //
 }
 
-void RandomFlipFault::faultLogic() {
+void RandomFlipFault::faultLogic(Event*& ev) {
     //
 }
