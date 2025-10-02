@@ -69,21 +69,21 @@ public:
 
         virtual void faultLogic(Event*& ev) {}
 
-        SST::Output*& getSimulationOutput();
+        inline SST::Output*& getSimulationOutput();
 
-        SST::Output*& getSimulationDebug();
+        inline SST::Output*& getSimulationDebug();
 
         installDirection setInstallDirection(std::string param);
 
         SST::MemHierarchy::MemEvent* convertMemEvent(Event*& ev);
 
-        dataVec& getMemEventPayload(Event*& ev);
+        inline dataVec& getMemEventPayload(Event*& ev);
 
         void setMemEventPayload(Event*& ev, dataVec newPayload);
 
         memEventType getMemEventCommandType(Event*& ev);
 
-        bool doInjection();
+        inline bool doInjection();
 
     protected:
 
