@@ -11,7 +11,7 @@
 
 #include "sst/elements/carcosa/faultInjectorBase.h"
 #include "sst/core/params.h"
-#include "sst/elements/carcosa/faultlogic/randomFlipFault.h"
+#include "sst/elements/carcosa/faultlogic/randomDropFault.h"
 
 using namespace SST::Carcosa;
 
@@ -23,11 +23,11 @@ FaultInjectorBase::FaultBase::FaultBase(Params& params, FaultInjectorBase* injec
     distribution_ = std::uniform_real_distribution<double>(0,1);
 }
 
-inline SST::Output*& FaultInjectorBase::FaultBase::getSimulationOutput() {
+SST::Output*& FaultInjectorBase::FaultBase::getSimulationOutput() {
     return injector_->out_;
 }
 
-inline SST::Output*& FaultInjectorBase::FaultBase::getSimulationDebug() {
+SST::Output*& FaultInjectorBase::FaultBase::getSimulationDebug() {
     return injector_->dbg_;
 }
 
@@ -61,7 +61,7 @@ SST::MemHierarchy::MemEvent* FaultInjectorBase::FaultBase::convertMemEvent(Event
     return mem_ev;
 }
 
-inline dataVec& FaultInjectorBase::FaultBase::getMemEventPayload(Event*& ev) {
+dataVec& FaultInjectorBase::FaultBase::getMemEventPayload(Event*& ev) {
     return convertMemEvent(ev)->getPayload();
 }
 
@@ -99,7 +99,7 @@ FaultInjectorBase::FaultBase::memEventType FaultInjectorBase::FaultBase::getMemE
     }
 }
 
-inline bool FaultInjectorBase::FaultBase::doInjection() {
+bool FaultInjectorBase::FaultBase::doInjection() {
     double rand_val = distribution_(generator_);
     return rand_val <= injector_->getInjectionProb();
 }
@@ -126,7 +126,7 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
     dbg_->debug(CALL_INFO_LONG, 1, 0, "\tInjection Probability: %f\n", injectionProbability_);
 #endif
     
-    fault = new RandomFlipFault(params, this);//FaultBase(params, this);
+    fault = new RandomDropFault(params, this);//FaultBase(params, this);
 
     std::string install_dir = params.find<std::string>("installDirection", "Receive");
     installDirection_ = fault->setInstallDirection(install_dir);

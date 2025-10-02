@@ -25,5 +25,8 @@ void RandomDropFault::faultLogic(Event*& ev) {
         if (injector_->getInstallDirection() == installDirection::Receive) {
             injector_->cancelDelivery();
         }
+#ifdef __SST_DEBUG_OUTPUT__
+        getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Event dropped.\n");
+#endif
     }
 }
