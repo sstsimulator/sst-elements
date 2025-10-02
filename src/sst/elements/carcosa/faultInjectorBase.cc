@@ -11,7 +11,7 @@
 
 #include "sst/elements/carcosa/faultInjectorBase.h"
 #include "sst/core/params.h"
-#include "sst/elements/carcosa/faultlogic/corruptMemFault.h"
+#include "sst/elements/carcosa/faultlogic/randomFlipFault.h"
 
 using namespace SST::Carcosa;
 
@@ -23,28 +23,26 @@ FaultInjectorBase::FaultBase::FaultBase(Params& params, FaultInjectorBase* injec
     distribution_ = std::uniform_real_distribution<double>(0,1);
 }
 
-SST::Output*& FaultInjectorBase::FaultBase::getSimulationOutput() {
+inline SST::Output*& FaultInjectorBase::FaultBase::getSimulationOutput() {
     return injector_->out_;
 }
 
-SST::Output*& FaultInjectorBase::FaultBase::getSimulationDebug() {
+inline SST::Output*& FaultInjectorBase::FaultBase::getSimulationDebug() {
     return injector_->dbg_;
 }
 
 installDirection FaultInjectorBase::FaultBase::setInstallDirection(std::string param) {
-    if ( param != "Receive" ) {
-        if ( param == "Send" ) {
-            if (std::find(valid_installation_.begin(), valid_installation_.end(), installDirection::Send) != valid_installation_.end()) {
-                return installDirection::Send;
-            } else {
-                injector_->out_->fatal(CALL_INFO_LONG, 1, 0, "This PortModule Fault Injector cannot intercept Send events.\n");
-            }
+    if ( param == "Receive" ) {
+        if (valid_installation_[0]) {
+            return installDirection::Receive;
         } else {
-            if (std::find(valid_installation_.begin(), valid_installation_.end(), installDirection::Receive) != valid_installation_.end()) {
-                return installDirection::Receive;
-            } else {
-                injector_->out_->fatal(CALL_INFO_LONG, 1, 0, "This PortModule Fault Injector cannot intercept Receive events.\n");
-            }
+            injector_->out_->fatal(CALL_INFO_LONG, 1, 0, "This PortModule Fault Injector cannot intercept Receive events.\n");
+        }
+    } else if ( param == "Send" ) {
+        if (valid_installation_[1]) {
+            return installDirection::Send;
+        } else {
+            injector_->out_->fatal(CALL_INFO_LONG, 1, 0, "This PortModule Fault Injector cannot intercept Send events.\n");
         }
     }
     return installDirection::Invalid;
@@ -63,26 +61,26 @@ SST::MemHierarchy::MemEvent* FaultInjectorBase::FaultBase::convertMemEvent(Event
     return mem_ev;
 }
 
-dataVec& FaultInjectorBase::FaultBase::getMemEventPayload(Event*& ev) {
+inline dataVec& FaultInjectorBase::FaultBase::getMemEventPayload(Event*& ev) {
     return convertMemEvent(ev)->getPayload();
 }
 
 void FaultInjectorBase::FaultBase::setMemEventPayload(Event*& ev, dataVec newPayload) {
 #ifdef __SST_DEBUG_OUTPUT__
-    injector_->getSimulationOutput().debug(CALL_INFO_LONG, 2, 0, "Payload before replacement:\n[");
+    getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "Payload before replacement:\n[");
     for (int i: convertMemEvent(ev)->getPayload()) {
-        injector_->getSimulationOutput().debug(CALL_INFO_LONG, 2, 0, "%d\t", i);
+        getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "%d\t", i);
     }
-    injector_->getSimulationOutput().debug(CALL_INFO_LONG, 2, 0, "]\n");
+    getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "]\n");
 #endif
     convertMemEvent(ev)->setPayload(newPayload);
 
 #ifdef __SST_DEBUG_OUTPUT__
-    injector_->getSimulationOutput().debug(CALL_INFO_LONG, 2, 0, "Payload after replacement:\n[");
+    getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "Payload after replacement:\n[");
     for (int i: convertMemEvent(ev)->getPayload()) {
-        injector_->getSimulationOutput().debug(CALL_INFO_LONG, 2, 0, "%d\t", i);
+        getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "%d\t", i);
     }
-    injector_->getSimulationOutput().debug(CALL_INFO_LONG, 2, 0, "]\n");
+    getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "]\n");
 #endif
 }
 
@@ -101,7 +99,7 @@ FaultInjectorBase::FaultBase::memEventType FaultInjectorBase::FaultBase::getMemE
     }
 }
 
-bool FaultInjectorBase::FaultBase::doInjection() {
+inline bool FaultInjectorBase::FaultBase::doInjection() {
     double rand_val = distribution_(generator_);
     return rand_val <= injector_->getInjectionProb();
 }
@@ -128,13 +126,13 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
     dbg_->debug(CALL_INFO_LONG, 1, 0, "\tInjection Probability: %f\n", injectionProbability_);
 #endif
     
-    fault = new CorruptMemFault(params, this);//FaultBase(params, this);
+    fault = new RandomFlipFault(params, this);//FaultBase(params, this);
 
     std::string install_dir = params.find<std::string>("installDirection", "Receive");
     installDirection_ = fault->setInstallDirection(install_dir);
 
     if (installDirection_ == installDirection::Invalid) {
-        out_->fatal(CALL_INFO_LONG, -1, "Install Direction should never be set to Invalid!\n");
+        out_->fatal(CALL_INFO_LONG, -1, "Install Direction should never be set to Invalid! Did you forget to set which directions are valid?\n");
     }
 
 #ifdef __SST_DEBUG_OUTPUT__

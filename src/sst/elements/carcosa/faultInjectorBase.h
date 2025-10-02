@@ -89,9 +89,22 @@ public:
 
         FaultInjectorBase* injector_ = nullptr;
 
-        std::vector<installDirection> valid_installation_;
+        bool valid_installation_[2] = {false, false};
         std::default_random_engine generator_;
         std::uniform_real_distribution<double> distribution_;
+
+        void toggleReceiveValid() {
+            valid_installation_[0] = true;
+        }
+
+        void toggleSendValid() {
+            valid_installation_[1] = true;
+        }
+
+        void toggleSendReceiveValid() {
+            valid_installation_[0] = true;
+            valid_installation_[1] = true;
+        }
         // TODO: Figure out how to properly set up serialization for this
         // void serialize_order(SST::Core::Serialization::serializer& ser) 
         // {

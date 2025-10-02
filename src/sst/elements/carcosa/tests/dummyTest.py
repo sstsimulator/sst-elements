@@ -500,8 +500,7 @@ memctrl.addPortModule("highlink", "carcosa.faultInjectorBase", {
     "intallDirection": "Receive",
     "injectionProbability": 1,
     "debug" : 1,
-    "debug_level": 2,
-    "regions": ["ABCDEFAB, DEADBEEF"]
+    "debug_level": 2
 })
 
 # node memory controller backend 

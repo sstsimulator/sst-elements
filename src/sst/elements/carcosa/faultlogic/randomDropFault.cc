@@ -14,7 +14,7 @@
 using namespace SST::Carcosa;
 
 RandomDropFault::RandomDropFault(Params& params, FaultInjectorBase* injector) : FaultBase(params, injector) {
-    // 
+    toggleReceiveValid();
 }
 
 void RandomDropFault::faultLogic(Event*& ev) {

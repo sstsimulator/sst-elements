@@ -15,8 +15,11 @@
 #include "sst/elements/carcosa/faultInjectorBase.h"
 #include <random>
 #include <vector>
+#include <utility>
 
 namespace SST::Carcosa {
+
+typedef std::vector<uint8_t> dataVec;
 
 class RandomDropFault : public FaultInjectorBase::FaultBase {
 public:
@@ -26,9 +29,6 @@ public:
     ~RandomDropFault() {}
 
     void faultLogic(Event*& ev) override;
-protected:
-    std::default_random_engine generator;
-    std::uniform_real_distribution<float> distribution;
 }; // RandomDropFault
 
 } // namespace SST::Carcosa
