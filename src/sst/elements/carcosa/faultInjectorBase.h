@@ -16,6 +16,7 @@
 #include "sst/core/event.h"
 #include "sst/core/output.h"
 #include "sst/elements/memHierarchy/memEvent.h"
+#include "sst/elements/carcosa/faultlogic/faultBase.h"
 #include <sst_config.h>
 #include <vector>
 #include <string>
@@ -24,8 +25,7 @@
 namespace SST::Carcosa {
 
 typedef std::vector<uint8_t> dataVec;
-
-class FaultInjectorBase;
+class FaultBase;
 
 /********** FaultInjectorBase **********/
 
@@ -42,84 +42,13 @@ enum installDirection {
 class FaultInjectorBase : public SST::PortModule
 {
 public:
-    /************** FaultBase **************/
-
-    /** TODO:
-     * Parameters for switching between interface-driven and normal instantiation
-     * A way to read in data to choose which logic to use
-     *  - Might be possible to parameterize the entirety of the logic, but would be easier if I can 
-     *    build a "library" of functions that are loaded dynamically
-    */
-
-    class FaultBase {
-    public:
-        
-        enum memEventType {
-            DataRequest = 0,
-            Response,
-            Writeback,
-            RoutedByAddr,
-            Invalid
-        };
-
-        FaultBase(Params& params, FaultInjectorBase* injector);
-
-        FaultBase() = default;
-        ~FaultBase() {}
-
-        virtual void faultLogic(Event*& ev) {}
-
-        SST::Output*& getSimulationOutput();
-
-        SST::Output*& getSimulationDebug();
-
-        installDirection setInstallDirection(std::string param);
-
-        SST::MemHierarchy::MemEvent* convertMemEvent(Event*& ev);
-
-        dataVec& getMemEventPayload(Event*& ev);
-
-        void setMemEventPayload(Event*& ev, dataVec newPayload);
-
-        memEventType getMemEventCommandType(Event*& ev);
-
-        bool doInjection();
-
-    protected:
-
-        FaultInjectorBase* injector_ = nullptr;
-
-        bool valid_installation_[2] = {false, false};
-        std::default_random_engine generator_;
-        std::uniform_real_distribution<double> distribution_;
-
-        void toggleReceiveValid() {
-            valid_installation_[0] = true;
-        }
-
-        void toggleSendValid() {
-            valid_installation_[1] = true;
-        }
-
-        void toggleSendReceiveValid() {
-            valid_installation_[0] = true;
-            valid_installation_[1] = true;
-        }
-        // TODO: Figure out how to properly set up serialization for this
-        // void serialize_order(SST::Core::Serialization::serializer& ser) 
-        // {
-        //     SST::PortModule::serialize_order(ser);
-        //     // serialize parameters like `SST_SER(<param>)
-        // }
-        // ImplementSerializable(SST::Carcosa::FaultBase)
-    };
 
     SST_ELI_REGISTER_PORTMODULE(
         FaultInjectorBase,
         "carcosa",
         "faultInjectorBase",
         SST_ELI_ELEMENT_VERSION(0, 1, 0),
-        "Barebones PortModule used to connect fault injection logic to components"
+        "Base PortModule class used to connect fault injection logic to components"
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -139,7 +68,9 @@ public:
 
     FaultInjectorBase() = default;
     ~FaultInjectorBase() {
-        delete fault;
+        if (fault) {
+            delete fault;
+        }
     }
 
     void virtual eventSent(uintptr_t key, Event*& ev) override;
@@ -178,16 +109,50 @@ public:
         return installDirection_;
     }
 
+    enum memEventType {
+        DataRequest = 0,
+        Response,
+        Writeback,
+        RoutedByAddr,
+        Invalid
+    };
+
+    SST::Output* getOutput() {
+        return out_;
+    }
+
+    SST::Output* getDebug() {
+        return dbg_;
+    }
+
 protected:
-    FaultBase* fault;
-
-    bool* cancel_;
-
-    installDirection installDirection_ = installDirection::Receive;
-    double injectionProbability_ = 0.5;
-
     SST::Output* out_;
     SST::Output* dbg_;
+    FaultBase* fault = nullptr;
+    bool* cancel_;
+    installDirection installDirection_ = installDirection::Receive;
+    double injectionProbability_ = 0.5;
+    std::default_random_engine generator_;
+    std::uniform_real_distribution<double> distribution_;
+    bool valid_installation_[2] = {false, false};
+
+    void toggleReceiveValid() {
+        valid_installation_[0] = true;
+    }
+
+    void toggleSendValid() {
+        valid_installation_[1] = true;
+    }
+
+    void toggleSendReceiveValid() {
+        valid_installation_[0] = true;
+        valid_installation_[1] = true;
+    }
+
+    installDirection setInstallDirection(std::string param);
+    bool doInjection();
+    memEventType getMemEventCommandType(Event*& ev);
+
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override
     {

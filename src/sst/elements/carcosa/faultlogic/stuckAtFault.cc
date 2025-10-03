@@ -129,11 +129,11 @@ std::vector<StuckAtFault::maskParam_t> StuckAtFault::convertString(std::vector<s
         std::stringstream stream;
         Addr addr; int byte; std::string zeroMaskStr, oneMaskStr; uint8_t zeroMask, oneMask;
         stream.str(*param);
-        stream >> addr;
+        stream >> std::hex >> addr;
         if (stream.peek() == ',') {
             stream.ignore();
         }
-        stream >> byte;
+        stream >> std::dec >> byte;
         if (stream.peek() == ',') {
             stream.ignore();
         }

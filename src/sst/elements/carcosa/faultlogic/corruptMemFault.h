@@ -12,7 +12,7 @@
 #ifndef SST_ELEMENTS_CARCOSA_CORRUPTMEMFAULT_H
 #define SST_ELEMENTS_CARCOSA_CORRUPTMEMFAULT_H
 
-#include "sst/elements/carcosa/faultInjectorBase.h"
+#include "sst/elements/carcosa/faultlogic/faultBase.h"
 #include <vector>
 #include <utility>
 #include <string>

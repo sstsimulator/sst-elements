@@ -21,6 +21,7 @@ RandomFlipFault::RandomFlipFault(Params& params, FaultInjectorBase* injector) : 
 void RandomFlipFault::faultLogic(Event*& ev) {
     // check if this is the proper event type and get payload if it is
     dataVec payload = getMemEventPayload(ev);
+    //getSimulationOutput()->output(CALL_INFO_LONG, 1, 0, "Payload size: %d\n", payload.size());
     // determine if injection occurs
     if (this->doInjection()) {
         std::pair<uint32_t, uint32_t> lucky_number = pickByteAndBit();

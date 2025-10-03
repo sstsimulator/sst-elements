@@ -12,7 +12,7 @@
 #ifndef SST_ELEMENTS_CARCOSA_RANDOMDROPFAULT_H
 #define SST_ELEMENTS_CARCOSA_RANDOMDROPFAULT_H
 
-#include "sst/elements/carcosa/faultInjectorBase.h"
+#include "sst/elements/carcosa/faultlogic/faultBase.h"
 #include <random>
 #include <vector>
 #include <utility>

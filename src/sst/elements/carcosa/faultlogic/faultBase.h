@@ -1,0 +1,51 @@
+// Copyright 2009-2025 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2025, NTESS
+// All rights reserved.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
+#ifndef SST_ELEMENTS_CARCOSA_FAULTBASE_H
+#define SST_ELEMENTS_CARCOSA_FAULTBASE_H
+
+#include "sst/elements/carcosa/faultInjectorBase.h"
+#include <random>
+#include <vector>
+#include <string>
+
+namespace SST::Carcosa {
+
+typedef std::vector<uint8_t> dataVec;
+
+class FaultBase {
+public:
+    FaultBase(Params& params, FaultInjectorBase* injector);
+
+    FaultBase() = default;
+    ~FaultBase() {}
+
+    virtual bool faultLogic(Event*& ev);
+
+    SST::Output*& getSimulationOutput() {
+        return injector_->getOutput();
+    }
+
+    SST::Output*& getSimulationDebug() {
+        return injector_->getDebug();
+    }
+
+    SST::MemHierarchy::MemEvent* convertMemEvent(Event*& ev);
+
+    dataVec& getMemEventPayload(Event*& ev);
+
+    void setMemEventPayload(Event*& ev, dataVec newPayload);
+protected:
+    FaultInjectorBase* injector_ = nullptr;
+}; // class FaultBase
+} // namespace SST::Carcosa
+
+#endif
