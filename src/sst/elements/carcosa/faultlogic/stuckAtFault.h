@@ -35,7 +35,7 @@ typedef SST::MemHierarchy::Addr Addr;
  * directly into the L1 or the core (bypassing L2 ops in simulation), it may be 
  * advisable to also place these port modules on the ports used to forward these events.
  */
-class StuckAtFault : public FaultInjectorBase::FaultBase
+class StuckAtFault : public FaultBase
 {
 public:
 
@@ -50,7 +50,7 @@ public:
      *  - If payload value does not match mapped value, add bit to flip mask
      *  - Once all stored bit values have been compared, use flip mask to modify address data
      */
-    void faultLogic(Event*& ev) override;
+    bool faultLogic(Event*& ev) override;
 protected:
 
     // map of addr->{byte, mask} for saving stuck bit values

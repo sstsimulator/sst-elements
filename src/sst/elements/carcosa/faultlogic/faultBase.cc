@@ -18,7 +18,7 @@ FaultBase::FaultBase(Params& params, FaultInjectorBase* injector) : injector_(in
 }
 
 bool FaultBase::faultLogic(Event*& ev) {
-    //
+    return true;
 }
 
 SST::MemHierarchy::MemEvent* FaultBase::convertMemEvent(Event*& ev) {

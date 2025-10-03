@@ -68,7 +68,7 @@ StuckAtFault::StuckAtFault(Params& params, FaultInjectorBase* injector) : FaultB
     }
 }
 
-void StuckAtFault::faultLogic(SST::Event*& ev) {
+bool StuckAtFault::faultLogic(SST::Event*& ev) {
     // Convert to memEvent
     SST::MemHierarchy::MemEvent* mem_ev = this->convertMemEvent(ev);
 

@@ -16,14 +16,14 @@
 
 namespace SST::Carcosa {
 
-class RandomFlipFault : public FaultInjectorBase::FaultBase {
+class RandomFlipFault : public FaultBase {
 public:
     RandomFlipFault(Params& params, FaultInjectorBase* injector);
 
     RandomFlipFault() = default;
     ~RandomFlipFault() {}
 
-    void faultLogic(Event*& ev) override;
+    bool faultLogic(Event*& ev) override;
 protected:
     std::default_random_engine int_generator;
     std::uniform_int_distribution<uint32_t> int_distribution;

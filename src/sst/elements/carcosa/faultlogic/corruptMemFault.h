@@ -31,7 +31,7 @@ typedef SST::MemHierarchy::Addr Addr;
  * module's parameters, will have their payloads randomly altered
  * to simulate corruption in the affected region of memory.
  */
-class CorruptMemFault : public FaultInjectorBase::FaultBase 
+class CorruptMemFault : public FaultBase 
 {
 public:
 
@@ -46,7 +46,7 @@ public:
      * 3. Corrupt event payload if necessary
      * 4. Replace payload
      */
-    void faultLogic(Event*& ev) override;
+    bool faultLogic(Event*& ev) override;
 protected:
 
     std::vector<std::pair<uint64_t, uint64_t>> corruptionRegions;

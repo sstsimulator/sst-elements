@@ -30,11 +30,11 @@ public:
 
     virtual bool faultLogic(Event*& ev);
 
-    SST::Output*& getSimulationOutput() {
+    SST::Output* getSimulationOutput() {
         return injector_->getOutput();
     }
 
-    SST::Output*& getSimulationDebug() {
+    SST::Output* getSimulationDebug() {
         return injector_->getDebug();
     }
 

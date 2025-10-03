@@ -109,14 +109,14 @@ void FaultInjectorBase::setInstallDirection(std::string param) {
 FaultInjectorBase::memEventType FaultInjectorBase::getMemEventCommandType(Event*& ev) {
     SST::MemHierarchy::MemEvent* mem_ev = convertMemEvent(ev);
     if (mem_ev->isDataRequest()) {
-        return FaultBase::memEventType::DataRequest;
+        return FaultInjectorBase::memEventType::DataRequest;
     } else if (mem_ev->isResponse()) {
-        return FaultBase::memEventType::Response;
+        return FaultInjectorBase::memEventType::Response;
     } else if (mem_ev->isWriteback()) {
-        return FaultBase::memEventType::Writeback;
+        return FaultInjectorBase::memEventType::Writeback;
     } else if (mem_ev->isRoutedByAddress()) {
-        return FaultBase::memEventType::RoutedByAddr;
+        return FaultInjectorBase::memEventType::RoutedByAddr;
     } else {
-        return FaultBase::memEventType::Invalid;
+        return FaultInjectorBase::memEventType::Invalid;
     }
 }

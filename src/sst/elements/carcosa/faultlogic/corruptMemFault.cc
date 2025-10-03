@@ -43,7 +43,7 @@ CorruptMemFault::CorruptMemFault(Params& params, FaultInjectorBase* injector) : 
     distribution = std::uniform_int_distribution<uint8_t>(0,255);
 }
 
-void CorruptMemFault::faultLogic(Event*& ev) {
+bool CorruptMemFault::faultLogic(Event*& ev) {
     SST::MemHierarchy::MemEvent* mem_ev = convertMemEvent(ev);
 
     Addr ev_addr = mem_ev->getAddr();

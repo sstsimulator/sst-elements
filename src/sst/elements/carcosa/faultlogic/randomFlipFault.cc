@@ -18,7 +18,7 @@ RandomFlipFault::RandomFlipFault(Params& params, FaultInjectorBase* injector) : 
     toggleSendReceiveValid();
 }
 
-void RandomFlipFault::faultLogic(Event*& ev) {
+bool RandomFlipFault::faultLogic(Event*& ev) {
     // check if this is the proper event type and get payload if it is
     dataVec payload = getMemEventPayload(ev);
     //getSimulationOutput()->output(CALL_INFO_LONG, 1, 0, "Payload size: %d\n", payload.size());

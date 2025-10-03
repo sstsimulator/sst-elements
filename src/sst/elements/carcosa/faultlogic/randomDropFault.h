@@ -21,14 +21,14 @@ namespace SST::Carcosa {
 
 typedef std::vector<uint8_t> dataVec;
 
-class RandomDropFault : public FaultInjectorBase::FaultBase {
+class RandomDropFault : public FaultBase {
 public:
     RandomDropFault(Params& params, FaultInjectorBase* injector);
 
     RandomDropFault() = default;
     ~RandomDropFault() {}
 
-    void faultLogic(Event*& ev) override;
+    bool faultLogic(Event*& ev) override;
 }; // RandomDropFault
 
 } // namespace SST::Carcosa

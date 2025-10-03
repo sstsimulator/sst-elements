@@ -17,7 +17,7 @@ RandomDropFault::RandomDropFault(Params& params, FaultInjectorBase* injector) : 
     toggleReceiveValid();
 }
 
-void RandomDropFault::faultLogic(Event*& ev) {
+bool RandomDropFault::faultLogic(Event*& ev) {
     SST::MemHierarchy::MemEvent* mem_ev = convertMemEvent(ev);
 
     if (this->doInjection()) {
