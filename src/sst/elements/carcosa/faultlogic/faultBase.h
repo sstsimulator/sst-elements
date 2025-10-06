@@ -21,6 +21,8 @@ namespace SST::Carcosa {
 
 typedef std::vector<uint8_t> dataVec;
 
+class FaultInjectorBase;
+
 class FaultBase {
 public:
     FaultBase(Params& params, FaultInjectorBase* injector);
@@ -30,13 +32,9 @@ public:
 
     virtual bool faultLogic(Event*& ev);
 
-    SST::Output* getSimulationOutput() {
-        return injector_->getOutput();
-    }
+    SST::Output* getSimulationOutput();
 
-    SST::Output* getSimulationDebug() {
-        return injector_->getDebug();
-    }
+    SST::Output* getSimulationDebug();
 
     SST::MemHierarchy::MemEvent* convertMemEvent(Event*& ev);
 

@@ -15,7 +15,7 @@
 #include "sst/elements/carcosa/faultInjectorBase.h"
 #include <string>
 
-namepace SST::Carcosa {
+namespace SST::Carcosa {
 
 class StuckAtFaultInjector : public FaultInjectorBase {
 public:

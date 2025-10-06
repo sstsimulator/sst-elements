@@ -14,7 +14,6 @@
 using namespace SST::Carcosa;
 
 CorruptMemFault::CorruptMemFault(Params& params, FaultInjectorBase* injector) : FaultBase(params, injector) {
-    toggleSendReceiveValid();
 #ifdef __SST_DEBUG_OUTPUT__
     getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Fault type: Corrupt Memory Region\n");
 #endif

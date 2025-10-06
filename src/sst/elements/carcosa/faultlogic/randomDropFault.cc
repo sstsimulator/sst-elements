@@ -14,19 +14,17 @@
 using namespace SST::Carcosa;
 
 RandomDropFault::RandomDropFault(Params& params, FaultInjectorBase* injector) : FaultBase(params, injector) {
-    toggleReceiveValid();
+    //
 }
 
 bool RandomDropFault::faultLogic(Event*& ev) {
     SST::MemHierarchy::MemEvent* mem_ev = convertMemEvent(ev);
 
-    if (this->doInjection()) {
-        delete mem_ev;
-        if (injector_->getInstallDirection() == installDirection::Receive) {
-            injector_->cancelDelivery();
-        }
-#ifdef __SST_DEBUG_OUTPUT__
-        getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Event dropped.\n");
-#endif
+    delete mem_ev;
+    if (injector_->getInstallDirection() == installDirection::Receive) {
+        injector_->cancelDelivery();
     }
+#ifdef __SST_DEBUG_OUTPUT__
+    getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Event dropped.\n");
+#endif
 }

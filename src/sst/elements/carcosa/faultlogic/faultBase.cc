@@ -21,15 +21,23 @@ bool FaultBase::faultLogic(Event*& ev) {
     return true;
 }
 
+SST::Output* FaultBase::getSimulationOutput() {
+    return injector_->getOutput();
+}
+
+SST::Output* FaultBase::getSimulationDebug() {
+    return injector_->getDebug();
+}
+
 SST::MemHierarchy::MemEvent* FaultBase::convertMemEvent(Event*& ev) {
     SST::MemHierarchy::MemEvent* mem_ev = dynamic_cast<SST::MemHierarchy::MemEvent*>(ev);
 
     if (mem_ev == nullptr) {
-        getSimulationOutput().fatal(CALL_INFO_LONG, -1, "Attempting to inject mem fault on a non-MemEvent type.\n");
+        getSimulationOutput()->fatal(CALL_INFO_LONG, -1, "Attempting to inject mem fault on a non-MemEvent type.\n");
     }
 
 #ifdef __SST_DEBUG_OUTPUT__
-    dbg_->debug(CALL_INFO_LONG, 2, 0, "Intercepted event %zu/%d\n", mem_ev->getID().first, mem_ev->getID().second);
+    getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "Intercepted event %zu/%d\n", mem_ev->getID().first, mem_ev->getID().second);
 #endif
     return mem_ev;
 }

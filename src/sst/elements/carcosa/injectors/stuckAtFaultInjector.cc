@@ -14,20 +14,8 @@
 
 using namespace SST::Carcosa;
 
-StuckAtFaultInjector::StuckAtFaultInjector(Params& params) : FaultInjectorBase(params) {
+StuckAtFaultInjector::StuckAtFaultInjector(Params& params) : FaultInjectorBase(params, SEND_RECEIVE_VALID) {
     // create fault
-    fault = new StuckAtFault(params, this);
-    // toggle valid installation direction
-    toggleSendReceiveValid();
-
-    std::string install_dir = params.find<std::string>("installDirection", "Receive");
-    installDirection_ = setInstallDirection(install_dir);
-
-    if (installDirection_ == installDirection::Invalid) {
-        out_->fatal(CALL_INFO_LONG, -1, "Install Direction should never be set to Invalid! Did you forget to set which directions are valid?\n");
-    }
-
-#ifdef __SST_DEBUG_OUTPUT__
-    dbg_->debug(CALL_INFO_LONG, 1, 0, "\tInstall Direction: %s\n", install_dir.c_str());
-#endif
+    fault = new FaultBase*;
+    *fault = new StuckAtFault(params, this);
 }
