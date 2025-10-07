@@ -19,9 +19,9 @@ namespace SST::Carcosa {
 class RandomFlipFaultInjector : public FaultInjectorBase {
 public:
     SST_ELI_REGISTER_PORTMODULE(
-        FaultInjectorBase,
+        RandomFlipFaultInjector,
         "carcosa",
-        "RandomFlipFaultInjector",
+        "randomFlipFaultInjector",
         SST_ELI_ELEMENT_VERSION(0, 1, 0),
         "PortModule class used to simulate a random bit flip when transferring data"
     )
@@ -34,7 +34,14 @@ public:
     RandomFlipFaultInjector() = default;
     ~RandomFlipFaultInjector() {}
 protected:
-    //
+    std::array<bool,2> getValidInstallation() override;
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override
+    {
+        SST::PortModule::serialize_order(ser);
+        // serialize parameters like `SST_SER(<param_member>)`
+    }
+    ImplementVirtualSerializable(SST::Carcosa::RandomFlipFaultInjector)
 }; // class RandomFlipFaultInjector
     
 } // namespace SST::Carcosa

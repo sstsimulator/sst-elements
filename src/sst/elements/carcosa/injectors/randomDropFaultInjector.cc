@@ -14,8 +14,11 @@
 
 using namespace SST::Carcosa;
 
-RandomDropFaultInjector::RandomDropFaultInjector(Params& params) : FaultInjectorBase(params, RECEIVE_VALID) {
+RandomDropFaultInjector::RandomDropFaultInjector(Params& params) : FaultInjectorBase(params) {
     // create fault
-    fault = new FaultBase*;
-    *fault = new RandomDropFault(params, this);
+    fault.push_back(new RandomDropFault(params, this));
+}
+
+std::array<bool,2> RandomDropFaultInjector::getValidInstallation() {
+    return RECEIVE_VALID;
 }

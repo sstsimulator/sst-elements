@@ -35,8 +35,30 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
 #ifdef __SST_DEBUG_OUTPUT__
     dbg_->debug(CALL_INFO_LONG, 1, 0, "\tInjection Probability: %f\n", injectionProbability_);
 #endif
-    // init randomizer 
-    distribution_ = std::uniform_real_distribution<double>(0,1);
+
+    valid_installation_ = getValidInstallation();
+    std::string install_dir = params.find<std::string>("installDirection", "Receive");
+    installDirection_ = setInstallDirection(install_dir);
+
+    if (installDirection_ == installDirection::Invalid) {
+        out_->fatal(CALL_INFO_LONG, -1, "Install Direction should never be set to Invalid! Did you forget to set which directions are valid?\n");
+    }
+
+#ifdef __SST_DEBUG_OUTPUT__
+    dbg_->debug(CALL_INFO_LONG, 1, 0, "\tInstall Direction: %s\n", install_dir.c_str());
+#endif
+}
+
+/**
+ * Default behavior is to delete all fault objects in the order they were 
+ * added to the vector
+ */
+FaultInjectorBase::~FaultInjectorBase() {
+    for (int i = 0; i < fault.size(); i++) {
+        if (fault[i]) {
+            delete fault[i];
+        }
+    }
 }
 
 void
@@ -44,20 +66,15 @@ FaultInjectorBase::eventSent(uintptr_t key, Event*& ev)
 {
     if (doInjection()){
 #ifdef __SST_DEBUG_OUTPUT__
-        dbg_->(CALL_INFO_LONG, 1, 0, "Injection triggered.\n")
+        dbg_->debug(CALL_INFO_LONG, 1, 0, "Injection triggered.\n");
 #endif
-        if (fault) {
-            fault->faultLogic(ev);
-        } else {
-            out_->fatal(CALL_INFO_LONG, -1, "No valid fault object.\n");
-        }
+        this->executeFaults(ev);
     }
 #ifdef __SST_DEBUG_OUTPUT__
     else {
-        dbg_->(CALL_INFO_LONG, 1, 0, "Injection skipped.\n")
+        dbg_->debug(CALL_INFO_LONG, 1, 0, "Injection skipped.\n");
     }
 #endif
-    
 }
 
 void
@@ -69,54 +86,51 @@ FaultInjectorBase::interceptHandler(uintptr_t key, Event*& ev, bool& cancel)
 
     if (doInjection()){
 #ifdef __SST_DEBUG_OUTPUT__
-        dbg_->(CALL_INFO_LONG, 1, 0, "Injection triggered.\n")
+        dbg_->debug(CALL_INFO_LONG, 1, 0, "Injection triggered.\n");
 #endif
-        if (fault) {
-            fault->faultLogic(ev);
-        } else {
-            out_->fatal(CALL_INFO_LONG, -1, "No valid fault object.\n");
-        }
+        this->executeFaults(ev);
     }
 #ifdef __SST_DEBUG_OUTPUT__
     else {
-        dbg_->(CALL_INFO_LONG, 1, 0, "Injection skipped.\n")
+        dbg_->debug(CALL_INFO_LONG, 1, 0, "Injection skipped.\n");
     }
 #endif
 }
 
 bool FaultInjectorBase::doInjection() {
-    double rand_val = distribution_(generator_);
-    return rand_val <= injector_->getInjectionProb();
+    double rand_val = base_rng_.nextUniform();
+    return rand_val <= getInjectionProb();
 }
 
-void FaultInjectorBase::setInstallDirection(std::string param) {
+installDirection FaultInjectorBase::setInstallDirection(std::string param) {
     if ( param == "Receive" ) {
         if (valid_installation_[0]) {
-            installDirection_= installDirection::Receive;
+            return installDirection::Receive;
         } else {
-            injector_->out_->fatal(CALL_INFO_LONG, 1, 0, "This PortModule Fault Injector cannot intercept Receive events.\n");
+            out_->fatal(CALL_INFO_LONG, 1, 0, "This PortModule Fault Injector cannot intercept Receive events.\n");
         }
     } else if ( param == "Send" ) {
         if (valid_installation_[1]) {
-            installDirection_ = return installDirection::Send;
+            return installDirection::Send;
         } else {
-            injector_->out_->fatal(CALL_INFO_LONG, 1, 0, "This PortModule Fault Injector cannot intercept Send events.\n");
+            out_->fatal(CALL_INFO_LONG, 1, 0, "This PortModule Fault Injector cannot intercept Send events.\n");
         }
     }
-    installDirection_= installDirection::Invalid;
+    return installDirection::Invalid;
 }
 
-FaultInjectorBase::memEventType FaultInjectorBase::getMemEventCommandType(Event*& ev) {
-    SST::MemHierarchy::MemEvent* mem_ev = convertMemEvent(ev);
-    if (mem_ev->isDataRequest()) {
-        return FaultInjectorBase::memEventType::DataRequest;
-    } else if (mem_ev->isResponse()) {
-        return FaultInjectorBase::memEventType::Response;
-    } else if (mem_ev->isWriteback()) {
-        return FaultInjectorBase::memEventType::Writeback;
-    } else if (mem_ev->isRoutedByAddress()) {
-        return FaultInjectorBase::memEventType::RoutedByAddr;
-    } else {
-        return FaultInjectorBase::memEventType::Invalid;
+/**
+ * Default behavior is to execute faults in the order they were
+ * added to the vector
+ */
+void FaultInjectorBase::executeFaults(Event*& ev) {
+    bool success = false;
+    for (int i = 0; i < fault.size(); i++) {
+        if (fault[i]) {
+            success = fault[i]->faultLogic(ev);
+        }
+    }
+    if (!success) {
+        out_->fatal(CALL_INFO_LONG, -1, "No valid fault object, or no fault successfully executed.\n");
     }
 }

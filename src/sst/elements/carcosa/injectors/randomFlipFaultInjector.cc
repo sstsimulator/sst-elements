@@ -14,8 +14,11 @@
 
 using namespace SST::Carcosa;
 
-RandomFlipFaultInjector::RandomFlipFaultInjector(Params& params) : FaultInjectorBase(params, SEND_RECEIVE_VALID) {
+RandomFlipFaultInjector::RandomFlipFaultInjector(Params& params) : FaultInjectorBase(params) {
     // create fault
-    fault = new FaultBase*;
-    *fault = new RandomFlipFault(params, this);
+    fault.push_back(new RandomFlipFault(params, this));
+}
+
+std::array<bool,2> RandomFlipFaultInjector::getValidInstallation() {
+    return SEND_RECEIVE_VALID;
 }

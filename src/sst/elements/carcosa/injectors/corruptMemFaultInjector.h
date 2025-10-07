@@ -19,9 +19,9 @@ namespace SST::Carcosa {
 class CorruptMemFaultInjector : public FaultInjectorBase {
 public:
     SST_ELI_REGISTER_PORTMODULE(
-        FaultInjectorBase,
+        CorruptMemFaultInjector,
         "carcosa",
-        "CorruptMemFaultInjector",
+        "corruptMemFaultInjector",
         SST_ELI_ELEMENT_VERSION(0, 1, 0),
         "PortModule class used to simulate a whole memory region being corrupted"
     )
@@ -35,7 +35,14 @@ public:
     CorruptMemFaultInjector() = default;
     ~CorruptMemFaultInjector() {}
 protected:
-    //
+    std::array<bool,2> getValidInstallation() override;
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override
+    {
+        SST::PortModule::serialize_order(ser);
+        // serialize parameters like `SST_SER(<param_member>)`
+    }
+    ImplementVirtualSerializable(SST::Carcosa::CorruptMemFaultInjector)
 }; // class CorruptMemFaultInjector
     
 } // namespace SST::Carcosa

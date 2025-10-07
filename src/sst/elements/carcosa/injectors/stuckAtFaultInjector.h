@@ -20,9 +20,9 @@ namespace SST::Carcosa {
 class StuckAtFaultInjector : public FaultInjectorBase {
 public:
     SST_ELI_REGISTER_PORTMODULE(
-        FaultInjectorBase,
+        StuckAtFaultInjector,
         "carcosa",
-        "StuckAtFaultInjector",
+        "stuckAtFaultInjector",
         SST_ELI_ELEMENT_VERSION(0, 1, 0),
         "PortModule class used to simulate a stuck bit within a given component"
     )
@@ -37,7 +37,14 @@ public:
     StuckAtFaultInjector() = default;
     ~StuckAtFaultInjector() {}
 protected:
-    //
+    std::array<bool,2> getValidInstallation() override;
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override
+    {
+        SST::PortModule::serialize_order(ser);
+        // serialize parameters like `SST_SER(<param_member>)`
+    }
+    ImplementVirtualSerializable(SST::Carcosa::StuckAtFaultInjector)
 }; // class StuckAtFaultInjector
     
 } // namespace SST::Carcosa

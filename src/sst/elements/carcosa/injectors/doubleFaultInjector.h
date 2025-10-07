@@ -20,9 +20,9 @@ namespace SST::Carcosa {
 class DoubleFaultInjector : public FaultInjectorBase {
 public:
     SST_ELI_REGISTER_PORTMODULE(
-        FaultInjectorBase,
+        DoubleFaultInjector,
         "carcosa",
-        "DoubleFaultInjector",
+        "doubleFaultInjector",
         SST_ELI_ELEMENT_VERSION(0, 1, 0),
         "PortModule class used to simulate a data transfer lost at random OR a random bit flip in transit"
     )
@@ -34,15 +34,23 @@ public:
     DoubleFaultInjector(Params& params);
 
     DoubleFaultInjector() = default;
-    ~DoubleFaultInjector();
-
-    void virtual eventSent(uintptr_t key, Event*& ev) override;
-    void virtual interceptHandler(uintptr_t key, Event*& ev, bool& cancel) override;
+    ~DoubleFaultInjector() {}
 protected:
     double flipVsDropProb_;
 
-    std::default_random_engine generator_;
-    std::uniform_real_distribution<double> distribution_;
+    void executeFaults(Event*& ev) override;
+    std::array<bool,2> getValidInstallation() override;
+
+    SST::RNG::MersenneRNG rng_;
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override
+    {
+        SST::PortModule::serialize_order(ser);
+        // serialize parameters like `SST_SER(<param_member>)`
+        SST_SER(flipVsDropProb_);
+        SST_SER(rng_);
+    }
+    ImplementVirtualSerializable(SST::Carcosa::DoubleFaultInjector)
 }; // class DoubleFaultInjector
     
 } // namespace SST::Carcosa

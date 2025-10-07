@@ -79,6 +79,11 @@ bool StuckAtFault::faultLogic(SST::Event*& ev) {
 #endif
         // replace data if necessary
         dataVec payload = this->getMemEventPayload(ev);
+        // payloads are given a size in the memEvent and it's usually cache line size
+        // addr is whatever the core requested
+        // base addr is first addr in byte array
+        // vanadis riscv is LITTLE ENDIAN so byte order is reversed (byte 0 at Addr A is lowest byte, but Addr0 is still base addr, Addr1 = Addr0+8)
+        // confirm that little endian is this trolling
 
         uint8_t mask = 0b00000000;
 #ifdef __SST_DEBUG_OUTPUT__

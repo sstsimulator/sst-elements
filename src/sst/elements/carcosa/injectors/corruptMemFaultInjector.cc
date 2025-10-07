@@ -14,8 +14,11 @@
 
 using namespace SST::Carcosa;
 
-CorruptMemFaultInjector::CorruptMemFaultInjector(Params& params) : FaultInjectorBase(params, SEND_RECEIVE_VALID) {
+CorruptMemFaultInjector::CorruptMemFaultInjector(Params& params) : FaultInjectorBase(params) {
     // create fault
-    fault = new FaultBase*;
-    *fault = new CorruptMemFault(params, this);
+    fault.push_back(new CorruptMemFault(params, this));
+}
+
+std::array<bool,2> CorruptMemFaultInjector::getValidInstallation() {
+    return SEND_RECEIVE_VALID;
 }

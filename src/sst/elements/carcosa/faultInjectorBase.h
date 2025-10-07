@@ -18,14 +18,20 @@
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/carcosa/faultlogic/faultBase.h"
 #include <sst_config.h>
+#include "sst/core/rng/mersenne.h"
 #include <vector>
 #include <string>
 #include <random>
+#include <array>
 
 namespace SST::Carcosa {
 
 typedef std::vector<uint8_t> dataVec;
 class FaultBase;
+
+#define SEND_RECEIVE_VALID  {{true, true}}
+#define RECEIVE_VALID       {{true, false}}
+#define SEND_VALID          {{false, true}}
 
 /********** FaultInjectorBase **********/
 
@@ -67,14 +73,10 @@ public:
     FaultInjectorBase(Params& params);
 
     FaultInjectorBase() = default;
-    ~FaultInjectorBase() {
-        if (fault) {
-            delete fault;
-        }
-    }
+    ~FaultInjectorBase();
 
     void virtual eventSent(uintptr_t key, Event*& ev) override;
-    void virtual interceptHandler(uintptr_t key, Event*& data, bool& cancel) override;
+    void virtual interceptHandler(uintptr_t key, Event*& ev, bool& cancel) override;
 
     bool installOnReceive() override
     {
@@ -105,6 +107,8 @@ public:
         *cancel_ = true;
     }
 
+    installDirection setInstallDirection(std::string param);
+
     installDirection getInstallDirection() {
         return installDirection_;
     }
@@ -128,41 +132,32 @@ public:
 protected:
     SST::Output* out_;
     SST::Output* dbg_;
-    FaultBase* fault = nullptr;
+    std::vector<FaultBase*> fault;
     bool* cancel_;
     installDirection installDirection_ = installDirection::Receive;
     double injectionProbability_ = 0.5;
-    std::default_random_engine generator_;
-    std::uniform_real_distribution<double> distribution_;
-    bool valid_installation_[2] = {false, false};
+    SST::RNG::MersenneRNG base_rng_;
+    std::array<bool,2> valid_installation_ = {{false, false}};
 
-    void toggleReceiveValid() {
-        valid_installation_[0] = true;
-    }
-
-    void toggleSendValid() {
-        valid_installation_[1] = true;
-    }
-
-    void toggleSendReceiveValid() {
-        valid_installation_[0] = true;
-        valid_installation_[1] = true;
-    }
-
-    installDirection setInstallDirection(std::string param);
     bool doInjection();
-    memEventType getMemEventCommandType(Event*& ev);
+    virtual void executeFaults(Event*& ev);
 
+    virtual std::array<bool,2> getValidInstallation() = 0;
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override
     {
         SST::PortModule::serialize_order(ser);
         // serialize parameters like `SST_SER(<param_member>)`
-        // SST_SER(fault);
+        SST_SER(out_);
+        SST_SER(dbg_);
+        SST_SER(fault);
+        SST_SER(cancel_);
         SST_SER(installDirection_);
         SST_SER(injectionProbability_);
+        SST_SER(base_rng_);
+        SST_SER(valid_installation_);
     }
-    ImplementSerializable(SST::Carcosa::FaultInjectorBase)
+    ImplementVirtualSerializable(SST::Carcosa::FaultInjectorBase)
 
     // Statistics
     // Statistic<uint64_t> stat_eventsArrived;
