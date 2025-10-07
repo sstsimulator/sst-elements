@@ -18,35 +18,20 @@
 #include "os/syscall/clone.h"
 #include "os/vnodeos.h"
 #include "os/vgetthreadstate.h"
+#include "os/syscall/syscall_defines.h"
 
 using namespace SST::Vanadis;
 
-#define RISCV_SIGCHLD        17
-#define RISCV_CSIGNAL       0x000000ff /* Signal mask to be sent at exit.  */
-#define RISCV_CLONE_VM      0x00000100 /* Set if VM shared between processes.  */
-#define RISCV_CLONE_FS      0x00000200 /* Set if fs info shared between processes.  */
-#define RISCV_CLONE_FILES   0x00000400 /* Set if open files shared between processes.  */
-#define RISCV_CLONE_SIGHAND 0x00000800 /* Set if signal handlers shared.  */
-
-#define RISCV_CLONE_THREAD  0x00010000 /* Set to add to same thread group.  */
-#define RISCV_CLONE_NEWNS   0x00020000 /* Set to create new namespace.  */
-#define RISCV_CLONE_SYSVSEM 0x00040000 /* Set to shared SVID SEM_UNDO semantics.  */
-#define RISCV_CLONE_SETTLS  0x00080000 /* Set TLS info.  */
-
-#define RISCV_CLONE_PARENT_SETTID  0x00100000 /* Store TID in userlevel buffer before MM copy.  */
-#define RISCV_CLONE_CHILD_CLEARTID 0x00200000 /* Register exit futex and memory location to clear.  */
-#define RISVC_CLONE_DETACHED       0x00400000 /* Create clone detached.  */
-#define RISCV_CLONE_CHILD_SETTID   0x01000000 /* Store TID in userlevel buffer in the child.  */
-
-#define CLONE_FLAGS (   RISCV_CLONE_VM | \
-                        RISCV_CLONE_FS | \
-                        RISCV_CLONE_FILES | \
-                        RISCV_CLONE_SIGHAND | \
-                        RISCV_CLONE_THREAD | \
-                        RISCV_CLONE_SYSVSEM | \
-                        RISCV_CLONE_SETTLS | \
-                        RISCV_CLONE_PARENT_SETTID | \
-                        RISCV_CLONE_CHILD_CLEARTID \
+// Clone flags that are handled by this implementation
+#define CLONE_FLAGS (   VANADIS_LINUX_CLONE_VM | \
+                        VANADIS_LINUX_CLONE_FS | \
+                        VANADIS_LINUX_CLONE_FILES | \
+                        VANADIS_LINUX_CLONE_SIGHAND | \
+                        VANADIS_LINUX_CLONE_THREAD | \
+                        VANADIS_LINUX_CLONE_SYSVSEM | \
+                        VANADIS_LINUX_CLONE_SETTLS | \
+                        VANADIS_LINUX_CLONE_PARENT_SETTID | \
+                        VANADIS_LINUX_CLONE_CHILD_CLEARTID \
                     )
 
 VanadisCloneSyscall::VanadisCloneSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallCloneEvent* event )
@@ -68,7 +53,7 @@ VanadisCloneSyscall::VanadisCloneSyscall( VanadisNodeOSComponent* os, SST::Link*
     }
 
     // SIGCHLD - fork()
-    if ( (event->getFlags() & RISCV_CSIGNAL) == RISCV_SIGCHLD ) {
+    if ( (event->getFlags() & VANADIS_LINUX_CSIGNAL) == VANADIS_LINUX_SIGCHLD ) {
 
         // do this before we create the child becuase the child gets a copy of this the parents page table
         // and we want the child to fault on write as well
@@ -88,7 +73,7 @@ VanadisCloneSyscall::VanadisCloneSyscall( VanadisNodeOSComponent* os, SST::Link*
 
     } else {
         // DETACHED is deprecated
-        if ( ( event->getFlags() & ~RISVC_CLONE_DETACHED ) != CLONE_FLAGS ) {
+        if ( ( event->getFlags() & ~VANADIS_LINUX_CLONE_DETACHED ) != CLONE_FLAGS ) {
             m_output->fatal(CALL_INFO, -1, "Error: clone, flags not supported %#" PRIx64 "\n",event->getFlags());
         }
         m_newThread = new OS::ProcessInfo;
@@ -159,12 +144,12 @@ void VanadisCloneSyscall::setTid(VanadisSyscallCloneEvent* event)
     m_newThread->setTidAddress( m_childTidAddr );
 
     // because we are lazy don't allow both of these at once, If this can happen we will need to add another state
-    if ( event->getFlags() & RISCV_CLONE_PARENT_SETTID && event->getFlags() & RISCV_CLONE_CHILD_SETTID ) {
+    if ( event->getFlags() & VANADIS_LINUX_CLONE_PARENT_SETTID && event->getFlags() & VANADIS_LINUX_CLONE_CHILD_SETTID ) {
         assert(0);
     }
 
     // this code could be collapsed
-    if ( event->getFlags() & RISCV_CLONE_PARENT_SETTID ) {
+    if ( event->getFlags() & VANADIS_LINUX_CLONE_PARENT_SETTID ) {
         assert( event->getParentTidAddr() );
 
         // this has to be size of pid_t
@@ -181,7 +166,7 @@ void VanadisCloneSyscall::setTid(VanadisSyscallCloneEvent* event)
         writeMemory( event->getParentTidAddr(), m_buffer );
         m_state = ChildSetTid;
 
-    } else if ( event->getFlags() & RISCV_CLONE_CHILD_SETTID ) {
+    } else if ( event->getFlags() & VANADIS_LINUX_CLONE_CHILD_SETTID ) {
         assert( m_childTidAddr );
 
         // this has to be size of pid_t
@@ -220,7 +205,7 @@ void VanadisCloneSyscall::handleEvent( VanadisCoreEvent* ev )
 
     _VanadisStartThreadBaseReq* req;
 
-    if ( (event->getFlags() & RISCV_CSIGNAL) == RISCV_SIGCHLD ) {
+    if ( (event->getFlags() & VANADIS_LINUX_CSIGNAL) == VANADIS_LINUX_SIGCHLD ) {
         req = new VanadisStartThreadForkReq( m_threadID->hwThread, resp->getInstPtr(), resp->getTlsPtr() );
     } else {
         req = new VanadisStartThreadCloneReq( m_threadID->hwThread, m_threadStartAddr, event->getThreadStackAddr(),

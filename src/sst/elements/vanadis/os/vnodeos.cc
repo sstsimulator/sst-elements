@@ -139,6 +139,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
                         output->fatal( CALL_INFO, -1, "--> error - exe %s is not statically linked\n",exe.c_str());
                     }
                     m_elfMap[exe] = elfInfo;
+                    elfInfo->print(output);
                 }
 
                 unsigned tid = getNewTid();
@@ -434,8 +435,8 @@ int VanadisNodeOSComponent::checkpointLoad( std::string dir )
 
             auto region = m_threadMap[100]->findMemRegion("text");
 
-            assert( region->backing && region->backing->elfInfo );
-            assert( 0 == strcmp( str, region->backing->elfInfo->getBinaryPath() ) );
+            assert( region->backing_ && region->backing_->elf_info_ );
+            assert( 0 == strcmp( str, region->backing_->elf_info_->getBinaryPath() ) );
 
             auto page = region->getPage( vpn );
 
@@ -535,25 +536,25 @@ VanadisNodeOSComponent::startProcess( OS::HwThreadID& threadID, OS::ProcessInfo*
     }
 
     OS::MemoryBacking* phdrBacking = new OS::MemoryBacking;
-    uint64_t rand_values_address = m_appRuntimeMemory->configurePhdr( output, m_pageSize, process, m_phdr_address, phdrBacking->data );
+    uint64_t rand_values_address = m_appRuntimeMemory->configurePhdr( output, m_pageSize, process, m_phdr_address, phdrBacking->data_ );
     // configurePhdr() should have returned a block of memory that is a multiple of a page size
-    assert( 0 == phdrBacking->data.size() % m_pageSize );
-    phdrBacking->dataStartAddr = m_phdr_address;
+    assert( 0 == phdrBacking->data_.size() % m_pageSize );
+    phdrBacking->data_start_addr_ = m_phdr_address;
 
-    size_t  phdrRegionEnd = m_phdr_address + phdrBacking->data.size();
+    size_t  phdrRegionEnd = m_phdr_address + phdrBacking->data_.size();
     // setup a VM memory region for this process
     process->addMemRegion( "phdr", m_phdr_address, phdrRegionEnd - m_phdr_address, 0x4, phdrBacking );
 
     OS::MemoryBacking* stackBacking = new OS::MemoryBacking;
-    uint64_t stack_pointer = m_appRuntimeMemory->configureStack( output, m_pageSize, process, m_stack_top, m_phdr_address, rand_values_address, stackBacking->data );
+    uint64_t stack_pointer = m_appRuntimeMemory->configureStack( output, m_pageSize, process, m_stack_top, m_phdr_address, rand_values_address, stackBacking->data_ );
     // configureStack() should have returned a block of memory that is a multiple of a page size
-    assert( 0 == stackBacking->data.size() % m_pageSize );
+    assert( 0 == stackBacking->data_.size() % m_pageSize );
     uint64_t aligned_stack_address = stack_pointer & ~(m_pageSize-1);
 
-    stackBacking->dataStartAddr = aligned_stack_address;
+    stackBacking->data_start_addr_ = aligned_stack_address;
 
     // stack vm region start right after the phdrs
-    uint64_t stackRegionEnd = aligned_stack_address + stackBacking->data.size();
+    uint64_t stackRegionEnd = aligned_stack_address + stackBacking->data_.size();
     process->addMemRegion( "stack", phdrRegionEnd, stackRegionEnd - phdrRegionEnd, 0x6, stackBacking );
 
     output->verbose( CALL_INFO, 16, VANADIS_OS_DBG_APP_INIT,
@@ -744,8 +745,8 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
     auto thread = m_threadMap.at(pid);
     uint64_t virtAddr = vpn << m_pageShift;
 
-    // this is confusing because we have to virtAddrs one is the page virtaddr and the is the address of the memory req that faulted,
-    // the full addres was added for debug, we should git rid of the VPN at some point.
+    // this is confusing because we have two virtAddrs: one is the page virtaddr and the other is the address of the memory req that faulted,
+    // the full address was added for debug, we should get rid of the VPN at some point.
     output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"link=%d pid=%d virtAddr=%#" PRIx64 " %c%c%c instPtr=%#" PRIx64 " virtMemAddr=%#" PRIx64 "\n",
             link,pid,virtAddr,
             faultPerms & 0x4 ? 'R' : '-',
@@ -765,15 +766,15 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
         // 1) Read or Write from a data tlb
         // 2) Read with Execute from a inst tlb
 
-        output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"found region %#" PRIx64 "-%#" PRIx64 "\n",region->addr,region->addr + region->length);
+        output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"found region %#" PRIx64 "-%#" PRIx64 "\n",region->addr_,region->addr_ + region->length_);
 
         output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"virtAddr=%#010" PRIx64 ": fault-perms %c%c%c, VM-perms %c%c%c pagePerms=%#x\n",virtAddr,
             faultPerms & 0x4 ? 'R' : '-',
             faultPerms & 0x2 ? 'W' : '-',
             faultPerms & 0x1 ? 'X' : '-',
-            region->perms & 0x4 ? 'R' : '-',
-            region->perms & 0x2 ? 'W' : '-',
-            region->perms & 0x1 ? 'X' : '-',
+            region->perms_ & 0x4 ? 'R' : '-',
+            region->perms_ & 0x2 ? 'W' : '-',
+            region->perms_ & 0x1 ? 'X' : '-',
             pagePerms);
 
         // if the page is present the fault wants to write but the page doesn't have write, could be COW
@@ -783,7 +784,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
             output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"COW ppn of origin page %d\n",origPPN);
 
             // check if we can upgrade the permission for this page
-            if ( ! MMU_Lib::checkPerms( faultPerms, region->perms ) ) {
+            if ( ! MMU_Lib::checkPerms( faultPerms, region->perms_ ) ) {
                 output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"core %d, hwThread %d, instPtr %#" PRIx64 " caused page fault at address %#" PRIx64 "\n",
                     info->core,info->hwThread,info->instPtr,info->memVirtAddr);
                 pageFaultFini( info, false );
@@ -800,7 +801,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
 
             output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"origin ppn %d new ppn %d\n",origPPN, newPage->getPPN());
             // map this physical page into the MMU for this process with the regions permissions
-            m_mmu->map( thread->getpid(), vpn, newPage->getPPN(), m_pageSize, region->perms );
+            m_mmu->map( thread->getpid(), vpn, newPage->getPPN(), m_pageSize, region->perms_ );
 
             auto callback = new Callback( [=]() {
                 pageFaultFini( info );
@@ -810,9 +811,9 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
         }
 
         // the fault is in a present region, check to see if the retions permissions satisfy the fault
-        if ( ! MMU_Lib::checkPerms( faultPerms, region->perms ) ) {
+        if ( ! MMU_Lib::checkPerms( faultPerms, region->perms_ ) ) {
             output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "memory fault instPtr=%#" PRIx64 ", could not be satified for %#" PRIx64 ", no permission wantPerms=%#x havePerms=%#x\n",
-                    info->instPtr,virtAddr,faultPerms,region->perms);
+                    info->instPtr,virtAddr,faultPerms,region->perms_);
             pageFaultFini( info, false );
             return;
         }
@@ -820,7 +821,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
         int pageTablePerms =  m_mmu->getPerms( pid, vpn );
         output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"vpn %d perms %#x\n",vpn,pageTablePerms);
         if ( pageTablePerms > -1 ) {
-            if ( ! MMU_Lib::checkPerms( faultPerms, region->perms ) ) {
+            if ( ! MMU_Lib::checkPerms( faultPerms, region->perms_ ) ) {
                 output->verbose(CALL_INFO, 1, 0,"core %d, hwThread %d, instPtr %#" PRIx64 " caused page fault at address %#" PRIx64 "\n",
                     info->core,info->hwThread,info->instPtr,info->memVirtAddr);
                 pageFaultFini( info, false );
@@ -835,26 +836,24 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
 
         uint8_t* data = nullptr;
         // if this region has backing
-        if ( region->backing ) {
+        if ( region->backing_ ) {
             // if this region is mapped to an ELF file, check to see if the physical page is cached
-            if ( region->backing->elfInfo ) {
-                page = checkPageCache( region->backing->elfInfo, vpn );
+            if ( region->backing_->elf_info_ ) {
+                page = checkPageCache( region->backing_->elf_info_, vpn );
                 if ( nullptr == page ) {
-                    data = readElfPage( output, region->backing->elfInfo, vpn, m_pageSize );
-                }  else {
-                    output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"found elf page vpn %d -> ppn %d\n",vpn, page->getPPN());
+                    data = readElfPage( output, region->backing_->elf_info_, vpn, m_pageSize );
                 }
-            } else if ( region->backing->dev ) {
+            } else if ( region->backing_->dev_ ) {
                 // map this physical page into the MMU for this process
-                auto physAddr = region->backing->dev->getPhysAddr();
-                auto offset = vpn - ( region->addr >> m_pageShift);
+                auto physAddr = region->backing_->dev_->getPhysAddr();
+                auto offset = vpn - ( region->addr_ >> m_pageShift);
                 auto ppn = ( physAddr >> m_pageShift ) + offset;
                 output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "Device physAddr=%#" PRIx64 " ppn=%" PRIu64 "\n",physAddr,ppn);
-                m_mmu->map( thread->getpid(), vpn, ppn, m_pageSize, region->perms );
+                m_mmu->map( thread->getpid(), vpn, ppn, m_pageSize, region->perms_ );
                 pageFaultFini( info );
                 return;
             } else {
-                assert( region->backing->data.size());
+                assert( region->backing_->data_.size());
                 data = region->readData( vpn << m_pageShift, m_pageSize );
             }
         }
@@ -875,12 +874,12 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
         }
 
         // map this physical page into the MMU for this process
-        m_mmu->map( thread->getpid(), vpn, page->getPPN(), m_pageSize, region->perms );
+        m_mmu->map( thread->getpid(), vpn, page->getPPN(), m_pageSize, region->perms_ );
 
         // if there's elfInfo for this region is mapped to a file update the page cache
-        if ( region->backing && region->backing->elfInfo && 0 == region->name.compare("text") ) {
+        if ( region->backing_ && region->backing_->elf_info_ && 0 == region->name_.compare("text") ) {
             if ( nullptr != data ) {
-                updatePageCache( region->backing->elfInfo, vpn, page );
+                updatePageCache( region->backing_->elf_info_, vpn, page );
             } else {
                 output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"fault handled link=%d pid=%d vpn=%d %#" PRIx32 " ppn=%d\n",link,pid,vpn, vpn << m_pageShift,page->getPPN());
                 pageFaultFini( info );

@@ -99,7 +99,6 @@ vanadis_cpu_type += os.getenv("VANADIS_CPU_ELEMENT_NAME","dbg_VanadisCPU")
 
 if (verbosity > 0):
     print("Verbosity: " + str(verbosity) + " -> loading Vanadis CPU type: " + vanadis_cpu_type)
-    print("Auto-clock syscalls: " + str(auto_clock_sys))
 # vanadis_cpu_type = "vanadisdbg.VanadisCPU"
 
 app_args = os.getenv("VANADIS_EXE_ARGS", "")

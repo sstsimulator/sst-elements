@@ -16,6 +16,7 @@
 #ifndef _H_VANADIS_OS_SYSCALL_UNMAP
 #define _H_VANADIS_OS_SYSCALL_UNMAP
 
+#include "utils.h"
 #include "os/syscall/syscall.h"
 #include "os/callev/voscallunmap.h"
 
@@ -30,7 +31,7 @@ public:
         uint64_t address = event->getDeallocationAddress();
         uint64_t length = event->getDeallocationLength();
 
-        m_output->verbose(CALL_INFO, 16, 0, "[syscall-unmap] addr=%#" PRIx64 " lenght=%" PRIu64 "\n",address, length);
+        m_output->verbose(CALL_INFO, 16, 0, "[syscall-unmap] addr=%#" PRI_ADDR " length=%" PRIu64 "\n",address, length);
 
         auto threads = process->getThreadList();
         for ( const auto iter : threads) {

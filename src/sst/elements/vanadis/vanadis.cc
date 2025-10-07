@@ -131,12 +131,12 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     for ( uint32_t i = 0; i < hw_threads; ++i ) {
         VanadisDecoder* thr_decoder = nullptr;
         if ( decoders && decoders->isPopulated(i) ) {
-            thr_decoder = decoders->create<VanadisDecoder>(i, ComponentInfo::SHARE_NONE);
+            thr_decoder = decoders->create<VanadisDecoder>(i, ComponentInfo::SHARE_NONE, output);
         } else {
             // Input configuration uses the decoder%d slot name (which is an invalid name)
             // This is deprecated but supported until at least SST 16.0
             snprintf(decoder_name, 64, "decoder%" PRIu32 "", i);
-            thr_decoder = loadUserSubComponent<SST::Vanadis::VanadisDecoder>(decoder_name);
+            thr_decoder = loadUserSubComponent<SST::Vanadis::VanadisDecoder>(decoder_name, ComponentInfo::SHARE_NONE, output);
             output->output("%s, Warning: the '%s' subcomponent slot is deprecated. Use index %" PRIu32 " of the 'decoder' subcomponent slot instead\n",
                     getName().c_str(), decoder_name, i);
         }
@@ -237,9 +237,9 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
         tmp_int_reg_write.push_back( new uint8_t[max_int_regs] );
         tmp_not_issued_fp_reg_read.push_back( new uint8_t[max_fp_regs] );
         tmp_fp_reg_write.push_back( new uint8_t[max_fp_regs] );
+        resetRegisterUseTemps(i, max_int_regs, max_fp_regs);
     }
 
-    resetRegisterUseTemps(max_int_regs, max_fp_regs);
 
     //	memDataInterface =
     // loadUserSubComponent<Interfaces::SimpleMem>("mem_interface_data",
@@ -435,7 +435,7 @@ VANADIS_COMPONENT::startThread(int thr, uint64_t stackStart, uint64_t instructio
     output->verbose(CALL_INFO, 8, 0, "Configuring core-%d, thread-%d entry point = %p stack = %#" PRIx64  "\n", core_id, thr, (void*)instructionPointer, stackStart);
     thread_decoders[thr]->setInstructionPointer(instructionPointer);
 
-    thread_decoders[thr]->setStackPointer( output, issue_isa_tables[thr], register_files[thr], stackStart );
+    thread_decoders[thr]->setStackPointer( issue_isa_tables[thr], register_files[thr], stackStart );
 
     // Force retire table to sync with issue table
     retire_isa_tables[thr]->reset(issue_isa_tables[thr]);
@@ -488,39 +488,50 @@ VANADIS_COMPONENT::setHalt(uint32_t thr, int64_t halt_code)
     }
 }
 
-int
+void
 VANADIS_COMPONENT::performFetch(const uint64_t cycle)
 {
     // This is handled by the decoder step, so just keep it empty.
-    return 0;
-}
-
-int
-VANADIS_COMPONENT::performDecode(const uint64_t cycle)
-{
-
-    for ( uint32_t i = 0; i < hw_threads; ++i ) {
-        const int64_t rob_before_decode = (int64_t)rob[i]->size();
-
-        // If thread is not masked then decode from it
-        if ( !halted_masks[i] ) { thread_decoders[i]->tick(output, (uint64_t)cycle); }
-
-        const int64_t rob_after_decode = (int64_t)rob[i]->size();
-        const int64_t decoded_cycle    = (rob_after_decode - rob_before_decode);
-        ins_decoded_this_cycle += (decoded_cycle > 0) ? static_cast<uint64_t>(decoded_cycle) : 0;
-    }
-        return 0;
 }
 
 void
-VANADIS_COMPONENT::resetRegisterUseTemps(const uint16_t int_reg_count, const uint16_t fp_reg_count)
+VANADIS_COMPONENT::performDecode(const uint64_t cycle)
 {
-    for ( uint32_t i = 0; i < hw_threads; i++ ) {
-        std::memset(tmp_not_issued_int_reg_read[i], 0, int_reg_count);
-        std::memset(tmp_int_reg_write[i], 0, int_reg_count);
-        std::memset(tmp_not_issued_fp_reg_read[i], 0, fp_reg_count);
-        std::memset(tmp_fp_reg_write[i], 0, fp_reg_count);
+    bool blocked = true;
+    uint32_t start_thr = decode_start_thread_;
+    for ( uint32_t i = 0; i < decodes_per_cycle; ++i ) {
+        if ( i == 1 && blocked ) break; // Means every hw_thread is blocked, stop trying
+        // Locate next decodable thread
+        for ( uint32_t t = 0; t < hw_threads; ++t) {
+            const int64_t rob_before_decode = (int64_t)rob[decode_start_thread_]->size();
+            bool decode_or_fetch = false;
+            // If thread is not masked then attempt decode from it
+            if ( !halted_masks[decode_start_thread_] ) {
+                decode_or_fetch = thread_decoders[decode_start_thread_]->tick(cycle);
+                const int64_t rob_after_decode = (int64_t)rob[decode_start_thread_]->size();
+                const int64_t decoded_cycle    = (rob_after_decode - rob_before_decode);
+                ins_decoded_this_cycle += (decoded_cycle > 0) ? static_cast<uint64_t>(decoded_cycle) : 0;
+                if (decode_or_fetch) {
+                    blocked = false;
+                    break; // found one, go to next decodes_per_cycle
+                }
+            }
+            decode_start_thread_++;
+            if (decode_start_thread_ == hw_threads) decode_start_thread_ = 0;
+        }
     }
+    if ( blocked ) { // If all threads are blocked, attempt next thread first on next cycle
+        decode_start_thread_ = ( start_thr + 1 ) % hw_threads;
+    }
+}
+
+void
+VANADIS_COMPONENT::resetRegisterUseTemps(const int hw_thr, const uint16_t int_reg_count, const uint16_t fp_reg_count)
+{
+    std::memset(tmp_not_issued_int_reg_read[hw_thr], 0, int_reg_count);
+    std::memset(tmp_int_reg_write[hw_thr], 0, int_reg_count);
+    std::memset(tmp_not_issued_fp_reg_read[hw_thr], 0, fp_reg_count);
+    std::memset(tmp_fp_reg_write[hw_thr], 0, fp_reg_count);
 }
 
 int
@@ -582,7 +593,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
                 #endif
                 const auto ins_type = ins->getInstFuncType();
 
-                if ( 0 == resource_check )
+                if ( 0 == resource_check ) // Resources available, can issue
                 {
                     int allocate_fu = 1;
                     if (ins_type == INST_LOAD || ins_type == INST_STORE || ins_type == INST_FENCE ||
@@ -619,7 +630,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
                     {
                         int status = 0;
 
-                            status = assignRegistersToInstruction(
+                        status = assignRegistersToInstruction(
                                 thread_decoders[i]->countISAIntReg(), thread_decoders[i]->countISAFPReg(), ins,
                                 int_register_stack, fp_register_stack, issue_isa_tables[i]);
                         #ifdef VANADIS_BUILD_DEBUG
@@ -638,6 +649,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
                                 }
                             }
                         #endif
+
                         ins->markIssued();
                         ins_issued_this_cycle++;
                         issued_an_ins = true;
@@ -719,7 +731,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
     return issued_an_ins ? 0 : 1;
 }
 
-int
+void
 VANADIS_COMPONENT::performExecute(const uint64_t cycle)
 {
 
@@ -788,8 +800,6 @@ VANADIS_COMPONENT::performExecute(const uint64_t cycle)
         roccs_[i]->tick((uint64_t)cycle);
 
     }
-
-    return 0;
 }
 
 void VANADIS_COMPONENT::printRob(int rob_num, VanadisCircularQueue<VanadisInstruction*>* rob)
@@ -849,8 +859,6 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
         retire_isa_tables[rob_front->getHWThread()]->print(
             output, register_files[ins_thread], print_int_reg, print_fp_reg, 0);
 
-
-
         char* inst_asm_buffer = new char[32768];
         rob_front->printToBuffer(inst_asm_buffer, 32768);
 
@@ -863,12 +871,13 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
         delete[] inst_asm_buffer;
     }
 
+    // Instruction is done
     if ( rob_front->completedIssue() && rob_front->completedExecution() ) {
         bool     perform_cleanup       = true;
         bool     perform_delay_cleanup = false;
         uint64_t pipeline_reset_addr   = 0;
 
-        if ( rob_front->isSpeculated() ) {
+        if ( rob_front->isSpeculated() ) { // speculated instruction, need to check for correct speculation
             #ifdef VANADIS_BUILD_DEBUG
             if(output->getVerboseLevel() >= 8) {
                 output->verbose(CALL_INFO, 9, VANADIS_DBG_RETIRE_FLG, "--> instruction is speculated\n");
@@ -976,7 +985,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
                         spec_ins->getSpeculatedAddress() != pipeline_reset_addr ? "yes" : "no",
                         perform_pipeline_clear ? "yes" : "no", perform_delay_cleanup ? "yes" : "no");
 
-                    // stop simulation
+                    // stop simulation - TODO fix so that this doesn't call fatal() but instead tells OS to shutdown nicely
                     output->fatal(
                         CALL_INFO, -2,
                         "Retired instruction address 0x%" PRI_ADDR ", requested "
@@ -1120,6 +1129,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
             delete rob_front;
         }
     }
+    // Instruction not yet ready to retire
     else
     {
         output->verbose(CALL_INFO, 16, 0,"Instruction 0x%" PRI_ADDR " instruction-code=%s has execute? :%d\n",rob_front->getInstructionAddress(), rob_front->getInstCode(), rob_front->completedExecution());
@@ -1132,10 +1142,8 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
                     VanadisSysCallInstruction* the_syscall_ins = dynamic_cast<VanadisSysCallInstruction*>(rob_front);
 
                     if ( nullptr == the_syscall_ins ) {
-                        output->fatal(
-                            CALL_INFO, -1,
-                            "Error: SYSCALL cannot be converted to an actual "
-                            "sys-call instruction.\n");
+                        output->fatal( CALL_INFO, -1,
+                            "Error: SYSCALL cannot be converted to an actual syscall instruction.\n");
                     }
 
                     #ifdef VANADIS_BUILD_DEBUG
@@ -1187,7 +1195,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
                 }
 
                 // We spent this cycle waiting on an issued SYSCALL, it has not resolved
-                // at the emulated OS component yet so we have to wait, potentiallty for
+                // at the emulated OS component yet so we have to wait, potentially for
                 // a lot longer
                 stat_syscall_cycles->addData(1);
 
@@ -1421,7 +1429,7 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     if(output_verbosity >= 9)
     {
         output->verbose(
-            CALL_INFO, 2, 0,
+            CALL_INFO, 9, 0,
             "=> Retire Stage "
             "<==========================================================\n");
     }
@@ -1462,7 +1470,7 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     if(output_verbosity >= 9)
     {
         output->verbose(
-            CALL_INFO, 2, 0,
+            CALL_INFO, 9, 0,
             "=> Execute Stage "
             "<==========================================================\n");
     }
@@ -1475,14 +1483,14 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     if(output_verbosity >= 9)
     {
         output->verbose(
-            CALL_INFO, 2, 0,
+            CALL_INFO, 9, 0,
             "=> Issue Stage  "
             "<==========================================================\n");
     }
     #endif
     // Clear our temps on a per-thread basis
     for ( uint32_t i = 0; i < hw_threads; ++i ) {
-        resetRegisterUseTemps(thread_decoders[i]->countISAIntReg(), thread_decoders[i]->countISAFPReg());
+        resetRegisterUseTemps(i, thread_decoders[i]->countISAIntReg(), thread_decoders[i]->countISAFPReg());
     }
 
     {
@@ -1523,14 +1531,12 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     if(output_verbosity >= 9)
     {
         output->verbose(
-            CALL_INFO, 2, 0,
+            CALL_INFO, 9, 0,
             "=> Decode Stage "
             "<==========================================================\n");
     }
     #endif
-    for ( uint32_t i = 0; i < decodes_per_cycle; ++i ) {
-        if ( performDecode(cycle) != 0 ) { break; }
-    }
+    performDecode(cycle);
 
     stat_ins_decoded->addData(ins_decoded_this_cycle);
 
@@ -1540,13 +1546,13 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     if(output_verbosity >= 9)
     {
         output->verbose(
-            CALL_INFO, 2, 0,
+            CALL_INFO, 9, 0,
             "=> Fetch Stage "
             "<==========================================================\n");
     }
     #endif
     for ( uint32_t i = 0; i < fetches_per_cycle; ++i ) {
-        if ( performFetch(cycle) != 0 ) { break; }
+        performFetch(cycle);
     }
 
     uint64_t rob_total_count = 0;
@@ -2079,7 +2085,7 @@ VANADIS_COMPONENT::handleIncomingInstCacheEvent(StandardMem::Request* ev)
     bool hit = false;
 
     for ( VanadisDecoder* next_decoder : thread_decoders ) {
-        if ( next_decoder->acceptCacheResponse(output, ev) ) {
+        if ( next_decoder->acceptCacheResponse(ev) ) {
             hit = true;
             break;
         }
@@ -2111,7 +2117,7 @@ VANADIS_COMPONENT::handleMisspeculate(const uint32_t hw_thr, const uint64_t new_
 
     // Reset the ISA table to get correct ISA to physical mappings
     issue_isa_tables[hw_thr]->reset(retire_isa_tables[hw_thr]);
-    thread_decoders[hw_thr]->setInstructionPointerAfterMisspeculate(output, new_ip);
+    thread_decoders[hw_thr]->setInstructionPointerAfterMisspeculate(new_ip);
 
     #ifdef VANADIS_BUILD_DEBUG
     // if(output->getVerboseLevel() >= 8)
@@ -2189,9 +2195,10 @@ VANADIS_COMPONENT::syscallReturn(uint32_t thr)
 void VANADIS_COMPONENT::recvOSEvent(SST::Event* ev) {
     output->verbose(CALL_INFO, 16, 0, "-> recv os response\n");
 
+    // This is a pretty terrible sequence of dynamic_casts...TODO fix it
     VanadisSyscallResponse* os_resp = dynamic_cast<VanadisSyscallResponse*>(ev);
 
-    if (nullptr != os_resp) {
+    if (nullptr != os_resp) { // Case 0
         int hw_thr = os_resp->getHWThread();
 
         output->verbose(CALL_INFO, 16, 0, "hw_thread %d: syscall return-code: %" PRId64 " (success: %3s)\n",
@@ -2214,66 +2221,73 @@ void VANADIS_COMPONENT::recvOSEvent(SST::Event* ev) {
             //  setHalt(hw_thr,0);
         }
 
-    } else {
+    } else { // Case 1
 
-        VanadisStartThreadFirstReq* os_req = dynamic_cast<VanadisStartThreadFirstReq*>(ev);
-        if ( nullptr != os_req ) {
-            startThread( os_req->getThread(), os_req->getStackAddr(), os_req->getInstPtr() );
-        } else {
+    VanadisStartThreadFirstReq* os_req = dynamic_cast<VanadisStartThreadFirstReq*>(ev);
+    if ( nullptr != os_req ) {
+        startThread( os_req->getThread(), os_req->getStackAddr(), os_req->getInstPtr() );
+    } else { // Case 2
 
-            VanadisStartThreadForkReq* req = dynamic_cast<VanadisStartThreadForkReq*>(ev);
-            if ( nullptr != req ) {
-                startThreadFork( req );
-            } else {
+    VanadisStartThreadForkReq* req = dynamic_cast<VanadisStartThreadForkReq*>(ev);
+    if ( nullptr != req ) {
+        startThreadFork( req );
+    } else { // Case 3
 
-                VanadisGetThreadStateReq* req = dynamic_cast<VanadisGetThreadStateReq*>(ev);
-                if ( nullptr != req ) {
-                    getThreadState( req );
-                } else {
+    VanadisGetThreadStateReq* req = dynamic_cast<VanadisGetThreadStateReq*>(ev);
+    if ( nullptr != req ) {
+        getThreadState( req );
+    } else { // Case 4
 
-                    VanadisStartThreadCloneReq* req = dynamic_cast<VanadisStartThreadCloneReq*>(ev);
-                    if ( nullptr != req ) {
-                        startThreadClone( req );
-                    } else {
+    VanadisStartThreadCloneReq* req = dynamic_cast<VanadisStartThreadCloneReq*>(ev);
+    if ( nullptr != req ) {
+        startThreadClone( req );
+    } else { // Case 5
 
-                        VanadisExitResponse* os_exit = dynamic_cast<VanadisExitResponse*>(ev);
-                        if ( nullptr != os_exit ) {
-                            output->verbose(CALL_INFO, 16, 0,
-                                "received an exit command from the operating system for hw_thr %d "
-                                "(return-code: %" PRId64 " )\n",
-                                os_exit->getHWThread(),
-                                os_exit->getReturnCode());
+    VanadisStartThreadClone3Req* req = dynamic_cast<VanadisStartThreadClone3Req*>(ev);
+    if ( nullptr != req ) {
+        startThreadClone3( req );
+    } else { // Case 6
 
-                            setHalt(os_exit->getHWThread(), os_exit->getReturnCode());
-                        } else {
+    VanadisExitResponse* os_exit = dynamic_cast<VanadisExitResponse*>(ev);
+    if ( nullptr != os_exit ) {
+        output->verbose(CALL_INFO, 16, 0,
+                "received an exit command from the operating system for hw_thr %d "
+                "(return-code: %" PRId64 " )\n",
+                os_exit->getHWThread(),
+                os_exit->getReturnCode());
 
-                            VanadisDumpRegsReq* req = dynamic_cast<VanadisDumpRegsReq*>(ev);
-                            if (nullptr != req ) {
-                                dumpRegs(req);
-                            } else {
-                                VanadisCheckpointReq* req = dynamic_cast<VanadisCheckpointReq*>(ev);
-                                if ( nullptr != req ) {
+                setHalt(os_exit->getHWThread(), os_exit->getReturnCode());
+    } else { // Case 7
 
-                                    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT," checkpoing core=%d thread=%d checkpointing\n", req->coreId, req->hwThread );
+    VanadisDumpRegsReq* req = dynamic_cast<VanadisDumpRegsReq*>(ev);
+    if (nullptr != req ) {
+        dumpRegs(req);
+    } else { // Case 8
 
-                                    if ( nullptr == m_checkpointing ) {
-                                        m_checkpointing = new bool[hw_threads];
-                                        for ( auto i = 0; i < hw_threads; i++ ) {
-                                            m_checkpointing[i] = false;
-                                        }
-                                    }
+    VanadisCheckpointReq* req = dynamic_cast<VanadisCheckpointReq*>(ev);
+    if ( nullptr != req ) {
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,
+            " checkpoing core=%d thread=%d checkpointing\n", req->coreId, req->hwThread );
 
-                                    m_checkpointing[req->hwThread] = true;
-                                } else {
-                                    assert(0);
-                                }
-                            }
-                        }
-                    }
-                }
+        if ( nullptr == m_checkpointing ) {
+            m_checkpointing = new bool[hw_threads];
+            for ( auto i = 0; i < hw_threads; i++ ) {
+                m_checkpointing[i] = false;
             }
         }
-    }
+
+        m_checkpointing[req->hwThread] = true;
+    } else { // Case 9
+        assert(0);
+    } // Case 9
+    } // Case 8
+    } // Case 7
+    } // Case 6
+    } // Case 5
+    } // Case 4
+    } // Case 3
+    } // Case 2
+    } // Case 1
 
     if ( ev ) {
         delete ev;
@@ -2313,17 +2327,58 @@ void VANADIS_COMPONENT::startThreadClone( VanadisStartThreadCloneReq* req )
     }
 
     // Note that under the covers, based on ISA, some of these do nothing
-    thr_decoder->setArg1Register( output, isa_table, reg_file, req->getArgAddr() );
-    thr_decoder->setFuncPointer( output, isa_table, reg_file, req->getInstPtr() );
-    thr_decoder->setStackPointer( output, isa_table, reg_file, req->getStackAddr() );
+    thr_decoder->setArg1Register( isa_table, reg_file, req->getArgAddr() );
+    thr_decoder->setFuncPointer( isa_table, reg_file, req->getInstPtr() );
+    thr_decoder->setStackPointer( isa_table, reg_file, req->getStackAddr() );
     thr_decoder->setThreadLocalStoragePointer( req->getTlsAddr() );
-    thr_decoder->setThreadPointer( output, isa_table, reg_file, req->getTlsAddr() );
+    thr_decoder->setThreadPointer( isa_table, reg_file, req->getTlsAddr() );
 
     halted_masks[hw_thr]            = false;
 
-    output->verbose(CALL_INFO, 16, 0, "startThreadClone arrivedthrad fail HandleMissspeculate %d.\n", hw_thr);
+    output->verbose(CALL_INFO, 16, 0, "startThreadClone arrivedthread fail HandleMissspeculate %d.\n", hw_thr);
     handleMisspeculate( hw_thr, req->getInstPtr() );
-    cloneReqs.push_back(req);
+}
+
+void VANADIS_COMPONENT::startThreadClone3( VanadisStartThreadClone3Req* req )
+{
+    output->verbose(CALL_INFO, 8, 0, "received start thread %d command from the operating system \n",req->getThread());
+
+    int hw_thr = req->getThread();
+    auto thr_decoder = thread_decoders[hw_thr];
+    auto isa_table = retire_isa_tables[hw_thr];
+    auto reg_file = register_files[hw_thr];
+
+    resetHwThread( hw_thr );
+
+    output->verbose(CALL_INFO, 8, 0,"instPtr=%#" PRIx64 " stackAddr=%#" PRIx64 " argAddr=%#" PRIx64 " tlsAddr=%#" PRIx64 "\n",
+        req->getInstPtr(), req->getStackAddr(), req->getArgAddr(), req->getTlsAddr() );
+    for ( int i = 0; i < req->getIntRegs().size(); i++ )
+    {
+        reg_file->setIntReg<uint64_t>(isa_table->getIntPhysReg(i), req->getIntRegs()[i]);
+    }
+    for ( int i = 0; i < req->getFpRegs().size(); i++ )
+    {
+        if ( VANADIS_REGISTER_MODE_FP32 == thr_decoder->getFPRegisterMode() )
+        {
+            reg_file->setFPReg<uint32_t>(isa_table->getFPPhysReg(i), req->getFpRegs()[i]);
+        } else
+        {
+            reg_file->setFPReg<uint64_t>(isa_table->getFPPhysReg(i), req->getFpRegs()[i]);
+        }
+    }
+
+    // Note that under the covers, based on ISA, some of these do nothing
+    thr_decoder->setStackPointer( isa_table, reg_file, req->getStackAddr() );
+    thr_decoder->setThreadLocalStoragePointer( req->getTlsAddr() );
+    thr_decoder->setThreadPointer( isa_table, reg_file, req->getTlsAddr() );
+
+    thr_decoder->setReturnRegister( isa_table, reg_file, 0 );
+    thr_decoder->setSuccessRegister( isa_table, reg_file, 0 );
+
+    halted_masks[hw_thr] = false;
+
+    output->verbose(CALL_INFO, 16, 0, "startThreadClone arrivedthrad fail HandleMissspeculate %d.\n", hw_thr);
+    handleMisspeculate( hw_thr, req->getInstPtr() + 4);
 }
 
 void VANADIS_COMPONENT::startThreadFork( VanadisStartThreadForkReq* req )
@@ -2345,8 +2400,8 @@ void VANADIS_COMPONENT::startThreadFork( VanadisStartThreadForkReq* req )
         reg_file->setIntReg<uint64_t>(isa_table->getIntPhysReg(i), req->getIntRegs()[i]);
     }
 
-    thr_decoder->setReturnRegister( output, isa_table, reg_file, 0 );
-    thr_decoder->setSuccessRegister( output, isa_table, reg_file, 0 );
+    thr_decoder->setReturnRegister( isa_table, reg_file, 0 );
+    thr_decoder->setSuccessRegister( isa_table, reg_file, 0 );
 
     for ( int i = 0; i < req->getFpRegs().size(); i++ ) {
         if ( VANADIS_REGISTER_MODE_FP32 == thr_decoder->getFPRegisterMode() ) {

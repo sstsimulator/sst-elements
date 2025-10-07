@@ -180,12 +180,6 @@ public:
         assert(0); // stop compiler "warning: control reaches end of non-void function [-Wreturn-type]"
     }
 
-    virtual void markExecuted() override
-    {
-        hasExecuted = true;
-    }
-
-
     VanadisStoreRegisterType getValueRegisterType() const { return regType; }
 
 protected:

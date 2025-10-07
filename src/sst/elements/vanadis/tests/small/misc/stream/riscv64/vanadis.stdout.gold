@@ -23,7 +23,7 @@ precision of your system timer.
 Function    Best Rate MB/s  Avg time     Min time     Max time
 Copy:            4000.0     0.000040     0.000040     0.000040
 Scale:           1240.3     0.000130     0.000129     0.000130
-Add:             1846.2     0.000130     0.000130     0.000130
+Add:             1846.2     0.000131     0.000130     0.000131
 Triad:           1846.2     0.000130     0.000130     0.000130
 -------------------------------------------------------------
 Solution Validates: avg error less than 1.000000e-13 on all three arrays

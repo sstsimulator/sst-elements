@@ -18,7 +18,9 @@
 
 #include <cinttypes>
 #include <cstdio>
+#include "utils.h"
 #include "os/vosDbgFlags.h"
+#include "sst/core/output.h"
 
 namespace SST {
 namespace Vanadis {
@@ -215,8 +217,8 @@ public:
 
     void print(SST::Output* output, uint32_t index) {
         output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF,
-                        "Relocation (index: %" PRIu32 " / address: %" PRIu64 " (0x%0" PRI_ADDR ") / info: %" PRIu64 "\n", index,
-                        rel_address, rel_address, symbol_info);
+            "Relocation (index: %" PRIu32 " / address: %" PRIu64 " (0x%0" PRI_ADDR ") / info: %" PRIu64 "\n",
+            index, rel_address, rel_address, symbol_info);
     }
 
     void setAddress(const uint64_t addr) { rel_address = addr; }
@@ -457,7 +459,7 @@ public:
                                     : "Unknown");
         output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Instruction-Set:      %" PRIu16 " / %s\n", elf_isa,
                         getELFISAString(getISA()));
-	output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Endian:               %s\n", elf_endian == VANADIS_LITTLE_ENDIAN ? "Little Endian" : "Big Endian");
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Endian:               %s\n", elf_endian == VANADIS_LITTLE_ENDIAN ? "Little Endian" : "Big Endian");
         output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Object Type:          %s\n", getELFObjectTypeString(getObjectType()));
         output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "OS-ABI:               %" PRIu8 " / %s\n", elf_os_abi,
                         getELFOSABIString(getOSABI()));
