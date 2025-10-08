@@ -79,6 +79,7 @@ bool StuckAtFault::faultLogic(SST::Event*& ev) {
 #endif
         // replace data if necessary
         dataVec payload = this->getMemEventPayload(ev);
+        // TODO: review everything in below comment and adjust this function
         // payloads are given a size in the memEvent and it's usually cache line size
         // addr is whatever the core requested
         // base addr is first addr in byte array

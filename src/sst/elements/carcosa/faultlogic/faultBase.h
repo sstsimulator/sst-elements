@@ -23,7 +23,7 @@ namespace SST::Carcosa {
 typedef std::vector<uint8_t> dataVec;
 
 class FaultInjectorBase;
-// TODO: IMPLEMENT SERIALIZATION FOR THIS CLASS
+
 class FaultBase : public SST::Core::Serialization::serializable {
 public:
     FaultBase(Params& params, FaultInjectorBase* injector);
