@@ -33,27 +33,27 @@ CorruptMemFault::CorruptMemFault(Params& params, FaultInjectorBase* injector) : 
                                         region_pair.first, region_pair.second);
         }
 
-        corruptionRegions.push_back(region_pair);
+        corruptionRegions_.push_back(region_pair);
 #ifdef __SST_DEBUG_OUTPUT__
         getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Inserted corruption region: [0x%zx, 0x%zx]\n",
                                     region_pair.first, region_pair.second);
 #endif
     }
-    distribution = std::uniform_int_distribution<uint8_t>(0,255);
 }
 
+// TODO: fix this to respect endianness and byte array
 bool CorruptMemFault::faultLogic(Event*& ev) {
     SST::MemHierarchy::MemEvent* mem_ev = convertMemEvent(ev);
 
     Addr ev_addr = mem_ev->getAddr();
-    for (auto& region: corruptionRegions) {
+    for (auto& region: corruptionRegions_) {
         if ((ev_addr >= region.first) || (ev_addr <= region.second)) {
             dataVec new_payload(8);
             for (uint8_t& byte: new_payload) {
-                byte = distribution(generator);
+                byte = static_cast<uint8_t>(rng_.generateNextUInt32() % 255);
             }
             setMemEventPayload(ev, new_payload);
-            break;
+            return true;
         }
     }
 }

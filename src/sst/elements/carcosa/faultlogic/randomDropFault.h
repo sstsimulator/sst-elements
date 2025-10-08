@@ -29,6 +29,11 @@ public:
     ~RandomDropFault() {}
 
     bool faultLogic(Event*& ev) override;
+protected:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        FaultBase::serialize_order(ser);
+    }
+    ImplementVirtualSerializable(RandomDropFault)
 }; // RandomDropFault
 
 } // namespace SST::Carcosa

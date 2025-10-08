@@ -13,11 +13,11 @@
 #define SST_ELEMENTS_CARCOSA_CORRUPTMEMFAULT_H
 
 #include "sst/elements/carcosa/faultlogic/faultBase.h"
+#include "sst/core/rng/mersenne.h"
 #include <vector>
 #include <utility>
 #include <string>
 #include <sstream>
-#include <random>
 
 namespace SST::Carcosa {
 
@@ -49,12 +49,18 @@ public:
     bool faultLogic(Event*& ev) override;
 protected:
 
-    std::vector<std::pair<uint64_t, uint64_t>> corruptionRegions;
+    std::vector<std::pair<uint64_t, uint64_t>> corruptionRegions_;
 
-    std::default_random_engine generator;
-    std::uniform_int_distribution<uint8_t> distribution;
+    SST::RNG::MersenneRNG rng_;
 
     std::pair<uint64_t,uint64_t> convertString(std::string& region);
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        FaultBase::serialize_order(ser);
+        SST_SER(corruptionRegions_);
+        SST_SER(rng_);
+    }
+    ImplementVirtualSerializable(CorruptMemFault)
 }; // CorruptMemFault
 } // namespace SST::Carcosa
 

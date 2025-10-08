@@ -26,6 +26,7 @@ bool RandomFlipFault::faultLogic(Event*& ev) {
     uint8_t mask = static_cast<uint8_t>(1) << (lucky_number.second);
     payload[lucky_number.first] = byte ^ mask;
     setMemEventPayload(ev, payload);
+    return true;
 }
 
 inline std::pair<uint32_t, uint32_t> RandomFlipFault::pickByteAndBit() {

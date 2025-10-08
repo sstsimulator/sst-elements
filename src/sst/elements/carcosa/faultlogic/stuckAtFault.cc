@@ -37,10 +37,10 @@ StuckAtFault::StuckAtFault(Params& params, FaultInjectorBase* injector) : FaultB
                                         "byte: %d\n", addr, byte);
         }
         // check for vector in each map before creating it
-        if (stuckAtZeroMask.count(addr) == 1) {
-            stuckAtZeroMask.at(addr).push_back(make_pair(byte, zeroMask));
+        if (stuckAtZeroMask_.count(addr) == 1) {
+            stuckAtZeroMask_.at(addr).push_back(make_pair(byte, zeroMask));
         } else {
-            auto addrVecPair = stuckAtZeroMask.emplace(make_pair(addr, std::vector<std::pair<int, uint8_t>>()));
+            auto addrVecPair = stuckAtZeroMask_.emplace(make_pair(addr, std::vector<std::pair<int, uint8_t>>()));
             if (addrVecPair.second) {
                 addrVecPair.first->second.push_back(make_pair(byte, zeroMask));
             } else {
@@ -50,10 +50,10 @@ StuckAtFault::StuckAtFault(Params& params, FaultInjectorBase* injector) : FaultB
 #ifdef __SST_DEBUG_OUTPUT__
         getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Finished inserting zero-masks for 0x%zx.\n", addr);
 #endif
-        if (stuckAtOneMask.count(addr) == 1) {
-            stuckAtOneMask.at(addr).push_back(make_pair(byte, oneMask));
+        if (stuckAtOneMask_.count(addr) == 1) {
+            stuckAtOneMask_.at(addr).push_back(make_pair(byte, oneMask));
         } else {
-            auto addrVecPair = stuckAtOneMask.emplace(make_pair(addr, std::vector<std::pair<int, uint8_t>>()));
+            auto addrVecPair = stuckAtOneMask_.emplace(make_pair(addr, std::vector<std::pair<int, uint8_t>>()));
             if (addrVecPair.second) {
                 addrVecPair.first->second.push_back(make_pair(byte, oneMask));
             } else {
@@ -73,7 +73,7 @@ bool StuckAtFault::faultLogic(SST::Event*& ev) {
     Addr addr = mem_ev->getAddr();
 
     // check for the addr in question in the fault map
-    if (stuckAtZeroMask.count(addr) == 1 || stuckAtOneMask.count(addr) == 1) {
+    if (stuckAtZeroMask_.count(addr) == 1 || stuckAtOneMask_.count(addr) == 1) {
 #ifdef __SST_DEBUG_OUTPUT__
         getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Addr 0x%zx found in stuck map.\n", addr);
 #endif
@@ -89,8 +89,8 @@ bool StuckAtFault::faultLogic(SST::Event*& ev) {
 #ifdef __SST_DEBUG_OUTPUT__
         getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Begin zero mask for address: 0x%zx\n", addr);
 #endif
-        if (stuckAtZeroMask.count(addr) == 1) {
-            for (auto maskPair: stuckAtZeroMask.at(addr)) {
+        if (stuckAtZeroMask_.count(addr) == 1) {
+            for (auto maskPair: stuckAtZeroMask_.at(addr)) {
                 mask = maskPair.second;
 #ifdef __SST_DEBUG_OUTPUT__
                 getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "\tbyte %d, value: %d, mask: %d, new value: %d\n",
@@ -104,8 +104,8 @@ bool StuckAtFault::faultLogic(SST::Event*& ev) {
         getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "End zero mask for address: 0x%zx\n", addr);
         getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Begin one mask for address: 0x%zx\n", addr);
 #endif
-        if (stuckAtOneMask.count(addr) == 1) {
-            for (auto maskPair: stuckAtOneMask.at(addr)) {
+        if (stuckAtOneMask_.count(addr) == 1) {
+            for (auto maskPair: stuckAtOneMask_.at(addr)) {
                 mask = maskPair.second;
 #ifdef __SST_DEBUG_OUTPUT__
                 getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "\tbyte %d, value: %d, mask: %d, new value: %d\n",
@@ -122,6 +122,7 @@ bool StuckAtFault::faultLogic(SST::Event*& ev) {
         // replace payload
         this->setMemEventPayload(ev, payload);
     }
+    return true;
 }
 
 std::vector<StuckAtFault::maskParam_t> StuckAtFault::convertString(std::vector<std::string>& paramVecString) {

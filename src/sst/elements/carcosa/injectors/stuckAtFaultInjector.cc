@@ -17,8 +17,5 @@ using namespace SST::Carcosa;
 StuckAtFaultInjector::StuckAtFaultInjector(Params& params) : FaultInjectorBase(params) {
     // create fault
     fault.push_back(new StuckAtFault(params, this));
-}
-
-std::array<bool,2> StuckAtFaultInjector::getValidInstallation() {
-    return SEND_RECEIVE_VALID;
+    setValidInstallation(params, SEND_RECEIVE_VALID);
 }

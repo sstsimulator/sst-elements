@@ -33,6 +33,11 @@ protected:
      * @return (byte, bit)
      */
     inline std::pair<uint32_t, uint32_t> pickByteAndBit();
+protected:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        FaultBase::serialize_order(ser);
+    }
+    ImplementVirtualSerializable(RandomFlipFault)
 }; // RandomFlipFault
 }
 

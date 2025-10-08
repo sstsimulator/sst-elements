@@ -13,6 +13,7 @@
 #define SST_ELEMENTS_CARCOSA_FAULTBASE_H
 
 #include "sst/elements/carcosa/faultInjectorBase.h"
+#include "sst/core/serialization/serializable.h"
 #include <random>
 #include <vector>
 #include <string>
@@ -23,7 +24,7 @@ typedef std::vector<uint8_t> dataVec;
 
 class FaultInjectorBase;
 // TODO: IMPLEMENT SERIALIZATION FOR THIS CLASS
-class FaultBase {
+class FaultBase : public SST::Core::Serialization::serializable {
 public:
     FaultBase(Params& params, FaultInjectorBase* injector);
 
@@ -43,6 +44,12 @@ public:
     void setMemEventPayload(Event*& ev, dataVec newPayload);
 protected:
     FaultInjectorBase* injector_ = nullptr;
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        FaultBase::serialize_order(ser);
+        SST_SER(injector_);
+    }
+    ImplementVirtualSerializable(FaultBase)
 }; // class FaultBase
 } // namespace SST::Carcosa
 

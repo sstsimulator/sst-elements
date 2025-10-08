@@ -137,12 +137,21 @@ protected:
     installDirection installDirection_ = installDirection::Receive;
     double injectionProbability_ = 0.5;
     SST::RNG::MersenneRNG base_rng_;
+private:
     std::array<bool,2> valid_installation_ = {{false, false}};
+    bool valid_installs_set = false;
+protected: 
 
     bool doInjection();
     virtual void executeFaults(Event*& ev);
 
-    virtual std::array<bool,2> getValidInstallation() = 0;
+    /**
+     * This function MUST be called by the derived class constructor
+     * @arg params pass the same params object to this function
+     * @arg valid_install_ pass either SEND_VALID, RECEIVE_VALID, 
+     *      or SEND_RECEIVE_VALID
+     */
+    void setValidInstallation(Params& params, std::array<bool,2> valid_install);
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override
     {
@@ -156,6 +165,7 @@ protected:
         SST_SER(injectionProbability_);
         SST_SER(base_rng_);
         SST_SER(valid_installation_);
+        SST_SER(valid_installs_set);
     }
     ImplementVirtualSerializable(SST::Carcosa::FaultInjectorBase)
 

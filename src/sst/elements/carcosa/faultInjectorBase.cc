@@ -35,18 +35,6 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
 #ifdef __SST_DEBUG_OUTPUT__
     dbg_->debug(CALL_INFO_LONG, 1, 0, "\tInjection Probability: %f\n", injectionProbability_);
 #endif
-
-    valid_installation_ = getValidInstallation();
-    std::string install_dir = params.find<std::string>("installDirection", "Receive");
-    installDirection_ = setInstallDirection(install_dir);
-
-    if (installDirection_ == installDirection::Invalid) {
-        out_->fatal(CALL_INFO_LONG, -1, "Install Direction should never be set to Invalid! Did you forget to set which directions are valid?\n");
-    }
-
-#ifdef __SST_DEBUG_OUTPUT__
-    dbg_->debug(CALL_INFO_LONG, 1, 0, "\tInstall Direction: %s\n", install_dir.c_str());
-#endif
 }
 
 /**
@@ -64,6 +52,9 @@ FaultInjectorBase::~FaultInjectorBase() {
 void
 FaultInjectorBase::eventSent(uintptr_t key, Event*& ev) 
 {
+    if (!valid_installs_set) {
+        out_->fatal(CALL_INFO_LONG, -1, "Valid installation directions not set -- did you forget to call setValidInstallation() in your constructor?\n");
+    }
     if (doInjection()){
 #ifdef __SST_DEBUG_OUTPUT__
         dbg_->debug(CALL_INFO_LONG, 1, 0, "Injection triggered.\n");
@@ -80,6 +71,9 @@ FaultInjectorBase::eventSent(uintptr_t key, Event*& ev)
 void
 FaultInjectorBase::interceptHandler(uintptr_t key, Event*& ev, bool& cancel) 
 {
+    if (!valid_installs_set) {
+        out_->fatal(CALL_INFO_LONG, -1, "Valid installation directions not set -- did you forget to call setValidInstallation() in your constructor?\n");
+    }
     // do not cancel delivery by default
     cancel = false;
     cancel_ = &cancel;
@@ -117,6 +111,21 @@ installDirection FaultInjectorBase::setInstallDirection(std::string param) {
         }
     }
     return installDirection::Invalid;
+}
+
+void FaultInjectorBase::setValidInstallation(Params& params, std::array<bool,2> valid_install) {
+    valid_installation_ = valid_install;
+    std::string install_dir = params.find<std::string>("installDirection", "Receive");
+    installDirection_ = setInstallDirection(install_dir);
+
+    if (installDirection_ == installDirection::Invalid) {
+        out_->fatal(CALL_INFO_LONG, -1, "Install Direction should never be set to Invalid! Did you forget to set which directions are valid?\n");
+    }
+
+#ifdef __SST_DEBUG_OUTPUT__
+    dbg_->debug(CALL_INFO_LONG, 1, 0, "\tInstall Direction: %s\n", install_dir.c_str());
+#endif
+    valid_installs_set = true;
 }
 
 /**

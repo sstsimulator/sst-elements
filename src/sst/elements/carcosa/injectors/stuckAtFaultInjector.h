@@ -37,8 +37,6 @@ public:
     StuckAtFaultInjector() = default;
     ~StuckAtFaultInjector() {}
 protected:
-    std::array<bool,2> getValidInstallation() override;
-
     void serialize_order(SST::Core::Serialization::serializer& ser) override
     {
         SST::PortModule::serialize_order(ser);

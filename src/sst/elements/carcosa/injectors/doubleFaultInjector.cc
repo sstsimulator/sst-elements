@@ -23,6 +23,8 @@ DoubleFaultInjector::DoubleFaultInjector(Params& params) : FaultInjectorBase(par
 
     // read flipvsdrop param
     flipVsDropProb_ = params.find<double>("flipVsDropProb", 0.5);
+
+    setValidInstallation(params, SEND_RECEIVE_VALID);
 }
 
 /**
@@ -49,8 +51,4 @@ void DoubleFaultInjector::executeFaults(Event*& ev) {
     } else {
         out_->fatal(CALL_INFO_LONG, -1, "No valid fault object.\n");
     }
-}
-
-std::array<bool,2> DoubleFaultInjector::getValidInstallation() {
-    return SEND_RECEIVE_VALID;
 }

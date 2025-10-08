@@ -39,7 +39,6 @@ protected:
     double flipVsDropProb_;
 
     void executeFaults(Event*& ev) override;
-    std::array<bool,2> getValidInstallation() override;
 
     SST::RNG::MersenneRNG rng_;
 

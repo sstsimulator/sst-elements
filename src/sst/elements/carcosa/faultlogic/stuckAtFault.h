@@ -54,9 +54,9 @@ public:
 protected:
 
     // map of addr->{byte, mask} for saving stuck bit values
-    std::map<Addr, std::vector<std::pair<int, uint8_t>>> stuckAtZeroMask;
+    std::map<Addr, std::vector<std::pair<int, uint8_t>>> stuckAtZeroMask_;
     // add stuckAtOneMask
-    std::map<Addr, std::vector<std::pair<int, uint8_t>>> stuckAtOneMask;
+    std::map<Addr, std::vector<std::pair<int, uint8_t>>> stuckAtOneMask_;
 
     typedef struct maskParam {
         Addr addr;
@@ -66,6 +66,13 @@ protected:
     } maskParam_t;
 
     std::vector<maskParam_t> convertString(std::vector<std::string>& paramVecStr);
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        FaultBase::serialize_order(ser);
+        SST_SER(stuckAtZeroMask_);
+        SST_SER(stuckAtOneMask_);
+    }
+    ImplementVirtualSerializable(StuckAtFault)
 };
 
 } // namespace SST::Carcosa
