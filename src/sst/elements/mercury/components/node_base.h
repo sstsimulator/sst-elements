@@ -19,7 +19,7 @@
 
 #include <sst/core/timeConverter.h>
 #include <sst/core/link.h>
-#include <mercury/components/operating_system_fwd.h>
+#include <mercury/components/operating_system_api.h>
 #include <mercury/components/nic.h>
 #include <mercury/common/request_fwd.h>
 #include <mercury/common/node_address.h>
@@ -51,6 +51,8 @@ public:
 
   NodeBase(SST::ComponentId_t id, SST::Params &params);
 
+  virtual ~NodeBase() {}
+
   /**
    @return  A unique integer identifier
   */
@@ -66,7 +68,7 @@ public:
     primaryComponentOKToEndSim();
   }
 
-  SST::Hg::OperatingSystem* os() const {
+  SST::Hg::OperatingSystemAPI* os() const {
     return os_;
   }
 
@@ -81,7 +83,7 @@ protected:
   int nranks_;
   int npernode_;
   SST::Hg::NIC* nic_;
-  SST::Hg::OperatingSystem* os_;
+  SST::Hg::OperatingSystemAPI* os_;
   SST::Interfaces::SimpleNetwork* link_control_;
   SST::Link* netLink_;
   std::unique_ptr<SST::Output> out_;

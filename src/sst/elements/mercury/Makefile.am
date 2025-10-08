@@ -25,13 +25,15 @@ libhg_la_SOURCES = \
   common/util.cc \
   common/timestamp.cc \
   common/connection.cc \
+  components/compute_library/node_cl.cc \
+  components/compute_library/operating_system_cl.cc \
+  components/compute_library/operating_system_cl_api.cc \
   components/nic.cc \
   components/node.cc \
   components/node_base.cc \
-  components/node_CL.cc \
   components/operating_system.cc \
-  components/operating_system_base.cc \
-  components/operating_system_CL.cc \
+  components/operating_system_api.cc \
+  components/operating_system_impl.cc \
   hardware/common/packet.cc \
   hardware/common/recv_cq.cc \
   hardware/network/network_message.cc \
@@ -130,19 +132,21 @@ nobase_library_include_HEADERS = \
   common/sim_thread_lock.h \
   common/timestamp.h \
   common/unusedvariablemacro.h \
+  components/compute_library/node_cl.h \
+  components/compute_library/node_cl_fwd.h \
+  components/compute_library/operating_system_cl.h \
+  components/compute_library/operating_system_cl_api.h \
+  components/compute_library/operating_system_cl_fwd.h \
   components/nic.h \
   components/nic_fwd.h \
   components/node.h \
   components/node_fwd.h \
   components/node_base.h \
   components/node_base_fwd.h \
-  components/node_CL.h \
-  components/node_CL_fwd.h \
-  components/operating_system_base.h \
+  components/operating_system_api.h \
   components/operating_system.h \
   components/operating_system_fwd.h \
-  components/operating_system_CL.h \
-  components/operating_system_CL_fwd.h \
+  components/operating_system_impl.h \
   external/json.hpp \
   hardware/network/network_id.h \
   hardware/network/network_message.h \

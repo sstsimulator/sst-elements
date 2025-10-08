@@ -13,7 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <mercury/components/operating_system.h>
+#include <mercury/components/operating_system_api.h>
 #include <mercury/operating_system/libraries/unblock_event.h>
 #include <mercury/operating_system/process/thread.h>
 
@@ -23,7 +23,7 @@ namespace Hg {
 extern template class  HgBase<SST::Component>;
 extern template class  HgBase<SST::SubComponent>;
 
-UnblockEvent::UnblockEvent(OperatingSystem *os, Thread *thr)
+UnblockEvent::UnblockEvent(OperatingSystemAPI *os, Thread *thr)
   :  os_(os), thr_(thr)
 {
 }
@@ -34,7 +34,7 @@ UnblockEvent::execute()
   os_->unblock(thr_);
 }
 
-TimeoutEvent::TimeoutEvent(OperatingSystem* os, Thread* thr) :
+TimeoutEvent::TimeoutEvent(OperatingSystemAPI* os, Thread* thr) :
   os_(os), thr_(thr), counter_(thr->blockCounter())
 {
 }

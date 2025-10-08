@@ -47,7 +47,7 @@ class App : public Thread
  public:
   SST_ELI_DECLARE_BASE(App)
   SST_ELI_DECLARE_DEFAULT_INFO()
-  SST_ELI_DECLARE_CTOR(SST::Params&,SoftwareId,OperatingSystem*)
+  SST_ELI_DECLARE_CTOR(SST::Params&,SoftwareId,OperatingSystemAPI*)
 
   typedef void (*destructor_fxn)(void*);
 
@@ -71,6 +71,8 @@ class App : public Thread
   // void sleep(TimeDelta time);
 
   // void compute(TimeDelta time);
+
+  App(SST::Params& params, SoftwareId sid, OperatingSystemAPI* os);
 
   ~App() override;
 
@@ -98,7 +100,7 @@ class App : public Thread
 
   int setenv(const std::string& name, const std::string& value, int overwrite);
 
-  OperatingSystem* os() {return os_;}
+  OperatingSystemAPI* os() {return os_api_;}
 
   /**
    * Let a parent application know about the existence of a subthread
@@ -194,17 +196,23 @@ class App : public Thread
   std::ostream& coutStream();
   std::ostream& cerrStream();
 
+  void set_os_api(OperatingSystemAPI* api) {
+    os_api_ = api;
+  }
+
+  OperatingSystemAPI* os_api() {
+    return os_api_;
+  }
+
  protected:
   friend class Thread;
 
-  App(SST::Params& params, SoftwareId sid,
-      OperatingSystem* os);
+  // App(SST::Params& params, SoftwareId sid,
+  //     OperatingSystemAPI* os);
 
   SST::Params params_;
 
  private:
-
-  OperatingSystem* os_;
 
   char* allocateDataSegment(bool tls);
 
@@ -231,6 +239,8 @@ class App : public Thread
 
   static int app_rc_;
 
+  OperatingSystemAPI* os_api_;
+
   std::ofstream cout_;
   std::ofstream cerr_;
   FILE* stdout_;
@@ -243,29 +253,28 @@ class App : public Thread
 class UserAppCxxFullMain : public App
 {
  public:
-  SST_ELI_REGISTER_DERIVED(App,
-    UserAppCxxFullMain,
-    "hg",
-    "UserAppCxxFullMain",
-    SST_ELI_ELEMENT_VERSION(1,0,0),
-    "an app that runs main(argc,argv)")
+   SST_ELI_REGISTER_DERIVED(App, 
+                            UserAppCxxFullMain, 
+                            "hg",
+                            "UserAppCxxFullMain",
+                            SST_ELI_ELEMENT_VERSION(1, 0, 0),
+                            "an app that runs main(argc,argv)")
 
-  UserAppCxxFullMain(SST::Params& params, SoftwareId sid,
-                     OperatingSystem* os);
+   UserAppCxxFullMain(SST::Params &params, SoftwareId sid, OperatingSystemAPI* os);
 
-  static void registerMainFxn(const char* name, App::main_fxn fxn);
+   static void registerMainFxn(const char *name, App::main_fxn fxn);
 
-  int skeletonMain() override;
+   int skeletonMain() override;
 
-  static void deleteStatics();
+   static void deleteStatics();
 
-  static void aliasMains();
+   static void aliasMains();
 
-  struct argv_entry {
-    char** argv;
-    int argc;
-    argv_entry() : argv(0), argc(0) {}
-  };
+   struct argv_entry {
+     char **argv;
+     int argc;
+     argv_entry() : argv(0), argc(0) {}
+   };
 
  private:
   void initArgv(argv_entry& entry);
@@ -287,8 +296,7 @@ class UserAppCxxEmptyMain : public App
     SST_ELI_ELEMENT_VERSION(1,0,0),
     "an app that runs main()")
 
-  UserAppCxxEmptyMain(SST::Params& params, SoftwareId sid,
-                          OperatingSystem* os);
+  UserAppCxxEmptyMain(SST::Params &params, SoftwareId sid, OperatingSystemAPI* os);
 
   static void registerMainFxn(const char* name, App::empty_main_fxn fxn);
 

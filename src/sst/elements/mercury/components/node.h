@@ -47,8 +47,7 @@ public:
       SST_ELI_ELEMENT_VERSION(
           0, 0, 1),   // Version of the component (not related to SST version)
       "Simple Mercury node", // Description
-      COMPONENT_CATEGORY_UNCATEGORIZED, // Category
-      SST::Hg::NodeBase
+      COMPONENT_CATEGORY_UNCATEGORIZED // Category
   )
 
   Node(SST::ComponentId_t id, SST::Params &params);

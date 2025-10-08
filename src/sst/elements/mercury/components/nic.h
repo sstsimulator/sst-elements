@@ -18,11 +18,12 @@
 #include <mercury/common/component.h>
 
 #include <sst/core/event.h>
-#include <sst/core/eli/elementbuilder.h>
+//#include <sst/core/eli/elementbuilder.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
+#include <mercury/components/node_fwd.h>
 #include <mercury/components/node_base_fwd.h>
-#include <mercury/components/operating_system_fwd.h>
+#include <mercury/components/operating_system_api.h>
 #include <mercury/common/thread_safe_new.h>
 #include <mercury/common/node_address.h>
 #include <mercury/common/timestamp.h>
@@ -68,8 +69,7 @@ class NIC : public SST::Hg::SubComponent
 {
  public:
 
-  SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::NIC,
-                                    SST::Hg::NodeBase*)
+  SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::NIC)
 
   SST_ELI_REGISTER_SUBCOMPONENT(
     NIC,
@@ -210,13 +210,14 @@ public:
   }
 
  public:
-  NIC(uint32_t id, SST::Params& params, SST::Hg::NodeBase* parent);
+  NIC(uint32_t id, SST::Params& params);
 
- protected:
+  void set_parent(NodeBase*);
 
-  SST::Hg::NodeBase* parent() const {
-    return parent_;
-  }
+protected:
+
+  SST::Hg::NodeBase *parent() const 
+  { return parent_; }
 
   bool negligibleSize(int bytes) const {
     return bytes <= negligibleSize_;
@@ -240,7 +241,7 @@ protected:
   std::unique_ptr<SST::Output> out_;
 
  protected:
-  SST::Hg::OperatingSystem* os_;
+  SST::Hg::OperatingSystemAPI* os_;
 
  private:
   /**

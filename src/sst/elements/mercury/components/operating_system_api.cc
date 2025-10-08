@@ -13,32 +13,13 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#pragma once
-
 #include <mercury/components/operating_system_api.h>
-#include <mercury/operating_system/libraries/event_library.h>
 
 namespace SST {
 namespace Hg {
 
-class Service :
-  public EventLibrary
-{
+OperatingSystemAPI::OperatingSystemAPI(ComponentId_t id, SST::Params& params) 
+: SST::Hg::SubComponent(id) {}
 
- public:
-  virtual void start() {}
-
- protected:
-  Service(const std::string& libname, SoftwareId sid, OperatingSystemAPI* os) :
-    EventLibrary(libname, sid, os)
-  {}
-
-  Service(const char* prefix, SoftwareId sid, OperatingSystemAPI* os) :
-    EventLibrary(prefix, sid, os)
-  {}
-
-  ~Service() override{}
-};
-
-} // end namespace Hg
-} // end namespace SST
+} // namespace Hg
+} // namespace SST

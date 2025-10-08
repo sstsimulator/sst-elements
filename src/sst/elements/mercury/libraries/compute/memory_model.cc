@@ -16,7 +16,7 @@
 #include <inttypes.h>
 #include <mercury/libraries/compute/memory_model.h>
 #include <mercury/components/operating_system.h>
-#include <mercury/components/node_CL.h>
+#include <mercury/components/compute_library/node_cl.h>
 
 namespace SST {
 namespace Hg {

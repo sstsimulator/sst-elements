@@ -16,7 +16,7 @@
 #include <libraries/system/system_library.h>
 #include <mercury/common/timestamp.h>
 #include <mercury/common/thread_safe_new.h>
-#include <mercury/components/operating_system.h>
+#include <mercury/components/compute_library/operating_system_cl.h>
 #include <mercury/operating_system/process/thread.h>
 #include <mercury/operating_system/process/app.h>
 #include <mercury/operating_system/libraries/unblock_event.h>
@@ -27,22 +27,24 @@ namespace Hg {
 extern template class  HgBase<SST::Component>;
 extern template SST::TimeConverter HgBase<SST::SubComponent>::time_converter_;
 
-using os = OperatingSystem;
+using os = OperatingSystemAPI;
 
 SystemLibrary::SystemLibrary(SST::Params& params, App* app) :
-  Library(params,app)
-{ }
+  Library(params,app),
+  os_(app->os_api())
+{}
 
 double
 SystemLibrary::ssthg_block()
 {
-  os::currentOs()->block();
-  return os::currentOs()->now().sec();
+  app_->os_api()->block();
+  //return os::currentOs()->now().sec();
+  return now().sec();
 }
 
 unsigned int
 SystemLibrary::ssthg_sleep(unsigned int secs){
-    os* cos = os::currentOs();
+    OperatingSystemAPI* cos = OperatingSystemImpl::currentOs();
     Thread* t = cos->activeThread();
     UnblockEvent* ev = new UnblockEvent(cos, t);
     cos->sendDelayedExecutionEvent(TimeDelta(secs, TimeDelta::one_second), ev);

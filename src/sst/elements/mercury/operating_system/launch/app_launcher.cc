@@ -24,7 +24,7 @@ namespace Hg {
 extern template class  HgBase<SST::Component>;
 extern template class  HgBase<SST::SubComponent>;
 
-AppLauncher::AppLauncher(OperatingSystem* os, unsigned int npernode) :
+AppLauncher::AppLauncher(OperatingSystemAPI* os, unsigned int npernode) :
   os_(os), npernode_(npernode)
 {
 }

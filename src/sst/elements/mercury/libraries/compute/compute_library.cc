@@ -15,7 +15,7 @@
 
 #include <sst/core/params.h>
 #include <mercury/common/errors.h>
-#include <mercury/components/operating_system_CL.h>
+#include <mercury/components/compute_library/operating_system_cl_api.h>
 #include <mercury/libraries/compute/compute_library.h>
 #include <mercury/operating_system/process/app.h>
 
@@ -25,7 +25,7 @@ namespace Hg {
 ComputeLibrary::ComputeLibrary(SST::Params &params, App *parent)
     : Library(params, parent)
 {
-  parent_os_ = dynamic_cast<OperatingSystemCL*>(parent->os());
+  parent_os_ = dynamic_cast<OperatingSystemCLAPI*>(parent->os());
 
   //FIXME: do 64 bit accesses make sense? (cache line?)
   access_width_bytes_ = params.find<int>("compute_library_access_width", 64) / 8;
@@ -113,7 +113,7 @@ ComputeLibrary::computeDetailed(
 void
 ComputeLibrary::computeInst(ComputeEvent* cmsg, int nthr)
 {
-  parent_os_->execute(OperatingSystemCL::COMP_INSTR, cmsg, nthr);
+  parent_os_->execute(OperatingSystemCLAPI::COMP_INSTR, cmsg, nthr);
 }
 
 } // end namespace Hg

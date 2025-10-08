@@ -19,7 +19,7 @@
 #include <mercury/common/events.h>
 #include <mercury/common/request_fwd.h>
 #include <mercury/common/node_address.h>
-#include <mercury/components/operating_system_fwd.h>
+#include <mercury/components/operating_system_api.h>
 #include <mercury/operating_system/process/software_id.h>
 #include <mercury/common/hg_printf.h>
 #include <map>
@@ -43,7 +43,7 @@ class EventLibrary
 
   virtual void incomingRequest(Request* req) = 0;
 
-  OperatingSystem* os() const {
+  OperatingSystemAPI* os() const {
     return os_;
   }
 
@@ -62,9 +62,9 @@ class EventLibrary
   virtual ~EventLibrary();
 
  protected:
-  EventLibrary(const std::string& libname, SoftwareId sid, OperatingSystem* os);
+  EventLibrary(const std::string& libname, SoftwareId sid, OperatingSystemAPI* os);
 
-  EventLibrary(const char* prefix, SoftwareId sid, OperatingSystem* os) :
+  EventLibrary(const char* prefix, SoftwareId sid, OperatingSystemAPI* os) :
     EventLibrary(standardLibname(prefix, sid), sid, os)
   {
   }
@@ -87,7 +87,7 @@ class EventLibrary
   }
 
  protected:
-  OperatingSystem* os_;
+  OperatingSystemAPI* os_;
   SoftwareId sid_;
   NodeId addr_;
 
