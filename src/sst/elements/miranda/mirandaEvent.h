@@ -32,14 +32,14 @@ public:
     };
 
 	std::deque< std::pair< std::string, SST::Params> > generators;
-
 	uint64_t 	key;
+
 private:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
-        Event::serialize_order(ser);
-        SST_SER(key);
+        SST::Event::serialize_order(ser);
 		SST_SER(generators);
+        SST_SER(key);
     }
 
     ImplementSerializable(SST::Miranda::MirandaReqEvent);
