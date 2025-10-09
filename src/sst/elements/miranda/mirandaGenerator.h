@@ -96,7 +96,7 @@ private:
 };
 
 template<typename QueueType>
-class MirandaRequestQueue {
+class MirandaRequestQueue : public SST::Core::Serialization::serializable {
 public:
 	MirandaRequestQueue() {
 		theQ = (QueueType*) malloc(sizeof(QueueType) * 16);
@@ -181,6 +181,8 @@ public:
 		SST_SER(maxCapacity);
 		SST_SER(curSize);
 	}
+
+	ImplementSerializable(SST::Miranda::MirandaRequestQueue)
 
 private:
 	QueueType* theQ;

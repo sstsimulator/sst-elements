@@ -99,13 +99,21 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 
 	memMgr = new MirandaMemoryManager(out, pageSize, pageCount, policy);
 
+	// Generators can be given in 3 ways. We will search for them in the following order
+	//   1. In the `generator` subcomponent
+	//   2. In the `generator` parameter
+	//   3. Received on the `src` port
+	// Method 3 can be used to send multiple generators to this CPU. Otherwise only a single
+	// generator will be used.
 	reqGen = loadUserSubComponent<RequestGenerator>("generator");
 	if (reqGen) {
+
 		out->verbose(CALL_INFO, 1, 0, "Generator loaded successfully.\n");
 	    registerAsPrimaryComponent();
 	    primaryComponentDoNotEndSim();
 
 	} else {
+
 	    std::string reqGenModName = params.find<std::string>("generator", "");
 
 		if ( ! reqGenModName.empty() ) {
@@ -123,6 +131,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 			primaryComponentDoNotEndSim();
 
 	    } else if ( isPortConnected("src") ) {
+
 			// TODO create a generator that gets data from a port
 			out->verbose(CALL_INFO, 1, 0, "getting generators from a link\n");
 			srcLink = configureLink( "src", "50ps", new Event::Handler2<RequestGenCPU,&RequestGenCPU::handleSrcEvent>(this));
@@ -131,7 +140,9 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 			}
 
 	    } else {
+
 			out->fatal(CALL_INFO, -1, "Failed to find a generator or src port\n");
+
 	    }
 	}
 
