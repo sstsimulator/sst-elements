@@ -17,6 +17,9 @@
 #ifndef TLB_WRAPPER_H
 #define TLB_WRAPPER_H
 
+#include <cstddef>
+#include <cstdint>
+#include <map>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>

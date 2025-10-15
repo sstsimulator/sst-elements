@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <string>
 #include <iris/sumi/collective.h>
 #include <iris/sumi/collective_actor.h>
 #include <iris/sumi/collective_message.h>

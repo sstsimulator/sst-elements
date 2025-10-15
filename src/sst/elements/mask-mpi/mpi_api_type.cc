@@ -42,6 +42,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <cstdint>
+#include <sstream>
+#include <string>
 #include <mpi_api.h>
 //#include <sumi-mpi/otf2_output_stat.h>
 #include <mercury/components/operating_system.h>

@@ -21,9 +21,13 @@
 #ifndef _MEMHIERARCHY_DIRCONTROLLER_H_
 #define _MEMHIERARCHY_DIRCONTROLLER_H_
 
+#include <cstddef>
+#include <cstdint>
+#include <list>
 #include <map>
 #include <set>
-#include <list>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <sst/core/event.h>

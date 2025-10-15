@@ -29,6 +29,10 @@
 #ifndef COMMON_HELPER_STRING_H_
 #define COMMON_HELPER_STRING_H_
 
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fstream>

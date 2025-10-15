@@ -13,6 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cstdio>
 #include <sst_config.h>
 #include "hades.h"
 
@@ -26,8 +27,8 @@
 
 #include <stdlib.h>
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
 #include "functionSM.h"

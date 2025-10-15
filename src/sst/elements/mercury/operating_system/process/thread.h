@@ -15,6 +15,10 @@
 
 #pragma once
 
+#include <cstdint>
+#include <string>
+#include <typeinfo>
+#include <vector>
 #include <mercury/common/errors.h>
 #include <mercury/common/node_address.h>
 #include <mercury/common/timestamp.h>
@@ -25,10 +29,10 @@
 #include <mercury/operating_system/libraries/library.h>
 #include <mercury/operating_system/threading/threading_interface.h>
 
-#include <queue>
-#include <map>
-#include <utility>
 #include <list>
+#include <map>
+#include <queue>
+#include <utility>
 #include <unistd.h>
 
 namespace SST {

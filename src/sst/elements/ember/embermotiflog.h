@@ -16,6 +16,10 @@
 #ifndef _H_SST_EMBER_MOTIF_LOG
 #define _H_SST_EMBER_MOTIF_LOG
 
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <string>
 #include <stdio.h>
 #include <sst/core/componentExtension.h>
 

@@ -16,6 +16,7 @@
 #ifndef _LLYR_MAPPER_H
 #define _LLYR_MAPPER_H
 
+#include <cstdint>
 #include <sst/core/sst_config.h>
 #include <sst/core/module.h>
 

@@ -13,6 +13,17 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <deque>
+#include <functional>
+#include <map>
+#include <queue>
+#include <string>
+#include <vector>
+
 class Work {
 
   public:

@@ -31,8 +31,9 @@
 #include "sst_config.h"
 
 // C++ includes
-#include <memory>
 #include <iostream>
+#include <list>
+#include <memory>
 #include <assert.h>
 
 // CramSim includes

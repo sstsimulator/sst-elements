@@ -14,6 +14,7 @@
 #ifndef _H_SST_TLBSTRUCTURE
 #define _H_SST_TLBSTRUCTURE
 
+#include <cstdint>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/componentExtension.h>
@@ -22,8 +23,8 @@
 #include <sst/core/output.h>
 
 #include <map>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "utils.h"
 #include "tlb_entry.h"

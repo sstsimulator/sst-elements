@@ -31,9 +31,11 @@
 #define C_RANK_HPP_
 
 // global includes
+#include <map>
 #include <memory>
-#include <vector>
+#include <ostream>
 #include <string>
+#include <vector>
 
 // SST includes
 #include <sst/core/component.h>

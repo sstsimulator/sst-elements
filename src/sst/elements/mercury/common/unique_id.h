@@ -15,7 +15,9 @@
 
 #pragma once
 
+#include <cstdint>
 #include <sstream>
+#include <string>
 #include <stdint.h>
 #include <sst/core/serialization/serializable.h>
 

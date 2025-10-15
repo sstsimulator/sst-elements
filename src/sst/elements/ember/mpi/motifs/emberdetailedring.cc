@@ -14,6 +14,8 @@
 // distribution.
 
 
+#include <cstddef>
+#include <queue>
 #include <sst_config.h>
 #include "emberdetailedring.h"
 

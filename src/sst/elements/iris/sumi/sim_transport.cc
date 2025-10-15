@@ -13,6 +13,12 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
+#include <list>
+#include <set>
+#include <utility>
 #include <sst/core/params.h>
 #include <sst/core/event.h>
 #include <sst/core/factory.h>

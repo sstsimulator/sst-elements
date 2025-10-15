@@ -17,6 +17,7 @@
 #ifndef _H_EMBER_STOP_MOTIF
 #define _H_EMBER_STOP_MOTIF
 
+#include <cstdint>
 #include <sst/core/component.h>
 #include "mpi/embermpigen.h"
 

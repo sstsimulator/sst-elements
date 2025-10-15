@@ -58,6 +58,9 @@
  */
 
 // SSTSnippet::component-header::start
+#include <cstddef>
+#include <set>
+#include <string>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 

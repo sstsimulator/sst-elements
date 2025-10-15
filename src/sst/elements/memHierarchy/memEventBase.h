@@ -16,6 +16,11 @@
 #ifndef MEMHIERARCHY_MEMEVENTBASE_H
 #define MEMHIERARCHY_MEMEVENTBASE_H
 
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <utility>
+#include <vector>
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
 #include <sst/core/warnmacros.h>

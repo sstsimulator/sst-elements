@@ -15,10 +15,12 @@
 
 #pragma once
 
+#include <ostream>
+#include <string>
 #include <mercury/common/hg_printf.h>
 
-#include <exception>
 #include <cstdlib>
+#include <exception>
 #include <iostream>
 
 namespace SST {

@@ -20,6 +20,7 @@
 #include "inst/vregfmt.h"
 #include "util/vfpreghandler.h"
 
+#include <cstdint>
 #include <type_traits>
 
 namespace SST {

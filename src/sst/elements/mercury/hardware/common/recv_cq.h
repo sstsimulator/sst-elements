@@ -15,7 +15,10 @@
 
 #pragma once
 
+#include <cstdint>
+#include <map>
 #include <unordered_map>
+#include <utility>
 #include <mercury/hardware/common/packet.h>
 #include <mercury/common/allocator.h>
 

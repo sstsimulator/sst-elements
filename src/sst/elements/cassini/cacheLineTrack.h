@@ -18,6 +18,8 @@
 #define _H_SST_ADDR_HISTOGRAMMER
 
 #include <bitset>
+#include <cstdint>
+#include <vector>
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>

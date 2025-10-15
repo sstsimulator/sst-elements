@@ -17,14 +17,16 @@
 #ifndef COMPONENTS_HR_ROUTER_XBAR_ARB_RAND_H
 #define COMPONENTS_HR_ROUTER_XBAR_ARB_RAND_H
 
+#include <cstddef>
+#include <cstdint>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/rng/xorshift.h>
 
-#include <vector>
 #include <queue>
+#include <vector>
 
 #include "sst/elements/merlin/router.h"
 

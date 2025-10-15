@@ -12,6 +12,9 @@
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
+#include <cstdint>
+#include <cstdio>
+#include <functional>
 #include <sst_config.h>
 
 #include "shmem/fcollect.h"

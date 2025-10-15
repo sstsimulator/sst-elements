@@ -15,11 +15,13 @@
 
 #pragma once
 
+#include <cstdlib>
+#include <memory>
 #include <mercury/common/thread_safe_new.h>
-#include <vector>
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <iostream>
+#include <vector>
 
 namespace SST {
 namespace Hg {

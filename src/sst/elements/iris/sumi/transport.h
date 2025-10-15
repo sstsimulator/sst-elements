@@ -44,6 +44,12 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
+#include <cstdint>
+#include <list>
+#include <set>
+#include <string>
+#include <type_traits>
+#include <utility>
 #include <sst/core/params.h>
 #include <mercury/operating_system/libraries/library.h>
 #include <mercury/operating_system/process/software_id.h>
@@ -60,8 +66,8 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <iris/sumi/options.h>
 #include <iris/sumi/communicator_fwd.h>
 
-#include <unordered_map>
 #include <queue>
+#include <unordered_map>
 
 namespace SST::Iris::sumi {
 

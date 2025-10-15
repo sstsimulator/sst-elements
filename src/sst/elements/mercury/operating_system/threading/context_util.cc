@@ -13,6 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <string>
+#include <utility>
 #include <mercury/common/errors.h>
 #include <mercury/operating_system/threading/context_util.h>
 #include <mercury/operating_system/threading/threading_interface.h>

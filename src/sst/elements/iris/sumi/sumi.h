@@ -45,6 +45,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #ifndef sumi_msg_api_h
 #define sumi_msg_api_h
 
+#include <utility>
 #include <iris/sumi/options.h>
 #include <iris/sumi/message.h>
 #include <iris/sumi/comm_functions.h>

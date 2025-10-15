@@ -15,9 +15,10 @@
 
 #pragma once
 
-#include <queue>
-#include <map>
 #include <list>
+#include <map>
+#include <queue>
+#include <vector>
 #include <mercury/common/errors.h>
 #include <mercury/common/timestamp.h>
 #include <mercury/operating_system/process/thread_fwd.h>

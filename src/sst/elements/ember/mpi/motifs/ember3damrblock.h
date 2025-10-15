@@ -17,6 +17,9 @@
 #ifndef _H_EMBER_3D_AMR_BLOCK
 #define _H_EMBER_3D_AMR_BLOCK
 
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
 

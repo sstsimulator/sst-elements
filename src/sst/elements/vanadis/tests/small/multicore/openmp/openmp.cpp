@@ -13,6 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cstdio>
+#include <cstdlib>
 #include <sched.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -14,6 +14,7 @@
 // distribution.
 
 
+#include <queue>
 #include <sst_config.h>
 #include "emberring.h"
 

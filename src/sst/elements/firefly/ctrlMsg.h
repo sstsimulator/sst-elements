@@ -16,6 +16,9 @@
 #ifndef COMPONENTS_FIREFLY_CTRLMSG_H
 #define COMPONENTS_FIREFLY_CTRLMSG_H
 
+#include <cstdint>
+#include <functional>
+#include <string>
 #include <sst/core/component.h>
 #include "protocolAPI.h"
 #include "ctrlMsgFunctors.h"

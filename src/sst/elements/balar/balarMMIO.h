@@ -16,6 +16,9 @@
 #ifndef BALAR_MMIO_H
 #define BALAR_MMIO_H
 
+#include <cstdint>
+#include <stack>
+#include <unordered_map>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
@@ -33,8 +36,8 @@
 
 
 #include <cstring>
-#include <string>
 #include <map>
+#include <string>
 
 #include <stdio.h>
 #include <stdint.h>

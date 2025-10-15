@@ -30,6 +30,7 @@
 #define C_BANK_HPP
 
 // general C++ includes
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <stdint.h>

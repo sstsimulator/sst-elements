@@ -13,6 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cstring>
 #include <math.h>
 #include <sst_config.h>
 #include <sst/core/component.h>

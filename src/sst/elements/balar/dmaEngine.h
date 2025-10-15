@@ -16,6 +16,11 @@
 #ifndef BALAR_DMA_ENGINE_H
 #define BALAR_DMA_ENGINE_H
 
+#include <cstddef>
+#include <cstdint>
+#include <map>
+#include <string>
+#include <vector>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>

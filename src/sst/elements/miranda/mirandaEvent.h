@@ -17,6 +17,9 @@
 #ifndef _H_SST_MEM_H_REQUEST_GEN_EVENT
 #define _H_SST_MEM_H_REQUEST_GEN_EVENT
 
+#include <cstdint>
+#include <deque>
+#include <string>
 #include <stdint.h>
 #include <sst/core/event.h>
 #include <sst/core/params.h>

@@ -33,6 +33,8 @@
 #ifndef _OFI_HOOK_H_
 #define _OFI_HOOK_H_
 
+#include <stdint.h>
+#include <stddef.h>
 #include <assert.h>
 
 #include <rdma/fabric.h>

@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <vector>
 #include <iris/sumi/reduce.h>
 #include <iris/sumi/transport.h>
 #include <iris/sumi/communicator.h>

@@ -17,6 +17,8 @@
 #ifndef _H_EMBER_SHMEM_SWAP
 #define _H_EMBER_SHMEM_SWAP
 
+#include <cstdint>
+#include <string>
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
 #include <cxxabi.h>

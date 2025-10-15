@@ -16,6 +16,8 @@
 #ifndef COMPONENTS_FIREFLY_CTRL_MSG_TIMING_BASE_H
 #define COMPONENTS_FIREFLY_CTRL_MSG_TIMING_BASE_H
 
+#include <cstdint>
+
 namespace SST {
 namespace Firefly {
 namespace CtrlMsg {

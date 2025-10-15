@@ -25,8 +25,15 @@ This is a pure header implementation. No need to build/link extra libraries.
 #define output_holder_h
 
 
-#include <fstream>
 #include <cmath>
+#include <cstdio>
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <ostream>
+#include <string>
+#include <unordered_map>
+#include <vector>
 #include <stdlib.h>
 #include <time.h>
 

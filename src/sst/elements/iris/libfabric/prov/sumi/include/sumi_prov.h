@@ -20,6 +20,11 @@
 //#include <config.h>
 //#endif /* HAVE_CONFIG_H */
 
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <list>
+#include <utility>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <inttypes.h>

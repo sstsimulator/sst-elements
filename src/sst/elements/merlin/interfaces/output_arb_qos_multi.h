@@ -19,6 +19,9 @@
 #ifndef COMPONENTS_MERLIN_ARBITRATION_OUTPUT_ARB_QOS_MULTI_H
 #define COMPONENTS_MERLIN_ARBITRATION_OUTPUT_ARB_QOS_MULTI_H
 
+#include <cstdint>
+#include <ostream>
+#include <string>
 #include <sst/elements/merlin/router.h>
 #include <sst/elements/merlin/arbitration/single_arb.h>
 

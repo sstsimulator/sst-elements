@@ -29,9 +29,10 @@
 #ifndef C_BANKCOMMAND_HPP
 #define C_BANKCOMMAND_HPP
 
-#include <ostream>
 #include <map>
+#include <ostream>
 #include <string>
+#include <vector>
 
 //sst includes
 

@@ -17,6 +17,7 @@
 #ifndef _H_SST_NEXT_BLOCK_PREFETCH
 #define _H_SST_NEXT_BLOCK_PREFETCH
 
+#include <cstdint>
 #include <vector>
 
 #include <sst/core/event.h>

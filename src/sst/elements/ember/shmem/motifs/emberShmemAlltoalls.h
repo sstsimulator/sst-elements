@@ -17,6 +17,9 @@
 #ifndef _H_EMBER_SHMEM_ALLTOALLS
 #define _H_EMBER_SHMEM_ALLTOALLS
 
+#include <cstddef>
+#include <cstdint>
+#include <string>
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
 #include <cxxabi.h>

@@ -33,6 +33,8 @@
 #ifndef FI_CM_H
 #define FI_CM_H
 
+#include <stddef.h>
+#include <stdint.h>
 #include <rdma/fi_endpoint.h>
 
 

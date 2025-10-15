@@ -17,6 +17,7 @@
 //#include <config.h>
 //#endif /* HAVE_CONFIG_H */
 
+#include <cstdint>
 #include <stdlib.h>
 #include <assert.h>
 

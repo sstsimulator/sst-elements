@@ -18,10 +18,12 @@
 #define _H_SST_ARIEL_RTL_EVENT
 
 #include "arielevent.h"
-#include <unordered_map>
-#include <vector>
+#include <cstddef>
+#include <cstdint>
 #include <deque>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 using namespace SST;
 

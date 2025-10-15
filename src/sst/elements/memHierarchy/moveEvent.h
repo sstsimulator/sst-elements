@@ -16,6 +16,11 @@
 #ifndef MEMHIERARHCY_MOVEEVENT_H
 #define MEMHIERARHCY_MOVEEVENT_H
 
+#include <cstddef>
+#include <cstdint>
+#include <set>
+#include <string>
+#include <vector>
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
 

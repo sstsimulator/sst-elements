@@ -15,6 +15,10 @@
 
 #pragma once
 
+#include <cstdint>
+#include <cstdlib>
+#include <ostream>
+#include <string>
 #include <sst/core/sst_types.h>
 #include <mercury/common/errors.h>
 #include <sst/core/serialization/serializable.h>

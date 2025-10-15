@@ -17,6 +17,7 @@
 #ifndef _H_SST_CASSINI_DMA_STATE
 #define _H_SST_CASSINI_DMA_STATE
 
+#include <cstdint>
 #include <dmacmd.h>
 
 namespace SST {

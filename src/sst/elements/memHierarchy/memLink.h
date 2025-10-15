@@ -16,10 +16,11 @@
 #ifndef _MEMHIERARCHY_MEMLINK_H_
 #define _MEMHIERARCHY_MEMLINK_H_
 
+#include <queue>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <queue>
 
 #include <sst/core/event.h>
 #include <sst/core/output.h>

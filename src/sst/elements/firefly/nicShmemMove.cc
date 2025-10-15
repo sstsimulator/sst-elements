@@ -17,6 +17,8 @@
 #include "sst_config.h"
 #include "nic.h"
 
+#include <vector>
+
 using namespace SST;
 using namespace SST::Firefly;
 

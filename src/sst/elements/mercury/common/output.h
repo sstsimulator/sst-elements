@@ -16,6 +16,7 @@
 #pragma once
 
 #include <iostream>
+#include <ostream>
 
 #define cout0 ::SST::Hg::output::out0()
 #define coutn ::SST::Hg::output::outn()

@@ -13,6 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cstddef>
 #include <mercury/operating_system/process/thread.h>
 #include <mercury/operating_system/process/thread_info.h>
 #include <mercury/operating_system/threading/threading_interface.h>

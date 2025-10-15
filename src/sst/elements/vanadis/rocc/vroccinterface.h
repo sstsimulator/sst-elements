@@ -16,13 +16,14 @@
 #ifndef _H_VANADIS_ROCC_INTERFACE
 #define _H_VANADIS_ROCC_INTERFACE
 
+#include <cstddef>
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>
 
 #include <cinttypes>
 #include <cstdint>
-#include <vector>
 #include <queue>
+#include <vector>
 
 namespace SST {
 namespace Vanadis {

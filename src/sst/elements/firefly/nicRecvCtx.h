@@ -13,6 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <queue>
+#include <string>
+
        class Ctx {
             std::string m_prefix;
             const char* prefix() { return m_prefix.c_str(); }

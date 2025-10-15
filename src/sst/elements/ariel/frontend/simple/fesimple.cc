@@ -14,6 +14,13 @@
 // distribution.
 
 //#include <malloc.h>
+#include <cerrno>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <ostream>
+#include <vector>
 #include <execinfo.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -25,13 +32,13 @@
 #include <sstream>
 #include <fcntl.h>
 #include <unistd.h>
-#include <iostream>
-#include <fstream>
-#include <map>
-#include <stack>
-#include <ctime>
 #include <bitset>
+#include <ctime>
+#include <fstream>
+#include <iostream>
+#include <map>
 #include <set>
+#include <stack>
 #include <sst_config.h>
 
 #ifdef HAVE_LIBZ

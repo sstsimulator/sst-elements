@@ -17,6 +17,7 @@
 #ifndef _H_SST_MIRANDA_MEMORY_MANAGER
 #define _H_SST_MIRANDA_MEMORY_MANAGER
 
+#include <cstdint>
 #include <vector>
 #include <sst/core/rng/marsaglia.h>
 #include <sst/core/output.h>

@@ -27,6 +27,8 @@
  *
  */
 
+#include <cstddef>
+#include <string>
 #include <sst/core/component.h>
 
 namespace SST {

@@ -14,10 +14,14 @@
 // distribution.
 
 
+#include <cassert>
+#include <iostream>
+#include <iterator>
+#include <ostream>
 #include <sst_config.h>
 #include "emberTrafficGen.h"
-#include <limits>
 #include <cstdlib>
+#include <limits>
 
 using namespace SST;
 using namespace SST::Ember;

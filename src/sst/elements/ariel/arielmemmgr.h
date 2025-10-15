@@ -17,12 +17,13 @@
 #ifndef _H_ARIEL_MEM_MANAGER
 #define _H_ARIEL_MEM_MANAGER
 
+#include <cstdint>
 #include <sst/core/subcomponent.h>
 #include <sst/core/output.h>
 
 #include <stdint.h>
-#include <vector>
 #include <deque>
+#include <vector>
 
 using namespace SST;
 

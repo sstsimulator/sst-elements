@@ -10,11 +10,14 @@
 // distribution.
 //
 
+#include <ostream>
+#include <utility>
+#include <vector>
 #include <sst_config.h>
 #include "opal.h"
 
-#include <string>
 #include <iostream>
+#include <string>
 
 using namespace SST;
 using namespace SST::OpalComponent;

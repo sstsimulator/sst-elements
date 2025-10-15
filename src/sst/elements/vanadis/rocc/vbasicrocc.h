@@ -16,6 +16,9 @@
 #ifndef _H_VANADIS_BASIC_ROCC
 #define _H_VANADIS_BASIC_ROCC
 
+#include <cassert>
+#include <cstddef>
+#include <deque>
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>
 
@@ -23,9 +26,9 @@
 
 #include <cinttypes>
 #include <cstdint>
-#include <vector>
-#include <queue>
 #include <limits>
+#include <queue>
+#include <vector>
 
 using namespace SST::Interfaces;
 

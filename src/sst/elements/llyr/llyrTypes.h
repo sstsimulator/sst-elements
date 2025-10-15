@@ -17,12 +17,15 @@
 #ifndef _LLYR_TYPES
 #define _LLYR_TYPES
 
+#include <cstdint>
+#include <map>
+#include <utility>
 #include <sst/core/interfaces/stdMem.h>
 
-#include <list>
-#include <tuple>
 #include <bitset>
+#include <list>
 #include <string>
+#include <tuple>
 
 #define Bit_Length 64
 typedef std::bitset< Bit_Length > LlyrData;

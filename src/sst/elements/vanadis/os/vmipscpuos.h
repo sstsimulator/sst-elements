@@ -25,6 +25,7 @@
 #include "os/vstartthreadreq.h"
 #include "os/vcpuos2.h"
 #include "os/voscallev.h"
+#include <cstdint>
 #include <functional>
 #include <sys/mman.h>
 

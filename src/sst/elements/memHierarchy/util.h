@@ -16,6 +16,7 @@
 #ifndef MEMHIERARCHY_UTIL_H
 #define	MEMHIERARCHY_UTIL_H
 
+#include <cstdint>
 #include <sst/core/stringize.h>
 #include <sst/core/params.h>
 

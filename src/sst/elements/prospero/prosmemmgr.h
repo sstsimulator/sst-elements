@@ -17,6 +17,7 @@
 #ifndef _H_SS_PROSPERO_MEM_MGR
 #define _H_SS_PROSPERO_MEM_MGR
 
+#include <cstdint>
 #include <sst/core/output.h>
 #include <map>
 

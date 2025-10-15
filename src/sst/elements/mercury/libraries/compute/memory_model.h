@@ -15,6 +15,10 @@
 
 #pragma once
 
+#include <cstdint>
+#include <string>
+#include <unordered_map>
+#include <vector>
 #include <mercury/common/events.h>
 #include <mercury/components/node_CL_fwd.h>
 #include <mercury/common/unique_id.h>

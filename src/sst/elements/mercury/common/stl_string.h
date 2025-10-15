@@ -15,11 +15,12 @@
 
 #pragma once
 
-#include <set>
-#include <vector>
 #include <list>
 #include <map>
+#include <set>
 #include <sstream>
+#include <string>
+#include <vector>
 
 template <class Container>
 std::string oneDimString(const Container& c, const char* open, const char* close){

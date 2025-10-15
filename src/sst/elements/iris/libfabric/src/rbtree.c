@@ -43,6 +43,7 @@
 
 // reentrant red-black tree
 
+#include <stddef.h>
 #include <stdlib.h>
 #include "rbtree.h"
 

@@ -14,6 +14,7 @@
 // distribution.
 
 #include <cassert>
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>

@@ -16,6 +16,7 @@
 #ifndef _H_SERRANO_CIRC_Q
 #define _H_SERRANO_CIRC_Q
 
+#include <cstddef>
 #include <cstdint>
 
 namespace SST {

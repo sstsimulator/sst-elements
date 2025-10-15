@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <cstdint>
+#include <string>
 #include <mercury/hardware/common/flow.h>
 #include <mercury/hardware/network/network_id.h>
 #include <mercury/operating_system/process/task_id.h>

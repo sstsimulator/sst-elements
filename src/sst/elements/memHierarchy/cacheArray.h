@@ -16,6 +16,9 @@
 #ifndef CACHEARRAY_H
 #define CACHEARRAY_H
 
+#include <cstddef>
+#include <cstdint>
+#include <map>
 #include <vector>
 
 #include <sst/core/output.h>

@@ -13,6 +13,12 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cassert>
+#include <cstdio>
+#include <iostream>
+#include <map>
+#include <ostream>
+#include <utility>
 #include <sst_config.h>
 #include "gensa.h"
 

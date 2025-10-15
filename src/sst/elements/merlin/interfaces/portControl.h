@@ -19,6 +19,12 @@
 #ifndef COMPONENTS_MERLIN_PORTCONTROL_H
 #define COMPONENTS_MERLIN_PORTCONTROL_H
 
+#include <cstdint>
+#include <deque>
+#include <map>
+#include <queue>
+#include <string>
+#include <vector>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>

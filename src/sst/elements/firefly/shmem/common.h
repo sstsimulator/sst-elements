@@ -17,6 +17,7 @@
 #ifndef COMPONENTS_FIREFLY_SHMEM_COMMON_H
 #define COMPONENTS_FIREFLY_SHMEM_COMMON_H
 
+#include <string>
 #include <vector>
 #include "sst/elements/hermes/shmemapi.h"
 

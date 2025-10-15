@@ -17,6 +17,7 @@
 #ifndef _H_CASSINI_PAGE_ENTRY
 #define _H_CASSINI_PAGE_ENTRY
 
+#include <cstdint>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>

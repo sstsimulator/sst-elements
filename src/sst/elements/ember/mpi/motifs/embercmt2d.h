@@ -17,6 +17,7 @@
 #ifndef _H_EMBER_CMT_2D
 #define _H_EMBER_CMT_2D
 
+#include <cstdint>
 #include <sst/core/rng/gaussian.h>
 #include "mpi/embermpigen.h"
 

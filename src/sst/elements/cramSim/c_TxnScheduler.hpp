@@ -35,6 +35,9 @@
 #include "c_TxnConverter.hpp"
 #include "c_Controller.hpp"
 
+#include <list>
+#include <vector>
+
 
 namespace SST {
     namespace CramSim {

@@ -16,6 +16,11 @@
 #ifndef MMU_H
 #define MMU_H
 
+#include <cassert>
+#include <cstdint>
+#include <functional>
+#include <string>
+#include <vector>
 #include <sst/core/sst_types.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/link.h>

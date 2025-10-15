@@ -27,6 +27,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ios>
+#include <ostream>
+#include <sstream>
+#include <string>
 #include <sst_config.h>
 
 #include <algorithm>

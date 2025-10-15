@@ -16,10 +16,14 @@
 #ifndef _MEMHBRIDGE_H
 #define _MEMHBRIDGE_H
 
+#include <cstddef>
+#include <ostream>
+#include <streambuf>
+#include <string>
 #include <stdint.h>
-#include <queue>
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <queue>
 
 //SST includes
 #include <sst/core/component.h>

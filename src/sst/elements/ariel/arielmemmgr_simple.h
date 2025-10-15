@@ -17,12 +17,13 @@
 #ifndef _H_ARIEL_MEM_MANAGER_SIMPLE
 #define _H_ARIEL_MEM_MANAGER_SIMPLE
 
+#include <cstdint>
 #include <sst/core/output.h>
 
 #include <stdint.h>
 #include <deque>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 #include "arielmemmgr_cache.h"
 

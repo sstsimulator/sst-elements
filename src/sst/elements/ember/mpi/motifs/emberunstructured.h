@@ -13,6 +13,9 @@
 #ifndef _H_EMBER_UNSTRUCTURED
 #define _H_EMBER_UNSTRUCTURED
 
+#include <cstdint>
+#include <string>
+#include <vector>
 #include <sst/core/component.h>
 #include "mpi/embermpigen.h"
 

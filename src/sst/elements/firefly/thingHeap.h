@@ -16,6 +16,8 @@
 #ifndef COMPONENTS_FIREFLY_THINGHEAP_H
 #define COMPONENTS_FIREFLY_THINGHEAP_H
 
+#include <vector>
+
 template < class T>
 class ThingHeap {
 

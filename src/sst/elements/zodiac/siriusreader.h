@@ -17,14 +17,16 @@
 #ifndef _H_ZODIAC_SIRIUS_READER
 #define _H_ZODIAC_SIRIUS_READER
 
+#include <cstdint>
+#include <cstdio>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
 
-#include <string>
 #include <iostream>
 #include <queue>
+#include <string>
 
 #include "sst/core/output.h"
 #include "sst/elements/hermes/msgapi.h"

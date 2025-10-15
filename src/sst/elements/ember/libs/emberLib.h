@@ -17,6 +17,7 @@
 #ifndef _H_EMBER_LIBS_EMBERLIB
 #define _H_EMBER_LIBS_EMBERLIB
 
+#include <cstddef>
 #include <sst/core/subcomponent.h>
 #include "sst/elements/hermes/hermes.h"
 

@@ -16,6 +16,9 @@
 #ifndef COMPONENTS_FIREFLY_IO_H
 #define COMPONENTS_FIREFLY_IO_H
 
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 #include <sst/core/module.h>
 #include <sst/core/component.h>
 

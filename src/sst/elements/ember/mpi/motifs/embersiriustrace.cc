@@ -14,12 +14,13 @@
 // distribution.
 
 
+#include <queue>
 #include <sst_config.h>
 
 #include "embersiriustrace.h"
 
-#include <cstdint>
 #include <climits>
+#include <cstdint>
 
 using namespace SST::Ember;
 

@@ -14,6 +14,7 @@
 // distribution.
 
 
+#include <cstddef>
 #include <sst_config.h>
 
 #include "reorderLinkControl.h"

@@ -18,9 +18,10 @@
 #define _LLYR_HELPERS
 
 #include <iterator>
-#include <vector>
-#include <string>
 #include <list>
+#include <ostream>
+#include <string>
+#include <vector>
 
 #include "llyrTypes.h"
 #include "mappers/csvParser.h"

@@ -6,6 +6,8 @@
 // Authors: Kartik Lakhotia, Sai Prabhakar Rao Chenna
 
 
+#include <cassert>
+#include <string>
 #include <sst_config.h>
 #include "polarfly.h"
 

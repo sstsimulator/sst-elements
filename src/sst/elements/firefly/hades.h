@@ -17,6 +17,7 @@
 #ifndef COMPONENTS_FIREFLY_HADES_H
 #define COMPONENTS_FIREFLY_HADES_H
 
+#include <string>
 #include <sst/core/output.h>
 #include <sst/core/params.h>
 

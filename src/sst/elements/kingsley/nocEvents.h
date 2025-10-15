@@ -19,6 +19,8 @@
 #ifndef COMPONENTS_KINGSLEY_NOCEVENTS_H
 #define COMPONENTS_KINGSLEY_NOCEVENTS_H
 
+#include <cstddef>
+#include <string>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>

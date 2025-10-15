@@ -16,6 +16,7 @@
 #ifndef _H_SERRANO_COARSE_UNIT
 #define _H_SERRANO_COARSE_UNIT
 
+#include <cstddef>
 #include <sst/core/subcomponent.h>
 
 #include <cinttypes>

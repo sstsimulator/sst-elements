@@ -16,8 +16,10 @@
 #ifndef _NEURON_H
 #define _NEURON_H
 
-#include <map>
 #include <cstdint>
+#include <map>
+#include <string>
+#include <vector>
 
 #include <sst/core/interfaces/stdMem.h>  // supplies type uint
 #include <sst/core/rng/marsaglia.h>

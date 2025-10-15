@@ -13,6 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <iostream>
+#include <ostream>
 #include <iris/sumi/collective.h>
 #include <iris/sumi/collective_actor.h>
 #include <iris/sumi/dense_rank_map.h>

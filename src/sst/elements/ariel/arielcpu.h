@@ -16,6 +16,8 @@
 #ifndef _H_ARIEL_CPU
 #define _H_ARIEL_CPU
 
+#include <cstdint>
+#include <vector>
 #include <sst/core/sst_config.h>
 #include <sst/core/interfaces/stdMem.h>
 #include <sst/core/component.h>
@@ -24,8 +26,8 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include <string>
 #include <map>
+#include <string>
 
 #include "arielmemmgr.h"
 #include "arielcore.h"

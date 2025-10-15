@@ -13,6 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <functional>
+
 class Shmem {
   public:
     Shmem( Output& output ) : m_dbg( output) {}

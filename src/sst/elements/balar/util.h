@@ -16,10 +16,11 @@
 #ifndef BALAR_UTIL_H
 #define BALAR_UTIL_H
 
+#include <cstdint>
 #include <stdint.h>
-#include <vector>
-#include <string>
 #include <map>
+#include <string>
+#include <vector>
 
 using namespace std;
 

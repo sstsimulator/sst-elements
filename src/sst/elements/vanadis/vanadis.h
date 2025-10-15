@@ -35,8 +35,15 @@
 #include "os/vcheckpointreq.h"
 
 #include <array>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <deque>
 #include <limits>
+#include <list>
 #include <set>
+#include <string>
+#include <vector>
 #include <sst/core/component.h>
 #include <sst/core/interfaces/stdMem.h>
 #include <sst/core/link.h>

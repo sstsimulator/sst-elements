@@ -23,6 +23,9 @@
 #endif /* !__dv */
 #include "balar_consts.h"
 
+#include <cstdint>
+#include <tuple>
+
 extern "C"{
 
 uint64_t cudaMallocSST(void **devPtr, size_t size);

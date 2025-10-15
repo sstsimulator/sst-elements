@@ -16,9 +16,13 @@
 #ifndef _MLM_H
 #define _MLM_H
 
-#include <vector>
-#include <utility>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <string>
+#include <utility>
+#include <vector>
 #include <stdlib.h>
 #include <iostream>
 #include <unistd.h>

@@ -17,13 +17,17 @@
 #ifndef _H_ARIEL_MEM_MANAGER_CACHE
 #define _H_ARIEL_MEM_MANAGER_CACHE
 
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <utility>
 #include <sst/core/output.h>
 #include <sst/core/rng/marsaglia.h>
 
 #include <stdint.h>
 #include <deque>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 #include "arielmemmgr.h"
 

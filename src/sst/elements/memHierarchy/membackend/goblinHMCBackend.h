@@ -17,7 +17,11 @@
 #ifndef _H_SST_MEMH_GOBLIN_HMC_BACKEND
 #define _H_SST_MEMH_GOBLIN_HMC_BACKEND
 
+#include <cstdint>
+#include <cstdio>
+#include <map>
 #include <queue>
+#include <string>
 #include <vector>
 
 #include <sst/core/component.h>

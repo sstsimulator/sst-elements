@@ -16,6 +16,7 @@
 #ifndef _H_SST_CRAMSIM_MEM_EVENT
 #define _H_SST_CRAMSIM_MEM_EVENT
 
+#include <cstdint>
 #include <sst/core/event.h>
 
 namespace SST {

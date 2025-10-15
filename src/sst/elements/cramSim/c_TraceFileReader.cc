@@ -17,6 +17,9 @@
 #include "sst_config.h"
 
 #include <algorithm>
+#include <iterator>
+#include <string>
+#include <utility>
 #include <assert.h>
 #include <iostream>
 #include <stdlib.h>

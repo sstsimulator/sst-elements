@@ -23,6 +23,7 @@
 #ifndef MEMHIERARCHY_HASH_H
 #define	MEMHIERARCHY_HASH_H
 
+#include <cstdint>
 #include <stdint.h>
 #include <sst/core/subcomponent.h>
 

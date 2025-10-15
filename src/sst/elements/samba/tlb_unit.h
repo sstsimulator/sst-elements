@@ -13,6 +13,7 @@
 #ifndef _H_SST_TLB
 #define _H_SST_TLB
 
+#include <cstdint>
 #include <sst_config.h>
 #include <sst/core/componentExtension.h>
 #include <sst/core/timeConverter.h>

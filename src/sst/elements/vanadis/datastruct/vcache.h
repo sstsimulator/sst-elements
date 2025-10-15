@@ -16,10 +16,12 @@
 #ifndef _H_VANADIS_CACHE
 #define _H_VANADIS_CACHE
 
+#include <cstddef>
 #include <cstdint>
 #include <list>
 #include <type_traits>
 #include <unordered_map>
+#include <utility>
 
 namespace SST {
 namespace Vanadis {

@@ -15,6 +15,7 @@
 
 #include "sst_config.h"
 #include <cmath>
+#include <vector>
 
 #include "cacheTracer.h"
 

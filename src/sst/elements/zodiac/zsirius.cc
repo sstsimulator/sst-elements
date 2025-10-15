@@ -17,6 +17,11 @@
 #include "sst_config.h"
 #include "zsirius.h"
 
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
+#include <ostream>
+#include <string>
 #include <assert.h>
 #include <memory>
 

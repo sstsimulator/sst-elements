@@ -24,6 +24,8 @@
 #undef DEBUG
 #endif
 
+#include <functional>
+#include <map>
 #include <dramsim3.h>
 
 #ifdef OLD_DEBUG

@@ -17,18 +17,21 @@
 #ifndef _LLYR_PE_H
 #define _LLYR_PE_H
 
+#include <cstddef>
+#include <iostream>
+#include <ostream>
 #include <sst/core/output.h>
 #include <sst/core/interfaces/stdMem.h>
 
+#include <algorithm>
+#include <bitset>
+#include <cstdint>
 #include <map>
 #include <queue>
+#include <sstream>
+#include <string>
 #include <tuple>
 #include <vector>
-#include <bitset>
-#include <string>
-#include <cstdint>
-#include <sstream>
-#include <algorithm>
 
 #include "../graph/graph.h"
 #include "../lsQueue.h"

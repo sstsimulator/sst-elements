@@ -13,6 +13,13 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cassert>
+#include <cstddef>
+#include <functional>
+#include <queue>
+#include <string>
+#include <utility>
+
 class StoreUnit : public Unit {
 	std::string m_name;
   public:

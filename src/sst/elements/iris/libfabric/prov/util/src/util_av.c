@@ -33,6 +33,9 @@
 
 //#include "config.h"
 
+#include <stdint.h>
+#include <stddef.h>
+#include <string.h>
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <stdlib.h>

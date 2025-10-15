@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <map>
+#include <string>
 #include <output.h>
 #include <iris/sumi/timeout.h>
 #include <iris/sumi/collective_message_fwd.h>

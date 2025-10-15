@@ -51,6 +51,7 @@
 /*
  * Endpoint common code
  */
+#include <cstddef>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>

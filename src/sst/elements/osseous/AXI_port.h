@@ -17,8 +17,12 @@ DEBUG_FLAGS debug_flag;
 
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
+#include <iostream>
+#include <ostream>
 #include "uint.h"
 #include "sint.h"
 #define UNLIKELY(condition) __builtin_expect(static_cast<bool>(condition), 0)

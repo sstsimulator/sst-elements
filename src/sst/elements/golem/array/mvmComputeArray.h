@@ -16,6 +16,8 @@
 #ifndef _MVMCOMPUTEARRAY_H
 #define _MVMCOMPUTEARRAY_H
 
+#include <cstdint>
+#include <vector>
 #include <sst/elements/golem/array/computeArray.h>
 #include <type_traits>
 

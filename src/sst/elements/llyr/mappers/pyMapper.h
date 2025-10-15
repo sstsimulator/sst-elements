@@ -16,12 +16,13 @@
 #ifndef _PY_MAPPER_H
 #define _PY_MAPPER_H
 
+#include <cstdint>
+#include <filesystem>
+#include <iostream>
 #include <map>
-#include <vector>
 #include <string>
 #include <utility>
-#include <iostream>
-#include <filesystem>
+#include <vector>
 #include <Python.h>
 
 #include "mappers/llyrMapper.h"

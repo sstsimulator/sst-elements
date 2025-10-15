@@ -16,6 +16,14 @@
 #ifndef _H_VANADIS_OS_SYSCALL_SYSCALL
 #define _H_VANADIS_OS_SYSCALL_SYSCALL
 
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <string>
+#include <tuple>
+#include <unordered_set>
+#include <vector>
 #include <sst/core/link.h>
 #include <sst/core/interfaces/stdMem.h>
 #include <sst/core/output.h>

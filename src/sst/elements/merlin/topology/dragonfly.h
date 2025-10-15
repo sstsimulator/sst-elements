@@ -20,6 +20,11 @@
 #define COMPONENTS_MERLIN_TOPOLOGY_DRAGONFLY_H
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include <sst/core/event.h>
 #include <sst/core/link.h>

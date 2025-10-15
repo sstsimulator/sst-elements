@@ -13,6 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <utility>
+#include <vector>
 #include <sst/core/sst_config.h>
 #include "memLink.h"
 

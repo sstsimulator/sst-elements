@@ -18,6 +18,10 @@
 
 #include "os/syscall/syscall.h"
 
+#include <cstddef>
+#include <cstdint>
+#include <vector>
+
 namespace SST {
 namespace Vanadis {
 

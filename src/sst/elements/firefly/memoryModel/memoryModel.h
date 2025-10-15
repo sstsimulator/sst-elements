@@ -16,6 +16,8 @@
 #ifndef COMPONENTS_FIREFLY_MEMORY_MODEL_H
 #define COMPONENTS_FIREFLY_MEMORY_MODEL_H
 
+#include <functional>
+
 namespace SST {
 namespace Firefly {
 

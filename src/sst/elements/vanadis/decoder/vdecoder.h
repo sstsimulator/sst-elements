@@ -30,6 +30,7 @@
 #include "vfpflags.h"
 
 
+#include <cassert>
 #include <cinttypes>
 #include <cstdint>
 #include <sst/core/interfaces/stdMem.h>

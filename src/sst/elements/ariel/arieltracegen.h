@@ -17,6 +17,7 @@
 #ifndef _H_SST_ARIEL_TRACE_GEN
 #define _H_SST_ARIEL_TRACE_GEN
 
+#include <cstdint>
 #include <sst/core/module.h>
 
 namespace SST {

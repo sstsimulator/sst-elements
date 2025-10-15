@@ -33,6 +33,8 @@
 #ifndef FI_DOMAIN_H
 #define FI_DOMAIN_H
 
+#include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 #include <rdma/fabric.h>
 #include <rdma/fi_eq.h>

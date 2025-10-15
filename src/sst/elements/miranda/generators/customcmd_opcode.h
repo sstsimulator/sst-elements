@@ -16,6 +16,8 @@
 #ifndef _MIRANDA_CUSTOMCMD_OPCODE_H_
 #define _MIRANDA_CUSTOMCMD_OPCODE_H_
 
+#include <cstdint>
+#include <string>
 #include <interfaces/stdMem.h>
 
 namespace SST {

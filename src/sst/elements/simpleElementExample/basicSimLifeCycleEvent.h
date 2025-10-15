@@ -16,6 +16,7 @@
 #ifndef _BASIC_SIM_LIFECYCLE_EVENT_H
 #define _BASIC_SIM_LIFECYCLE_EVENT_H
 
+#include <string>
 #include <sst/core/event.h>
 
 namespace SST {

@@ -16,6 +16,12 @@
 #ifndef SIMPLE_MMU_H
 #define SIMPLE_MMU_H
 
+#include <cassert>
+#include <cstdint>
+#include <cstdio>
+#include <map>
+#include <string>
+#include <vector>
 #include <sst/core/link.h>
 #include "mmu.h"
 #include "mmuTypes.h"

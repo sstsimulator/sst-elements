@@ -16,8 +16,11 @@
 #ifndef _MEMHIERARCHY_MULTITHREADL1_H_
 #define _MEMHIERARCHY_MULTITHREADL1_H_
 
+#include <cstddef>
+#include <cstdint>
 #include <map>
 #include <queue>
+#include <set>
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>

@@ -16,6 +16,7 @@
 #ifndef VECSHIFTREGISTER_H_
 #define VECSHIFTREGISTER_H_
 
+#include <cstdio>
 #include <iostream>
 #include <sstream>
 #include <inttypes.h>

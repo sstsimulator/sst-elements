@@ -16,6 +16,7 @@
 #ifndef _H_VANADIS_BRANCH_UNIT
 #define _H_VANADIS_BRANCH_UNIT
 
+#include <cstdint>
 #include <sst/core/subcomponent.h>
 
 #include "inst/vspeculate.h"

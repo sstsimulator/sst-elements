@@ -13,6 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cstddef>
+
 class SendEntry {
   public:
     SendEntry( int thread, NicCmd* cmd = NULL ) : cmd(cmd), thread(thread), vc(0) {}

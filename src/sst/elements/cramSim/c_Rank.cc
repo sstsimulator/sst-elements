@@ -28,6 +28,7 @@
 // limitations under the License.
 
 //SST includes
+#include <vector>
 #include <sst_config.h>
 
 // global includes

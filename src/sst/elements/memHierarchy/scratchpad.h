@@ -17,13 +17,18 @@
 #define MEMHIERARCHY_SCRATCHPAD_H
 
 
+#include <cstddef>
+#include <cstdint>
+#include <set>
+#include <string>
+#include <vector>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/output.h>
-#include <map>
 #include <list>
+#include <map>
 
 #include "sst/elements/memHierarchy/membackend/backing.h"
 #include "sst/elements/memHierarchy/moveEvent.h"

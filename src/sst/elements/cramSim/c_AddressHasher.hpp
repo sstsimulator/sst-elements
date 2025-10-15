@@ -30,13 +30,14 @@
 #define c_ADDRESSHASHER_HPP
 
 // sst includes
+#include <string>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
 #include <sst/core/subcomponent.h>
 
-#include <memory>
 #include <map>
+#include <memory>
 
 // local includes
 //#include "c_BankCommand.hpp"

@@ -19,6 +19,8 @@
 #include "os/syscall/syscall.h"
 #include "os/callev/voscallsetaffinity.h"
 
+#include <vector>
+
 namespace SST {
 namespace Vanadis {
 

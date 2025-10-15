@@ -44,6 +44,8 @@
 
 // reentrant red-black tree
 
+#include <stdlib.h>
+#include <stddef.h>
 #include <assert.h>
 
 #include <ofi_tree.h>

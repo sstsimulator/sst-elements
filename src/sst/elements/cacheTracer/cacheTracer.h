@@ -16,6 +16,8 @@
 #ifndef _CACHETRACER_H
 #define _CACHETRACER_H
 
+#include <cstdint>
+#include <cstdio>
 #include <sst/core/output.h>
 #include <sst/core/event.h>
 #include <sst/core/component.h>
@@ -29,8 +31,8 @@
 #include <errno.h>
 #include <execinfo.h>
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <map>
 
 using namespace std;

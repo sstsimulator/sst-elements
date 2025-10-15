@@ -16,6 +16,10 @@
 #ifndef MEMHIERARCHY_LINETYPES_H
 #define MEMHIERARCHY_LINETYPES_H
 
+#include <cstddef>
+#include <cstdint>
+#include <set>
+#include <string>
 #include <vector>
 
 #include <sst/core/output.h>

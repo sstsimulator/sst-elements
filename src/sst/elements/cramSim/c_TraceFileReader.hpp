@@ -17,11 +17,12 @@
 #ifndef C_TRACEFILEREADER_HPP
 #define C_TRACEFILEREADER_HPP
 
+#include <cstddef>
 #include <stdint.h>
-#include <queue>
-#include <iostream>
-#include <string>
 #include <fstream>
+#include <iostream>
+#include <queue>
+#include <string>
 
 //SST includes
 #include <sst/core/component.h>

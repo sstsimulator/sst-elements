@@ -40,6 +40,9 @@
 /*******************************************************************************
  * GNI API Functions
  ******************************************************************************/
+#include <stdint.h>
+#include <stddef.h>
+
 extern int sumi_pep_open(struct fid_fabric *fabric, struct fi_info *info,
 			 struct fid_pep **pep, void *context);
 

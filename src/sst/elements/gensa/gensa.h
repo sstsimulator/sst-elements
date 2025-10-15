@@ -20,9 +20,12 @@
 #define __STDC_FORMAT_MACROS
 #endif
 
+#include <cstdint>
+#include <set>
+#include <string>
 #include <inttypes.h>
-#include <vector>
 #include <queue>
+#include <vector>
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>

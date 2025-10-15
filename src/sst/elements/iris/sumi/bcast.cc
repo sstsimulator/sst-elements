@@ -13,6 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cstring>
 #include <output.h>
 #include <iris/sumi/bcast.h>
 #include <iris/sumi/communicator.h>

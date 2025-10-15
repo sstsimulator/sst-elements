@@ -16,6 +16,8 @@
 #ifndef _MEMHIERARCHY_CUSTOMCMDMEMHANDLER_H_
 #define _MEMHIERARCHY_CUSTOMCMDMEMHANDLER_H_
 
+#include <functional>
+#include <set>
 #include <string>
 
 #include <sst/core/event.h>

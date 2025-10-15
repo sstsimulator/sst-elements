@@ -17,6 +17,10 @@
 #ifndef __SST_MEMH_BACKEND__
 #define __SST_MEMH_BACKEND__
 
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <string>
 #include <sst/core/event.h>
 #include <sst/core/output.h>
 #include <sst/core/warnmacros.h>

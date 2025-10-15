@@ -14,6 +14,7 @@
 // distribution.
 
 
+#include <deque>
 #include <sst_config.h>
 #include "sst/elements/memHierarchy/util.h"
 #include "membackend/memBackend.h"

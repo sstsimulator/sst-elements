@@ -16,8 +16,11 @@
 #ifndef MESICOHERENCECONTROLLER_H
 #define MESICOHERENCECONTROLLER_H
 
-#include <iostream>
 #include <array>
+#include <cstdint>
+#include <iostream>
+#include <map>
+#include <set>
 
 #include "sst/elements/memHierarchy/coherencemgr/coherenceController.h"
 #include "sst/elements/memHierarchy/cacheArray.h"

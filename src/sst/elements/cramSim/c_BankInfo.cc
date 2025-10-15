@@ -26,7 +26,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include <cassert>
+#include <ios>
+#include <list>
 #include <memory>
+#include <ostream>
+#include <sstream>
 #include <assert.h>
 
 #include "sst_config.h"

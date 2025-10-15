@@ -16,6 +16,8 @@
 #ifndef _H_VANADIS_GET_THREAD_STATE
 #define _H_VANADIS_GET_THREAD_STATE
 
+#include <cstdint>
+#include <vector>
 #include <sst/core/event.h>
 
 namespace SST {

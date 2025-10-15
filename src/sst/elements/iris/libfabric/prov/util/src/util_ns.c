@@ -41,6 +41,11 @@
  * a query to the name server residing on "node".
  */
 
+#include <assert.h>
+#include <errno.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>

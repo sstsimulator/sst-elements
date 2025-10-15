@@ -15,6 +15,8 @@
 
 
 #include "sst_config.h"
+#include <cassert>
+#include <vector>
 #include <sst/core/unitAlgebra.h>
 
 #include "proscpu.h"

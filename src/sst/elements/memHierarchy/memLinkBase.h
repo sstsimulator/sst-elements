@@ -16,10 +16,12 @@
 #ifndef _MEMHIERARCHY_MEMLINKBASE_H_
 #define _MEMHIERARCHY_MEMLINKBASE_H_
 
+#include <cstdint>
+#include <queue>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <queue>
 
 #include <sst/core/event.h>
 #include <sst/core/output.h>

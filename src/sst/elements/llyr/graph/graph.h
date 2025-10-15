@@ -23,11 +23,13 @@
 #include "edge.h"
 #include "vertex.h"
 
-#include <map>
-#include <string>
-#include <vector>
 #include <cstdint>
 #include <fstream>
+#include <iostream>
+#include <map>
+#include <ostream>
+#include <string>
+#include <vector>
 
 namespace SST {
 namespace Llyr {

@@ -31,9 +31,10 @@
 #define C_BANKGROUP_HPP_
 
 // global includes
+#include <map>
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 // SST includes
 #include <sst/core/component.h>

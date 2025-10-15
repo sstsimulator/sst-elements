@@ -20,6 +20,7 @@
 #ifndef _SIEVECONTROLLER_H_
 #define _SIEVECONTROLLER_H_
 
+#include <cstdint>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>

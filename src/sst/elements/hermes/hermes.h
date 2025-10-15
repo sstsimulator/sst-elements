@@ -16,6 +16,14 @@
 #ifndef _H_HERMES
 #define _H_HERMES
 
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <functional>
+#include <ostream>
+#include <string>
+#include <vector>
 #include <sst/core/module.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/component.h>

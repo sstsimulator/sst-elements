@@ -15,12 +15,16 @@
 
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
+#include <list>
+#include <string>
 #include <iris/sumi/collective.h>
 #include <iris/sumi/collective_message.h>
 #include <iris/sumi/dense_rank_map.h>
 #include <iris/sumi/communicator.h>
-#include <set>
 #include <map>
+#include <set>
 #include <stdint.h>
 //#include <sstmac/common/sstmac_config.h>
 #include <mercury/common/allocator.h>

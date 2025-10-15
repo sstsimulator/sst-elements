@@ -16,6 +16,8 @@
 #ifndef _H_THORNHILL_MEMORY_HEAP
 #define _H_THORNHILL_MEMORY_HEAP
 
+#include <cstdint>
+#include <vector>
 #include <sst/core/component.h>
 
 namespace SST {

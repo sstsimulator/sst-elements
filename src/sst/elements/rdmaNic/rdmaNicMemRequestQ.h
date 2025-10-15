@@ -13,6 +13,15 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cassert>
+#include <cstdint>
+#include <cstdio>
+#include <map>
+#include <queue>
+#include <set>
+#include <utility>
+#include <vector>
+
     class MemRequestQ : public ComponentExtension {
 
         struct SrcChannel {

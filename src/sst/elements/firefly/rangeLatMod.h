@@ -19,6 +19,8 @@
 
 #include "latencyMod.h"
 #include <cmath>
+#include <cstddef>
+#include <deque>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <sst/core/unitAlgebra.h>

@@ -16,6 +16,13 @@
 #ifndef MEMHIERARCHY_MEMTYPES_H
 #define MEMHIERARCHY_MEMTYPES_H
 
+#include <cstdint>
+#include <iterator>
+#include <map>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
 #include <sst/core/sst_types.h>
 #include <limits>
 #include <numeric>

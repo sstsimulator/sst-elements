@@ -17,13 +17,14 @@
 #ifndef _H_ZODIAC_DUMPI_READER
 #define _H_ZODIAC_DUMPI_READER
 
+#include <cstdint>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <string>
 #include <iostream>
 #include <queue>
+#include <string>
 
 #include "sst/elements/hermes/msgapi.h"
 

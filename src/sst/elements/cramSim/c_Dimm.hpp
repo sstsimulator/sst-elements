@@ -29,8 +29,9 @@
 #ifndef C_DIMM_HPP
 #define C_DIMM_HPP
 
-#include <vector>
+#include <cstddef>
 #include <queue>
+#include <vector>
 #include <stdlib.h>
 
 // SST includes

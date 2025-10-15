@@ -16,7 +16,11 @@
 #ifndef _H_EMBER_MPI_LIB
 #define _H_EMBER_MPI_LIB
 
+#include <cstddef>
+#include <cstdint>
+#include <map>
 #include <queue>
+#include <vector>
 
 #include "libs/emberLib.h"
 

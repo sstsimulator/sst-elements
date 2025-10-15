@@ -13,11 +13,13 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cassert>
+#include <cstdio>
 #include <sst_config.h>
 #include "os/include/virtMemMap.h"
 
-#include <queue>
 #include <iterator>
+#include <queue>
 #include <string>
 #include <string.h>
 #include "velf/velfinfo.h"

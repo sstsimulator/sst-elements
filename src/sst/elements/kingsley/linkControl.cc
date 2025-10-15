@@ -14,6 +14,8 @@
 // distribution.
 
 
+#include <cstddef>
+#include <cstdint>
 #include <sst_config.h>
 
 #include "linkControl.h"

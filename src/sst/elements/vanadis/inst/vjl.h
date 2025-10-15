@@ -19,6 +19,7 @@
 #include "inst/vinst.h"
 #include "inst/vspeculate.h"
 
+#include <cstdint>
 #include <cstdio>
 
 namespace SST {

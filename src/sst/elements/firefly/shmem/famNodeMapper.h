@@ -16,6 +16,7 @@
 #ifndef _H_FIREFLY_SHMEM_FAM_NODE_MAPPER
 #define _H_FIREFLY_SHMEM_FAM_NODE_MAPPER
 
+#include <cassert>
 #include <sst/core/module.h>
 
 namespace SST {

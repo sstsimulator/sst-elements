@@ -19,6 +19,8 @@
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
 #endif
+#include <cstdint>
+#include <map>
 #include <inttypes.h>
 
 #include <sst/core/event.h>

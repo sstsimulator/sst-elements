@@ -13,6 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cstdlib>
 #include <stdlib.h>
 #include <signal.h>
 #include "sumi_prov.h"

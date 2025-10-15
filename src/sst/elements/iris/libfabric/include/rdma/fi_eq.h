@@ -34,6 +34,8 @@
 #define FI_EQ_H
 
 #ifndef _WIN32
+#include <stddef.h>
+#include <stdint.h>
 #include <pthread.h>
 #endif /* _WIN32 */
 

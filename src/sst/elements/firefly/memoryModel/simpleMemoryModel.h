@@ -16,6 +16,10 @@
 #ifndef COMPONENTS_FIREFLY_SIMPLE_MEMORY_MODEL_H
 #define COMPONENTS_FIREFLY_SIMPLE_MEMORY_MODEL_H
 
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <vector>
 #include <math.h>
 #include "ioVec.h"
 #include "memoryModel/memoryModel.h"

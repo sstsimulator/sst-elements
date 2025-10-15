@@ -16,8 +16,10 @@
 #ifndef _H_VANADIS_NODE_OS_INCLUDE_FREE_LIST
 #define _H_VANADIS_NODE_OS_INCLUDE_FREE_LIST
 
-#include <map>
 #include <cassert>
+#include <cstdint>
+#include <iterator>
+#include <map>
 
 namespace SST {
 namespace Vanadis {

@@ -17,9 +17,11 @@
 #define _CSV_PARSER_H
 
 #include <fstream>
+#include <iostream>
+#include <ostream>
 #include <sstream>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "../llyrTypes.h"
 

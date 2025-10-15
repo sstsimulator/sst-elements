@@ -16,6 +16,7 @@
 #ifndef _H_HERMES_MISC_INTERFACE
 #define _H_HERMES_MISC_INTERFACE
 
+#include <cassert>
 #include <assert.h>
 
 #include "hermes.h"

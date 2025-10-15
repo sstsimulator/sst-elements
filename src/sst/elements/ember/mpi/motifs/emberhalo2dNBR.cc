@@ -14,6 +14,8 @@
 // distribution.
 
 
+#include <cassert>
+#include <queue>
 #include <sst_config.h>
 
 #include <stdint.h>

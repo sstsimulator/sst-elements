@@ -35,6 +35,7 @@
 #ifndef OSX_OSD_H
 #define OSX_OSD_H
 
+#include <stddef.h>
 #include <sys/time.h>
 #include <time.h>
 #include <mach/clock.h>

@@ -19,7 +19,12 @@
 
 #include "embermap.h"
 
+#include <cstdint>
+#include <cstdlib>
 #include <fstream>
+#include <iostream>
+#include <map>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <vector>

@@ -42,6 +42,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <cstddef>
+#include <utility>
 #include <mpi_api.h>
 #include <mpi_queue/mpi_queue.h>
 //#include <sumi-mpi/otf2_output_stat.h>

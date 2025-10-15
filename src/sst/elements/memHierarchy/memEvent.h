@@ -16,6 +16,9 @@
 #ifndef MEMHIERARCHY_MEMEVENT_H
 #define MEMHIERARCHY_MEMEVENT_H
 
+#include <cstddef>
+#include <cstdint>
+#include <string>
 #include <utility>
 
 #include <sst/core/sst_types.h>

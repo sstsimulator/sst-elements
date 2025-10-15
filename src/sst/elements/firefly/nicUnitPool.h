@@ -14,6 +14,9 @@
 // distribution.
 
 
+#include <cassert>
+#include <vector>
+
 class UnitPool {
     enum { RoundRobin, PerContext } m_nicUnitAllocPolicy;
   public:

@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <functional>
+#include <string>
 #include <mercury/common/component.h>
 #include <mercury/components/node_base_fwd.h>
 #include <mercury/operating_system/launch/app_launcher_fwd.h>

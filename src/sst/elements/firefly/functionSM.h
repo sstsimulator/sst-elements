@@ -16,6 +16,7 @@
 #ifndef COMPONENTS_FIREFLY_FUNCTIONSM_H
 #define COMPONENTS_FIREFLY_FUNCTIONSM_H
 
+#include <vector>
 #include <sst/core/output.h>
 #include <sst/core/params.h>
 

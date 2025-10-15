@@ -32,8 +32,10 @@
 #ifndef C_TxnConverter_HPP_
 #define C_TxnConverter_HPP_
 
-#include <vector>
+#include <cstddef>
+#include <deque>
 #include <queue>
+#include <vector>
 
 // SST includes
 #include <sst/core/subcomponent.h>

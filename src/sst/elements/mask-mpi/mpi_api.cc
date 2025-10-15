@@ -42,13 +42,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <cstring>
 #include <sstream>
+#include <utility>
 #include <time.h>
+#include <chrono>
 #include <climits>
 #include <cmath>
-#include <chrono>
-#include <iomanip>
 #include <ctime>
+#include <iomanip>
 
 //#include <mercury/common/runtime.h>
 

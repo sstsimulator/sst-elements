@@ -29,12 +29,20 @@
 #ifndef C_DeviceDriver_HPP
 #define C_DeviceDriver_HPP
 
-#include <vector>
-#include <queue>
-#include <list>
-#include <set>
-#include <iostream>
+#include <cstddef>
+#include <cstdint>
+#include <deque>
 #include <fstream>
+#include <functional>
+#include <iostream>
+#include <list>
+#include <map>
+#include <ostream>
+#include <queue>
+#include <set>
+#include <streambuf>
+#include <string>
+#include <vector>
 
 // SST includes
 #include <sst/core/component.h>

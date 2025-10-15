@@ -17,6 +17,15 @@
 #ifndef COMPONENTS_FIREFLY_HADESSHMEM_H
 #define COMPONENTS_FIREFLY_HADESSHMEM_H
 
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <map>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
 #include <sst/core/module.h>
 
 #include <sst/core/params.h>

@@ -30,6 +30,10 @@
  * SOFTWARE.
  */
 
+#include <assert.h>
+#include <string.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <stdio.h>

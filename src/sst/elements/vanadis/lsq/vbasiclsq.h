@@ -16,6 +16,12 @@
 #ifndef _H_VANADIS_BASIC_LSQ
 #define _H_VANADIS_BASIC_LSQ
 
+#include <cstddef>
+#include <deque>
+#include <iomanip>
+#include <ios>
+#include <set>
+#include <sstream>
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/interfaces/stdMem.h>
@@ -28,8 +34,8 @@
 #include <cassert>
 #include <cinttypes>
 #include <cstdint>
-#include <vector>
 #include <queue>
+#include <vector>
 
 using namespace SST::Interfaces;
 

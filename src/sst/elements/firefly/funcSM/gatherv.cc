@@ -14,6 +14,7 @@
 // distribution.
 
 
+#include <cstring>
 #include <sst_config.h>
 
 #include <string.h>

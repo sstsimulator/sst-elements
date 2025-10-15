@@ -11,16 +11,17 @@
 //
 
 
+#include <ostream>
 #include <sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/link.h>
 #include <sst/elements/memHierarchy/memEvent.h>
 
-#include <map>
 #include <cstddef>
 #include <iostream>
 #include <list>
+#include <map>
 
 #include "rank.h"
 #include "writeBuffer.h"

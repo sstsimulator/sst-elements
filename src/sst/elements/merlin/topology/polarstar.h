@@ -8,6 +8,7 @@
 #ifndef COMPONENTS_MERLIN_TOPOLOGY_POLARSTAR_H
 #define COMPONENTS_MERLIN_TOPOLOGY_POLARSTAR_H
 
+#include <string>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
@@ -15,11 +16,11 @@
 
 #include <string.h>
 #include <unistd.h>
-#include <vector>
 #include <algorithm>
+#include <vector>
 #include <stdlib.h>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
 #include "sst/elements/merlin/router.h"

@@ -42,6 +42,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <cstdint>
+#include <set>
 #include <iris/sumi/communicator.h>
 #include <mercury/common/errors.h>
 #include <mercury/common/node_address.h>
@@ -53,9 +55,9 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mpi_comm/mpi_group.h>
 #include <mpi_integers.h>
 #include <mpi_request_fwd.h>
-#include <unordered_map>
-#include <string>
 #include <map>
+#include <string>
+#include <unordered_map>
 
 #pragma once
 

@@ -48,8 +48,11 @@
 #include <algorithm>
 #include <array>
 #include <cinttypes>
+#include <cstdint>
 #include <iomanip>
+#include <ios>
 #include <iostream>
+#include <ostream>
 #include <random>
 #include <type_traits>
 

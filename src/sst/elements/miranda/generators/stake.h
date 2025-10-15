@@ -17,6 +17,8 @@
 #ifndef _H_SST_MIRANDA_STAKE
 #define _H_SST_MIRANDA_STAKE
 
+#include <cstddef>
+#include <cstdint>
 #include <sst/elements/miranda/mirandaGenerator.h>
 #include <sst/core/output.h>
 
@@ -32,9 +34,9 @@
 #include <fesvr/option_parser.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace SST {
 namespace Miranda {

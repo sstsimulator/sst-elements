@@ -17,6 +17,9 @@
 #ifndef COMPONENTS_KINGSLEY_NOC_MESH_H
 #define COMPONENTS_KINGSLEY_NOC_MESH_H
 
+#include <cstddef>
+#include <utility>
+#include <vector>
 #include <sst/core/clock.h>
 #include <sst/core/component.h>
 #include <sst/core/event.h>

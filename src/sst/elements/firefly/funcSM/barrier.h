@@ -18,6 +18,8 @@
 
 #include "funcSM/collectiveTree.h"
 
+#include <string>
+
 namespace SST {
 namespace Firefly {
 

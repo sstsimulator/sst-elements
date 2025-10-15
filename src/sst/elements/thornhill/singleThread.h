@@ -16,7 +16,10 @@
 #ifndef _H_THORNHILL_SINGLE_THREAD
 #define _H_THORNHILL_SINGLE_THREAD
 
+#include <deque>
+#include <functional>
 #include <queue>
+#include <string>
 #include "detailedCompute.h"
 
 namespace SST {

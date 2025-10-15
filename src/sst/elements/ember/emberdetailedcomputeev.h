@@ -20,6 +20,11 @@
 #include "emberevent.h"
 #include "sst/elements/thornhill/detailedCompute.h"
 
+#include <deque>
+#include <functional>
+#include <string>
+#include <utility>
+
 namespace SST {
 namespace Ember {
 

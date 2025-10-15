@@ -20,13 +20,14 @@
 #define _H_SST_NVM_PARAMS
 
 
+#include <cstdint>
 #include <sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/timeConverter.h>
 #include <sst/elements/memHierarchy/memEvent.h>
 
-#include <map>
 #include <list>
+#include <map>
 
 // This class structure represents the NVM parameters
 using namespace SST; //::MessierComponent;

@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <memory>
 #include <iris/sumi/collective.h>
 #include <mpi_status.h>
 #include <mpi_message.h>

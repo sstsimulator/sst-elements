@@ -15,6 +15,7 @@
 
 #include "sst_config.h"
 
+#include <cstdio>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
 #include "virtNic.h"

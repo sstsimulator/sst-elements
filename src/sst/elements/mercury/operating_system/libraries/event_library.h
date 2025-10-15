@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <string>
 #include <sst/core/params.h>
 #include <mercury/common/events.h>
 #include <mercury/common/request_fwd.h>

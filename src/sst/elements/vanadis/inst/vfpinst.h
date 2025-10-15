@@ -16,6 +16,8 @@
 #ifndef _H_VANADIS_FP_INSTRUCTION
 #define _H_VANADIS_FP_INSTRUCTION
 
+#include <cstdint>
+#include <string>
 #include <fenv.h>
 
 #include "decoder/visaopts.h"
@@ -26,8 +28,8 @@
 #include "util/vfpreghandler.h"
 #include "vfpflags.h"
 
-#include <cstring>
 #include <cmath>
+#include <cstring>
 #include <sst/core/output.h>
 
 namespace SST {

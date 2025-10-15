@@ -13,6 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cstring>
 #include <mercury/common/null_buffer.h>
 #include <mercury/common/errors.h>
 #include <mercury/hardware/network/network_message.h>

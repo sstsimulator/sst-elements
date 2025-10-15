@@ -17,6 +17,9 @@
 #ifndef _H_EMBER_SHMEM_GETV
 #define _H_EMBER_SHMEM_GETV
 
+#include <sstream>
+#include <string>
+#include <type_traits>
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
 #include <cxxabi.h>

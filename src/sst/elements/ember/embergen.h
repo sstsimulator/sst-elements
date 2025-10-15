@@ -17,7 +17,14 @@
 #ifndef _H_EMBER_GENERATOR
 #define _H_EMBER_GENERATOR
 
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <ctime>
+#include <functional>
 #include <queue>
+#include <sstream>
+#include <string>
 
 #include <sst/core/output.h>
 #include <sst/core/module.h>

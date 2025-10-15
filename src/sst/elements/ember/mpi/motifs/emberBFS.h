@@ -20,13 +20,17 @@
 #define _H_EMBER_BFS_MOTIF
 
 #include "mpi/embermpigen.h"
+#include <cstdint>
+#include <iostream>
+#include <ostream>
+#include <vector>
 #include <sst/core/rng/mersenne.h>
 #include <sst/core/shared/sharedMap.h>
 #include <sst/core/output.h>
 
+#include <cmath>
 #include <map>
 #include <tuple>
-#include <cmath>
 
 namespace SST {
 namespace Ember {

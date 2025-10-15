@@ -17,6 +17,8 @@
 #ifndef COMPONENTS_KINGSLEY_LRU_UNIT_H
 #define COMPONENTS_KINGSLEY_LRU_UNIT_H
 
+#include <cstddef>
+#include <string>
 #include <vector>
 
 using namespace SST;

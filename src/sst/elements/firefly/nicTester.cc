@@ -15,6 +15,9 @@
 
 #include "sst_config.h"
 
+#include <cstddef>
+#include <cstdio>
+#include <vector>
 #include <sst/core/params.h>
 #include <sst/core/link.h>
 

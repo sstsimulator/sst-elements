@@ -14,6 +14,8 @@
 // distribution.
 
 
+#include <cstdio>
+#include <queue>
 #include <sst_config.h>
 #include "emberallreduce.h"
 

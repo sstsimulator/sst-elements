@@ -33,6 +33,8 @@
 
 #pragma once
 
+#include <cstdio>
+#include <cstdlib>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

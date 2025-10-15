@@ -18,6 +18,8 @@
  */
 
 
+#include <sstream>
+#include <string>
 #include <sst/core/sst_config.h>
 #include <sst/core/params.h>
 #include "../util.h"

@@ -21,6 +21,7 @@
 
 #include "rocc/vroccinterface.h"
 
+#include <cstdint>
 #include <cstdio>
 
 namespace SST {

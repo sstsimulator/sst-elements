@@ -16,6 +16,7 @@
 #ifndef _BASIC_SUBCOMPONENT_EVENT_H
 #define _BASIC_SUBCOMPONENT_EVENT_H
 
+#include <string>
 #include <sst/core/event.h>
 
 namespace SST {

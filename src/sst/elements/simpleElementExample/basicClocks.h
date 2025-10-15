@@ -39,6 +39,7 @@
  *  Clock2 suspend themselves.
  */
 
+#include <string>
 #include <sst/core/component.h>
 #include <sst/core/timeConverter.h>
 

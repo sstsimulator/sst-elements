@@ -25,6 +25,10 @@
     };
 #endif
 
+#include <cassert>
+#include <cstddef>
+#include <string>
+
 	class UnitBase {
 	  public:
 

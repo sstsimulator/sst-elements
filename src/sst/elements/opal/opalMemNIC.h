@@ -16,6 +16,10 @@
 #ifndef _OPAL_MEMNIC_SUBCOMPONENT_H_
 #define _OPAL_MEMNIC_SUBCOMPONENT_H_
 
+#include <cstddef>
+#include <cstdint>
+#include <queue>
+#include <string>
 #include <sst/core/component.h>
 #include <sst/core/subcomponent.h>
 

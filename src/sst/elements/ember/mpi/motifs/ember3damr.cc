@@ -13,6 +13,13 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cassert>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <map>
+#include <queue>
+#include <string>
 #include <sst_config.h>
 
 #include <climits>

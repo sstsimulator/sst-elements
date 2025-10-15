@@ -18,6 +18,8 @@
 // using the DRAMSim port from:
 // https://github.com/tactcomplabs/HBM
 
+#include <cstdint>
+#include <deque>
 #include <sst/core/sst_config.h>
 #include "sst/elements/memHierarchy/util.h"
 #include "membackend/HBMdramSimBackend.h"

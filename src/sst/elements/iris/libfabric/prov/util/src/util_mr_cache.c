@@ -34,6 +34,10 @@
  */
 
 //#include <config.h>
+#include <assert.h>
+#include <stddef.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <ofi_util.h>
 #include <ofi_iov.h>

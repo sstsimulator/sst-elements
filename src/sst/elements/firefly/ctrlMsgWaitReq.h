@@ -18,6 +18,9 @@
 
 #include "ctrlMsgCommReq.h"
 
+#include <cstddef>
+#include <deque>
+
 namespace SST {
 namespace Firefly {
 namespace CtrlMsg {

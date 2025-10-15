@@ -48,6 +48,11 @@ Questions? Contact sst-macro-help@sandia.gov
 //#include <sstmac/common/event_scheduler_fwd.h>
 //#include <sstmac/software/launch/task_mapping.h>
 
+#include <cstdint>
+#include <functional>
+#include <map>
+#include <memory>
+#include <vector>
 #include <output.h>
 
 #include <sst/core/eli/elementbuilder.h>
@@ -74,8 +79,8 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <iris/sumi/communicator_fwd.h>
 #include <iris/sumi/null_buffer.h>
 
-#include <unordered_map>
 #include <queue>
+#include <unordered_map>
 
 namespace SST::Iris::sumi {
 

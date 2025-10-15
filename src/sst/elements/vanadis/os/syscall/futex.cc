@@ -13,6 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cassert>
+#include <cinttypes>
+#include <cstdio>
 #include <sst_config.h>
 
 #include "os/syscall/futex.h"

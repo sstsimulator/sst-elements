@@ -36,6 +36,8 @@
 #ifndef FI_PROV_H
 #define FI_PROV_H
 
+#include <stdint.h>
+#include <stddef.h>
 #include <rdma/fabric.h>
 
 #ifdef __cplusplus

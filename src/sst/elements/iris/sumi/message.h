@@ -44,8 +44,11 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
 #include <list>
 #include <memory>
+#include <string>
 #include <utility>
 #include <mercury/common/util.h>
 #include <mercury/common/printable.h>

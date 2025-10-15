@@ -16,14 +16,16 @@
 #ifndef _LLYR_H
 #define _LLYR_H
 
+#include <cstdint>
+#include <vector>
 #include <sst/core/sst_config.h>
 
 #include <sst/core/component.h>
 #include <sst/core/interfaces/stdMem.h>
 
-#include <string>
-#include <fstream>
 #include <cinttypes>
+#include <fstream>
+#include <string>
 
 #include "graph/graph.h"
 #include "lsQueue.h"

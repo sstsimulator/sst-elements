@@ -14,6 +14,11 @@
 // distribution.
 
 
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <sst_config.h>
 #include <stdlib.h>
 #include <stdint.h>

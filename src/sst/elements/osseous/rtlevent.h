@@ -18,6 +18,7 @@
 
 #include "uint.h"
 #include "rtl_header.h"
+#include <cstdint>
 #include <string>
 #include <sst/core/event.h>
 using namespace SST;

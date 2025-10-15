@@ -44,6 +44,7 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #define ssthg_app_name reduce
 
+#include <cstdio>
 #include <stdio.h>
 
 #include <mask_mpi.h>

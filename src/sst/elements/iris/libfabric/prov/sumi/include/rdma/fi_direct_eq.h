@@ -40,6 +40,9 @@
 /*******************************************************************************
  * GNI API Functions
  ******************************************************************************/
+#include <stddef.h>
+#include <stdint.h>
+
 extern int sumi_fabric_trywait(struct fid_fabric *fabric, struct fid **fids,
                                int count);
 

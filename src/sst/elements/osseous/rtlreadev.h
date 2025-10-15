@@ -14,6 +14,7 @@
 // distribution.
 
 
+#include <cstdint>
 #include <inttypes.h>
 
 #ifndef _H_SST_OSSEOUS_READ_EVENT

@@ -14,6 +14,7 @@
 // distribution.
 
 
+#include <cstddef>
 #include <sst/core/sst_config.h>
 #include <membackend/goblinHMCBackend.h>
 

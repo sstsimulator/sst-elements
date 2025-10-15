@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <sst/core/params.h>
 #include <mercury/common/timestamp.h>
 #include <mercury/libraries/compute/memory_model.h>

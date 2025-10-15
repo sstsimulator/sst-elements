@@ -17,6 +17,8 @@
 #ifndef _H_SST_STRIDE_PREFETCH
 #define _H_SST_STRIDE_PREFETCH
 
+#include <cstdint>
+#include <deque>
 #include <vector>
 
 #include <sst/core/event.h>

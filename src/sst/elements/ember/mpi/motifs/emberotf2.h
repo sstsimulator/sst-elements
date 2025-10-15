@@ -17,7 +17,10 @@
 #ifndef _H_EMBER_OTF2_READER
 #define _H_EMBER_OTF2_READER
 
+#include <cstdint>
+#include <queue>
 #include <unordered_map>
+#include <vector>
 
 #include "mpi/embermpigen.h"
 #include "otf2/otf2.h"

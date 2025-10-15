@@ -13,6 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <execinfo.h>

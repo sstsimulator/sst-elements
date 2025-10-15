@@ -16,6 +16,10 @@
 #ifndef _PHYSMEMMANAGER_H
 #define _PHYSMEMMANAGER_H
 
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
 #include <stddef.h>
 #include <vector>
 #include <stdint.h>

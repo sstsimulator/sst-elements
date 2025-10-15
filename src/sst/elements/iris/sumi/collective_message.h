@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <string>
 #include <iris/sumi/message.h>
 #include <iris/sumi/collective.h>
 #include <mercury/common/thread_safe_new.h>

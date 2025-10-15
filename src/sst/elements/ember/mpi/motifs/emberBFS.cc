@@ -17,13 +17,14 @@
 // https://github.com/sstsimulator/a-sst/tree/new-bfs-models/ISB-BFS
 
 
+#include <queue>
 #include <sst_config.h>
-#include <fstream>
-#include <iterator>
 #include <algorithm>
+#include <fstream>
 #include <iostream>
-#include <string>
+#include <iterator>
 #include <memory>
+#include <string>
 #include "emberBFS.h"
 #include <stdint.h>
 #include <regex>

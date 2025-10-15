@@ -35,6 +35,9 @@
 
 //#include "config.h"
 
+#include <stdint.h>
+#include <stddef.h>
+#include <assert.h>
 #include <complex.h>
 #include <stdio.h>
 #include <stdlib.h>

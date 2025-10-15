@@ -29,6 +29,13 @@
 #ifndef COMMON_HELPER_IMAGE_H_
 #define COMMON_HELPER_IMAGE_H_
 
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ostream>
 #include <assert.h>
 #include <exception.h>
 #include <math.h>

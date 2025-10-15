@@ -18,6 +18,9 @@
 #define _H_SST_ARIEL_TEXT_TRACE_GEN
 
 #include <climits>
+#include <cstdint>
+#include <cstdio>
+#include <string>
 
 #include <sst/core/params.h>
 

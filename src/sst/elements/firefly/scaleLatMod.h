@@ -18,6 +18,9 @@
 #define COMPONENTS_FIREFLY_SCALELATMOD_H
 
 #include "latencyMod.h"
+#include <cstddef>
+#include <cstdint>
+#include <deque>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <sst/core/unitAlgebra.h>

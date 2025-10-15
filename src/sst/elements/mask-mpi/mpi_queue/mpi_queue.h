@@ -42,6 +42,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <list>
+#include <set>
+#include <unordered_map>
+#include <vector>
 #include <mpi_message.h>
 #include <mpi_request.h>
 #include <mpi_comm/mpi_comm.h>

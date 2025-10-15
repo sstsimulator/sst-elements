@@ -39,6 +39,10 @@
 //#  include <config.h>
 //#endif /* HAVE_CONFIG_H */
 
+#include <stddef.h>
+#include <string.h>
+#include <assert.h>
+#include <stdint.h>
 #include <pthread.h>
 #include <stdio.h>
 

@@ -16,6 +16,9 @@
 #ifndef _H_VANADIS_NODE_OS_INCLUDE_THREAD_GRP
 #define _H_VANADIS_NODE_OS_INCLUDE_THREAD_GRP
 
+#include <cassert>
+#include <cstddef>
+#include <map>
 #include <string>
 
 #include <set>

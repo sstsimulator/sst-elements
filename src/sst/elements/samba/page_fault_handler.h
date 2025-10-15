@@ -16,6 +16,9 @@
 #ifndef _H_SAMBA_PAGE_FAULT_HANDLER
 #define _H_SAMBA_PAGE_FAULT_HANDLER
 
+#include <cstdint>
+#include <iostream>
+#include <ostream>
 #include <sst/core/subcomponent.h>
 #include <sst/core/output.h>
 

@@ -25,6 +25,9 @@
 
 #include "fasthash.h"
 
+#include <stdint.h>
+#include <stddef.h>
+
 // Compression function for Merkle-Damgard construction.
 // This function is generated using the framework provided.
 static inline uint64_t mix(uint64_t h)

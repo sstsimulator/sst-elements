@@ -40,6 +40,9 @@
 /*******************************************************************************
  * GNI API Functions
  ******************************************************************************/
+#include <stddef.h>
+#include <stdint.h>
+
 extern ssize_t sumi_ep_atomic_write(struct fid_ep *ep, const void *buf,
 				    size_t count, void *desc,
 				    fi_addr_t dest_addr, uint64_t addr,

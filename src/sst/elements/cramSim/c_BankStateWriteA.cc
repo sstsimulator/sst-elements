@@ -29,6 +29,7 @@
 //SST includes
 #include "sst_config.h"
 
+#include <list>
 #include <memory>
 
 #include "c_Bank.hpp"

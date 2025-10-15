@@ -42,6 +42,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <map>
+#include <vector>
 #include <mpi_comm/mpi_comm_factory.h>
 #include <mpi_comm/mpi_comm.h>
 #include <mpi_comm/mpi_comm_cart.h>

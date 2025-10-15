@@ -14,6 +14,9 @@
 // distribution.
 
 
+#include <cstddef>
+#include <cstdio>
+#include <deque>
 #include <sst_config.h>
 
 #include <limits>

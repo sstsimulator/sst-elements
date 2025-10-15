@@ -16,7 +16,10 @@
 #ifndef _H_SERRANO_BINARY_OP_CG_UNIT
 #define _H_SERRANO_BINARY_OP_CG_UNIT
 
+#include <cstddef>
+#include <cstdint>
 #include <functional>
+#include <vector>
 
 #include "smsg.h"
 #include "sercgunit.h"

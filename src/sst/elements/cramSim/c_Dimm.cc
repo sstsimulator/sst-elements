@@ -30,6 +30,9 @@
 
 // C++ includes
 #include <algorithm>
+#include <cstdint>
+#include <ostream>
+#include <sstream>
 #include <assert.h>
 #include <iostream>
 #include <stdlib.h>

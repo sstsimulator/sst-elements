@@ -13,6 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <vector>
 #include <iris/sumi/allreduce.h>
 #include <iris/sumi/transport.h>
 #include <iris/sumi/communicator.h>

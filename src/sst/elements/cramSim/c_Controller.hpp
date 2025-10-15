@@ -32,6 +32,8 @@
 
 
 // SST includes
+#include <deque>
+#include <string>
 #include <sst/core/link.h>
 #include <sst/core/component.h>
 #include "c_AddressHasher.hpp"

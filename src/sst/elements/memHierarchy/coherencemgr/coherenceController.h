@@ -17,6 +17,15 @@
 #define MEMHIERARCHY_COHERENCECONTROLLER_H
 
 #include <array>
+#include <cstddef>
+#include <cstdint>
+#include <ctime>
+#include <functional>
+#include <map>
+#include <set>
+#include <string>
+#include <thread>
+#include <vector>
 
 #include <sst/core/subcomponent.h>
 #include <sst/core/event.h>

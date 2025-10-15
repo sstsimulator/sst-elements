@@ -16,11 +16,13 @@
 #ifndef _MSHR_H_
 #define _MSHR_H_
 
+#include <cstdint>
 #include <list>
+#include <set>
 
 #include <map>
-#include <string>
 #include <sstream>
+#include <string>
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>

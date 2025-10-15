@@ -14,6 +14,7 @@
 // distribution.
 
 
+#include <ostream>
 #include <sst_config.h>
 #include "dumpireader.h"
 

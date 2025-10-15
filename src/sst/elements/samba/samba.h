@@ -12,6 +12,8 @@
 #ifndef _SAMBA_H
 #define _SAMBA_H
 
+#include <cstdint>
+#include <vector>
 #include <sst/core/sst_types.h>
 #include <sst/core/link.h>
 #include <sst/core/event.h>
@@ -22,10 +24,10 @@
 #include <sst/elements/memHierarchy/memEventBase.h>
 
 #include <cstring>
-#include <string>
 #include <fstream>
-#include <sstream>
 #include <map>
+#include <sstream>
+#include <string>
 
 #include <stdio.h>
 #include <stdint.h>

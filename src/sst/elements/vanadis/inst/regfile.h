@@ -20,6 +20,9 @@
 #include "decoder/visaopts.h"
 #include "inst/fpregmode.h"
 
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <sst/core/output.h>
 #include <sst/core/sst_types.h>

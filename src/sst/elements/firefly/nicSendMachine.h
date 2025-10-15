@@ -14,6 +14,13 @@
 // distribution.
 
 
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <queue>
+#include <string>
+#include <utility>
 #include <sst/core/interfaces/simpleNetwork.h>
 
 class SendMachine {

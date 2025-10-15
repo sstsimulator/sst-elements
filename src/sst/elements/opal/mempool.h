@@ -12,9 +12,10 @@
 
 #include "opal_event.h"
 
+#include <cmath>
+#include <cstdint>
 #include <list>
 #include <map>
-#include <cmath>
 
 
 typedef struct reqresponse {

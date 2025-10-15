@@ -13,6 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <utility>
 #include <sst_config.h>
 #include "MESI_Directory.h"
 

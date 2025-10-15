@@ -14,10 +14,12 @@
 // distribution.
 
 
+#include <iostream>
+#include <ostream>
 #include <sst_config.h>
 #include "emberhotspots.h"
-#include <limits>
 #include <cstdlib>
+#include <limits>
 
 using namespace SST;
 using namespace SST::Ember;

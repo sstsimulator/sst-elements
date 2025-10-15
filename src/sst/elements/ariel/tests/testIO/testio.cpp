@@ -15,7 +15,9 @@
 
 // This is a simple program that reads from stdin and writes to the specified output stream.
 // Specify -o to write to stdout and -e to write to stderr.
+#include <cstdlib>
 #include <iostream>
+#include <ostream>
 #include <string>
 #include <sys/poll.h>
 

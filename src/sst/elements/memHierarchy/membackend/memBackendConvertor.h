@@ -17,6 +17,14 @@
 #ifndef __SST_MEMH_MEMBACKENDCONVERTOR__
 #define __SST_MEMH_MEMBACKENDCONVERTOR__
 
+#include <cstddef>
+#include <cstdint>
+#include <deque>
+#include <functional>
+#include <map>
+#include <set>
+#include <string>
+#include <utility>
 #include <sst/core/subcomponent.h>
 #include <sst/core/event.h>
 #include <sst/core/warnmacros.h>

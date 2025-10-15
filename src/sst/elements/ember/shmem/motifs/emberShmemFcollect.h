@@ -17,6 +17,9 @@
 #ifndef _H_EMBER_SHMEM_FCOLLECT
 #define _H_EMBER_SHMEM_FCOLLECT
 
+#include <cstddef>
+#include <cstdint>
+#include <string>
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
 #include <cxxabi.h>

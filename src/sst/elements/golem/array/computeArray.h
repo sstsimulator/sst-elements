@@ -16,6 +16,7 @@
 #ifndef _COMPUTEARRAY_H
 #define _COMPUTEARRAY_H
 
+#include <cstdint>
 #include <sst/core/component.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/event.h>

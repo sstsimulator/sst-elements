@@ -17,6 +17,8 @@
 #define __STDC_FORMAT_MACROS
 #endif
 
+#include <iostream>
+#include <ostream>
 #include <inttypes.h>
 
 #include <mercury/hardware/common/packet.h>

@@ -14,6 +14,7 @@
 // distribution.
 
 
+#include <cstdint>
 #include <sst_config.h>
 #include <vector>
 #include "coherencemgr/Incoherent.h"

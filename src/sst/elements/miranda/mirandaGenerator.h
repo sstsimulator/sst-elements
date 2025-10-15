@@ -17,6 +17,10 @@
 #ifndef _H_SST_MEM_H_REQUEST_GEN
 #define _H_SST_MEM_H_REQUEST_GEN
 
+#include <atomic>
+#include <cassert>
+#include <cstdint>
+#include <vector>
 #include <stdint.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/component.h>

@@ -16,13 +16,16 @@
 #ifndef _H_VANADIS_INST_LOADER
 #define _H_VANADIS_INST_LOADER
 
+#include <cstddef>
+#include <cstdio>
+#include <utility>
 #include <sst/core/interfaces/stdMem.h>
 #include <sst/core/subcomponent.h>
 
 #include <cinttypes>
 #include <cstdint>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 #include "vanadisDbgFlags.h"
 

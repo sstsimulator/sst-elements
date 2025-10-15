@@ -6,6 +6,7 @@
 // Author: Kartik Lakhotia
 
 
+#include <cassert>
 #include <sst_config.h>
 #include "polarstar.h"
 

@@ -17,6 +17,10 @@
 #ifndef _H_SST_ELEMENTS_EMBER_AMR_TEXT_FILE
 #define _H_SST_ELEMENTS_EMBER_AMR_TEXT_FILE
 
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

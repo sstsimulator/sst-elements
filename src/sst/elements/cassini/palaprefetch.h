@@ -17,9 +17,10 @@
 #ifndef _H_SST_STRIDE_PREFETCH_PALA
 #define _H_SST_STRIDE_PREFETCH_PALA
 
+#include <cstdint>
+#include <deque>
 #include <unordered_map>
 #include <vector>
-#include <deque>
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>

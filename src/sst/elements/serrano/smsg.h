@@ -16,8 +16,9 @@
 #ifndef _H_SERRANO_MESSAGE
 #define _H_SERRANO_MESSAGE
 
-#include <cstdint>
 #include <cinttypes>
+#include <cstddef>
+#include <cstdint>
 
 namespace SST {
 namespace Serrano {

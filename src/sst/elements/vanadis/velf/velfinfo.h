@@ -17,7 +17,12 @@
 #define _H_VANADIS_ELF_INFO
 
 #include <cinttypes>
+#include <cstddef>
+#include <cstdint>
 #include <cstdio>
+#include <cstring>
+#include <string>
+#include <vector>
 #include "utils.h"
 #include "os/vosDbgFlags.h"
 #include "sst/core/output.h"

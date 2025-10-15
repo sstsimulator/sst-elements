@@ -12,11 +12,13 @@
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
+#include <cstddef>
+#include <ostream>
 #include <sst_config.h>
 
-#include<iostream>
-#include<cstdlib>
 #include<cstdio>
+#include<cstdlib>
+#include<iostream>
 #include<string>
 
 #include <sys/mman.h>

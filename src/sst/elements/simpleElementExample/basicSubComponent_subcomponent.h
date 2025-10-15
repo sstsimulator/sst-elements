@@ -31,6 +31,7 @@
  * See 'basicSubComponent_component.h' for more information on how the example simulation works
  */
 
+#include <string>
 #include <sst/core/subcomponent.h>
 
 namespace SST {

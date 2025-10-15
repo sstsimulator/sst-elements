@@ -38,6 +38,8 @@
 //#  include <config.h>
 //#endif /* HAVE_CONFIG_H */
 
+#include <stddef.h>
+#include <stdint.h>
 #include <inttypes.h>
 #include <stdbool.h>
 

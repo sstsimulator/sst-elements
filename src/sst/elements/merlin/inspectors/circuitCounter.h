@@ -16,6 +16,9 @@
 #ifndef COMPONENTS_MERLIN_CIRCUITCOUNTER_H
 #define COMPONENTS_MERLIN_CIRCUITCOUNTER_H
 
+#include <map>
+#include <set>
+#include <string>
 #include <sst/core/subcomponent.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 #include <sst/core/threadsafe.h>

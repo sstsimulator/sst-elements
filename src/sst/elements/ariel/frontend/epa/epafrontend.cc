@@ -3,6 +3,12 @@
 //
 // Authors: Allyson Cauble-Chantrenne
 
+#include <cerrno>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <sst_config.h>
 
 #include "epafrontend.h"

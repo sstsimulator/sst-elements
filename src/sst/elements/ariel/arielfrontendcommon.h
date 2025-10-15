@@ -16,6 +16,8 @@
 #ifndef _H_ARIEL_FRONTEND_COMMON
 #define _H_ARIEL_FRONTEND_COMMON
 
+#include <cstdint>
+#include <vector>
 #include <sst/core/sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
@@ -23,8 +25,8 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include <string>
 #include <map>
+#include <string>
 
 #include "arielfrontend.h"
 #include "ariel_shmem.h"

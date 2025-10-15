@@ -36,6 +36,7 @@
 
 /*#define _GNU_SOURCE*/
 
+#include <stddef.h>
 #include <byteswap.h>
 #include <endian.h>
 #include <sys/mman.h>

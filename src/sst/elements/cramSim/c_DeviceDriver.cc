@@ -29,10 +29,12 @@
 #include "sst_config.h"
 
 // C++ includes
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+#include <list>
 #include <string>
 #include <vector>
-#include <list>
-#include <algorithm>
 #include <assert.h>
 
 // CramSim includes

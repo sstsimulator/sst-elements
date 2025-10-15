@@ -19,6 +19,9 @@
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
 #endif
+#include <cstdint>
+#include <map>
+#include <queue>
 #include <inttypes.h>
 
 #include <sst/core/interfaces/stdMem.h>

@@ -16,10 +16,15 @@
 #ifndef MEMHIERARCHY_CACHECONTROLLER_H_
 #define MEMHIERARCHY_CACHECONTROLLER_H_
 
-#include <queue>
+#include <cstddef>
+#include <cstdint>
+#include <list>
 #include <map>
-#include <string>
+#include <queue>
+#include <set>
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>

@@ -17,6 +17,8 @@
 #ifndef _H_THORNHILL_MEMORY_HEAP_EVENT_EVENT
 #define _H_THORNHILL_MEMORY_HEAP_EVENT_EVENT
 
+#include <cstddef>
+#include <cstdint>
 #include <stdint.h>
 #include <sst/core/event.h>
 #include <sst/core/params.h>

@@ -15,12 +15,13 @@
 
 #pragma once
 
+#include <utility>
 #include <mercury/operating_system/process/global.h>
 #include <new>
 
 #if __cplusplus >= 201103L
-#include <tuple>
 #include <functional>
+#include <tuple>
 
 namespace SST {
 namespace Hg {

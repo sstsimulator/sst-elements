@@ -18,6 +18,12 @@
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"
 #endif
 
+#include <cassert>
+#include <cstddef>
+#include <functional>
+#include <string>
+#include <vector>
+
 class NicInitEvent : public Event {
 
   public:

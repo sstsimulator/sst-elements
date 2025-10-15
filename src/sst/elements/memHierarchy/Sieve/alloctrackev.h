@@ -16,6 +16,7 @@
 #ifndef _MEMH_SIEVE_ALLOCTRACKEV_H
 #define _MEMH_SIEVE_ALLOCTRACKEV_H
 
+#include <cstdint>
 #include <sst/core/event.h>
 
 namespace SST {

@@ -17,6 +17,8 @@
 
 #include "nic.h"
 
+#include <cassert>
+
 using namespace SST;
 using namespace SST::Firefly;
 

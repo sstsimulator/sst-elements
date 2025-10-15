@@ -32,6 +32,9 @@
 
 #include "ofi_hook.h"
 
+#include <stddef.h>
+#include <stdint.h>
+
 
 static ssize_t
 hook_atomic_write(struct fid_ep *ep,

@@ -30,6 +30,8 @@
  *
  */
 
+#include <cstdint>
+#include <vector>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/rng/marsaglia.h>

@@ -16,6 +16,10 @@
 #ifndef COMPONENTS_FIREFLY_MEM_H
 #define COMPONENTS_FIREFLY_MEM_H
 
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <vector>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 

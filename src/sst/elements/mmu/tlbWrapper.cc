@@ -14,6 +14,8 @@
 // distribution.
 
 
+#include <utility>
+#include <vector>
 #include <sst_config.h>
 #include "tlbWrapper.h"
 

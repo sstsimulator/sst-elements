@@ -16,8 +16,12 @@
 #ifndef SST_MEMHIERARCHY_BUS_H
 #define SST_MEMHIERARCHY_BUS_H
 
-#include <queue>
+#include <cstdint>
 #include <map>
+#include <queue>
+#include <set>
+#include <string>
+#include <vector>
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>

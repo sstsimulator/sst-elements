@@ -21,6 +21,11 @@
 #include "ctrlMsg.h"
 #include "info.h"
 
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <vector>
+
 namespace SST {
 namespace Firefly {
 

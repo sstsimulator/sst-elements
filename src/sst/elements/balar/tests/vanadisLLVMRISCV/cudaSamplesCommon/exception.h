@@ -30,6 +30,8 @@
 #define COMMON_EXCEPTION_H_
 
 // includes, system
+#include <cstdlib>
+#include <ostream>
 #include <stdlib.h>
 #include <exception>
 #include <iostream>

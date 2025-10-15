@@ -33,6 +33,10 @@
 
 #include "ofi_atomic.h"
 
+#include <errno.h>
+#include <stdint.h>
+#include <stddef.h>
+
 static const size_t ofi_datatype_size_table[] = {
 	[FI_INT8]   = sizeof(int8_t),
 	[FI_UINT8]  = sizeof(uint8_t),

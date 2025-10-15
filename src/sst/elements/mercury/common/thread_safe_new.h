@@ -15,8 +15,10 @@
 
 #pragma once
 
-#include <vector>
+#include <cstdint>
 #include <set>
+#include <utility>
+#include <vector>
 
 #define SSTHG_TLS_OFFSET 64
 

@@ -17,6 +17,8 @@
 #ifndef _H_SST_CASSINI_DMA_COMMAND
 #define _H_SST_CASSINI_DMA_COMMAND
 
+#include <cstdint>
+#include <utility>
 #include <sst/core/event.h>
 #include <sst/core/component.h>
 

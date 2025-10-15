@@ -13,6 +13,12 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cassert>
+#include <cstddef>
+#include <cstdlib>
+#include <tuple>
+#include <utility>
+#include <vector>
 #include <sst_config.h>
 #include "balarMMIO.h"
 #include "dmaEngine.h"

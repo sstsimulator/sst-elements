@@ -26,6 +26,10 @@
 #include "msgTiming.h"
 #endif
 
+#include <cstddef>
+#include <cstdint>
+#include <vector>
+
 namespace SST {
 namespace Firefly {
 namespace CtrlMsg {

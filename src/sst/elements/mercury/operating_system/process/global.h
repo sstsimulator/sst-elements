@@ -15,10 +15,12 @@
 
 #pragma once
 
+#include <cstdint>
+#include <type_traits>
 #include <mercury/operating_system/process/tls.h>
+#include <functional>
 #include <list>
 #include <map>
-#include <functional>
 #include <unordered_set>
 
 extern "C" int sst_hg_global_stacksize;

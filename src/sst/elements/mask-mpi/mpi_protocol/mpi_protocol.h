@@ -42,6 +42,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <map>
+#include <string>
 #include <mpi_queue/mpi_queue_fwd.h>
 #include <mpi_api_fwd.h>
 #include <mpi_queue/mpi_queue_recv_request_fwd.h>

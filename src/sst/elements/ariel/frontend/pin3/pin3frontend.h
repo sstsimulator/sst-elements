@@ -16,6 +16,8 @@
 #ifndef _H_PIN3_FRONTEND
 #define _H_PIN3_FRONTEND
 
+#include <cstdint>
+#include <vector>
 #include <sst/core/sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
@@ -24,8 +26,8 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include <string>
 #include <map>
+#include <string>
 
 #include "arielfrontendcommon.h"
 #include "ariel_shmem.h"

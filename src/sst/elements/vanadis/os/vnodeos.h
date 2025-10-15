@@ -16,8 +16,19 @@
 #ifndef _H_VANADIS_NODE_OS
 #define _H_VANADIS_NODE_OS
 
-#include <unordered_set>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <deque>
+#include <functional>
+#include <map>
 #include <queue>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 #include <sst/core/component.h>
 #include <sst/core/interfaces/stdMem.h>

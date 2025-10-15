@@ -13,6 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cstddef>
 #include <sst_config.h>
 
 #include <signal.h>
@@ -25,8 +26,8 @@
 #include <cstdlib>
 #include <cstring>
 
-#include <vector>
 #include <string>
+#include <vector>
 
 #define PROSPERO_INNER_STRINGIZE(input) #input
 #define PROSPERO_STRINGIZE(input) PROSPERO_INNER_STRINGIZE(input)

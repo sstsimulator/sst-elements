@@ -18,8 +18,10 @@
 
 #include "vbranch/vbranchunit.h"
 
+#include <cstdint>
 #include <list>
 #include <unordered_map>
+#include <utility>
 
 namespace SST {
 namespace Vanadis {

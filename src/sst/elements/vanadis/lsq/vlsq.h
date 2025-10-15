@@ -16,6 +16,10 @@
 #ifndef _H_VANADIS_LSQ_BASE
 #define _H_VANADIS_LSQ_BASE
 
+#include <cstddef>
+#include <cstdio>
+#include <deque>
+#include <string>
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>
 
@@ -27,8 +31,8 @@
 #include <cassert>
 #include <cinttypes>
 #include <cstdint>
-#include <vector>
 #include <queue>
+#include <vector>
 
 #define VANADIS_DBG_LSQ_STORE_FLG 0 // (1<<0)
 #define VANADIS_DBG_LSQ_LOAD_FLG  0 //(1<<1)

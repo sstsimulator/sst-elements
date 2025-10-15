@@ -34,6 +34,9 @@
 
 //#include "config.h"
 
+#include <stddef.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

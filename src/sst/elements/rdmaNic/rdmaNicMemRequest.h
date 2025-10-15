@@ -13,6 +13,12 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <functional>
+#include <vector>
+
     struct MemRequest {
 
         typedef std::function<void(Interfaces::StandardMem::Request*, int )> Callback;

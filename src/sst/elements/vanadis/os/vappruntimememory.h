@@ -16,6 +16,7 @@
 #ifndef _H_VANADIS_OS_APP_RUNTIME_MEMORY
 #define _H_VANADIS_OS_APP_RUNTIME_MEMORY
 
+#include <cstdint>
 #include <unordered_set>
 #include <stdint.h>
 #include <unistd.h>

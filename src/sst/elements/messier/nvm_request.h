@@ -20,13 +20,14 @@
 
 #ifndef _H_SST_NVM_REQUEST
 #define _H_SST_NVM_REQUEST
+#include <cstdint>
 #include <sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/timeConverter.h>
 #include <sst/elements/memHierarchy/memEvent.h>
 
-#include <map>
 #include <list>
+#include <map>
 
 using namespace SST;
 

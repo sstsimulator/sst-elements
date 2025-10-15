@@ -13,6 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <deque>
 #include <sst/core/sst_config.h>
 #include "sst/elements/memHierarchy/util.h"
 #include "membackend/dramSimBackend.h"

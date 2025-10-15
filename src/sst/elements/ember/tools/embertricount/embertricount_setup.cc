@@ -37,11 +37,16 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <map>
-#include <set>
-#include <random>
+#include <cstdint>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
+#include <map>
+#include <ostream>
+#include <random>
+#include <set>
+#include <string>
+#include <vector>
 
 int scale;
 

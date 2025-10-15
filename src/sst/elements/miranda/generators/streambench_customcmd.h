@@ -17,6 +17,7 @@
 #ifndef _H_SST_MIRANDA_STREAM_BENCH_GEN_CUSTOMCMD
 #define _H_SST_MIRANDA_STREAM_BENCH_GEN_CUSTOMCMD
 
+#include <cstdint>
 #include <sst/elements/miranda/mirandaGenerator.h>
 #include <sst/core/output.h>
 

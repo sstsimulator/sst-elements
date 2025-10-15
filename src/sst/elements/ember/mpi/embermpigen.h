@@ -19,6 +19,8 @@
 #include "embergen.h"
 #include "libs/emberMpiLib.h"
 
+#include <cstdint>
+
 namespace SST {
 namespace Ember {
 

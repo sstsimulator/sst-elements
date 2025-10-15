@@ -15,6 +15,9 @@
 
 #pragma once
 
+#include <cstdint>
+#include <memory>
+#include <string>
 #include <mercury/common/component.h>
 
 #include <sst/core/event.h>
@@ -33,9 +36,9 @@
 #include <mercury/hardware/common/flow_fwd.h>
 #include <mercury/hardware/network/network_message.h>
 
-#include <vector>
-#include <queue>
 #include <functional>
+#include <queue>
+#include <vector>
 
 namespace SST {
 namespace Hg {

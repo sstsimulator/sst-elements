@@ -16,8 +16,12 @@
 #ifndef MEMHIERARCHY_MESIPRIVATENONINCLUSIVE_H
 #define MEMHIERARCHY_MESIPRIVATENONINCLUSIVE_H
 
-#include <iostream>
 #include <array>
+#include <cstdint>
+#include <iostream>
+#include <map>
+#include <set>
+#include <string>
 
 #include "sst/elements/memHierarchy/coherencemgr/coherenceController.h"
 #include "sst/elements/memHierarchy/lineTypes.h"

@@ -21,6 +21,7 @@
 #include "util/vfpreghandler.h"
 
 #include <cmath>
+#include <cstdint>
 
 namespace SST {
 namespace Vanadis {

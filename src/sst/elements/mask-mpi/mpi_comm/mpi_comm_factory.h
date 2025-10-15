@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <memory>
 #include <sst/core/output.h>
 #include <mpi_comm/mpi_comm.h>
 #include <mpi_types/mpi_type.h>

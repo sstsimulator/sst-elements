@@ -19,6 +19,9 @@
 #ifndef COMPONENTS_MERLIN_ROUTER_H
 #define COMPONENTS_MERLIN_ROUTER_H
 
+#include <cstddef>
+#include <string>
+#include <utility>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>

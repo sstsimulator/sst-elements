@@ -18,6 +18,9 @@
 #define _H_SST_ARIEL_COMPRESSED_BINARY_TRACE_GEN
 
 #include <climits>
+#include <cstddef>
+#include <cstdint>
+#include <string>
 
 #include <sst/core/params.h>
 #include "zlib.h"

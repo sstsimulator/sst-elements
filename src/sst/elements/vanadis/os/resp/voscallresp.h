@@ -16,6 +16,8 @@
 #ifndef _H_VANADIS_SYSCALL_RESPONSE
 #define _H_VANADIS_SYSCALL_RESPONSE
 
+#include <cassert>
+#include <cstdint>
 #include <sst/core/event.h>
 
 namespace SST {

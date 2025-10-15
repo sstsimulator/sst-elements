@@ -17,13 +17,14 @@
 #ifndef _H_RTL_MEM_MANAGER
 #define _H_RTL_MEM_MANAGER
 
+#include <cstdint>
 #include <sst/core/subcomponent.h>
 #include <sst/core/output.h>
 
 #include <stdint.h>
-#include <vector>
-#include <unordered_map>
 #include <deque>
+#include <unordered_map>
+#include <vector>
 
 namespace SST {
 

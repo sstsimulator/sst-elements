@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <mercury/common/events.h>
 #include <mercury/common/thread_safe_new.h>
 #include <mercury/components/operating_system_fwd.h>

@@ -15,10 +15,11 @@
 
 #pragma once
 
+#include <cstddef>
 #include <mercury/operating_system/threading/thread_lock.h>
 
-#include <cstring>
 #include <cstdint>
+#include <cstring>
 
 namespace SST {
 namespace Hg {

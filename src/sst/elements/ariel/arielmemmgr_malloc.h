@@ -17,6 +17,9 @@
 #ifndef _H_ARIEL_MEM_MANAGER_MALLOC
 #define _H_ARIEL_MEM_MANAGER_MALLOC
 
+#include <cstdint>
+#include <map>
+#include <unordered_set>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
 
@@ -24,8 +27,8 @@
 
 #include <stdint.h>
 #include <deque>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 using namespace SST;
 

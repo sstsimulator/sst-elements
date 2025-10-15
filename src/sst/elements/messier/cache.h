@@ -13,6 +13,7 @@
 #ifndef _H_SST_MESSIER_CACHE
 #define _H_SST_MESSIER_CACHE
 
+#include <cstdint>
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
 #include <sst/core/component.h>
@@ -21,11 +22,11 @@
 #include <sst/core/output.h>
 
 #include <cstring>
-#include <string>
-#include <iostream>
 #include <fstream>
-#include <sstream>
+#include <iostream>
 #include <map>
+#include <sstream>
+#include <string>
 
 #include <stdio.h>
 #include <stdint.h>

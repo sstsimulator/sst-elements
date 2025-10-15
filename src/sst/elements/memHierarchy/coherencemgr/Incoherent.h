@@ -16,8 +16,9 @@
 #ifndef INCOHERENTCONTROLLER_H
 #define INCOHERENTCONTROLLER_H
 
-#include <iostream>
 #include <array>
+#include <iostream>
+#include <set>
 
 #include "sst/elements/memHierarchy/coherencemgr/coherenceController.h"
 #include "sst/elements/memHierarchy/cacheArray.h"

@@ -34,6 +34,7 @@
 #ifndef _OFI_STR_H_
 #define _OFI_STR_H_
 
+#include <stddef.h>
 #include <string.h>
 
 //#include "config.h"
