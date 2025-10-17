@@ -21,7 +21,7 @@ public:
     SST_ELI_REGISTER_PORTMODULE(
         RandomDropFaultInjector,
         "carcosa",
-        "randomFlipFaultInjector",
+        "RandomFlipFaultInjector",
         SST_ELI_ELEMENT_VERSION(0, 1, 0),
         "PortModule class used to simulate a data transfer lost at random"
     )

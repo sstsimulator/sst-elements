@@ -22,7 +22,7 @@ public:
     SST_ELI_REGISTER_PORTMODULE(
         DoubleFaultInjector,
         "carcosa",
-        "doubleFaultInjector",
+        "DoubleFaultInjector",
         SST_ELI_ELEMENT_VERSION(0, 1, 0),
         "PortModule class used to simulate a data transfer lost at random OR a random bit flip in transit"
     )

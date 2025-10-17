@@ -22,7 +22,7 @@ public:
     SST_ELI_REGISTER_PORTMODULE(
         StuckAtFaultInjector,
         "carcosa",
-        "stuckAtFaultInjector",
+        "StuckAtFaultInjector",
         SST_ELI_ELEMENT_VERSION(0, 1, 0),
         "PortModule class used to simulate a stuck bit within a given component"
     )
@@ -30,6 +30,7 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
         {"masks", "String array formatted as [\"addr0, byte0, zeroMask0, oneMask0\",...,\"addrN, byteN, zeroMaskN, oneMaskN\"]." \
         "Addresses are expected to be in hexadecimal, and masks are 8 bit strings."},
+        {"endianness", "Byte ordering in memory. Given as a string containing \'little\' or \'big\'. Default: little"}
     )
 
     StuckAtFaultInjector(Params& params);

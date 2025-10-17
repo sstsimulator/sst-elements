@@ -21,7 +21,7 @@ public:
     SST_ELI_REGISTER_PORTMODULE(
         CorruptMemFaultInjector,
         "carcosa",
-        "corruptMemFaultInjector",
+        "CorruptMemFaultInjector",
         SST_ELI_ELEMENT_VERSION(0, 1, 0),
         "PortModule class used to simulate a whole memory region being corrupted"
     )

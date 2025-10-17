@@ -52,7 +52,7 @@ public:
     SST_ELI_REGISTER_PORTMODULE(
         FaultInjectorBase,
         "carcosa",
-        "faultInjectorBase",
+        "FaultInjectorBase",
         SST_ELI_ELEMENT_VERSION(0, 1, 0),
         "Base PortModule class used to connect fault injection logic to components"
     )

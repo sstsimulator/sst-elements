@@ -37,7 +37,7 @@ SST::MemHierarchy::MemEvent* FaultBase::convertMemEvent(Event*& ev) {
     }
 
 #ifdef __SST_DEBUG_OUTPUT__
-    getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "Intercepted event %zu/%d\n", mem_ev->getID().first, mem_ev->getID().second);
+    getSimulationDebug()->debug(CALL_INFO_LONG, 3, 0, "Intercepted event %zu/%d\n", mem_ev->getID().first, mem_ev->getID().second);
 #endif
     return mem_ev;
 }
@@ -48,20 +48,30 @@ dataVec& FaultBase::getMemEventPayload(Event*& ev) {
 
 void FaultBase::setMemEventPayload(Event*& ev, dataVec newPayload) {
 #ifdef __SST_DEBUG_OUTPUT__
-    getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "Payload before replacement:\n[");
-    for (int i: getMemEventPayload(ev)) {
-        getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "%d\t", i);
+    getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "Payload before replacement:\n");
+    SST::MemHierarchy::MemEvent* mem_ev = convertMemEvent(ev);
+    dataVec payload = getMemEventPayload(ev);
+    for (int i = 0; i < payload.size(); i+=8) {
+        getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "\n0x%zx: [\t", mem_ev->getBaseAddr() + i);
+        for (int j = i; j < (i+8); j++) {
+            getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "%d\t", payload[j]);
+        }
+        getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "]\n");
     }
-    getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "]\n");
 #endif
     convertMemEvent(ev)->setPayload(newPayload);
 
 #ifdef __SST_DEBUG_OUTPUT__
-    getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "Payload after replacement:\n[");
-    for (int i: getMemEventPayload(ev)) {
-        getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "%d\t", i);
+    getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "Payload after replacement:\n");
+    mem_ev = convertMemEvent(ev);
+    payload = getMemEventPayload(ev);
+    for (int i = 0; i < payload.size(); i+=8) {
+        getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "\n0x%zx: [\t", mem_ev->getBaseAddr() + i);
+        for (int j = i; j < (i+8); j++) {
+            getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "%d\t", payload[j]);
+        }
+        getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "]\n");
     }
-    getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "]\n");
 #endif
 }
 

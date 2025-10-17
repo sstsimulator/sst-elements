@@ -64,6 +64,11 @@ StuckAtFault::StuckAtFault(Params& params, FaultInjectorBase* injector) : FaultB
         getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Finished inserting one-masks for 0x%zx.\n", addr);
 #endif
     }
+
+    endianness = (params.find<std::string>("endianness", "little") == std::string("little")) ? false : true;
+#ifdef __SST_DEBUG_OUTPUT__
+    getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Endianness set to %s.\n", endianness ? "big" : "little");
+#endif
 }
 
 bool StuckAtFault::faultLogic(SST::Event*& ev) {
@@ -71,11 +76,17 @@ bool StuckAtFault::faultLogic(SST::Event*& ev) {
     SST::MemHierarchy::MemEvent* mem_ev = this->convertMemEvent(ev);
 
     Addr addr = mem_ev->getAddr();
+    std::vector<Addr> masked_addrs;
+    for (int i = mem_ev->getBaseAddr(); i < mem_ev->getBaseAddr() + mem_ev->getPayloadSize(); i+=8) {
+        if (stuckAtZeroMask_.count(i) == 1 || stuckAtOneMask_.count(i) == 1) {
+            masked_addrs.push_back(i);
+        }
+    }
 
     // check for the addr in question in the fault map
-    if (stuckAtZeroMask_.count(addr) == 1 || stuckAtOneMask_.count(addr) == 1) {
+    if (masked_addrs.size() > 0) {
 #ifdef __SST_DEBUG_OUTPUT__
-        getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Addr 0x%zx found in stuck map.\n", addr);
+        getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Masked Addr at cache line 0x%zx found in stuck map.\n", addr);
 #endif
         // replace data if necessary
         dataVec payload = this->getMemEventPayload(ev);
@@ -86,43 +97,50 @@ bool StuckAtFault::faultLogic(SST::Event*& ev) {
         // vanadis riscv is LITTLE ENDIAN so byte order is reversed (byte 0 at Addr A is lowest byte, but Addr0 is still base addr, Addr1 = Addr0+8)
         // confirm that little endian is this trolling
 
-        uint8_t mask = 0b00000000;
+        for (int masked_addr: masked_addrs){
+            uint8_t mask = 0b00000000;
 #ifdef __SST_DEBUG_OUTPUT__
-        getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Begin zero mask for address: 0x%zx\n", addr);
+            getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Begin zero mask for address: 0x%zx\n", masked_addr);
 #endif
-        if (stuckAtZeroMask_.count(addr) == 1) {
-            for (auto maskPair: stuckAtZeroMask_.at(addr)) {
-                mask = maskPair.second;
+            // mask tuple is (byte, mask)
+            if (stuckAtZeroMask_.count(masked_addr) == 1) {
+                for (auto maskPair: stuckAtZeroMask_.at(masked_addr)) {
+                    mask = maskPair.second;
+                    uint32_t final_byte = computeByte(masked_addr, mem_ev->getBaseAddr(), maskPair.first);
 #ifdef __SST_DEBUG_OUTPUT__
-                getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "\tbyte %d, value: %d, mask: %d, new value: %d\n",
-                                            maskPair.first, (int)payload[maskPair.first], (int) mask, 
-                                            (int)(payload[maskPair.first] &= (!mask)));
+                    getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "\tbyte %d, value: %d, mask: %d, new value: %d\n",
+                                                maskPair.first, (int)payload[final_byte], (int) mask, 
+                                                (int)(payload[final_byte] & (!mask)));
+                    getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "\tPayload index: %d\n", final_byte);
 #endif
-                payload[maskPair.first] &= (!mask);
-            }
-        }
-#ifdef __SST_DEBUG_OUTPUT__
-        getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "End zero mask for address: 0x%zx\n", addr);
-        getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Begin one mask for address: 0x%zx\n", addr);
-#endif
-        if (stuckAtOneMask_.count(addr) == 1) {
-            for (auto maskPair: stuckAtOneMask_.at(addr)) {
-                mask = maskPair.second;
-#ifdef __SST_DEBUG_OUTPUT__
-                getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "\tbyte %d, value: %d, mask: %d, new value: %d\n",
-                                            maskPair.first, (int)payload[maskPair.first], (int) mask, 
-                                            (int)(payload[maskPair.first] |= mask));
-#endif
-                payload[maskPair.first] |= mask;
+                    payload[final_byte] &= (!mask);
+                }
             }
 #ifdef __SST_DEBUG_OUTPUT__
-            getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "End one mask for address: 0x%zx\n", addr);
+            getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "End zero mask for address: 0x%zx\n", masked_addr);
+            getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Begin one mask for address: 0x%zx\n", masked_addr);
 #endif
+            if (stuckAtOneMask_.count(masked_addr) == 1) {
+                for (auto maskPair: stuckAtOneMask_.at(masked_addr)) {
+                    mask = maskPair.second;
+                    uint32_t final_byte = computeByte(masked_addr, mem_ev->getBaseAddr(), maskPair.first);
+#ifdef __SST_DEBUG_OUTPUT__
+                    getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "\tbyte %d, value: %d, mask: %d, new value: %d\n",
+                                                maskPair.first, (int)payload[final_byte], (int) mask, 
+                                                (int)(payload[final_byte] | mask));
+                    getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "\tPayload index: %d\n", final_byte);
+#endif
+                    payload[final_byte] |= mask;
+                }
+#ifdef __SST_DEBUG_OUTPUT__
+                getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "End one mask for address: 0x%zx\n", masked_addr);
+#endif
+            }
         }
 
         // replace payload
         this->setMemEventPayload(ev, payload);
-    }
+    } // if (found)
     return true;
 }
 
@@ -160,4 +178,16 @@ std::vector<StuckAtFault::maskParam_t> StuckAtFault::convertString(std::vector<s
     }
 
     return paramVec;
+}
+
+uint32_t StuckAtFault::computeByte(Addr addr, Addr base_addr, uint32_t byte) {
+    uint32_t base_byte = addr - base_addr;
+    // vanadis riscv is little endian, so bytes are in reverse order
+    // Big endian: Addr->(B7|B6|B5|B4|B3|B2|B1|B0); Little endian: Addr->(B0|B1|B2|B3|B4|B5|B6|B7)
+    // endianness bool -> true = big; false = little
+    if (endianness) {
+        return (base_byte + 7) - byte;
+    } else {
+        return base_byte + byte;
+    }
 }

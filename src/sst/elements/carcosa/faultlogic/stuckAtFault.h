@@ -57,6 +57,8 @@ protected:
     std::map<Addr, std::vector<std::pair<int, uint8_t>>> stuckAtZeroMask_;
     // add stuckAtOneMask
     std::map<Addr, std::vector<std::pair<int, uint8_t>>> stuckAtOneMask_;
+    // false = little; true = big
+    bool endianness = false;
 
     typedef struct maskParam {
         Addr addr;
@@ -66,6 +68,7 @@ protected:
     } maskParam_t;
 
     std::vector<maskParam_t> convertString(std::vector<std::string>& paramVecStr);
+    uint32_t computeByte(Addr addr, Addr base_addr, uint32_t byte);
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         FaultBase::serialize_order(ser);
