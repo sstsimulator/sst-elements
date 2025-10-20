@@ -57,13 +57,13 @@ FaultInjectorBase::eventSent(uintptr_t key, Event*& ev)
     }
     if (doInjection()){
 #ifdef __SST_DEBUG_OUTPUT__
-        dbg_->debug(CALL_INFO_LONG, 1, 0, "Injection triggered.\n");
+        dbg_->debug(CALL_INFO_LONG, 3, 0, "Injection triggered.\n");
 #endif
         this->executeFaults(ev);
     }
 #ifdef __SST_DEBUG_OUTPUT__
     else {
-        dbg_->debug(CALL_INFO_LONG, 1, 0, "Injection skipped.\n");
+        dbg_->debug(CALL_INFO_LONG, 3, 0, "Injection skipped.\n");
     }
 #endif
 }
@@ -80,13 +80,13 @@ FaultInjectorBase::interceptHandler(uintptr_t key, Event*& ev, bool& cancel)
 
     if (doInjection()){
 #ifdef __SST_DEBUG_OUTPUT__
-        dbg_->debug(CALL_INFO_LONG, 1, 0, "Injection triggered.\n");
+        dbg_->debug(CALL_INFO_LONG, 3, 0, "Injection triggered.\n");
 #endif
         this->executeFaults(ev);
     }
 #ifdef __SST_DEBUG_OUTPUT__
     else {
-        dbg_->debug(CALL_INFO_LONG, 1, 0, "Injection skipped.\n");
+        dbg_->debug(CALL_INFO_LONG, 3, 0, "Injection skipped.\n");
     }
 #endif
 }

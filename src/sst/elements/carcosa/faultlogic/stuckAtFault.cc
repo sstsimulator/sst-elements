@@ -110,10 +110,10 @@ bool StuckAtFault::faultLogic(SST::Event*& ev) {
 #ifdef __SST_DEBUG_OUTPUT__
                     getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "\tbyte %d, value: %d, mask: %d, new value: %d\n",
                                                 maskPair.first, (int)payload[final_byte], (int) mask, 
-                                                (int)(payload[final_byte] & (!mask)));
+                                                (int)(payload[final_byte] & (~mask)));
                     getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "\tPayload index: %d\n", final_byte);
 #endif
-                    payload[final_byte] &= (!mask);
+                    payload[final_byte] &= (~mask);
                 }
             }
 #ifdef __SST_DEBUG_OUTPUT__

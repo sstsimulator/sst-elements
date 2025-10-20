@@ -499,7 +499,7 @@ memctrl.addParams( memCtrlParams )
 memctrl.addPortModule("highlink", "carcosa.StuckAtFaultInjector", {
     "intallDirection": "Receive",
     "injectionProbability": 1.0,
-    "masks": ["4DA0, 3, 00001111, 11110000"],
+    "masks": ["4DA0, 3, 00001111, 11110000", "4D98, 3, 10101010, 01010101"],
     "debug" : 1,
     "debug_level": 2
 })
