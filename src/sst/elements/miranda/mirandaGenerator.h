@@ -79,6 +79,7 @@ public:
 	}
 
 	virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+		//SST::Core::Serialization::serializable::serialize_order(ser);
 		SST_SER(reqID);
 		SST_SER(issueTime);
 		SST_SER(dependsOn);
@@ -96,7 +97,7 @@ private:
 };
 
 template<typename QueueType>
-class MirandaRequestQueue : public SST::Core::Serialization::serializable {
+class MirandaRequestQueue {
 public:
 	MirandaRequestQueue() {
 		theQ = (QueueType*) malloc(sizeof(QueueType) * 16);
@@ -177,12 +178,11 @@ public:
 	}
 
     void serialize_order(SST::Core::Serialization::serializer& ser) {
-		SST_SER(theQ);
+		//int theQ_size = sizeof(QueueType) * curSize;
+		SST_SER(SST::Core::Serialization::array(theQ, curSize));
 		SST_SER(maxCapacity);
 		SST_SER(curSize);
 	}
-
-	ImplementSerializable(SST::Miranda::MirandaRequestQueue)
 
 private:
 	QueueType* theQ;
@@ -209,7 +209,7 @@ public:
 	uint64_t getAddress() const { return addr; }
 	uint64_t getLength() const { return length; }
 
-	virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+	void serialize_order(SST::Core::Serialization::serializer& ser) override {
         SST::Miranda::GeneratorRequest::serialize_order(ser);
 		SST_SER(addr);
 		SST_SER(length);
@@ -234,7 +234,7 @@ public:
     ReqOperation getOperation() const { return CUSTOM; }
     Interfaces::StandardMem::CustomData* getPayload() { return data; }
 
-	virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+	void serialize_order(SST::Core::Serialization::serializer& ser) override {
         SST::Miranda::GeneratorRequest::serialize_order(ser);
 		SST_SER(data);
     }
@@ -251,7 +251,7 @@ public:
 	~FenceOpRequest() {}
 	ReqOperation getOperation() const { return REQ_FENCE; }
 
-	virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+	void serialize_order(SST::Core::Serialization::serializer& ser) override {
         SST::Miranda::GeneratorRequest::serialize_order(ser);
     }
 
@@ -275,7 +275,7 @@ public:
         SST::SubComponent::serialize_order(ser);
     }
 
-    ImplementSerializable(SST::Miranda::RequestGenerator)
+    ImplementVirtualSerializable(SST::Miranda::RequestGenerator)
 
 
 };
