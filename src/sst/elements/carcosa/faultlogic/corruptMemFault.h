@@ -47,18 +47,26 @@ public:
      * 4. Replace payload
      */
     bool faultLogic(Event*& ev) override;
+
+    std::vector<uint32_t>* checkAddrUsage(Event*& ev);
 protected:
 
     std::vector<std::pair<uint64_t, uint64_t>> corruptionRegions_;
 
     SST::RNG::MersenneRNG rng_;
 
+    std::vector<uint32_t> regionsToUse_;
+
     std::pair<uint64_t,uint64_t> convertString(std::string& region);
+
+    int32_t computeStartIndex(Addr base_addr, size_t payload_sz, Addr region_start);
+    int32_t computeEndIndex(Addr base_addr, size_t payload_sz, Addr region_end);
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         FaultBase::serialize_order(ser);
         SST_SER(corruptionRegions_);
         SST_SER(rng_);
+        SST_SER(regionsToUse_);
     }
     ImplementVirtualSerializable(CorruptMemFault)
 }; // CorruptMemFault

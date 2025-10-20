@@ -65,9 +65,9 @@ StuckAtFault::StuckAtFault(Params& params, FaultInjectorBase* injector) : FaultB
 #endif
     }
 
-    endianness = (params.find<std::string>("endianness", "little") == std::string("little")) ? false : true;
+    endianness_ = (params.find<std::string>("endianness", "little") == std::string("little")) ? false : true;
 #ifdef __SST_DEBUG_OUTPUT__
-    getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Endianness set to %s.\n", endianness ? "big" : "little");
+    getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Endianness set to %s.\n", endianness_ ? "big" : "little");
 #endif
 }
 
@@ -90,12 +90,6 @@ bool StuckAtFault::faultLogic(SST::Event*& ev) {
 #endif
         // replace data if necessary
         dataVec payload = this->getMemEventPayload(ev);
-        // TODO: review everything in below comment and adjust this function
-        // payloads are given a size in the memEvent and it's usually cache line size
-        // addr is whatever the core requested
-        // base addr is first addr in byte array
-        // vanadis riscv is LITTLE ENDIAN so byte order is reversed (byte 0 at Addr A is lowest byte, but Addr0 is still base addr, Addr1 = Addr0+8)
-        // confirm that little endian is this trolling
 
         for (int masked_addr: masked_addrs){
             uint8_t mask = 0b00000000;
@@ -185,7 +179,7 @@ uint32_t StuckAtFault::computeByte(Addr addr, Addr base_addr, uint32_t byte) {
     // vanadis riscv is little endian, so bytes are in reverse order
     // Big endian: Addr->(B7|B6|B5|B4|B3|B2|B1|B0); Little endian: Addr->(B0|B1|B2|B3|B4|B5|B6|B7)
     // endianness bool -> true = big; false = little
-    if (endianness) {
+    if (endianness_) {
         return (base_byte + 7) - byte;
     } else {
         return base_byte + byte;

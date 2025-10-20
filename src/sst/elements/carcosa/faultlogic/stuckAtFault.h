@@ -58,7 +58,7 @@ protected:
     // add stuckAtOneMask
     std::map<Addr, std::vector<std::pair<int, uint8_t>>> stuckAtOneMask_;
     // false = little; true = big
-    bool endianness = false;
+    bool endianness_ = false;
 
     typedef struct maskParam {
         Addr addr;
@@ -74,6 +74,7 @@ protected:
         FaultBase::serialize_order(ser);
         SST_SER(stuckAtZeroMask_);
         SST_SER(stuckAtOneMask_);
+        SST_SER(endianness_);
     }
     ImplementVirtualSerializable(StuckAtFault)
 };

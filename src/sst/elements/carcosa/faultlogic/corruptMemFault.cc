@@ -29,7 +29,7 @@ CorruptMemFault::CorruptMemFault(Params& params, FaultInjectorBase* injector) : 
 
         // check validity
         if (region_pair.first > region_pair.second) {
-            getSimulationOutput()->fatal(CALL_INFO_LONG, 1, 0, "Invalid corruption region: [0x%zx, 0x%zx].\n", 
+            getSimulationOutput()->fatal(CALL_INFO_LONG, -1, "Invalid corruption region: [0x%zx, 0x%zx].\n", 
                                         region_pair.first, region_pair.second);
         }
 
@@ -41,20 +41,32 @@ CorruptMemFault::CorruptMemFault(Params& params, FaultInjectorBase* injector) : 
     }
 }
 
-// TODO: fix this to respect endianness and byte array
 bool CorruptMemFault::faultLogic(Event*& ev) {
     SST::MemHierarchy::MemEvent* mem_ev = convertMemEvent(ev);
 
-    Addr ev_addr = mem_ev->getAddr();
-    for (auto& region: corruptionRegions_) {
-        if ((ev_addr >= region.first) || (ev_addr <= region.second)) {
-            dataVec new_payload(8);
-            for (uint8_t& byte: new_payload) {
-                byte = static_cast<uint8_t>(rng_.generateNextUInt32() % 255);
-            }
-            setMemEventPayload(ev, new_payload);
-            return true;
+    Addr base_addr = mem_ev->getBaseAddr();
+    dataVec original_payload = mem_ev->getPayload();
+    for (int r: regionsToUse_) {
+        auto& region = corruptionRegions_[r];
+        size_t payload_sz = mem_ev->getPayloadSize();
+        int32_t start = computeStartIndex(base_addr, payload_sz, region.first);
+        if (start < 0) {
+            getSimulationOutput()->fatal(CALL_INFO_LONG, -1, "No valid start index for corruption.\n");
         }
+        int32_t end = computeEndIndex(base_addr, payload_sz, region.second);
+        if (end < 0) {
+            getSimulationOutput()->fatal(CALL_INFO_LONG, -1, "No valid start index for corruption.\n");
+        }
+        dataVec new_payload(payload_sz);
+        for (int i = 0; i < payload_sz; i++) {
+            if ((i < start) || (i > end)) {
+                new_payload[i] = original_payload[i];
+            } else if ((i >= start) && (i <= end)) {
+                new_payload[i] = static_cast<uint8_t>(rng_.generateNextUInt32() % 255);
+            }
+        }
+        setMemEventPayload(ev, new_payload);
+        return true;
     }
 }
 
@@ -69,8 +81,49 @@ std::pair<uint64_t,uint64_t> CorruptMemFault::convertString(std::string& region)
     ss >> std::hex >> addr1;
 
     #ifdef __SST_DEBUG_OUTPUT__
-    getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "Extracted region pair: [0x%zu, 0x%zx]\n",
+    getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "Extracted region pair: [0x%zx, 0x%zx]\n",
                                 addr0, addr1);
     #endif
     return make_pair(addr0, addr1);
+}
+
+int32_t CorruptMemFault::computeStartIndex(Addr base_addr, size_t payload_sz, Addr region_start) {
+    // start index is always the first byte of this payload in the corruption region
+    int payload_bytes = payload_sz / 8;
+    Addr addr = base_addr;
+    for (int i = 0; i < payload_bytes; i++, addr+=8) {
+        if (addr >= region_start) {
+            return addr - base_addr;
+        }
+    }
+    return -1;
+}
+
+int32_t CorruptMemFault::computeEndIndex(Addr base_addr, size_t payload_sz, Addr region_end) {
+    // end index is either the final addr's final byte, or the region end's addr's final byte
+    int payload_bytes = payload_sz / 8;
+    Addr addr = base_addr + ((payload_bytes - 1) * 8);
+    for (int i = payload_bytes; i >= 0; i--, addr-=8) {
+        if (addr <= region_end) {
+            return addr - base_addr;
+        }
+    }
+    return -1;
+}
+
+// TODO: why is this triggering a push_back on 0x4D80 from payload 0x4d40?
+std::vector<uint32_t>* CorruptMemFault::checkAddrUsage(Event*& ev) {
+    Addr addr = convertMemEvent(ev)->getBaseAddr();
+    for (int i = 0; i < corruptionRegions_.size(); i++) {
+        auto& region = corruptionRegions_[i];
+        // check if message contains ANY address in this region
+        int payload_bytes = convertMemEvent(ev)->getPayloadSize() / 8;
+        for (int j = 0; j < payload_bytes; j++, addr+=8) {
+            if ((addr >= region.first) && (addr <= region.second)) {
+                regionsToUse_.push_back(i);
+                break;
+            }
+        }
+    }
+    return &regionsToUse_;
 }

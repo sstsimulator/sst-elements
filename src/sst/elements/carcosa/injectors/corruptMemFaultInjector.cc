@@ -19,3 +19,17 @@ CorruptMemFaultInjector::CorruptMemFaultInjector(Params& params) : FaultInjector
     fault.push_back(new CorruptMemFault(params, this));
     setValidInstallation(params, SEND_RECEIVE_VALID);
 }
+
+void CorruptMemFaultInjector::executeFaults(Event*& ev) {
+    // is this addr in a corrupt region?
+    std::vector<uint32_t>* regionsToUse = dynamic_cast<CorruptMemFault*>(fault[0])->checkAddrUsage(ev);
+    // if returned vec is not empty, save to fault-accessible location and execute
+    if (regionsToUse->size() != 0) {
+#ifdef __SST_DEBUG_OUTPUT__
+        dbg_->debug(CALL_INFO_LONG, 2, 0, "Corruption region detected.\n");
+#endif
+        fault[0]->faultLogic(ev);
+        // reset vec
+        regionsToUse->clear();
+    }
+}
