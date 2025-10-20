@@ -26,15 +26,15 @@ namespace Miranda {
 
 class MirandaReqEvent : public SST::Event {
 public:
+    /*
     struct Generator {
         std::string name;
         SST::Params params;
     };
+    */
 
 	std::deque< std::pair< std::string, SST::Params> > generators;
 	uint64_t 	key;
-
-private:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         SST::Event::serialize_order(ser);
@@ -50,7 +50,7 @@ public:
 	uint64_t 	key;
 private:
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
-        Event::serialize_order(ser);
+        SST::Event::serialize_order(ser);
 		SST_SER(key);
 	}
     ImplementSerializable(SST::Miranda::MirandaRspEvent);

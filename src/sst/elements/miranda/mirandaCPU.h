@@ -148,11 +148,11 @@ public:
         SST_SER(requestsInFlight);
         SST_SER(cache_link);
         SST_SER(srcLink);
-        SST_SER(srcReqEvent);
+        //SST_SER(srcReqEvent);
         SST_SER(stdMemHandlers);
 
         // TODO - fails as there is no serialize_impl for GeneratorRequest
-        //SST_SER(pendingRequests);
+        SST_SER(pendingRequests);
         SST_SER(memMgr);
 
         SST_SER(maxRequestsPending);
