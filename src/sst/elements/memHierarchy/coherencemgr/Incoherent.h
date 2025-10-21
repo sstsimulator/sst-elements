@@ -16,6 +16,7 @@
 #ifndef INCOHERENTCONTROLLER_H
 #define INCOHERENTCONTROLLER_H
 
+#include <set>
 #include <iostream>
 #include <array>
 

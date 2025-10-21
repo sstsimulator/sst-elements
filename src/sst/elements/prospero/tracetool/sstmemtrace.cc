@@ -16,6 +16,11 @@
 // Uses PIN Tool Memory Trace as a basis for provide SST Memory Tracing output
 // directly to the tracing framework.
 
+#include <ostream>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <sst_config.h>
 #include "pin.H"
 

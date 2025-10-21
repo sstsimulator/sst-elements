@@ -31,6 +31,8 @@
 #define C_CHANNEL_HPP_
 
 // global includes
+#include <map>
+#include <ostream>
 #include <memory>
 #include <vector>
 #include <string>

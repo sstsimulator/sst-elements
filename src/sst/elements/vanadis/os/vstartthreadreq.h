@@ -16,6 +16,8 @@
 #ifndef _H_VANADIS_START_THREAD_REQ
 #define _H_VANADIS_START_THREAD_REQ
 
+#include <cstdint>
+#include <vector>
 #include <sst/core/event.h>
 
 namespace SST {

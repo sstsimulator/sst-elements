@@ -17,6 +17,12 @@
 #ifndef __SST_MEMH_SCRATCHBACKENDCONVERTOR__
 #define __SST_MEMH_SCRATCHBACKENDCONVERTOR__
 
+#include <functional>
+#include <map>
+#include <cstddef>
+#include <deque>
+#include <string>
+#include <cstdint>
 #include <sst/core/subcomponent.h>
 #include "sst/elements/memHierarchy/memEvent.h"
 

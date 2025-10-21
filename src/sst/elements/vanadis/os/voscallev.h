@@ -18,6 +18,7 @@
 
 #include "voscallfunc.h"
 #include "vosbittype.h"
+#include <cstdint>
 #include <sst/core/event.h>
 
 namespace SST {

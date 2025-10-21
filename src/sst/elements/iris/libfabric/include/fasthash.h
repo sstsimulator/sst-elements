@@ -26,6 +26,7 @@
 #ifndef _FASTHASH_H
 #define _FASTHASH_H
 
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 

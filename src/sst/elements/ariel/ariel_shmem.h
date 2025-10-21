@@ -26,6 +26,8 @@
  *  - Only PinCRT-enabled includes are allowed (no PinCRT specific ones and no non-enabled ones)
  */
 
+#include <cstdint>
+#include <cstddef>
 #include <inttypes.h>
 #include <string>
 #include <vector>

@@ -13,6 +13,12 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <queue>
+#include <cstddef>
+#include <functional>
+#include <cassert>
+#include <string>
+
 class LoadUnit : public Unit {
 	struct Entry {
 		Entry( MemReq* req, Callback* callback, SimTime_t time ) : req(req), callback(callback), postTime(time) {}

@@ -33,6 +33,7 @@
 #ifndef _OFI_BITMASK_H_
 #define _OFI_BITMASK_H_
 
+#include <stddef.h>
 #include <rdma/fi_errno.h>
 
 #include <stdint.h>

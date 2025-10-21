@@ -36,6 +36,8 @@
 
 //#include "config.h"
 
+#include <stddef.h>
+#include <stdint.h>
 #include <assert.h>
 #include <pthread.h>
 #include <stdlib.h>

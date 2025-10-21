@@ -18,6 +18,10 @@
 
 #include "ctrlMsgMemoryBase.h"
 
+#include <cstdint>
+#include <cassert>
+#include <functional>
+
 namespace SST {
 namespace Firefly {
 namespace CtrlMsg {

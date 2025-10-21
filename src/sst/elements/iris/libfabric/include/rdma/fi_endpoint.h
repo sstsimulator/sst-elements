@@ -33,6 +33,8 @@
 #ifndef FI_ENDPOINT_H
 #define FI_ENDPOINT_H
 
+#include <stddef.h>
+#include <stdint.h>
 #include <rdma/fabric.h>
 #include <rdma/fi_domain.h>
 

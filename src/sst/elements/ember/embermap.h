@@ -17,6 +17,7 @@
 #ifndef _SST_EMBER_RANK_MAP
 #define _SST_EMBER_RANK_MAP
 
+#include <cstdint>
 #include <sst/core/module.h>
 #include <sst/core/component.h>
 

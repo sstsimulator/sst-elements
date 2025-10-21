@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <cstdlib>
+#include <memory>
 #include <mercury/common/thread_safe_new.h>
 #include <vector>
 #include <cstdint>

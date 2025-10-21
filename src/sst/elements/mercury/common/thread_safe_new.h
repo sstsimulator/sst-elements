@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <utility>
+#include <cstdint>
 #include <vector>
 #include <set>
 

@@ -19,6 +19,9 @@
 #include "inst/vinst.h"
 #include "inst/vmemflagtype.h"
 
+#include <cstdio>
+#include <cstdint>
+
 namespace SST {
 namespace Vanadis {
 

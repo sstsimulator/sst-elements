@@ -17,6 +17,8 @@
 #ifndef _H_EMBER_SHMEM_WAIT
 #define _H_EMBER_SHMEM_WAIT
 
+#include <string>
+#include <cstdint>
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
 #include <cxxabi.h>

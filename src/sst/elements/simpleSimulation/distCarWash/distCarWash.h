@@ -12,6 +12,7 @@
 #ifndef _UNCLEMOESCARWASH_H
 #define _UNCLEMOESCARWASH_H
 
+#include <cstdint>
 #include <sst/core/component.h>
 #include "distCarEvent.h"
 

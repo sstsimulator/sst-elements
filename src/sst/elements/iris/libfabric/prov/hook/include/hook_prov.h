@@ -34,6 +34,7 @@
 #ifndef HOOK_PROV_H
 #define HOOK_PROV_H
 
+#include <stdint.h>
 #include <ofi.h>
 #include "ofi_hook.h"
 

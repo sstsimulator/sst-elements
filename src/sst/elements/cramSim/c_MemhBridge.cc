@@ -16,6 +16,11 @@
 //SST includes
 #include "sst_config.h"
 
+#include <ios>
+#include <ostream>
+#include <cstdint>
+#include <utility>
+#include <string>
 #include <assert.h>
 #include <iostream>
 

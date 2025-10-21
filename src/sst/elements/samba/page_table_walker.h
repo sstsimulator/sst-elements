@@ -13,6 +13,8 @@
 #ifndef _H_SST_PTW
 #define _H_SST_PTW
 
+#include <utility>
+#include <cstdint>
 #include <sst_config.h>
 #include <sst/core/link.h>
 #include <sst/core/event.h>

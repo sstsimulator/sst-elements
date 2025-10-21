@@ -32,6 +32,8 @@
 #ifndef C_TxnConverter_HPP_
 #define C_TxnConverter_HPP_
 
+#include <cstddef>
+#include <deque>
 #include <vector>
 #include <queue>
 

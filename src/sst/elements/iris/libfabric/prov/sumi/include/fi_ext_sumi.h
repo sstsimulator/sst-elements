@@ -55,6 +55,8 @@ extern "C" {
 //#include <config.h>
 //#endif /* HAVE_CONFIG_H */
 
+#include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
 
 #define FI_SUMI_DOMAIN_OPS_1 "domain ops 1"

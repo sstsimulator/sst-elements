@@ -19,6 +19,7 @@
 #ifndef COMPONENTS_MERLIN_TEST_SIMPLE_PATTERNS_INCAST_H
 #define COMPONENTS_MERLIN_TEST_SIMPLE_PATTERNS_INCAST_H
 
+#include <vector>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>

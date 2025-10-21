@@ -18,6 +18,8 @@
 
 #include "vbranch/vbranchunit.h"
 
+#include <cstdint>
+#include <utility>
 #include <list>
 #include <unordered_map>
 

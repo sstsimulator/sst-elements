@@ -25,6 +25,13 @@ This is a pure header implementation. No need to build/link extra libraries.
 #define output_holder_h
 
 
+#include <vector>
+#include <ostream>
+#include <iostream>
+#include <map>
+#include <string>
+#include <cstdio>
+#include <unordered_map>
 #include <fstream>
 #include <cmath>
 #include <stdlib.h>

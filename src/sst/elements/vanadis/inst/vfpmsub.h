@@ -16,6 +16,7 @@
 #ifndef _H_VANADIS_FP_MSUB
 #define _H_VANADIS_FP_MSUB
 
+#include <cstdint>
 #include <cfenv>
 
 #include "inst/vfpinst.h"

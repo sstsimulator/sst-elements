@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <string>
+#include <ostream>
 #include <mercury/operating_system/process/app_id.h>
 #include <mercury/operating_system/process/task_id.h>
 #include <mercury/operating_system/process/thread_id.h>

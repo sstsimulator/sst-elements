@@ -16,6 +16,8 @@
 #ifndef COMPONENTS_FIREFLY_FUNCSM_EVENT_H
 #define COMPONENTS_FIREFLY_FUNCSM_EVENT_H
 
+#include <cstdint>
+#include <cstddef>
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
 #include "sst/elements/hermes/msgapi.h"

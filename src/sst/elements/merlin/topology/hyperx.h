@@ -19,6 +19,8 @@
 #ifndef COMPONENTS_MERLIN_TOPOLOGY_HYPERX_H
 #define COMPONENTS_MERLIN_TOPOLOGY_HYPERX_H
 
+#include <utility>
+#include <string>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>

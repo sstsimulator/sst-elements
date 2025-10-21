@@ -17,6 +17,11 @@
 #define MEMHIERARCHY_SCRATCHPAD_H
 
 
+#include <cstddef>
+#include <set>
+#include <cstdint>
+#include <string>
+#include <vector>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>

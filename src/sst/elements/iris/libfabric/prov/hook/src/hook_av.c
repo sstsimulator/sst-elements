@@ -30,6 +30,8 @@
  * SOFTWARE.
  */
 
+#include <stdint.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include "ofi_hook.h"
 

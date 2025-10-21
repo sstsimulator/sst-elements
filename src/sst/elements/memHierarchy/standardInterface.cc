@@ -15,6 +15,8 @@
 // distribution.
 //
 
+#include <sstream>
+#include <vector>
 #include <sst/core/sst_config.h>
 #include "standardInterface.h"
 

@@ -19,6 +19,7 @@
 #include "sst_config.h"
 #include "cacheLineTrack.h"
 
+#include <cstdio>
 #include <stdint.h>
 
 #include "sst/core/params.h"

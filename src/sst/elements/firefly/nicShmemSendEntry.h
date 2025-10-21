@@ -14,6 +14,9 @@
 // distribution.
 
 
+#include <functional>
+#include <cstddef>
+
 class ShmemSendEntryBase: public SendEntryBase {
   public:
     ShmemSendEntryBase( int local_vNic, int streamNum, int vn ) : SendEntryBase( local_vNic, streamNum ), m_vn(vn) { }

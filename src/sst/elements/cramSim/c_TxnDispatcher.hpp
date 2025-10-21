@@ -30,6 +30,10 @@
 #ifndef C_TXNDISPATCHER_HPP
 #define C_TXNDISPATCHER_HPP
 //SST includes
+#include <vector>
+#include <cstdint>
+#include <cstddef>
+#include <deque>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include "c_Transaction.hpp"

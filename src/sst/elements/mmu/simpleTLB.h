@@ -16,6 +16,10 @@
 #ifndef SIMPLE_TLB_H
 #define SIMPLE_TLB_H
 
+#include <cassert>
+#include <cstdint>
+#include <cstddef>
+#include <vector>
 #include <sst/core/link.h>
 #include <sst/core/rng/xorshift.h>
 

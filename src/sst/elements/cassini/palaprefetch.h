@@ -17,6 +17,7 @@
 #ifndef _H_SST_STRIDE_PREFETCH_PALA
 #define _H_SST_STRIDE_PREFETCH_PALA
 
+#include <cstdint>
 #include <unordered_map>
 #include <vector>
 #include <deque>

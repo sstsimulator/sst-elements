@@ -16,6 +16,11 @@
 #ifndef _H_VANADIS_ELF_INFO
 #define _H_VANADIS_ELF_INFO
 
+#include <vector>
+#include <string>
+#include <cstdint>
+#include <cstring>
+#include <cstddef>
 #include <cinttypes>
 #include <cstdio>
 #include "utils.h"

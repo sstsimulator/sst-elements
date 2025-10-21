@@ -16,6 +16,7 @@
 #ifndef _H_SERRANO_PRINT_UNIT
 #define _H_SERRANO_PRINT_UNIT
 
+#include <cstdint>
 #include <sst/core/output.h>
 #include "sercgunit.h"
 

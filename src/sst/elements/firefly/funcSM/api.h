@@ -16,6 +16,9 @@
 #ifndef COMPONENTS_FIREFLY_FUNCSM_API_H
 #define COMPONENTS_FIREFLY_FUNCSM_API_H
 
+#include <cassert>
+#include <cstdint>
+#include <string>
 #include <sst/core/event.h>
 #include <sst/core/module.h>
 #include <sst/core/output.h>

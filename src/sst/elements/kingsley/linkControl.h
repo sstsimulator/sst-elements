@@ -19,6 +19,8 @@
 #ifndef COMPONENTS_KINGSLEY_LINKCONTROL_H
 #define COMPONENTS_KINGSLEY_LINKCONTROL_H
 
+#include <string>
+#include <deque>
 #include <sst/core/subcomponent.h>
 #include <sst/core/unitAlgebra.h>
 

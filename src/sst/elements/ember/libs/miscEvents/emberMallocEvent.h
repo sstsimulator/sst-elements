@@ -17,6 +17,8 @@
 #ifndef _H_EMBER_LIBS_MISC_MALLOC_EV
 #define _H_EMBER_LIBS_MISC_MALLOC_EV
 
+#include <cstddef>
+#include <string>
 #include <sst/elements/hermes/miscapi.h>
 #include "emberMiscEvent.h"
 

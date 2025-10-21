@@ -21,6 +21,10 @@
 
 #include "memEvent.h"
 
+#include <cstdint>
+#include <vector>
+#include <array>
+
 using namespace std;
 
 namespace SST {

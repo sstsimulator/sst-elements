@@ -17,6 +17,8 @@
 #ifndef _H_SST_ADDR_HISTOGRAMMER
 #define _H_SST_ADDR_HISTOGRAMMER
 
+#include <vector>
+#include <cstdint>
 #include <bitset>
 
 #include <sst/core/event.h>

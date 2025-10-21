@@ -18,6 +18,7 @@
 #define _H_EMBER_TRICOUNT
 
 #include "mpi/embermpigen.h"
+#include <cstdint>
 #include <vector>
 #include <list>
 #include <queue>

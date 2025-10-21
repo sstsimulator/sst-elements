@@ -16,6 +16,7 @@
 #ifndef _H_VANADIS_OP_SYS
 #define _H_VANADIS_OP_SYS
 
+#include <cstdint>
 #include <sst/core/output.h>
 #include <sst/core/link.h>
 #include <sst/core/subcomponent.h>

@@ -16,6 +16,7 @@
 #ifndef _H_VANADIS_FP_MADD
 #define _H_VANADIS_FP_MADD
 
+#include <cstdint>
 #include <cfenv>
 
 #include "inst/vfpinst.h"

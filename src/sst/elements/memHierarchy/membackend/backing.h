@@ -16,6 +16,16 @@
 #ifndef __SST_MEMH_BACKEND_BACKING
 #define __SST_MEMH_BACKEND_BACKING
 
+#include <map>
+#include <ios>
+#include <cstddef>
+#include <iomanip>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <cassert>
+#include <cstdio>
+#include <cstdint>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>

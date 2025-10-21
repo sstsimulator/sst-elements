@@ -13,6 +13,13 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cstdint>
+#include <cassert>
+#include <vector>
+#include <queue>
+#include <cstddef>
+#include <map>
+
 class RecvEntry {
   public:
     RecvEntry( int thread, NicCmd* cmd = NULL ) : m_cmd(cmd), m_thread(thread), m_cqId(-1) {}

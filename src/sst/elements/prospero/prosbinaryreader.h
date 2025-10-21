@@ -19,6 +19,9 @@
 
 #include "prosreader.h"
 
+#include <cstdio>
+#include <cstdint>
+
 namespace SST {
 namespace Prospero {
 

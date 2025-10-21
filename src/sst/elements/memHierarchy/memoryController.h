@@ -16,6 +16,11 @@
 #ifndef MEMHIERARCHY_MEMORYCONTROLLER_H
 #define MEMHIERARCHY_MEMORYCONTROLLER_H
 
+#include <vector>
+#include <string>
+#include <cstddef>
+#include <map>
+#include <set>
 #include <sst/core/sst_types.h>
 
 #include <sst/core/component.h>

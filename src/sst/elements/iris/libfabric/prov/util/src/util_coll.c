@@ -32,6 +32,10 @@
 
 //#include "config.h"
 
+#include <stddef.h>
+#include <assert.h>
+#include <stdint.h>
+#include <string.h>
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <stdlib.h>

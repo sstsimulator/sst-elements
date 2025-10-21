@@ -30,6 +30,8 @@
  * SOFTWARE.
  */
 
+#include <stddef.h>
+#include <stdint.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <rdma/fabric.h>

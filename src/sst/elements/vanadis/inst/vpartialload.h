@@ -16,6 +16,9 @@
 #ifndef _H_VANADIS_PARTIAL_LOAD
 #define _H_VANADIS_PARTIAL_LOAD
 
+#include <cstdint>
+#include <cstdio>
+
 namespace SST {
 namespace Vanadis {
 

@@ -16,6 +16,7 @@
 #ifndef BALAR_UTIL_H
 #define BALAR_UTIL_H
 
+#include <cstdint>
 #include <stdint.h>
 #include <vector>
 #include <string>

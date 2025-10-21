@@ -44,6 +44,7 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
+#include <cstddef>
 #include <mercury/operating_system/process/task_id.h>
 #include <mpi_integers.h>
 #include <vector>

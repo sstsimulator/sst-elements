@@ -45,6 +45,8 @@
 #ifndef SINT_H_
 #define SINT_H_
 
+#include <cstdint>
+#include <ostream>
 #include <cinttypes>
 
 #include "uint.h"

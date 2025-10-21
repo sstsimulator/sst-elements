@@ -17,6 +17,7 @@
 #ifndef _H_SST_OSSEOUS_WRITE_EVENT
 #define _H_SST_OSSEOUS_WRITE_EVENT
 
+#include <cstdint>
 #include <inttypes.h>
 
 namespace SST {

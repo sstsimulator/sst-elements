@@ -13,6 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <string>
+#include <cstdint>
+#include <cstddef>
+
 class Ctx;
 class StreamBase {
             std::string m_prefix;

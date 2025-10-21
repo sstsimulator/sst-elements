@@ -16,6 +16,8 @@
 #ifndef _H_HERMES_MESSAGE_INTERFACE
 #define _H_HERMES_MESSAGE_INTERFACE
 
+#include <cstdint>
+#include <cassert>
 #include <assert.h>
 
 #include "hermes.h"

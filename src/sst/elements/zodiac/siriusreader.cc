@@ -13,6 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cstdlib>
+#include <cstddef>
+#include <ostream>
 #include <sst_config.h>
 
 #include "siriusreader.h"

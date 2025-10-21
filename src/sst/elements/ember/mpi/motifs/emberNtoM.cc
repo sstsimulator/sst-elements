@@ -14,6 +14,9 @@
 // distribution.
 
 
+#include <string>
+#include <queue>
+#include <cstddef>
 #include <sst_config.h>
 #include "emberNtoM.h"
 

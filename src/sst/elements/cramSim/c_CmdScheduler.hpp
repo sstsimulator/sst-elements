@@ -35,6 +35,9 @@
 #include "c_HashedAddress.hpp"
 #include "c_Controller.hpp"
 
+#include <vector>
+#include <deque>
+
 namespace SST{
     namespace CramSim {
         class c_DeviceDriver;

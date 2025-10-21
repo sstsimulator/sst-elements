@@ -15,6 +15,8 @@
 
 
 #include "sst_config.h"
+#include <sstream>
+#include <cstddef>
 #include <sst/core/timeLord.h>
 
 

@@ -17,6 +17,9 @@
 #define __STDC_FORMAT_MACROS
 #endif
 
+#include <cstring>
+#include <iostream>
+#include <set>
 #include <sst/core/params.h>
 #include <sst/core/factory.h>
 #include <sst/core/stringize.h>

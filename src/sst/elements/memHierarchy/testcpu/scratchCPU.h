@@ -16,6 +16,7 @@
 #ifndef _SCRATCHCPU_H
 #define _SCRATCHCPU_H
 
+#include <cstdint>
 #include <sst/core/interfaces/stdMem.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>

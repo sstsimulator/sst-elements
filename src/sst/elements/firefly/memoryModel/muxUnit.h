@@ -13,6 +13,13 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <functional>
+#include <cstddef>
+#include <queue>
+#include <string>
+#include <cassert>
+#include <cstdint>
+
 	class MuxUnit : public Unit {
 		struct Entry {
 			enum Op { Load, Store } op;

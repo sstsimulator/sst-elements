@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <string>
+#include <cstdint>
 #include <sst/core/event.h>
 #include <mercury/common/node_address.h>
 #include <mercury/hardware/common/flow_fwd.h>

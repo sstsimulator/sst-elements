@@ -17,6 +17,9 @@
 #ifndef _LLYR_TYPES
 #define _LLYR_TYPES
 
+#include <cstdint>
+#include <utility>
+#include <map>
 #include <sst/core/interfaces/stdMem.h>
 
 #include <list>

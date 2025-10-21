@@ -33,6 +33,8 @@
 #ifndef _OFI_COLL_H_
 #define _OFI_COLL_H_
 
+#include <stddef.h>
+#include <stdint.h>
 #include <rdma/fi_collective.h>
 
 #include <ofi_list.h>

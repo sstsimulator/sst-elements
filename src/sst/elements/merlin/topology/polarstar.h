@@ -8,6 +8,7 @@
 #ifndef COMPONENTS_MERLIN_TOPOLOGY_POLARSTAR_H
 #define COMPONENTS_MERLIN_TOPOLOGY_POLARSTAR_H
 
+#include <string>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>

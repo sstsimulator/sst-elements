@@ -28,6 +28,9 @@
 #include "prosreader.h"
 #include "prosmemmgr.h"
 
+#include <cstdint>
+#include <cstdio>
+
 #ifdef HAVE_LIBZ
 #include <zlib.h>
 #endif

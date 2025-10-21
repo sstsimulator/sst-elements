@@ -18,6 +18,8 @@
 #define _H_SST_ARIEL_RTL_EVENT
 
 #include "arielevent.h"
+#include <cstdint>
+#include <cstddef>
 #include <unordered_map>
 #include <vector>
 #include <deque>

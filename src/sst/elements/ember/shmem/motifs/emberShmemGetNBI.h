@@ -17,6 +17,9 @@
 #ifndef _H_EMBER_SHMEM_GETNBI
 #define _H_EMBER_SHMEM_GETNBI
 
+#include <string>
+#include <cstddef>
+#include <cstdint>
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
 #include <cxxabi.h>

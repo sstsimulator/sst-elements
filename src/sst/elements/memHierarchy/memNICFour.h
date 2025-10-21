@@ -16,6 +16,9 @@
 #ifndef _MEMHIERARCHY_MEMNICFOUR_SUBCOMPONENT_H_
 #define _MEMHIERARCHY_MEMNICFOUR_SUBCOMPONENT_H_
 
+#include <array>
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <map>
 #include <queue>

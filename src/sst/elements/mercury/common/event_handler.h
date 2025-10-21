@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <string>
+#include <type_traits>
 #include <mercury/common/node_address.h>
 #include <mercury/common/events.h>
 #include <mercury/common/printable.h>

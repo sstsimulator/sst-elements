@@ -33,6 +33,8 @@
 #ifndef FI_COLLECTIVE_H
 #define FI_COLLECTIVE_H
 
+#include <stdint.h>
+#include <stddef.h>
 #include <rdma/fi_atomic.h>
 #include <rdma/fi_domain.h>
 #include <rdma/fi_cm.h>

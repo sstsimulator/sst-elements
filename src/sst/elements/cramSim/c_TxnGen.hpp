@@ -17,6 +17,9 @@
 #ifndef _TXNGEN_H
 #define _TXNGEN_H
 
+#include <cstdint>
+#include <map>
+#include <deque>
 #include <stdint.h>
 #include <queue>
 

@@ -17,6 +17,7 @@
 #ifndef _H_EMBER_CMT_CR
 #define _H_EMBER_CMT_CR
 
+#include <cstdint>
 #include <sst/core/rng/gaussian.h>
 #include "mpi/embermpigen.h"
 

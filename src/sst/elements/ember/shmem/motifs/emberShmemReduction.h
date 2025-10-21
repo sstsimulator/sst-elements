@@ -17,6 +17,9 @@
 #ifndef _H_EMBER_SHMEM_REDUCTION
 #define _H_EMBER_SHMEM_REDUCTION
 
+#include <sstream>
+#include <string>
+#include <cstddef>
 #include <type_traits>
 #include <strings.h>
 #include "shmem/emberShmemGen.h"

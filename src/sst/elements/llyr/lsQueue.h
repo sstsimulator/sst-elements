@@ -17,6 +17,7 @@
 #ifndef _LLYR_LSQ
 #define _LLYR_LSQ
 
+#include <cstdio>
 #include <sst/core/output.h>
 #include <sst/core/interfaces/stdMem.h>
 

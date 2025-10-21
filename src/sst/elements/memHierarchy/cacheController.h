@@ -16,6 +16,11 @@
 #ifndef MEMHIERARCHY_CACHECONTROLLER_H_
 #define MEMHIERARCHY_CACHECONTROLLER_H_
 
+#include <list>
+#include <vector>
+#include <cstdint>
+#include <set>
+#include <cstddef>
 #include <queue>
 #include <map>
 #include <string>

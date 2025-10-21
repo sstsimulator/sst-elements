@@ -14,6 +14,7 @@
 // distribution.
 
 #include "sst_config.h"
+#include <vector>
 #include <cmath>
 
 #include "cacheTracer.h"

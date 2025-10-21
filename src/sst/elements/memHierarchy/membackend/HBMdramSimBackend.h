@@ -31,6 +31,7 @@
 #undef DEBUG
 #endif
 
+#include <map>
 #include <HBMDRAMSim.h>
 
 #ifdef OLD_DEBUG

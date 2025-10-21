@@ -44,6 +44,12 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
+#include <type_traits>
+#include <list>
+#include <string>
+#include <set>
+#include <utility>
+#include <cstdint>
 #include <sst/core/params.h>
 #include <mercury/operating_system/libraries/library.h>
 #include <mercury/operating_system/process/software_id.h>

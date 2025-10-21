@@ -19,6 +19,10 @@
 #include "os/syscall/syscall.h"
 #include "os/callev/voscallwrite.h"
 
+#include <cstddef>
+#include <cassert>
+#include <vector>
+
 namespace SST {
 namespace Vanadis {
 

@@ -13,6 +13,15 @@
 #ifndef _H_SST_MEMH_TIMING_DRAM_BACKEND
 #define _H_SST_MEMH_TIMING_DRAM_BACKEND
 
+#include <cstdint>
+#include <list>
+#include <string>
+#include <vector>
+#include <deque>
+#include <cstddef>
+#include <functional>
+#include <set>
+#include <cstdarg>
 #include <queue>
 
 #include <sst/core/componentExtension.h>

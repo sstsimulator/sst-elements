@@ -15,6 +15,13 @@
 
 #include "busWidget.h"
 
+#include <cstdint>
+#include <vector>
+#include <string>
+#include <queue>
+#include <cstddef>
+#include <functional>
+
 class BusBridgeUnit : public Unit {
 
 	struct Entry {

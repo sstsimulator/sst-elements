@@ -20,6 +20,11 @@
 #include "funcSM/event.h"
 #include "ctrlMsg.h"
 
+#include <cstddef>
+#include <string>
+#include <vector>
+#include <cstdint>
+
 namespace SST {
 namespace Firefly {
 

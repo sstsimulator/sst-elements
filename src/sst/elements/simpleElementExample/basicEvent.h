@@ -16,6 +16,7 @@
 #ifndef _BASICEVENT_H
 #define _BASICEVENT_H
 
+#include <vector>
 #include <sst/core/event.h>
 
 namespace SST {

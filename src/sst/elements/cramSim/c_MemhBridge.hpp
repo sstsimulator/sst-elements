@@ -16,6 +16,10 @@
 #ifndef _MEMHBRIDGE_H
 #define _MEMHBRIDGE_H
 
+#include <string>
+#include <streambuf>
+#include <ostream>
+#include <cstddef>
 #include <stdint.h>
 #include <queue>
 #include <iostream>

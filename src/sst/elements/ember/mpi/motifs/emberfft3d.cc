@@ -13,6 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <queue>
+#include <sstream>
+#include <cassert>
 #include <sst_config.h>
 
 #include "emberfft3d.h"

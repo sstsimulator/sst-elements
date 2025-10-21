@@ -16,6 +16,7 @@
 #ifndef _ariel_H
 #define _ariel_H
 
+#include <cstdint>
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
 #include <sst/core/component.h>

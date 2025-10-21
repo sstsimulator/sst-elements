@@ -18,6 +18,8 @@
 
 #include "embermpigen.h"
 
+#include <cstdint>
+
 #ifdef _XOPEN_SOURCE
 #include <ucontext.h>
 #else

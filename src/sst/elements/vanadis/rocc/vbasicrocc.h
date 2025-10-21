@@ -16,6 +16,9 @@
 #ifndef _H_VANADIS_BASIC_ROCC
 #define _H_VANADIS_BASIC_ROCC
 
+#include <cstddef>
+#include <deque>
+#include <cassert>
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>
 

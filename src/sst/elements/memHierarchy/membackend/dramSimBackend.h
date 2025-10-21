@@ -24,6 +24,7 @@
 #undef DEBUG
 #endif
 
+#include <map>
 #include <DRAMSim.h>
 
 #ifdef OLD_DEBUG

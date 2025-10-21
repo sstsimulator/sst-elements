@@ -16,6 +16,8 @@
 #ifndef _H_PIN3_FRONTEND
 #define _H_PIN3_FRONTEND
 
+#include <vector>
+#include <cstdint>
 #include <sst/core/sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>

@@ -14,6 +14,8 @@
 // distribution.
 
 
+#include <cstdio>
+#include <cassert>
 #include <limits.h>
 #include "sst_config.h"
 #include "libs/emberMpiLib.h"

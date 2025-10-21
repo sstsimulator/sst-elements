@@ -20,6 +20,7 @@
 #define _H_SST_NVM_PARAMS
 
 
+#include <cstdint>
 #include <sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/timeConverter.h>

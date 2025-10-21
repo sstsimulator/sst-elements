@@ -17,6 +17,10 @@
 #ifndef COMPONENTS_FIREFLY_VIRTNIC_H
 #define COMPONENTS_FIREFLY_VIRTNIC_H
 
+#include <cstddef>
+#include <functional>
+#include <cstdint>
+#include <cassert>
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>
 #include "sst/elements/hermes/shmemapi.h"

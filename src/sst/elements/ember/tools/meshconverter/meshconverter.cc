@@ -13,6 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cstdlib>
+#include <cstdint>
+#include <cstdio>
+#include <cstddef>
 #include <sst_config.h>
 #include <stdio.h>
 #include <stdlib.h>

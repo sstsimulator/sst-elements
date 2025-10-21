@@ -17,6 +17,14 @@
 #ifndef COMPONENTS_FIREFLY_NIC_H
 #define COMPONENTS_FIREFLY_NIC_H
 
+#include <cstdint>
+#include <cassert>
+#include <vector>
+#include <string>
+#include <cstddef>
+#include <unordered_map>
+#include <deque>
+#include <functional>
 #include <cmath>
 #include <list>
 #include <sstream>

@@ -13,6 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <queue>
+#include <cstddef>
+#include <cstdio>
 #include <sst_config.h>
 
 #include "emberlqcd.h"

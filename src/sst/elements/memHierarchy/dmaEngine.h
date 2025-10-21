@@ -18,6 +18,11 @@
 
 
 
+#include <set>
+#include <cstddef>
+#include <deque>
+#include <cstdint>
+#include <utility>
 #include <vector>
 
 #include <sst/core/event.h>

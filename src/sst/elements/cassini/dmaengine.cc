@@ -14,6 +14,8 @@
 // distribution.
 
 
+#include <cstddef>
+#include <utility>
 #include <sst_config.h>
 
 #include <sst/core/output.h>

@@ -31,6 +31,7 @@
 #include "c_TxnDispatcher.hpp"
 
 
+#include <cstdint>
 #include <bitset>
 
 using namespace std;

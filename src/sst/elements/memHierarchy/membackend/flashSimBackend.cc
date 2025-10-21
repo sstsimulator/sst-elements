@@ -14,6 +14,7 @@
 // distribution.
 
 
+#include <deque>
 #include <sst/core/sst_config.h>
 #include "membackend/flashSimBackend.h"
 

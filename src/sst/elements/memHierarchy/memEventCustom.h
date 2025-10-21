@@ -16,6 +16,9 @@
 #ifndef MEMHIERARHCY_MEMEVENTCUSTOM_H
 #define MEMHIERARHCY_MEMEVENTCUSTOM_H
 
+#include <string>
+#include <cstdint>
+#include <cstddef>
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
 #include <sst/core/warnmacros.h>

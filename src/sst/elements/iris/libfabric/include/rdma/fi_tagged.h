@@ -33,6 +33,8 @@
 #ifndef FI_TAGGED_H
 #define FI_TAGGED_H
 
+#include <stddef.h>
+#include <stdint.h>
 #include <rdma/fabric.h>
 #include <rdma/fi_endpoint.h>
 

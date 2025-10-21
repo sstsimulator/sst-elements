@@ -17,6 +17,9 @@
 #ifndef _H_EMBER_SHMEM_PUT
 #define _H_EMBER_SHMEM_PUT
 
+#include <sstream>
+#include <string>
+#include <cstdint>
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
 #include <cxxabi.h>

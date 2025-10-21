@@ -16,6 +16,8 @@
 #ifndef _H_SST_CASSINI_DMA_MEMORY_OPERATION
 #define _H_SST_CASSINI_DMA_MEMORY_OPERATION
 
+#include <cstdint>
+
 namespace SST {
 namespace Cassini {
 

@@ -14,6 +14,8 @@
 // distribution.
 
 
+#include <cstdint>
+#include <cstddef>
 #include <stdint.h>
 #include <string>
 #include <math.h>

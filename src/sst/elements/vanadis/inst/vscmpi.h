@@ -20,6 +20,8 @@
 #include "inst/vinst.h"
 #include "util/vcmpop.h"
 
+#include <cstdint>
+
 namespace SST {
 namespace Vanadis {
 

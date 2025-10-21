@@ -16,6 +16,12 @@
 #ifndef COMPONENTS_FIREFLY_CTRLMSGPROCESSQUEUESSTATE_H
 #define COMPONENTS_FIREFLY_CTRLMSGPROCESSQUEUESSTATE_H
 
+#include <vector>
+#include <cstdio>
+#include <cstdint>
+#include <map>
+#include <cstddef>
+#include <deque>
 #include <functional>
 #include <stdint.h>
 #include "ctrlMsg.h"

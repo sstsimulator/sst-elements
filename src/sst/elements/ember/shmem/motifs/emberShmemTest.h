@@ -17,6 +17,8 @@
 #ifndef _H_EMBER_SHMEM_TEST
 #define _H_EMBER_SHMEM_TEST
 
+#include <cstring>
+#include <cstdio>
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
 

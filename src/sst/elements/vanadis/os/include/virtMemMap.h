@@ -16,6 +16,10 @@
 #ifndef _H_VANADIS_NODE_OS_INCLUDE_VIRT_MEM_MAP
 #define _H_VANADIS_NODE_OS_INCLUDE_VIRT_MEM_MAP
 
+#include <cstddef>
+#include <map>
+#include <cstdint>
+#include <vector>
 #include <queue>
 #include <iterator>
 #include <string>

@@ -10,6 +10,8 @@
 // distribution.
 //
 
+#include <ctime>
+#include <cstdint>
 #include <cstring>
 #include <string>
 #include <fstream>

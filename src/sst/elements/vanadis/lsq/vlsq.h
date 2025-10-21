@@ -16,6 +16,10 @@
 #ifndef _H_VANADIS_LSQ_BASE
 #define _H_VANADIS_LSQ_BASE
 
+#include <cstddef>
+#include <deque>
+#include <cstdio>
+#include <string>
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>
 

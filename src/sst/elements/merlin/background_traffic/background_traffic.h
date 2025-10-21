@@ -27,6 +27,7 @@
 // #include <sst/core/rng/expon.h>
 // #include <sst/core/rng/uniform.h>
 
+#include <cstdint>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>

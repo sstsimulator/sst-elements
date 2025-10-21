@@ -17,6 +17,7 @@
 #ifndef _H_OPAL_PAGE_FAULT_HANDLER_OPAL
 #define _H_OPAL_PAGE_FAULT_HANDLER_OPAL
 
+#include <cstdint>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
 

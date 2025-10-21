@@ -12,6 +12,7 @@
 #ifndef _UNCLEEDSCARWASH_H
 #define _UNCLEEDSCARWASH_H
 
+#include <cstdint>
 #include <sst/core/component.h>
 #include <sst/core/rng/marsaglia.h>
 

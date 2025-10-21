@@ -36,6 +36,8 @@
 
 //#include "config.h"
 
+#include <stdint.h>
+#include <stddef.h>
 #include <ofi.h>
 #include <stdbool.h>
 #include <stdlib.h>

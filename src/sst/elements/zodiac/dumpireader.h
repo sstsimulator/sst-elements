@@ -17,6 +17,7 @@
 #ifndef _H_ZODIAC_DUMPI_READER
 #define _H_ZODIAC_DUMPI_READER
 
+#include <cstdint>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

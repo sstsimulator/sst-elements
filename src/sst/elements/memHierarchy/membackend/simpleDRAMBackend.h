@@ -19,6 +19,8 @@
 
 #include "membackend/memBackend.h"
 
+#include <cstdint>
+
 namespace SST {
 namespace MemHierarchy {
 

@@ -17,6 +17,8 @@
 #ifndef _H_SST_PROSPERO_READER
 #define _H_SST_PROSPERO_READER
 
+#include <cstdint>
+#include <cstddef>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>

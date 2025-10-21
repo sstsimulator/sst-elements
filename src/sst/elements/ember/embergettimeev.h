@@ -19,6 +19,9 @@
 
 #include "emberevent.h"
 
+#include <string>
+#include <cstdint>
+
 namespace SST {
 namespace Ember {
 

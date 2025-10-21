@@ -15,6 +15,12 @@
 
 #pragma once
 
+#include <memory>
+#include <cstdint>
+#include <cstdio>
+#include <string>
+#include <map>
+#include <ostream>
 #include <sst/core/params.h>
 
 #include <mercury/common/component.h>

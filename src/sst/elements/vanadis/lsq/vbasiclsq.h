@@ -16,6 +16,12 @@
 #ifndef _H_VANADIS_BASIC_LSQ
 #define _H_VANADIS_BASIC_LSQ
 
+#include <set>
+#include <ios>
+#include <deque>
+#include <cstddef>
+#include <iomanip>
+#include <sstream>
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/interfaces/stdMem.h>

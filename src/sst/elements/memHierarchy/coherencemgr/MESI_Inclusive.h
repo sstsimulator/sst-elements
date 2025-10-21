@@ -16,6 +16,9 @@
 #ifndef MESICOHERENCECONTROLLER_H
 #define MESICOHERENCECONTROLLER_H
 
+#include <map>
+#include <set>
+#include <cstdint>
 #include <iostream>
 #include <array>
 

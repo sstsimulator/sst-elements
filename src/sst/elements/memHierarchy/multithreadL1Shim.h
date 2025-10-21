@@ -16,6 +16,9 @@
 #ifndef _MEMHIERARCHY_MULTITHREADL1_H_
 #define _MEMHIERARCHY_MULTITHREADL1_H_
 
+#include <cstdint>
+#include <cstddef>
+#include <set>
 #include <map>
 #include <queue>
 

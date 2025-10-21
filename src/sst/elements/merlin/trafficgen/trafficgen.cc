@@ -13,6 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cstddef>
+#include <cassert>
 #include <sst_config.h>
 #include "trafficgen/trafficgen.h"
 #include <unistd.h>

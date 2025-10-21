@@ -37,6 +37,11 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <ostream>
+#include <string>
+#include <vector>
+#include <cstdint>
+#include <cstdio>
 #include <map>
 #include <set>
 #include <random>

@@ -12,6 +12,7 @@
 
 #include "opal_event.h"
 
+#include <cstdint>
 #include <list>
 #include <map>
 #include <cmath>

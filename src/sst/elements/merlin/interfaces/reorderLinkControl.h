@@ -17,6 +17,7 @@
 #ifndef COMPONENTS_MERLIN_REORDERLINKCONTROL_H
 #define COMPONENTS_MERLIN_REORDERLINKCONTROL_H
 
+#include <cstdint>
 #include <sst/core/subcomponent.h>
 #include <sst/core/unitAlgebra.h>
 

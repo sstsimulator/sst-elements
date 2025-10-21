@@ -18,6 +18,7 @@
 #define _MEMNETBRIDGE_H_
 
 
+#include <set>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 #include <sst/core/output.h>

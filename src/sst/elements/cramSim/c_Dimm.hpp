@@ -29,6 +29,7 @@
 #ifndef C_DIMM_HPP
 #define C_DIMM_HPP
 
+#include <cstddef>
 #include <vector>
 #include <queue>
 #include <stdlib.h>

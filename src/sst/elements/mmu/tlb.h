@@ -16,6 +16,7 @@
 #ifndef TLB_H
 #define TLB_H
 
+#include <functional>
 #include <sst/core/sst_types.h>
 #include <sst/core/subcomponent.h>
 #include "mmuTypes.h"

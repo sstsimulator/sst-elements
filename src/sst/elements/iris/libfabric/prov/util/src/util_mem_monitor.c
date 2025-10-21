@@ -32,6 +32,9 @@
  * SOFTWARE.
  */
 
+#include <stddef.h>
+#include <assert.h>
+#include <string.h>
 #include <ofi_mr.h>
 #include <unistd.h>
 

@@ -19,6 +19,8 @@
 #include "os/voscallev.h"
 #include "os/vosbittype.h"
 
+#include <cstdint>
+
 namespace SST {
 namespace Vanadis {
 

@@ -16,6 +16,8 @@
 #ifndef MEMHIERARCHY_L1COHERENCECONTROLLER_H
 #define MEMHIERARCHY_L1COHERENCECONTROLLER_H
 
+#include <cstdint>
+#include <set>
 #include <iostream>
 #include <array>
 

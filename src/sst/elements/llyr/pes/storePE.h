@@ -16,6 +16,14 @@
 #ifndef _STORE_PE_H
 #define _STORE_PE_H
 
+#include <sstream>
+#include <map>
+#include <vector>
+#include <cstdlib>
+#include <memory>
+#include <cstdint>
+#include <queue>
+#include <cstring>
 #include <random>
 
 #include "pes/processingElement.h"

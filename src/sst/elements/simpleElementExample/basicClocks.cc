@@ -20,6 +20,8 @@
 
 #include "basicClocks.h"
 
+#include <cstdint>
+
 
 using namespace SST;
 using namespace SST::simpleElementExample;

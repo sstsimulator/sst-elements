@@ -40,6 +40,9 @@
 /*******************************************************************************
  * GNI API Functions
  ******************************************************************************/
+#include <stdint.h>
+#include <stddef.h>
+
 extern ssize_t sumi_ep_read(struct fid_ep *ep, void *buf, size_t len,
 			    void *desc, fi_addr_t src_addr, uint64_t addr,
 			    uint64_t key, void *context);

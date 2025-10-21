@@ -19,6 +19,7 @@
 #include "decoder/visaopts.h"
 #include "inst/regfile.h"
 
+#include <string>
 #include <cstdint>
 
 #ifndef PRI_ADDR

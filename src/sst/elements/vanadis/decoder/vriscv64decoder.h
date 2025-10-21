@@ -20,6 +20,10 @@
 #include "inst/vinstall.h"
 #include "os/vriscvcpuos.h"
 
+#include <cassert>
+#include <cstdio>
+#include <string>
+#include <functional>
 #include <cstdint>
 #include <cstring>
 

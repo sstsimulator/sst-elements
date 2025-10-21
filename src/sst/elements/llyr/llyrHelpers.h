@@ -17,6 +17,7 @@
 #ifndef _LLYR_HELPERS
 #define _LLYR_HELPERS
 
+#include <ostream>
 #include <iterator>
 #include <vector>
 #include <string>

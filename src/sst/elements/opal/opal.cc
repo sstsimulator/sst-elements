@@ -10,6 +10,9 @@
 // distribution.
 //
 
+#include <vector>
+#include <utility>
+#include <ostream>
 #include <sst_config.h>
 #include "opal.h"
 

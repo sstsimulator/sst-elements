@@ -16,6 +16,15 @@
 #ifndef _MEMHIERARCHY_MEMNICBASE_SUBCOMPONENT_H_
 #define _MEMHIERARCHY_MEMNICBASE_SUBCOMPONENT_H_
 
+#include <utility>
+#include <cstdint>
+#include <sstream>
+#include <vector>
+#include <cstddef>
+#include <iterator>
+#include <map>
+#include <set>
+#include <unordered_set>
 #include <string>
 #include <unordered_map>
 #include <queue>

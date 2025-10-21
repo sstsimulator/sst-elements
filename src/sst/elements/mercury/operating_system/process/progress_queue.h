@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <vector>
 #include <queue>
 #include <map>
 #include <list>

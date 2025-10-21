@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <string>
 #include <mercury/components/operating_system_fwd.h>
 #include <mercury/operating_system/libraries/event_library.h>
 

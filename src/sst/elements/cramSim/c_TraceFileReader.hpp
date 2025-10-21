@@ -17,6 +17,7 @@
 #ifndef C_TRACEFILEREADER_HPP
 #define C_TRACEFILEREADER_HPP
 
+#include <cstddef>
 #include <stdint.h>
 #include <queue>
 #include <iostream>

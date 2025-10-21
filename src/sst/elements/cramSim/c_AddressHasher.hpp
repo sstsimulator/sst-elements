@@ -30,6 +30,7 @@
 #define c_ADDRESSHASHER_HPP
 
 // sst includes
+#include <string>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>

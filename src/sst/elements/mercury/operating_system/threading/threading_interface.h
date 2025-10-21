@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <string>
 #include <sst/core/component.h>
 
 #include <errno.h>

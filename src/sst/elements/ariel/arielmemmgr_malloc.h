@@ -17,6 +17,9 @@
 #ifndef _H_ARIEL_MEM_MANAGER_MALLOC
 #define _H_ARIEL_MEM_MANAGER_MALLOC
 
+#include <cstdint>
+#include <map>
+#include <unordered_set>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
 

@@ -15,6 +15,10 @@
 
 #pragma once
 
+#include <list>
+#include <string>
+#include <cstddef>
+#include <cstdint>
 #include <iris/sumi/collective.h>
 #include <iris/sumi/collective_message.h>
 #include <iris/sumi/dense_rank_map.h>

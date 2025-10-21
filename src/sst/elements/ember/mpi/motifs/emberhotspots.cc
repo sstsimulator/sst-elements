@@ -14,6 +14,8 @@
 // distribution.
 
 
+#include <ostream>
+#include <iostream>
 #include <sst_config.h>
 #include "emberhotspots.h"
 #include <limits>

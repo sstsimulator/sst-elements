@@ -16,6 +16,12 @@
 #ifndef MEMHIERARCHY_SHMEM_NIC_H
 #define MEMHIERARCHY_SHMEM_NIC_H
 
+#include <cstdint>
+#include <string>
+#include <vector>
+#include <cstddef>
+#include <map>
+#include <functional>
 #include <list>
 #include <queue>
 #include <sst/core/sst_types.h>

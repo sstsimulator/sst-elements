@@ -13,6 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <vector>
+#include <cstddef>
+
 class RdmaNicNetworkEvent : public Event {
 
     size_t calcOverHead() {

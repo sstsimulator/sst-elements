@@ -19,6 +19,8 @@
 #include "group.h"
 #include "sst/elements/hermes/msgapi.h"
 
+#include <cassert>
+#include <map>
 #include <cstdint>
 
 using namespace Hermes;

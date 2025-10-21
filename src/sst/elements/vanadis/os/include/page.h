@@ -16,6 +16,7 @@
 #ifndef _H_VANADIS_NODE_OS_INCLUDE_PAGE
 #define _H_VANADIS_NODE_OS_INCLUDE_PAGE
 
+#include <cassert>
 #include <string>
 #include <set>
 

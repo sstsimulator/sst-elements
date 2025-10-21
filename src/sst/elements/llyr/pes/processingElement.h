@@ -17,6 +17,9 @@
 #ifndef _LLYR_PE_H
 #define _LLYR_PE_H
 
+#include <iostream>
+#include <ostream>
+#include <cstddef>
 #include <sst/core/output.h>
 #include <sst/core/interfaces/stdMem.h>
 

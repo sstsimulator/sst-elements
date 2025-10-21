@@ -16,6 +16,8 @@
 #ifndef _NEURON_H
 #define _NEURON_H
 
+#include <string>
+#include <vector>
 #include <map>
 #include <cstdint>
 

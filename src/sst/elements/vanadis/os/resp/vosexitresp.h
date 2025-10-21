@@ -16,6 +16,8 @@
 #ifndef _H_VANADIS_EXIT_RESPONSE
 #define _H_VANADIS_EXIT_RESPONSE
 
+#include <cstdint>
+#include <cassert>
 #include <sst/core/event.h>
 
 namespace SST {

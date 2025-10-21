@@ -16,6 +16,9 @@
 #ifndef _COMPLEX_PE_H
 #define _COMPLEX_PE_H
 
+#include <cstdlib>
+#include <cstdint>
+#include <vector>
 #include <cmath>
 
 #include "pes/processingElement.h"

@@ -15,6 +15,13 @@
 
 #pragma once
 
+#include <string>
+#include <list>
+#include <map>
+#include <functional>
+#include <vector>
+#include <unordered_map>
+#include <cstddef>
 #include <mercury/common/component.h>
 
 #include <sst/core/link.h>

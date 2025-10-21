@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <string>
 #include <sst/core/event.h>
 #include <sst/core/params.h>
 

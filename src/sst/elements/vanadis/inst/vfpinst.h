@@ -16,6 +16,8 @@
 #ifndef _H_VANADIS_FP_INSTRUCTION
 #define _H_VANADIS_FP_INSTRUCTION
 
+#include <string>
+#include <cstdint>
 #include <fenv.h>
 
 #include "decoder/visaopts.h"

@@ -16,6 +16,17 @@
 #ifndef _H_VANADIS_NODE_OS
 #define _H_VANADIS_NODE_OS
 
+#include <string>
+#include <vector>
+#include <utility>
+#include <cassert>
+#include <cstdio>
+#include <cstdint>
+#include <map>
+#include <functional>
+#include <unordered_map>
+#include <deque>
+#include <cstddef>
 #include <unordered_set>
 #include <queue>
 

@@ -13,6 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <string>
+
 class NicCmdEntry {
   public:
     NicCmdEntry( RdmaNic& nic, int thread, NicCmd* tmp ) :

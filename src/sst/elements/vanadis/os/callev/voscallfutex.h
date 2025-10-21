@@ -18,6 +18,8 @@
 
 #include "os/voscallev.h"
 
+#include <cstdint>
+
 namespace SST {
 namespace Vanadis {
 

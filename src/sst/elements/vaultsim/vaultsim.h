@@ -17,6 +17,8 @@
 #ifndef _VAULTSIMC_H
 #define _VAULTSIMC_H
 
+#include <cstdint>
+#include <cstddef>
 #include <sst/core/event.h>
 #include <sst/core/output.h>
 #include <sst/core/component.h>

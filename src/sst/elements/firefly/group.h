@@ -16,6 +16,8 @@
 #ifndef COMPONENTS_FIREFLY_GROUP_H
 #define COMPONENTS_FIREFLY_GROUP_H
 
+#include <cassert>
+#include <map>
 #include <vector>
 #include <virtNic.h>
 #include <sst/core/interfaces/simpleNetwork.h>

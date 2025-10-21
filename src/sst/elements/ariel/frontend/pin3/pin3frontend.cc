@@ -14,6 +14,11 @@
 // distribution.
 
 
+#include <cstdlib>
+#include <cerrno>
+#include <cstdio>
+#include <cstring>
+#include <cstddef>
 #include <sst_config.h>
 
 #include "pin3frontend.h"

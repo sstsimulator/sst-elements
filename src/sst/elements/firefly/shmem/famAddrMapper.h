@@ -16,6 +16,7 @@
 #ifndef _H_FIREFLY_SHMEM_FAM_ADDR_MAPPER
 #define _H_FIREFLY_SHMEM_FAM_ADDR_MAPPER
 
+#include <cstdint>
 #include <sst/core/module.h>
 
 namespace SST {

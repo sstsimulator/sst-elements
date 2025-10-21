@@ -18,6 +18,9 @@
 
 #include "inst/vinst.h"
 
+#include <sstream>
+#include <cstdint>
+
 namespace SST {
 namespace Vanadis {
 

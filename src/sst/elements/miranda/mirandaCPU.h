@@ -16,6 +16,9 @@
 #ifndef _H_SST_MEM_H_REQ_GEN_CPU
 #define _H_SST_MEM_H_REQ_GEN_CPU
 
+#include <map>
+#include <string>
+#include <cstdint>
 #include <sst/core/component.h>
 #include <sst/core/interfaces/stdMem.h>
 #include <sst/core/statapi/stataccumulator.h>

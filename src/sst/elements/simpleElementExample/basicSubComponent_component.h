@@ -39,6 +39,7 @@
  *      - Whan all components have received the messages they sent, the simulation ends
  */
 
+#include <cstddef>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 

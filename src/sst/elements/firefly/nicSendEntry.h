@@ -13,6 +13,11 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <functional>
+#include <cstddef>
+#include <vector>
+#include <cstdint>
+
 class SendEntryBase {
   public:
     SendEntryBase( int local_vNic, int streamNum ) :

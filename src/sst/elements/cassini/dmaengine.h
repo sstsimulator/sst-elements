@@ -17,6 +17,9 @@
 #ifndef _H_SST_CASSINI_DMA_ENGINE
 #define _H_SST_CASSINI_DMA_ENGINE
 
+#include <cstdint>
+#include <vector>
+#include <map>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
 #include <deque>

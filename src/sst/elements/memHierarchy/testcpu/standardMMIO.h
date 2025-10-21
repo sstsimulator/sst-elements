@@ -16,6 +16,8 @@
 #ifndef MEMHIERARCHY_MMIO_EXAMPLE_H
 #define MEMHIERARCHY_MMIO_EXAMPLE_H
 
+#include <map>
+#include <cstdint>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>

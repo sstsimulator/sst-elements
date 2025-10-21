@@ -18,6 +18,9 @@
 #define _H_EMBER_SIRIUS_TRACE_MOTIF
 
 #include "mpi/embermpigen.h"
+#include <cstddef>
+#include <cstdio>
+#include <cstdint>
 #include <unordered_map>
 
 #include "sirius/siriusglobals.h"

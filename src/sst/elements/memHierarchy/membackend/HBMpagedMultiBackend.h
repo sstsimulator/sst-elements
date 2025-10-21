@@ -19,6 +19,9 @@
 #ifndef _H_SST_MEMH_HBM_PAGEDMULTI_BACKEND
 #define _H_SST_MEMH_HBM_PAGEDMULTI_BACKEND
 
+#include <cassert>
+#include <cstdint>
+#include <string>
 #include <queue>
 #include <sst/core/rng/rng.h>
 #include "sst/elements/memHierarchy/membackend/HBMdramSimBackend.h"

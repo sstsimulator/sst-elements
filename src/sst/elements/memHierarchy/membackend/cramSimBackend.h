@@ -20,6 +20,8 @@
 
 #include "sst/elements/memHierarchy/membackend/memBackend.h"
 
+#include <set>
+
 namespace SST {
 namespace MemHierarchy {
 

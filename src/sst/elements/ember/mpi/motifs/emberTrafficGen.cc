@@ -14,6 +14,10 @@
 // distribution.
 
 
+#include <iostream>
+#include <cassert>
+#include <ostream>
+#include <iterator>
 #include <sst_config.h>
 #include "emberTrafficGen.h"
 #include <limits>

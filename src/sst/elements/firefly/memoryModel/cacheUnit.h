@@ -15,6 +15,13 @@
 
 	#include "muxUnit.h"
 
+#include <cassert>
+#include <string>
+#include <cstddef>
+#include <queue>
+#include <functional>
+#include <map>
+
 	class CacheUnit : public Unit {
 
 		struct Entry {

@@ -12,6 +12,8 @@
 #ifndef _SAMBA_H
 #define _SAMBA_H
 
+#include <vector>
+#include <cstdint>
 #include <sst/core/sst_types.h>
 #include <sst/core/link.h>
 #include <sst/core/event.h>

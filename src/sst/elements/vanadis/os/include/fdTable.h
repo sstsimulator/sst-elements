@@ -16,6 +16,9 @@
 #ifndef _H_VANADIS_NODE_OS_INCLUDE_FD_TABLE
 #define _H_VANADIS_NODE_OS_INCLUDE_FD_TABLE
 
+#include <cerrno>
+#include <cassert>
+#include <cstdio>
 #include <assert.h>
 #include <stdint.h>
 #include <string>

@@ -14,6 +14,13 @@
 // distribution.
 
 //#include <malloc.h>
+#include <cstdint>
+#include <cstdio>
+#include <cerrno>
+#include <cstdlib>
+#include <vector>
+#include <cstddef>
+#include <ostream>
 #include <execinfo.h>
 #include <assert.h>
 #include <stdlib.h>

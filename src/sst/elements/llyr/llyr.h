@@ -16,6 +16,8 @@
 #ifndef _LLYR_H
 #define _LLYR_H
 
+#include <cstdint>
+#include <vector>
 #include <sst/core/sst_config.h>
 
 #include <sst/core/component.h>

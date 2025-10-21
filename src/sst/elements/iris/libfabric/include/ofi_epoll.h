@@ -34,6 +34,7 @@
 #ifndef _OFI_EPOLL_H_
 #define _OFI_EPOLL_H_
 
+#include <stdint.h>
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>

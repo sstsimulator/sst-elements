@@ -20,6 +20,8 @@
 #include "os/callev/voscalltgkill.h"
 #include "os/resp/vosexitresp.h"
 
+#include <vector>
+
 namespace SST {
 namespace Vanadis {
 

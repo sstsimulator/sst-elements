@@ -23,6 +23,11 @@
 #include "base/base.h"
 #include "base/request.h"
 #include "frontend/frontend.h"
+
+#include <string>
+#include <cstddef>
+#include <set>
+#include <map>
 //#include "memory_system/memory_system.h"
 
 

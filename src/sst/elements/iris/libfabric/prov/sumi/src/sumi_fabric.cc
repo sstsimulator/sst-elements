@@ -54,6 +54,9 @@
 //#include <config.h>
 //#endif /* HAVE_CONFIG_H */
 
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>

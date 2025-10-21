@@ -17,6 +17,11 @@
 #ifndef _H_EMBER_TRAFFIC_GEN
 #define _H_EMBER_TRAFFIC_GEN
 
+#include <string>
+#include <set>
+#include <vector>
+#include <queue>
+#include <cstdint>
 #include <sst/core/rng/gaussian.h>
 #include <sst/core/rng/marsaglia.h>
 

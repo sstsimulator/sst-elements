@@ -17,6 +17,7 @@
 #ifndef _H_OPAL_MEM_MANAGER_OPAL
 #define _H_OPAL_MEM_MANAGER_OPAL
 
+#include <cstdint>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
 

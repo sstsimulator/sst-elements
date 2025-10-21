@@ -16,6 +16,7 @@
 #ifndef _MEMHIERARCHY_MEMNIC_SUBCOMPONENT_H_
 #define _MEMHIERARCHY_MEMNIC_SUBCOMPONENT_H_
 
+#include <cstddef>
 #include <string>
 #include <unordered_map>
 #include <queue>

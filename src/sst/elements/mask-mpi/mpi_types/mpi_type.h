@@ -42,6 +42,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <cstddef>
+#include <ostream>
 #include <iris/sumi/comm_functions.h>
 #include <mpi_integers.h>
 #include <mpi_types.h>

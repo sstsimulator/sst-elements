@@ -16,6 +16,9 @@
 #include "sst_config.h"
 #include "strideprefetch.h"
 
+#include <cassert>
+#include <cstddef>
+#include <cinttypes>
 #include <vector>
 #include "stdlib.h"
 

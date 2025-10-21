@@ -16,6 +16,9 @@
 #ifndef _MEMHIERARCHY_MESI_DIRECTORY_COHERENCE_H_
 #define _MEMHIERARCHY_MESI_DIRECTORY_COHERENCE_H_
 
+#include <string>
+#include <cstdint>
+#include <unordered_map>
 #include <map>
 #include <set>
 #include <list>

@@ -29,6 +29,9 @@
 #include "sst_config.h"
 
 // C++ includes
+#include <cstdint>
+#include <sstream>
+#include <ostream>
 #include <algorithm>
 #include <assert.h>
 #include <iostream>

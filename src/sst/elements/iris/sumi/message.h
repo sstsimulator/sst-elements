@@ -44,6 +44,9 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
+#include <string>
+#include <cstddef>
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <utility>

@@ -16,6 +16,14 @@
 #ifndef _FP_PE_H
 #define _FP_PE_H
 
+#include <cstdlib>
+#include <memory>
+#include <iomanip>
+#include <cstdint>
+#include <sstream>
+#include <bitset>
+#include <vector>
+#include <ostream>
 #include <limits>
 #include <string>
 

@@ -17,6 +17,7 @@
 #ifndef _H_EMBER_LIBS_MISC_GETNUMNODES_EV
 #define _H_EMBER_LIBS_MISC_GETNUMNODES_EV
 
+#include <string>
 #include <sst/elements/hermes/miscapi.h>
 #include "emberMiscEvent.h"
 

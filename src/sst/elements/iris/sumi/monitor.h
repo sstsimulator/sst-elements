@@ -44,6 +44,7 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
+#include <list>
 #include <output.h>
 #include <sst/core/eli/elementbuilder.h>
 //#include <sprockit/debug.h>

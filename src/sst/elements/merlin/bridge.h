@@ -18,6 +18,10 @@
 #define _MERLIN_BRIDGE_H_
 
 
+#include <cstdint>
+#include <cstddef>
+#include <string>
+#include <map>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 #include <sst/core/output.h>

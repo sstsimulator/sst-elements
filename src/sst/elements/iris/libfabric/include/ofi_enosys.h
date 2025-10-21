@@ -33,6 +33,8 @@
 #ifndef _OFI_ENOSYS_H_
 #define _OFI_ENOSYS_H_
 
+#include <stddef.h>
+#include <stdint.h>
 #include <ofi_osd.h>
 
 #include <rdma/fabric.h>

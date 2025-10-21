@@ -14,6 +14,14 @@
 // distribution.
 
 #include "pin.H"
+#include <cstddef>
+#include <ostream>
+#include <cerrno>
+#include <cstdlib>
+#include <cstdint>
+#include <cstdio>
+#include <sstream>
+#include <vector>
 #include <sst_config.h>
 #include <iostream>
 #include <fstream>

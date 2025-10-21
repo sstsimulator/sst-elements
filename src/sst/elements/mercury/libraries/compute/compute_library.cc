@@ -13,6 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cstdint>
 #include <sst/core/params.h>
 #include <mercury/common/errors.h>
 #include <mercury/components/operating_system_CL.h>

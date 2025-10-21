@@ -38,6 +38,10 @@
 // distribution.
 
 
+#include <ostream>
+#include <cstdlib>
+#include <cstdio>
+#include <string>
 #include <sst_config.h>
 #include "embertricount.h"
 

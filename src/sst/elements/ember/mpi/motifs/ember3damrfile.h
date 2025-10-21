@@ -17,6 +17,8 @@
 #ifndef _H_SST_ELEMENTS_EMBER_AMR_FILE
 #define _H_SST_ELEMENTS_EMBER_AMR_FILE
 
+#include <cstdint>
+#include <cstdio>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -16,6 +16,8 @@
 #ifndef _CACHETRACER_H
 #define _CACHETRACER_H
 
+#include <cstdio>
+#include <cstdint>
 #include <sst/core/output.h>
 #include <sst/core/event.h>
 #include <sst/core/component.h>

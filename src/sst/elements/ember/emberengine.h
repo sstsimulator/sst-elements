@@ -17,6 +17,10 @@
 #ifndef _H_EMBER_ENGINE
 #define _H_EMBER_ENGINE
 
+#include <cstdint>
+#include <map>
+#include <string>
+#include <vector>
 #include <queue>
 
 #include <sst/core/sst_types.h>

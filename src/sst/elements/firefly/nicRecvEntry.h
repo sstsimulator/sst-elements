@@ -14,6 +14,11 @@
 // distribution.
 
 
+#include <vector>
+#include <cassert>
+#include <functional>
+#include <cstddef>
+
 class RecvEntryBase : public EntryBase {
   public:
 

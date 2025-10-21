@@ -20,6 +20,10 @@
 #include "emberevent.h"
 #include "emberconstdistrib.h"
 
+#include <cstdint>
+#include <functional>
+#include <string>
+
 namespace SST {
 namespace Ember {
 

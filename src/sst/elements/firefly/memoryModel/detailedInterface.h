@@ -16,6 +16,13 @@
 #ifndef COMPONENTS_FIREFLY_MEMORY_MODEL_DETAILED_INTERFACE_H
 #define COMPONENTS_FIREFLY_MEMORY_MODEL_DETAILED_INTERFACE_H
 
+#include <cstddef>
+#include <set>
+#include <map>
+#include <functional>
+#include <cassert>
+#include <cstdint>
+#include <vector>
 #include <sst/core/subcomponent.h>
 #include <sst/core/interfaces/stdMem.h>
 #include "memoryModel/memReq.h"

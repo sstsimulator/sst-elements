@@ -17,6 +17,8 @@
 #ifndef _H_EMBER_SHMEM_GET
 #define _H_EMBER_SHMEM_GET
 
+#include <string>
+#include <sstream>
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
 #include <cxxabi.h>

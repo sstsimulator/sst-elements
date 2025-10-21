@@ -13,6 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <stddef.h>
 #include <sys/syscall.h>      /* Definition of SYS_* constants */
 #include <unistd.h>
 

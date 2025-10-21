@@ -34,6 +34,13 @@
 #include "os/vdumpregsreq.h"
 #include "os/vcheckpointreq.h"
 
+#include <vector>
+#include <list>
+#include <string>
+#include <cstdint>
+#include <cstdio>
+#include <cstddef>
+#include <deque>
 #include <array>
 #include <limits>
 #include <set>

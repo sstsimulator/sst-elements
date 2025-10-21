@@ -16,6 +16,7 @@
 #include "sst_config.h"
 #include "palaprefetch.h"
 
+#include <utility>
 #include <unordered_map>
 #include <vector>
 #include <deque>

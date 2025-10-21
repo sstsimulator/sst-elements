@@ -16,6 +16,7 @@
 #ifndef _PY_MAPPER_H
 #define _PY_MAPPER_H
 
+#include <cstdint>
 #include <map>
 #include <vector>
 #include <string>

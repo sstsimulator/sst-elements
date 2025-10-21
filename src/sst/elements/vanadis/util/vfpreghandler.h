@@ -16,6 +16,7 @@
 #ifndef _H_VANADIS_FP_REGISTER_HANDLER
 #define _H_VANADIS_FP_REGISTER_HANDLER
 
+#include <cstdint>
 #include <cstring>
 
 namespace SST {

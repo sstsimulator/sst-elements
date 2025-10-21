@@ -22,6 +22,9 @@
 #include "inst/vinsttype.h"
 #include "inst/vregfmt.h"
 
+#include <cstdio>
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <map>
 #include <sst/core/output.h>

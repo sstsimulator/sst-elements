@@ -14,6 +14,12 @@
 // distribution.
 
 
+#include <functional>
+#include <unordered_map>
+#include <vector>
+#include <cassert>
+#include <cstdint>
+
 class RecvMachine {
 
     #include "nicShmemRecvMachine.h"

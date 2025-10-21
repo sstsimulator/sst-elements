@@ -16,6 +16,10 @@
 #ifndef SST_MEMHIERARCHY_BUS_H
 #define SST_MEMHIERARCHY_BUS_H
 
+#include <set>
+#include <vector>
+#include <string>
+#include <cstdint>
 #include <queue>
 #include <map>
 

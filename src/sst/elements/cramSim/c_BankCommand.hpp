@@ -29,6 +29,7 @@
 #ifndef C_BANKCOMMAND_HPP
 #define C_BANKCOMMAND_HPP
 
+#include <vector>
 #include <ostream>
 #include <map>
 #include <string>

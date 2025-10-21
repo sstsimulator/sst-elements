@@ -17,6 +17,7 @@
 #ifndef COMPONENTS_FIREFLY_LATENCYMOD_H
 #define COMPONENTS_FIREFLY_LATENCYMOD_H
 
+#include <cstddef>
 #include <sst/core/module.h>
 
 namespace SST {

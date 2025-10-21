@@ -42,6 +42,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <memory>
+#include <cstdint>
+#include <map>
+#include <string>
+#include <vector>
 #include <sst/core/params.h>
 #include <sst/core/factory.h>
 #include <mercury/components/operating_system_fwd.h>

@@ -42,6 +42,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
 #include <mask_mpi.h>
 #include <mercury/common/skeleton.h>
 //#include <sstmac/replacements/sys/time.h>

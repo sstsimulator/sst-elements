@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
 #include <sst/core/params.h>
 #include <sst/core/event.h>
 #include <mercury/common/component.h>

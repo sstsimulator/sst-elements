@@ -16,6 +16,10 @@
 #ifndef MEMHIERARCHY_MESIPRIVATENONINCLUSIVE_H
 #define MEMHIERARCHY_MESIPRIVATENONINCLUSIVE_H
 
+#include <set>
+#include <map>
+#include <cstdint>
+#include <string>
 #include <iostream>
 #include <array>
 

@@ -29,6 +29,7 @@
 //SST includes
 #include "sst_config.h"
 
+#include <list>
 #include <memory>
 #include <algorithm>
 #include <assert.h>

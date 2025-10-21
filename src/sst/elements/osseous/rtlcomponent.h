@@ -16,6 +16,10 @@
 #ifndef _SIMPLE_VECTORSHIFTREG_H
 #define _SIMPLE_VECTORSHIFTREG_H
 
+#include <unordered_map>
+#include <cstddef>
+#include <cstdint>
+#include <string>
 #include <sst/core/component.h>
 #include <sst/core/interfaces/stdMem.h>
 #include <sst/core/timeConverter.h>

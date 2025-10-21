@@ -20,6 +20,7 @@
 #include "inst/vregfmt.h"
 //#include "util/vtypename.h"
 
+#include <cstdint>
 #include <vector>
 
 namespace SST {

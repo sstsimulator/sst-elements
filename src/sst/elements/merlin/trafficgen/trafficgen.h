@@ -19,6 +19,8 @@
 #ifndef COMPONENTS_MERLIN_GENERATORS_TRAFFICEGEN_H
 #define COMPONENTS_MERLIN_GENERATORS_TRAFFICEGEN_H
 
+#include <vector>
+#include <cstdint>
 #include <cstdlib>
 
 #include <sst/core/rng/mersenne.h>

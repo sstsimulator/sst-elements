@@ -21,6 +21,10 @@
 #ifndef _MEMHIERARCHY_DIRCONTROLLER_H_
 #define _MEMHIERARCHY_DIRCONTROLLER_H_
 
+#include <string>
+#include <cstdint>
+#include <unordered_map>
+#include <cstddef>
 #include <map>
 #include <set>
 #include <list>

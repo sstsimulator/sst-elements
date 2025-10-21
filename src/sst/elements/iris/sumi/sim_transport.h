@@ -48,6 +48,11 @@ Questions? Contact sst-macro-help@sandia.gov
 //#include <sstmac/common/event_scheduler_fwd.h>
 //#include <sstmac/software/launch/task_mapping.h>
 
+#include <memory>
+#include <cstdint>
+#include <map>
+#include <functional>
+#include <vector>
 #include <output.h>
 
 #include <sst/core/eli/elementbuilder.h>

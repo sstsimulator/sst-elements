@@ -40,6 +40,9 @@
 /*******************************************************************************
  * GNI API Functions
  ******************************************************************************/
+#include <stddef.h>
+#include <stdint.h>
+
 extern int sumi_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 			    struct fid_domain **dom, void *context);
 

@@ -18,6 +18,13 @@
 
 #include "pes/processingElement.h"
 
+#include <map>
+#include <tuple>
+#include <vector>
+#include <cstdlib>
+#include <queue>
+#include <cstdint>
+
 namespace SST {
 namespace Llyr {
 

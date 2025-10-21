@@ -16,6 +16,7 @@
 #ifndef _SHOGON_COMPONENT_H
 #define _SHOGON_COMPONENT_H
 
+#include <cstdint>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/output.h>

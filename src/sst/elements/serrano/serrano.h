@@ -16,6 +16,7 @@
 #ifndef _H_SST_SERRANO
 #define _H_SST_SERRANO
 
+#include <cstddef>
 #include <sst/core/sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>

@@ -29,6 +29,14 @@
 #ifndef C_DeviceDriver_HPP
 #define C_DeviceDriver_HPP
 
+#include <functional>
+#include <map>
+#include <streambuf>
+#include <ostream>
+#include <deque>
+#include <cstddef>
+#include <string>
+#include <cstdint>
 #include <vector>
 #include <queue>
 #include <list>

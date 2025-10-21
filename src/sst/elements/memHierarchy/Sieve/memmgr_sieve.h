@@ -17,6 +17,7 @@
 #ifndef _H_SIEVE_MEM_MANAGER
 #define _H_SIEVE_MEM_MANAGER
 
+#include <cstdint>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
 

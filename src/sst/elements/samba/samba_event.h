@@ -20,6 +20,7 @@
 #define _H_SST_MESSIER_EVENT
 
 
+#include <cstdint>
 #include <sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/timeConverter.h>

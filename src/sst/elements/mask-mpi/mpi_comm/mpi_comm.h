@@ -42,6 +42,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <set>
+#include <cstdint>
 #include <iris/sumi/communicator.h>
 #include <mercury/common/errors.h>
 #include <mercury/common/node_address.h>

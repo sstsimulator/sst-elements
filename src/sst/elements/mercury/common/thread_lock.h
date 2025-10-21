@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <sst_element_config.h>
 #include <thread>
 

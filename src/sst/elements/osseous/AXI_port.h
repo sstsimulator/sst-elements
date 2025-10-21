@@ -16,6 +16,10 @@ DEBUG_FLAGS debug_flag;
 //void print_registers(DEBUG_FLAGS);
 
 
+#include <cstddef>
+#include <cstdio>
+#include <ostream>
+#include <iostream>
 #include <array>
 #include <cstdint>
 #include <cstdlib>

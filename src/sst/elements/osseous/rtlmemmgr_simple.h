@@ -17,6 +17,7 @@
 #ifndef _H_RTL_MEM_MANAGER_SIMPLE
 #define _H_RTL_MEM_MANAGER_SIMPLE
 
+#include <cstdint>
 #include <sst/core/output.h>
 
 #include <stdint.h>

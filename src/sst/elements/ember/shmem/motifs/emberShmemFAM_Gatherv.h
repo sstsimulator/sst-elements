@@ -17,6 +17,11 @@
 #ifndef _H_EMBER_SHMEM_FAM_GATHERV
 #define _H_EMBER_SHMEM_FAM_GATHERV
 
+#include <string>
+#include <vector>
+#include <cstdio>
+#include <cstddef>
+#include <cstdint>
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
 #include <unistd.h>

@@ -44,6 +44,7 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #define ssthg_app_name sendrecv
 
+#include <cstdio>
 #include <stddef.h>
 #include <stdio.h>
 #include <iostream>

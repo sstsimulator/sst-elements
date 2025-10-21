@@ -31,6 +31,7 @@
 #include "sst_config.h"
 
 // C++ includes
+#include <list>
 #include <memory>
 #include <iostream>
 #include <assert.h>

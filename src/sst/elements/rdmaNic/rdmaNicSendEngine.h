@@ -13,6 +13,11 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <vector>
+#include <queue>
+#include <cstddef>
+#include <map>
+
 class SendStream {
   public:
     SendStream( RdmaNic& nic, SendEntry* entry );

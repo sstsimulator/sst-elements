@@ -20,6 +20,10 @@
 #define _H_EMBER_BFS_MOTIF
 
 #include "mpi/embermpigen.h"
+#include <vector>
+#include <ostream>
+#include <iostream>
+#include <cstdint>
 #include <sst/core/rng/mersenne.h>
 #include <sst/core/shared/sharedMap.h>
 #include <sst/core/output.h>

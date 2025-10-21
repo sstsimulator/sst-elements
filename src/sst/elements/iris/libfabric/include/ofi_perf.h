@@ -35,6 +35,8 @@
 
 //#include "config.h"
 
+#include <stddef.h>
+#include <stdint.h>
 #include <assert.h>
 #include <string.h>
 #include <ofi_osd.h>

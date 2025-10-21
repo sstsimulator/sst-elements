@@ -17,6 +17,9 @@
 #ifndef _H_RTL_MEM_MANAGER_CACHE
 #define _H_RTL_MEM_MANAGER_CACHE
 
+#include <utility>
+#include <unordered_map>
+#include <cstdint>
 #include <sst/core/output.h>
 #include <sst/core/rng/marsaglia.h>
 

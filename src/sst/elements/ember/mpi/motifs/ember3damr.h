@@ -17,6 +17,8 @@
 #ifndef _H_EMBER_3D_AMR
 #define _H_EMBER_3D_AMR
 
+#include <vector>
+#include <cstdint>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <sst/core/output.h>

@@ -17,6 +17,8 @@
 #ifndef _H_EMBER_SHMEM_BARRIER_ALL
 #define _H_EMBER_SHMEM_BARRIER_ALL
 
+#include <cstdio>
+#include <cstdint>
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
 

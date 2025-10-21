@@ -16,6 +16,13 @@
 #ifndef _H_VANADIS_NODE_OS_INCLUDE_PROCESS
 #define _H_VANADIS_NODE_OS_INCLUDE_PROCESS
 
+#include <map>
+#include <cstddef>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <cassert>
+#include <cstdio>
 #include <math.h>
 #include <sys/mman.h>
 //#include <iostream>

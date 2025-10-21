@@ -16,6 +16,7 @@
 #ifndef _MEMHIERARCHY_MEMLINK_H_
 #define _MEMHIERARCHY_MEMLINK_H_
 
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>

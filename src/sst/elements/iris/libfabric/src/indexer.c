@@ -33,6 +33,7 @@
 
 //#include "config.h"
 
+#include <stddef.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <stdlib.h>

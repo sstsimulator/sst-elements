@@ -24,6 +24,8 @@
 #undef DEBUG
 #endif
 
+#include <map>
+#include <cstdint>
 #include <FlashDIMM.h>
 
 #ifdef OLD_DEBUG

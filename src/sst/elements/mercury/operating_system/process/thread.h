@@ -15,6 +15,10 @@
 
 #pragma once
 
+#include <typeinfo>
+#include <cstdint>
+#include <string>
+#include <vector>
 #include <mercury/common/errors.h>
 #include <mercury/common/node_address.h>
 #include <mercury/common/timestamp.h>

@@ -20,6 +20,10 @@
 #include "mpi/embermpigen.h"
 #include "rng/xorshift.h"
 
+#include <cassert>
+#include <cstdio>
+#include <cstddef>
+
 namespace SST {
 namespace Ember {
 

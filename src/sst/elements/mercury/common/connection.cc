@@ -13,6 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <utility>
+#include <string>
 #include <mercury/common/component.h>
 #include <sst/core/params.h>
 #include <mercury/common/connection.h>

@@ -19,6 +19,8 @@
 #include "funcSM/api.h"
 #include "event.h"
 
+#include <cassert>
+
 namespace SST {
 namespace Firefly {
 

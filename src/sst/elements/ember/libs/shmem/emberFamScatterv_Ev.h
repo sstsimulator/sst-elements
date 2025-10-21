@@ -19,6 +19,10 @@
 
 #include "emberFamEvent.h"
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
 namespace SST {
 namespace Ember {
 

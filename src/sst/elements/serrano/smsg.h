@@ -16,6 +16,7 @@
 #ifndef _H_SERRANO_MESSAGE
 #define _H_SERRANO_MESSAGE
 
+#include <cstddef>
 #include <cstdint>
 #include <cinttypes>
 

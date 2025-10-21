@@ -34,6 +34,7 @@
 #ifndef _FREEBSD_OSD_H_
 #define _FREEBSD_OSD_H_
 
+#include <stddef.h>
 #include <sys/endian.h>
 #include <pthread_np.h>
 

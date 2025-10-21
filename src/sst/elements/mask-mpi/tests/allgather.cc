@@ -44,6 +44,8 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #define ssthg_app_name allgather
 
+#include <cstdio>
+#include <cstdlib>
 #include <stddef.h>
 #include <stdio.h>
 #include <iostream>

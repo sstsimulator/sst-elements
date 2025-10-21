@@ -13,6 +13,13 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cassert>
+#include <cstdint>
+#include <string>
+#include <cstddef>
+#include <queue>
+#include <functional>
+
 struct WidgetEntry {
     WidgetEntry( int cacheLineSize, MemReq* req, SimTime_t issueTime, Callback* callback = NULL  ) : curAccess( 0 ),
             size(cacheLineSize ), issueTime(issueTime), callback(callback)

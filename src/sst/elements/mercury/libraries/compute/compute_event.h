@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <string>
+#include <cstdint>
 #include <mercury/common/timestamp.h>
 #include <mercury/common/events.h>
 #include <mercury/hardware/common/flow.h>

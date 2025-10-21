@@ -13,6 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <utility>
+#include <cstdlib>
+#include <cstdio>
+#include <vector>
 #include <sst_config.h>
 #include <sst/core/event.h>
 #include "rtlcomponent.h"

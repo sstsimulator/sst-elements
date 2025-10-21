@@ -14,6 +14,9 @@
 // distribution.
 
 #include "tb_header.h"
+#include <cstdlib>
+#include <cstdio>
+#include <cstddef>
 #include <memory.h>
 #include <sint.h>
 #include <stdio.h>

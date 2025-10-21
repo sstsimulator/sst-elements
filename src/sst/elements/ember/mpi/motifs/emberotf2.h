@@ -17,6 +17,9 @@
 #ifndef _H_EMBER_OTF2_READER
 #define _H_EMBER_OTF2_READER
 
+#include <vector>
+#include <cstdint>
+#include <queue>
 #include <unordered_map>
 
 #include "mpi/embermpigen.h"

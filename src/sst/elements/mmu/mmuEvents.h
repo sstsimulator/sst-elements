@@ -16,6 +16,8 @@
 #ifndef MMU_EVENTS_H
 #define MMU_EVENTS_H
 
+#include <cstddef>
+#include <cstdint>
 #include <sst/core/event.h>
 #include "mmuTypes.h"
 

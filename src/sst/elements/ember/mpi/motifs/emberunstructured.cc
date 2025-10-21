@@ -9,6 +9,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cstddef>
+#include <queue>
+#include <map>
 #include <sst_config.h>
 
 #include "emberunstructured.h"

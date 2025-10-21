@@ -17,6 +17,8 @@
 #ifndef _H_ZODIAC_SIRIUS_READER
 #define _H_ZODIAC_SIRIUS_READER
 
+#include <cstdio>
+#include <cstdint>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

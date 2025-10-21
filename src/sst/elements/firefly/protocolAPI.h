@@ -16,6 +16,7 @@
 #ifndef COMPONENTS_FIREFLY_PROTOCOLAPI_H
 #define COMPONENTS_FIREFLY_PROTOCOLAPI_H
 
+#include <string>
 #include <sst/core/subcomponent.h>
 #include "sst/elements/thornhill/memoryHeapLink.h"
 

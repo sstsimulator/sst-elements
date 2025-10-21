@@ -13,6 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <string>
+#include <cstddef>
 #include <sst_config.h>
 #include "background_traffic/background_traffic.h"
 

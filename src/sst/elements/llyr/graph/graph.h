@@ -23,6 +23,8 @@
 #include "edge.h"
 #include "vertex.h"
 
+#include <iostream>
+#include <ostream>
 #include <map>
 #include <string>
 #include <vector>

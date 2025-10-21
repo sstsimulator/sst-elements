@@ -16,6 +16,8 @@
 #ifndef _H_VANADIS_NODE_OS_INCLUDE_FUTEX
 #define _H_VANADIS_NODE_OS_INCLUDE_FUTEX
 
+#include <cstddef>
+#include <cassert>
 #include <string>
 
 #include <map>

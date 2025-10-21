@@ -19,6 +19,8 @@
 #ifndef COMPONENTS_MERLIN_TEST_PT2PT_PT2PT_TEST_H
 #define COMPONENTS_MERLIN_TEST_PT2PT_PT2PT_TEST_H
 
+#include <map>
+#include <vector>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>

@@ -18,6 +18,8 @@
 
 #include "sumi_prov.h"
 
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

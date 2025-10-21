@@ -17,6 +17,11 @@
 #ifndef COMPONENTS_FIREFLY_MERLINEVENT_H
 #define COMPONENTS_FIREFLY_MERLINEVENT_H
 
+#include <vector>
+#include <cstdint>
+#include <cstring>
+#include <cassert>
+#include <cstddef>
 #include <sst/core/interfaces/simpleNetwork.h>
 
 #define NUM_NODE_BITS     20

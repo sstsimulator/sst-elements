@@ -15,6 +15,9 @@
 
 #pragma once
 
+#include <string>
+#include <iostream>
+#include <ostream>
 #include <sst/core/component.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/link.h>

@@ -17,6 +17,9 @@
 #ifndef _H_COMPONENTS_FIREFLY_HEAP_ADDRS
 #define _H_COMPONENTS_FIREFLY_HEAP_ADDRS
 
+#include <cstddef>
+#include <cassert>
+#include <cstdint>
 #include <map>
 #include <queue>
 #include <string>

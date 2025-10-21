@@ -16,6 +16,8 @@
 #ifndef _CSV_PARSER_H
 #define _CSV_PARSER_H
 
+#include <ostream>
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <vector>

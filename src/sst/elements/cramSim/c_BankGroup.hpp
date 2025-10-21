@@ -31,6 +31,7 @@
 #define C_BANKGROUP_HPP_
 
 // global includes
+#include <map>
 #include <memory>
 #include <vector>
 #include <string>

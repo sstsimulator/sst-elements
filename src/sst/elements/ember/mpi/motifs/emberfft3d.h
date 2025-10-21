@@ -19,6 +19,9 @@
 
 #include "mpi/embermpigen.h"
 
+#include <vector>
+#include <cstdint>
+
 namespace SST {
 namespace Ember {
 

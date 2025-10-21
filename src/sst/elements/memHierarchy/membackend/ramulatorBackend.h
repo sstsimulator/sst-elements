@@ -21,6 +21,11 @@
 
 #include "Gem5Wrapper.h"
 
+#include <cstddef>
+#include <functional>
+#include <map>
+#include <set>
+
 #ifdef OLD_DEBUG
 #define DEBUG OLD_DEBUG
 #undef OLD_DEBUG

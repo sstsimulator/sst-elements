@@ -18,6 +18,9 @@
 
 #include "inst/vspeculate.h"
 
+#include <cstdint>
+#include <cstdio>
+
 namespace SST {
 namespace Vanadis {
 

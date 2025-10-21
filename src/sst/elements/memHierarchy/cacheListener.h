@@ -22,6 +22,7 @@
 #ifndef _H_MEMHIERARCHY_CACHE_LISTENER
 #define _H_MEMHIERARCHY_CACHE_LISTENER
 
+#include <cstdint>
 #include <sst/core/event.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/warnmacros.h>

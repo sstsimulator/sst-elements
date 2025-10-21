@@ -32,6 +32,9 @@
 
 #include "ofi_hook.h"
 
+#include <stdint.h>
+#include <stddef.h>
+
 
 static int hook_setname(fid_t fid, void *addr, size_t addrlen)
 {

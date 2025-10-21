@@ -13,6 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <tuple>
+#include <cassert>
+#include <sstream>
 #include <sst_config.h>
 #include "vanadis.h"
 

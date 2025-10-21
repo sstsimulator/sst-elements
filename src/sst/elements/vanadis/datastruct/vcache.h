@@ -16,6 +16,8 @@
 #ifndef _H_VANADIS_CACHE
 #define _H_VANADIS_CACHE
 
+#include <cstddef>
+#include <utility>
 #include <cstdint>
 #include <list>
 #include <type_traits>

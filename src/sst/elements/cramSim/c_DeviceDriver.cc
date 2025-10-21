@@ -29,6 +29,8 @@
 #include "sst_config.h"
 
 // C++ includes
+#include <cassert>
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <list>

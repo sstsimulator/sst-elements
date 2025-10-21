@@ -16,6 +16,9 @@
 #ifndef BALAR_MMIO_H
 #define BALAR_MMIO_H
 
+#include <unordered_map>
+#include <cstdint>
+#include <stack>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>

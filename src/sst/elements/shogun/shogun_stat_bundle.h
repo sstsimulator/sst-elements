@@ -16,6 +16,9 @@
 #ifndef _H_SHOGUN_STAT_BUNDLE
 #define _H_SHOGUN_STAT_BUNDLE
 
+#include <cstdlib>
+#include <cstdio>
+#include <cstdint>
 #include <sst/core/component.h>
 #include <sst/core/statapi/statbase.h>
 

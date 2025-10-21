@@ -30,6 +30,7 @@
 #include "sst_config.h"
 
 // global includes
+#include <vector>
 #include <assert.h>
 
 // local includes

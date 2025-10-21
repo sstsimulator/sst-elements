@@ -15,6 +15,10 @@
 
 #include "cacheList.h"
 
+#include <unordered_map>
+#include <utility>
+#include <cassert>
+
 class Cache {
   public:
     Cache( int cacheSize ) : m_cacheSize( cacheSize ) {

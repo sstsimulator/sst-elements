@@ -35,6 +35,9 @@ static const char *version = BALAR_CUDA_VERSION;
 #endif /* !__dv */
 
 extern "C" {
+#include <cstring>
+#include <cstdint>
+#include <cstdio>
     #include <unistd.h>
     #include <sys/syscall.h>
     #include <sys/mman.h>

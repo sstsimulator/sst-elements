@@ -33,6 +33,8 @@
 #ifndef FI_ATOMIC_H
 #define FI_ATOMIC_H
 
+#include <stdint.h>
+#include <stddef.h>
 #include <rdma/fabric.h>
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_rma.h>

@@ -14,6 +14,8 @@
 // distribution.
 
 
+#include <cinttypes>
+#include <queue>
 #include <sst_config.h>
 
 #include <stdint.h>

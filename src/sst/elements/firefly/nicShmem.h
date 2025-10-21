@@ -14,6 +14,15 @@
 // distribution.
 
 
+#include <vector>
+#include <string>
+#include <sstream>
+#include <cassert>
+#include <utility>
+#include <functional>
+#include <queue>
+#include <cstddef>
+
 class Shmem {
 
 

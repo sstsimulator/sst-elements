@@ -17,6 +17,7 @@
 #define _H_SERRANO_ITERATOR_UNIT
 
 #include "sercgunit.h"
+#include <cstdint>
 #include <functional>
 
 namespace SST {

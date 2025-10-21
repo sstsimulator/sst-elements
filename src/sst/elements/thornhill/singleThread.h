@@ -16,6 +16,9 @@
 #ifndef _H_THORNHILL_SINGLE_THREAD
 #define _H_THORNHILL_SINGLE_THREAD
 
+#include <functional>
+#include <string>
+#include <deque>
 #include <queue>
 #include "detailedCompute.h"
 

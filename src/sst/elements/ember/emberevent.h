@@ -17,6 +17,9 @@
 #ifndef _H_EMBER_EVENT
 #define _H_EMBER_EVENT
 
+#include <cstdint>
+#include <cstddef>
+#include <string>
 #include <sst/core/event.h>
 #include <sst/core/statapi/statbase.h>
 #include <sst/elements/hermes/msgapi.h>

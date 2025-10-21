@@ -13,6 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <functional>
+#include <vector>
+#include <cstdint>
+
 class ArbitrateDMA {
 
     struct XX {

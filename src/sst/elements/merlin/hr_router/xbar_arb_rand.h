@@ -17,6 +17,8 @@
 #ifndef COMPONENTS_HR_ROUTER_XBAR_ARB_RAND_H
 #define COMPONENTS_HR_ROUTER_XBAR_ARB_RAND_H
 
+#include <cstdint>
+#include <cstddef>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>

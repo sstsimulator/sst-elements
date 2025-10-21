@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <sst/core/params.h>
 
 #include <cstring>

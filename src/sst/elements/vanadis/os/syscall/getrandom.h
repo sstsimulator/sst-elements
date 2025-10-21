@@ -18,6 +18,7 @@
 
 #include "os/syscall/syscall.h"
 #include "os/callev/voscallgetrandom.h"
+#include <vector>
 #include <sst/core/rng/xorshift.h>
 
 

@@ -16,6 +16,8 @@
 #ifndef _MSHR_H_
 #define _MSHR_H_
 
+#include <set>
+#include <cstdint>
 #include <list>
 
 #include <map>

@@ -13,6 +13,7 @@
 #ifndef _MESSIER_H
 #define _MESSIER_H
 
+#include <cstdint>
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
 #include <sst/core/component.h>

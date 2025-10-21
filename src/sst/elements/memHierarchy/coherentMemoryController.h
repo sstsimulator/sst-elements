@@ -17,6 +17,9 @@
 #define _COHERENTMEMORYCONTROLLER_H
 
 
+#include <set>
+#include <vector>
+#include <cstdint>
 #include <sst/core/sst_types.h>
 
 #include <sst/core/event.h>

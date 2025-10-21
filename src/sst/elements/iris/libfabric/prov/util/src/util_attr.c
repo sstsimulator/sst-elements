@@ -31,6 +31,10 @@
  * SOFTWARE.
  */
 
+#include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stddef.h>
 #include <stdio.h>
 
 #include <shared/ofi_str.h>

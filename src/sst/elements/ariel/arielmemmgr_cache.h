@@ -17,6 +17,10 @@
 #ifndef _H_ARIEL_MEM_MANAGER_CACHE
 #define _H_ARIEL_MEM_MANAGER_CACHE
 
+#include <utility>
+#include <cstdio>
+#include <cstdint>
+#include <cstring>
 #include <sst/core/output.h>
 #include <sst/core/rng/marsaglia.h>
 

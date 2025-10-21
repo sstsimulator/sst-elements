@@ -13,6 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cinttypes>
+#include <queue>
 #include <math.h>
 
 #include <sst_config.h>

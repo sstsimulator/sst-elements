@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <type_traits>
+#include <cstdint>
 #include <mercury/operating_system/process/tls.h>
 #include <list>
 #include <map>

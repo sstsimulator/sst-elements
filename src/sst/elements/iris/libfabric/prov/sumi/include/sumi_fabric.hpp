@@ -51,6 +51,8 @@
 #ifndef SUMI_SUMI_HPP
 #define SUMI_SUMI_HPP
 
+#include <vector>
+#include <cstdint>
 #include <stdint.h>
 #include <pthread.h>
 #include <stddef.h>

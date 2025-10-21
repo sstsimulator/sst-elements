@@ -31,6 +31,8 @@
 #define C_RANK_HPP_
 
 // global includes
+#include <ostream>
+#include <map>
 #include <memory>
 #include <vector>
 #include <string>

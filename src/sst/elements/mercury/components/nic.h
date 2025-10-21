@@ -15,6 +15,9 @@
 
 #pragma once
 
+#include <cstdint>
+#include <memory>
+#include <string>
 #include <mercury/common/component.h>
 
 #include <sst/core/event.h>

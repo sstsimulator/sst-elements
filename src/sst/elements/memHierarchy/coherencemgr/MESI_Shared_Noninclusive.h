@@ -17,6 +17,9 @@
 #ifndef MESIINTERNALDIRCONTROLLER_H
 #define MESIINTERNALDIRCONTROLLER_H
 
+#include <cstdint>
+#include <set>
+#include <map>
 #include <iostream>
 #include <array>
 

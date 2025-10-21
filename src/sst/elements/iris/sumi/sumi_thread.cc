@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <cstdint>
 #include <iris/sumi/sumi_thread.h>
 #include <mercury/components/operating_system.h>
 

@@ -45,6 +45,9 @@
 #ifndef UINT_H_
 #define UINT_H_
 
+#include <cstdint>
+#include <ostream>
+#include <ios>
 #include <algorithm>
 #include <array>
 #include <cinttypes>
