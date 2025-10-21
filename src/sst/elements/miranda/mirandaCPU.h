@@ -148,10 +148,9 @@ public:
         SST_SER(requestsInFlight);
         SST_SER(cache_link);
         SST_SER(srcLink);
-        //SST_SER(srcReqEvent);
+        SST_SER(srcReqEvent);
         SST_SER(stdMemHandlers);
 
-        // TODO - fails as there is no serialize_impl for GeneratorRequest
         SST_SER(pendingRequests);
         SST_SER(memMgr);
 
@@ -161,17 +160,6 @@ public:
         SST_SER(cacheLine);
         SST_SER(maxOpLookup);
 
-        SST_SER(statReqs);
-        SST_SER(statSplitReqs);
-        SST_SER(statCyclesWithIssue);
-        SST_SER(statMaxIssuePerCycle);
-        SST_SER(statCyclesWithoutIssue);
-        SST_SER(statBytes);
-        SST_SER(statReqLatency);
-        SST_SER(statTime);
-        SST_SER(statCyclesHitFence);
-        SST_SER(statCyclesHitReorderLimit);
-        SST_SER(statCycles);
     }
 
     ImplementSerializable(SST::Miranda::RequestGenCPU)
