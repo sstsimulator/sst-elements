@@ -33,9 +33,6 @@ void RandomDropFaultInjector::executeFaults(Event*& ev) {
     bool success = false;
     if (fault[0]) {
         success = fault[0]->faultLogic(ev);
-        if (installDirection_ == installDirection::Receive) {
-            *cancel_ = true;
-        }
     }
     if (!success) {
         out_->fatal(CALL_INFO_LONG, -1, "No valid fault object, or no fault successfully executed.\n");

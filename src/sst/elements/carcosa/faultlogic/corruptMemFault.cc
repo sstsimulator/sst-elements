@@ -66,8 +66,9 @@ bool CorruptMemFault::faultLogic(Event*& ev) {
             }
         }
         setMemEventPayload(ev, new_payload);
-        return true;
+        break;
     }
+    return true;
 }
 
 std::pair<uint64_t,uint64_t> CorruptMemFault::convertString(std::string& region) {
@@ -80,10 +81,10 @@ std::pair<uint64_t,uint64_t> CorruptMemFault::convertString(std::string& region)
     }
     ss >> std::hex >> addr1;
 
-    #ifdef __SST_DEBUG_OUTPUT__
+#ifdef __SST_DEBUG_OUTPUT__
     getSimulationDebug()->debug(CALL_INFO_LONG, 2, 0, "Extracted region pair: [0x%zx, 0x%zx]\n",
                                 addr0, addr1);
-    #endif
+#endif
     return make_pair(addr0, addr1);
 }
 
@@ -113,12 +114,13 @@ int32_t CorruptMemFault::computeEndIndex(Addr base_addr, size_t payload_sz, Addr
 
 // TODO: why is this triggering a push_back on 0x4D80 from payload 0x4d40?
 std::vector<uint32_t>* CorruptMemFault::checkAddrUsage(Event*& ev) {
-    Addr addr = convertMemEvent(ev)->getBaseAddr();
+    Addr base_addr = convertMemEvent(ev)->getBaseAddr();
     for (int i = 0; i < corruptionRegions_.size(); i++) {
         auto& region = corruptionRegions_[i];
         // check if message contains ANY address in this region
         int payload_bytes = convertMemEvent(ev)->getPayloadSize() / 8;
-        for (int j = 0; j < payload_bytes; j++, addr+=8) {
+        Addr addr = base_addr;
+        for (int j = 0; j < payload_bytes; addr+=8, j++) {
             if ((addr >= region.first) && (addr <= region.second)) {
                 regionsToUse_.push_back(i);
                 break;

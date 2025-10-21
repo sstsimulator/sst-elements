@@ -28,7 +28,12 @@ void CorruptMemFaultInjector::executeFaults(Event*& ev) {
 #ifdef __SST_DEBUG_OUTPUT__
         dbg_->debug(CALL_INFO_LONG, 2, 0, "Corruption region detected.\n");
 #endif
-        fault[0]->faultLogic(ev);
+        if (!fault[0]) {
+            out_->fatal(CALL_INFO_LONG, -1, "No valid fault to execute.\n");
+        }
+        if (!fault[0]->faultLogic(ev)) {
+            out_->fatal(CALL_INFO_LONG, -1, "Fault somehow returned unsuccessful... How?\n");
+        }
         // reset vec
         regionsToUse->clear();
     }
