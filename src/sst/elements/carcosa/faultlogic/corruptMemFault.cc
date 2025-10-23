@@ -46,6 +46,7 @@ bool CorruptMemFault::faultLogic(Event*& ev) {
 
     Addr base_addr = mem_ev->getBaseAddr();
     dataVec original_payload = mem_ev->getPayload();
+    dataVec new_payload(original_payload);
     for (int r: regionsToUse_) {
         auto& region = corruptionRegions_[r];
         size_t payload_sz = mem_ev->getPayloadSize();
@@ -57,17 +58,11 @@ bool CorruptMemFault::faultLogic(Event*& ev) {
         if (end < 0) {
             getSimulationOutput()->fatal(CALL_INFO_LONG, -1, "No valid start index for corruption.\n");
         }
-        dataVec new_payload(payload_sz);
-        for (int i = 0; i < payload_sz; i++) {
-            if ((i < start) || (i > end)) {
-                new_payload[i] = original_payload[i];
-            } else if ((i >= start) && (i <= end)) {
-                new_payload[i] = static_cast<uint8_t>(injector_->randUInt32(0,255));
-            }
+        for (int i = start; i < end; i++) {
+            new_payload[i] = static_cast<uint8_t>(injector_->randUInt32(0,255));
         }
-        setMemEventPayload(ev, new_payload);
-        break;
     }
+    setMemEventPayload(ev, new_payload);
     return true;
 }
 
@@ -106,7 +101,7 @@ int32_t CorruptMemFault::computeEndIndex(Addr base_addr, size_t payload_sz, Addr
     Addr addr = base_addr + ((payload_bytes - 1) * 8);
     for (int i = payload_bytes; i >= 0; i--, addr-=8) {
         if (addr <= region_end) {
-            return addr - base_addr;
+            return addr - base_addr + 8;
         }
     }
     return -1;
