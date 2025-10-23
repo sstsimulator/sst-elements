@@ -62,7 +62,7 @@ bool CorruptMemFault::faultLogic(Event*& ev) {
             if ((i < start) || (i > end)) {
                 new_payload[i] = original_payload[i];
             } else if ((i >= start) && (i <= end)) {
-                new_payload[i] = static_cast<uint8_t>(rng_.generateNextUInt32() % 255);
+                new_payload[i] = static_cast<uint8_t>(injector_->randUInt32(0,255));
             }
         }
         setMemEventPayload(ev, new_payload);
@@ -112,7 +112,6 @@ int32_t CorruptMemFault::computeEndIndex(Addr base_addr, size_t payload_sz, Addr
     return -1;
 }
 
-// TODO: why is this triggering a push_back on 0x4D80 from payload 0x4d40?
 std::vector<uint32_t>* CorruptMemFault::checkAddrUsage(Event*& ev) {
     Addr base_addr = convertMemEvent(ev)->getBaseAddr();
     for (int i = 0; i < corruptionRegions_.size(); i++) {

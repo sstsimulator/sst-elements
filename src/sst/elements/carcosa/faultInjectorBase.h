@@ -129,6 +129,13 @@ public:
         return dbg_;
     }
 
+    uint32_t randUInt32(uint32_t start, uint32_t end);
+    int32_t randInt32(int32_t start, int32_t end);
+    uint64_t randUInt64(uint64_t start, uint64_t end);
+    int64_t randInt64(int64_t start, int64_t end);
+
+    double randFloat(double start, double end);
+
 protected:
     SST::Output* out_;
     SST::Output* dbg_;

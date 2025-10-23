@@ -91,6 +91,31 @@ FaultInjectorBase::interceptHandler(uintptr_t key, Event*& ev, bool& cancel)
 #endif
 }
 
+uint32_t FaultInjectorBase::randUInt32(uint32_t start, uint32_t end) {
+    uint32_t range = end - start;
+    return start + (base_rng_.generateNextUInt32() % range);
+}
+
+int32_t FaultInjectorBase::randInt32(int32_t start, int32_t end) {
+    int32_t range = end - start;
+    return start + (base_rng_.generateNextInt32() % range);
+}
+
+uint64_t FaultInjectorBase::randUInt64(uint64_t start, uint64_t end) {
+    uint64_t range = end - start;
+    return start + (base_rng_.generateNextUInt64() % range);
+}
+
+int64_t FaultInjectorBase::randInt64(int64_t start, int64_t end) {
+    int64_t range = end - start;
+    return start + (base_rng_.generateNextInt64() % range);
+}
+
+double FaultInjectorBase::randFloat(double start, double end) {
+    double range = end - start;
+    return start + (base_rng_.nextUniform() * range);
+}
+
 bool FaultInjectorBase::doInjection() {
     double rand_val = base_rng_.nextUniform();
     return rand_val <= getInjectionProb();

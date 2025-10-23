@@ -25,14 +25,11 @@ public:
 
     bool faultLogic(Event*& ev) override;
 protected:
-    std::default_random_engine int_generator;
-    std::uniform_int_distribution<uint32_t> int_distribution;
-
     /**
      * Randomly choose which bit in which byte to flip
      * @return (byte, bit)
      */
-    inline std::pair<uint32_t, uint32_t> pickByteAndBit();
+    inline std::pair<uint32_t, uint32_t> pickByteAndBit(size_t payload_sz);
 protected:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         FaultBase::serialize_order(ser);

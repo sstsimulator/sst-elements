@@ -496,11 +496,11 @@ dirNIC.addParams(dirNicParams)
 # node memory controller
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams( memCtrlParams )
-#TODO: fix bug here :)
-memctrl.addPortModule("highlink", "carcosa.CorruptMemFaultInjector", {
+# SHOULD FAIL TO INITIALIZE
+memctrl.addPortModule("highlink", "carcosa.StuckAtFaultInjector", {
     "intallDirection": "Receive",
     "injectionProbability": 1.0,
-    "regions": ["4D88, 4DA0", "4D90, 4DA8"],
+    "masks": ["4D88, 3, 11110000, 00001111", "4D88, 5, 11110000, 00001111"],
     "debug" : 1,
     "debug_level": 2
 })

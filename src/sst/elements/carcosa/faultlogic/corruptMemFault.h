@@ -53,8 +53,6 @@ protected:
 
     std::vector<std::pair<uint64_t, uint64_t>> corruptionRegions_;
 
-    SST::RNG::MersenneRNG rng_;
-
     std::vector<uint32_t> regionsToUse_;
 
     std::pair<uint64_t,uint64_t> convertString(std::string& region);
@@ -65,7 +63,6 @@ protected:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         FaultBase::serialize_order(ser);
         SST_SER(corruptionRegions_);
-        SST_SER(rng_);
         SST_SER(regionsToUse_);
     }
     ImplementVirtualSerializable(CorruptMemFault)
