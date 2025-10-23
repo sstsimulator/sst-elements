@@ -357,7 +357,7 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(ComponentId_t id, Params& params) : Ext
 		if(0 == rc) {
 			output->verbose(CALL_INFO, 1, 0, "Successfully configured link.\n");
 		} else {
-			output->fatal(CALL_INFO, 1, 0,
+			output->fatal(CALL_INFO, -1,
                           "Error configuring link %" PRIu32 ", code=%" PRId32 "\n", i, rc);
 		}
 
