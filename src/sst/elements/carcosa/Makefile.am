@@ -33,7 +33,15 @@ libcarcosa_la_SOURCES =                     \
     faultlogic/randomFlipFault.h
 
 EXTRA_DIST = \
-    dummyTest.py
+    tests/testCorruptMemBasic.py                  \
+    tests/testCorruptMemDouble.py                 \
+    tests/testCorruptMemDoubleOverlap.py          \
+    tests/testRandomDrop.py                       \
+    tests/testRandomFlip.py                       \
+    tests/testStuckAtBasic.py                     \
+    tests/testStuckAtMultiple.py                  \
+    tests/testStuckAtOverlap.py                   \
+    tests/testStuckAtSameByte.py  
 
 sstdir = $(includedir)/sst/elements/carcosa
 nobase_sst_HEADERS =                        \
