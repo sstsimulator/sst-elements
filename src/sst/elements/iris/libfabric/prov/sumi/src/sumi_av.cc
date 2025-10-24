@@ -197,7 +197,7 @@ DIRECT_FN const char *sumi_av_straddr(struct fid_av *av,
     uint32_t rank = ADDR_RANK(*addr_ptr);
     uint16_t cq = ADDR_CQ(*addr_ptr);
     uint16_t rx = ADDR_QUEUE(*addr_ptr);
-    snprintf(ret, SUMI_MAX_ADDR_LEN, "%" PRIu32 ".%" PRIu16 ".%" PRIu16,
+    snprintf(ret, 22 + 1, "%" PRIu32 ".%" PRIu16 ".%" PRIu16,
             rank, cq, rx);
   } else {
     sst_hg_abort_printf("internal error: got addr format that isn't SSTMAC or STR");
