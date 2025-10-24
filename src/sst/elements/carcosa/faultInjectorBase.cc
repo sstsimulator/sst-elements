@@ -35,6 +35,13 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
 #ifdef __SST_DEBUG_OUTPUT__
     dbg_->debug(CALL_INFO_LONG, 1, 0, "\tInjection Probability: %f\n", injectionProbability_);
 #endif
+    seed_ = params.find<uint64_t>("seed", 0);
+    if (seed_ != 0) {
+        base_rng_.seed(seed_);
+#ifdef __SST_DEBUG_OUTPUT__
+        dbg_->debug(CALL_INFO_LONG, 1, 0, "\tRNG Seed: %d\n", seed_);
+#endif
+    }
 }
 
 /**

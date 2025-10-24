@@ -500,8 +500,9 @@ memctrl.addParams( memCtrlParams )
 memctrl.addPortModule("highlink", "carcosa.RandomFlipFaultInjector", {
     "intallDirection": "Receive",
     "injectionProbability": 0.25,
+    "seed": 156,
     "debug" : 1,
-    "debug_level": 2
+    "debug_level": 1
 })
 
 # node memory controller backend 

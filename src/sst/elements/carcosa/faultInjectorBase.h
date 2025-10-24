@@ -60,6 +60,7 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
         {"installDirection", "Flag which direction the injector should read from on a port. Valid optins are \'Send\', \'Receive\', and \'Both\'. Default is \'Receive\'."},
         {"injectionProbability", "The probability with which an injection should occur. Valid inputs range from 0 to 1. Default = 0.5."},
+        {"seed", "Optional integer seed to give to the random number generator. Default = 0 (0 seed will be assumed to mean NO seed)."},
         {"debug", "Integer determining if debug should be active. 0 disables, 1 sends output to STDOUT, 2 to STDERR. Default = 0"},
         {"debug_level", "Integer determining verbosity of debug output. 1 enables basic text output, 2 enables signficant activity output."}
     )
@@ -144,6 +145,7 @@ protected:
     installDirection installDirection_ = installDirection::Receive;
     double injectionProbability_ = 0.5;
     SST::RNG::MersenneRNG base_rng_;
+    uint64_t seed_ = 0;
 private:
     std::array<bool,2> valid_installation_ = {{false, false}};
     bool valid_installs_set = false;
@@ -171,6 +173,7 @@ protected:
         SST_SER(installDirection_);
         SST_SER(injectionProbability_);
         SST_SER(base_rng_);
+        SST_SER(seed_);
         SST_SER(valid_installation_);
         SST_SER(valid_installs_set);
     }
