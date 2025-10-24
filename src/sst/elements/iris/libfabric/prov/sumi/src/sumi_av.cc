@@ -193,7 +193,7 @@ DIRECT_FN const char *sumi_av_straddr(struct fid_av *av,
   if (av_impl->domain->addr_format == FI_ADDR_STR){
     ::strcpy(ret, (const char*)addr);
   } else if (av_impl->domain->addr_format == FI_ADDR_SSTMAC) {
-    uint64_t* addr_ptr = (uint64_t*) addr;
+    uint64_t* addr_ptr = reinterpret_cast<uint64_t*>(const_cast<void*>(addr));
     uint32_t rank = ADDR_RANK(*addr_ptr);
     uint16_t cq = ADDR_CQ(*addr_ptr);
     uint16_t rx = ADDR_QUEUE(*addr_ptr);
