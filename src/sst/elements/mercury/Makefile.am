@@ -9,8 +9,11 @@ AM_CPPFLAGS += \
 # unpleasant hack to make vintage automake (e.g. 1.13.4) work
 AM_LIBTOOLFLAGS = --tag=CXX
 
-comp_LTLIBRARIES = libhg.la libsystemlibrary.la libcomputelibrary.la libostest.la
+comp_LTLIBRARIES = libhg.la
 compdir = $(pkglibdir)
+
+ext_LTLIBRARIES = libsystemlibrary.la libcomputelibrary.la libostest.la
+extdir = $(pkglibdir)/ext
 
 libhg_la_SOURCES = \
   common/event_link.cc \
@@ -207,7 +210,6 @@ deprecated_EXTRA_DIST =
 if !SST_ENABLE_PREVIEW_BUILD
 EXTRA_DIST += $(deprecated_EXTRA_DIST)
 endif
-
 
 libhg_la_LDFLAGS = -module -avoid-version -shared
 libsystemlibrary_la_LDFLAGS = -module -avoid-version -shared
