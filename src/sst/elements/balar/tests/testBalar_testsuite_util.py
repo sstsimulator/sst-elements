@@ -311,6 +311,7 @@ class BalarTestCase(SSTTestCase):
         # Set the various file paths
         testDataFileName="test_gpgpu_{0}".format(testcase)
 
+
         reffile = "{0}/refFiles/{1}.out".format(test_path, testDataFileName)
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
@@ -327,6 +328,15 @@ class BalarTestCase(SSTTestCase):
 
         gpuMemCfgfile = "{0}/gpu-v100-mem.cfg".format(self.testbalarDir)
         otherargs = '--model-options=\"-c {0} -s {1} --vanadis-binary {2} --vanadis-args=\\"{3}\\" --cuda-binary {4}\"'.format(gpuMemCfgfile, statsfile, exe, args, exe)
+
+        log_forced("ARGs = {otherargs}")
+        log_forced("testcase = {0}".format(testcase))
+        log_forced("sdl file = {0}".format(sdlfile))
+        log_forced("ref file = {0}".format(reffile))
+        log_forced("out file = {0}".format(outfile))
+        log_forced("err file = {0}".format(errfile))
+        log_forced("stats file = {0}".format(statsfile))
+        log_forced("testbalarDir = {0}".format(self.testbalarDir))
 
         # Run SST
         os.environ["VANADIS_ISA"] = "RISCV64"
@@ -402,21 +412,6 @@ class BalarTestCase(SSTTestCase):
         for f in os.listdir(self.balarElementLLVMVanadisTestDir):
             os_symlink_file(self.balarElementLLVMVanadisTestDir, self.testbalarLLVMVanadisDir, f)
 
-        # Check environment
-        if "CUDA_INSTALL_PATH" not in os.environ:
-            fallback = os.environ.get("CUDA_HOME")
-            os.environ["CUDA_INSTALL_PATH"] = fallback
-            print(f"CUDA_INSTALL_PATH was not set — assigning CUDA_INSTALL_PATH = {fallback}")
-        else:
-            print("CUDA_INSTALL_PATH already set to:", os.environ["CUDA_INSTALL_PATH"])
-
-        if "GPU_ARCH" not in os.environ:
-            fallback = "sm_70"
-            os.environ["GPU_ARCH"] = fallback
-            print(f"GPU_ARCH was not set — assigning GPU_ARCH = {fallback}")
-        else:
-            print("GPU_ARCH already set to:", os.environ["GPU_ARCH"])
-
         # Now build libcudart
         cmd = "make"
         rtn = OSCommand(cmd, set_cwd=self.cudartDir).run()
@@ -482,6 +477,32 @@ class BalarTestCase(SSTTestCase):
         self.testbalarLLVMVanadisDir = "{0}/vanadis_llvm_rv64".format(self.testbalarDir)
         self.cudartDir = os.path.abspath("{0}/libcudart".format(self.testbalarDir))
 
+        # Check environment
+        if "CUDA_INSTALL_PATH" not in os.environ:
+            fallback = os.environ.get("CUDA_HOME")
+            os.environ["CUDA_INSTALL_PATH"] = fallback
+            print(f"CUDA_INSTALL_PATH was not set — assigning CUDA_INSTALL_PATH = {fallback}")
+
+        if "GPU_ARCH" not in os.environ:
+            fallback = "sm_70"
+            os.environ["GPU_ARCH"] = fallback
+            print(f"GPU_ARCH was not set — assigning GPU_ARCH = {fallback}")
+
+        if "GPGPUSIM_ROOT" not in os.environ:
+            self.fail("Environment variable GPGPUSIM_ROOT not set — aborting test.")
+#             print("GPGPUSIM_ROOT not set — sourcing {self.balarElementDir}/gpgpu-sim_distribution/setup_environment sst...")
+#             result = subprocess.run(
+#                 ["bash", "-c", "source {self.balarElementDir}/gpgpu-sim_distribution/setup_environment sst && env"],
+#                 capture_output=True,
+#                 text=True,
+#                 check=False
+#             )
+#
+#             for line in result.stdout.splitlines():
+#                 key, _, value = line.partition("=")
+#                 os.environ[key] = value
+
+        # Get nvcc
         cmd = "which nvcc"
         rtn = OSCommand(cmd).run()
         log_debug("which nvcc result = {0}; output = {1}".format(rtn.result(), rtn.output()))
@@ -501,3 +522,6 @@ class BalarTestCase(SSTTestCase):
         log_debug("Dumping environment variables:")
         log_debug("NVCC path: {0}".format(os.environ["NVCC_PATH"]))
         log_debug("CUDA version: {0}".format(os.environ["CUDA_VERSION"]))
+        log_debug("GPU_ARCH: {0}".format(os.environ["GPU_ARCH"]))
+        log_debug("CUDA_INSTALL_PATH path: {0}".format(os.environ["CUDA_INSTALL_PATH"]))
+        log_debug("GPGPUSIM_ROOT: {0}".format(os.environ["GPGPUSIM_ROOT"]))

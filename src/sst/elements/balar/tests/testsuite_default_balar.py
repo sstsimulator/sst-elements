@@ -26,6 +26,7 @@ class testcase_balar_simple(BalarTestCase):
     #     self.balar_vanadis_clang_template("helloworld")
 
     @BalarTestCase.balar_basic_unittest
+    # @unittest.skipIf(not testing_check_is_nightly(), "balar tests only run on Nightly builds.")
     def test_balar_vanadis_clang_vecadd(self):
         self.balar_vanadis_clang_template("vecadd", 60 * 30)
     #
