@@ -329,14 +329,14 @@ class BalarTestCase(SSTTestCase):
         gpuMemCfgfile = "{0}/gpu-v100-mem.cfg".format(self.testbalarDir)
         otherargs = '--model-options=\"-c {0} -s {1} --vanadis-binary {2} --vanadis-args=\\"{3}\\" --cuda-binary {4}\"'.format(gpuMemCfgfile, statsfile, exe, args, exe)
 
-        log_forced("ARGs = {otherargs}")
-        log_forced("testcase = {0}".format(testcase))
-        log_forced("sdl file = {0}".format(sdlfile))
-        log_forced("ref file = {0}".format(reffile))
-        log_forced("out file = {0}".format(outfile))
-        log_forced("err file = {0}".format(errfile))
-        log_forced("stats file = {0}".format(statsfile))
-        log_forced("testbalarDir = {0}".format(self.testbalarDir))
+        print(f"ARGs = {otherargs}")
+        print("testcase = {0}".format(testcase))
+        print("sdl file = {0}".format(sdlfile))
+        print("ref file = {0}".format(reffile))
+        print("out file = {0}".format(outfile))
+        print("err file = {0}".format(errfile))
+        print("stats file = {0}".format(statsfile))
+        print("testbalarDir = {0}".format(self.testbalarDir))
 
         # Run SST
         os.environ["VANADIS_ISA"] = "RISCV64"
@@ -490,17 +490,6 @@ class BalarTestCase(SSTTestCase):
 
         if "GPGPUSIM_ROOT" not in os.environ:
             self.fail("Environment variable GPGPUSIM_ROOT not set — aborting test.")
-#             print("GPGPUSIM_ROOT not set — sourcing {self.balarElementDir}/gpgpu-sim_distribution/setup_environment sst...")
-#             result = subprocess.run(
-#                 ["bash", "-c", "source {self.balarElementDir}/gpgpu-sim_distribution/setup_environment sst && env"],
-#                 capture_output=True,
-#                 text=True,
-#                 check=False
-#             )
-#
-#             for line in result.stdout.splitlines():
-#                 key, _, value = line.partition("=")
-#                 os.environ[key] = value
 
         # Get nvcc
         cmd = "which nvcc"
