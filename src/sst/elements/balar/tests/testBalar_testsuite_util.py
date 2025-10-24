@@ -408,7 +408,7 @@ class BalarTestCase(SSTTestCase):
         for f in os.listdir(self.balarElementVanadisHandshakeTestDir):
             os_symlink_file(self.balarElementVanadisHandshakeTestDir, self.testbalarVanadisHandshakeDir, f)
 
-        # Create a simlink of each file in the balar/tests/vanadisLLVMRISCV directory
+        # Create a simlink of each file in the balar/tests/vanadis_llvm_rv64 directory
         for f in os.listdir(self.balarElementLLVMVanadisTestDir):
             os_symlink_file(self.balarElementLLVMVanadisTestDir, self.testbalarLLVMVanadisDir, f)
 
@@ -430,7 +430,7 @@ class BalarTestCase(SSTTestCase):
 #        log_debug("Balar vanadisHandshake Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
 #        self.assertTrue(rtn.result() == 0, "vanadisHandshake.c failed to compile")
 
-        # Build vanadisLLVMRISCV, contains helloworld, vecadd, and the custom CUDA lib
+        # Build vanadis_llvm_rv64, contains helloworld, vecadd, and the custom CUDA lib
         cmd = "make"
         rtn = OSCommand(cmd, set_cwd=self.testbalarLLVMVanadisDir).run()
         log_debug("Balar vanadisLLVM Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))

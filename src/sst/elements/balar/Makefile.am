@@ -47,18 +47,18 @@ EXTRA_DIST = \
 	tests/vanadisHandshake/cuda_runtime_api.c \
 	tests/vanadisHandshake/cuda_runtime_api.h \
 	tests/vanadisHandshake/Makefile \
-	tests/vanadisLLVMRISCV/cudaSamplesCommon/exception.h \
-	tests/vanadisLLVMRISCV/cudaSamplesCommon/helper_cuda.h \
-	tests/vanadisLLVMRISCV/cudaSamplesCommon/helper_functions.h \
-	tests/vanadisLLVMRISCV/cudaSamplesCommon/helper_image.h \
-	tests/vanadisLLVMRISCV/cudaSamplesCommon/helper_string.h \
-	tests/vanadisLLVMRISCV/cudaSamplesCommon/helper_timer.h \
-	tests/vanadisLLVMRISCV/balar_vanadis.h \
-	tests/vanadisLLVMRISCV/cuda_runtime_api_vanadis.cc \
-	tests/vanadisLLVMRISCV/helloworld.c \
-	tests/vanadisLLVMRISCV/Makefile \
-	tests/vanadisLLVMRISCV/simpleStreams.cu \
-	tests/vanadisLLVMRISCV/vecadd.cu \
+	tests/vanadis_llvm_rv64/cudaSamplesCommon/exception.h \
+	tests/vanadis_llvm_rv64/cudaSamplesCommon/helper_cuda.h \
+	tests/vanadis_llvm_rv64/cudaSamplesCommon/helper_functions.h \
+	tests/vanadis_llvm_rv64/cudaSamplesCommon/helper_image.h \
+	tests/vanadis_llvm_rv64/cudaSamplesCommon/helper_string.h \
+	tests/vanadis_llvm_rv64/cudaSamplesCommon/helper_timer.h \
+	tests/vanadis_llvm_rv64/balar_vanadis.h \
+	tests/vanadis_llvm_rv64/cuda_runtime_api_vanadis.cc \
+	tests/vanadis_llvm_rv64/helloworld.c \
+	tests/vanadis_llvm_rv64/Makefile \
+	tests/vanadis_llvm_rv64/simpleStreams.cu \
+	tests/vanadis_llvm_rv64/vecadd.cu \
 	tests/vectorAdd/cuda_calls.trace \
 	tests/vectorAdd/cuMemcpyD2H-0-524288.data \
 	tests/vectorAdd/cuMemcpyH2D-0-524288.data \
