@@ -29,10 +29,10 @@ typedef SST::MemHierarchy::Addr Addr;
  * To ensure correct operation, make sure that the port module
  * using this fault is attached at every point where the data
  * for this bit could be read. For example, a stuck bit in the L2
- * cache would need a port module with this fault installed on all 
+ * cache would need a port module with this fault installed on all
  * input OR all output ports to the L2; if the simulator has forwarding enabled,
  * but the actual system being simulated does not do the forwarding from memory
- * directly into the L1 or the core (bypassing L2 ops in simulation), it may be 
+ * directly into the L1 or the core (bypassing L2 ops in simulation), it may be
  * advisable to also place these port modules on the ports used to forward these events.
  */
 class StuckAtFault : public FaultBase

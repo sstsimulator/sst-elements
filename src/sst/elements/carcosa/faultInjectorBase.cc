@@ -45,7 +45,7 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
 }
 
 /**
- * Default behavior is to delete all fault objects in the order they were 
+ * Default behavior is to delete all fault objects in the order they were
  * added to the vector
  */
 FaultInjectorBase::~FaultInjectorBase() {
@@ -57,7 +57,7 @@ FaultInjectorBase::~FaultInjectorBase() {
 }
 
 void
-FaultInjectorBase::eventSent(uintptr_t key, Event*& ev) 
+FaultInjectorBase::eventSent(uintptr_t key, Event*& ev)
 {
     if (!valid_installs_set) {
         out_->fatal(CALL_INFO_LONG, -1, "Valid installation directions not set -- did you forget to call setValidInstallation() in your constructor?\n");
@@ -76,7 +76,7 @@ FaultInjectorBase::eventSent(uintptr_t key, Event*& ev)
 }
 
 void
-FaultInjectorBase::interceptHandler(uintptr_t key, Event*& ev, bool& cancel) 
+FaultInjectorBase::interceptHandler(uintptr_t key, Event*& ev, bool& cancel)
 {
     if (!valid_installs_set) {
         out_->fatal(CALL_INFO_LONG, -1, "Valid installation directions not set -- did you forget to call setValidInstallation() in your constructor?\n");

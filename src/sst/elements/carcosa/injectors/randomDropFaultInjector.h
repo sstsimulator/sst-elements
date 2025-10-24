@@ -35,7 +35,7 @@ public:
     ~RandomDropFaultInjector() {}
 protected:
     void executeFaults(Event*& ev) override;
-    
+
     void serialize_order(SST::Core::Serialization::serializer& ser) override
     {
         SST::PortModule::serialize_order(ser);
@@ -43,7 +43,7 @@ protected:
     }
     ImplementVirtualSerializable(SST::Carcosa::RandomDropFaultInjector)
 }; // class RandomDropFaultInjector
-    
+
 } // namespace SST::Carcosa
 
 #endif

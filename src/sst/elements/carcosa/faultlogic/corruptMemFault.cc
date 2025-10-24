@@ -29,7 +29,7 @@ CorruptMemFault::CorruptMemFault(Params& params, FaultInjectorBase* injector) : 
 
         // check validity
         if (region_pair.first > region_pair.second) {
-            getSimulationOutput()->fatal(CALL_INFO_LONG, -1, "Invalid corruption region: [0x%zx, 0x%zx].\n", 
+            getSimulationOutput()->fatal(CALL_INFO_LONG, -1, "Invalid corruption region: [0x%zx, 0x%zx].\n",
                                         region_pair.first, region_pair.second);
         }
 

@@ -51,7 +51,7 @@ protected:
     }
     ImplementVirtualSerializable(SST::Carcosa::DoubleFaultInjector)
 }; // class DoubleFaultInjector
-    
+
 } // namespace SST::Carcosa
 
 #endif

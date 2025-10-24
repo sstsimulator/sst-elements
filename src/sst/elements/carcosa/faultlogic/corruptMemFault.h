@@ -25,13 +25,13 @@ typedef std::vector<uint8_t> dataVec;
 typedef SST::MemHierarchy::Addr Addr;
 
 /**
- * This fault is intended to be placed on the input/output ports 
+ * This fault is intended to be placed on the input/output ports
  * of memory components such as DRAM or HBM. Events that pass through
- * it, and whose data addresses fall within the ranges set in this 
+ * it, and whose data addresses fall within the ranges set in this
  * module's parameters, will have their payloads randomly altered
  * to simulate corruption in the affected region of memory.
  */
-class CorruptMemFault : public FaultBase 
+class CorruptMemFault : public FaultBase
 {
 public:
 

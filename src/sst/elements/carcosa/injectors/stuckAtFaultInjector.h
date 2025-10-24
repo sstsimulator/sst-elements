@@ -45,7 +45,7 @@ protected:
     }
     ImplementVirtualSerializable(SST::Carcosa::StuckAtFaultInjector)
 }; // class StuckAtFaultInjector
-    
+
 } // namespace SST::Carcosa
 
 #endif

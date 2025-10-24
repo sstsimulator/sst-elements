@@ -41,7 +41,7 @@ protected:
     }
     ImplementVirtualSerializable(SST::Carcosa::RandomFlipFaultInjector)
 }; // class RandomFlipFaultInjector
-    
+
 } // namespace SST::Carcosa
 
 #endif

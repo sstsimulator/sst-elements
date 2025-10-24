@@ -41,7 +41,7 @@ EXTRA_DIST = \
     tests/testStuckAtBasic.py                     \
     tests/testStuckAtMultiple.py                  \
     tests/testStuckAtOverlap.py                   \
-    tests/testStuckAtSameByte.py  
+    tests/testStuckAtSameByte.py
 
 sstdir = $(includedir)/sst/elements/carcosa
 nobase_sst_HEADERS =                        \

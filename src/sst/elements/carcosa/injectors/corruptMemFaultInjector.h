@@ -36,7 +36,7 @@ public:
     ~CorruptMemFaultInjector() {}
 protected:
     void executeFaults(Event*& ev) override;
-    
+
     void serialize_order(SST::Core::Serialization::serializer& ser) override
     {
         SST::PortModule::serialize_order(ser);
@@ -44,7 +44,7 @@ protected:
     }
     ImplementVirtualSerializable(SST::Carcosa::CorruptMemFaultInjector)
 }; // class CorruptMemFaultInjector
-    
+
 } // namespace SST::Carcosa
 
 #endif

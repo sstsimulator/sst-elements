@@ -15,7 +15,7 @@ using namespace SST::Carcosa;
 
 /********** StuckAtFault **********/
 
-StuckAtFault::StuckAtFault(Params& params, FaultInjectorBase* injector) : FaultBase(params, injector) 
+StuckAtFault::StuckAtFault(Params& params, FaultInjectorBase* injector) : FaultBase(params, injector)
 {
 #ifdef __SST_DEBUG_OUTPUT__
     getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "Fault Type: Stuck-At Fault\n");
@@ -33,7 +33,7 @@ StuckAtFault::StuckAtFault(Params& params, FaultInjectorBase* injector) : FaultB
         uint8_t zeroMask = param->zeroMask;
         uint8_t oneMask = param->oneMask;
         if ((int)(zeroMask & oneMask) > 0) {
-            getSimulationOutput()->fatal(CALL_INFO_LONG, -1, "Masks contain overlapping values. Addr: 0x%zx, " 
+            getSimulationOutput()->fatal(CALL_INFO_LONG, -1, "Masks contain overlapping values. Addr: 0x%zx, "
                                         "byte: %d\n", addr, byte);
         }
         // check for vector in each map before creating it
@@ -103,7 +103,7 @@ bool StuckAtFault::faultLogic(SST::Event*& ev) {
                     uint32_t final_byte = computeByte(masked_addr, mem_ev->getBaseAddr(), maskPair.first);
 #ifdef __SST_DEBUG_OUTPUT__
                     getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "\tbyte %d, value: %d, mask: %d, new value: %d\n",
-                                                maskPair.first, (int)payload[final_byte], (int) mask, 
+                                                maskPair.first, (int)payload[final_byte], (int) mask,
                                                 (int)(payload[final_byte] & (~mask)));
                     getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "\tPayload index: %d\n", final_byte);
 #endif
@@ -120,7 +120,7 @@ bool StuckAtFault::faultLogic(SST::Event*& ev) {
                     uint32_t final_byte = computeByte(masked_addr, mem_ev->getBaseAddr(), maskPair.first);
 #ifdef __SST_DEBUG_OUTPUT__
                     getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "\tbyte %d, value: %d, mask: %d, new value: %d\n",
-                                                maskPair.first, (int)payload[final_byte], (int) mask, 
+                                                maskPair.first, (int)payload[final_byte], (int) mask,
                                                 (int)(payload[final_byte] | mask));
                     getSimulationDebug()->debug(CALL_INFO_LONG, 1, 0, "\tPayload index: %d\n", final_byte);
 #endif

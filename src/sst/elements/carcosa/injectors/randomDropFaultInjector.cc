@@ -22,9 +22,9 @@ RandomDropFaultInjector::RandomDropFaultInjector(Params& params) : FaultInjector
 
 /**
  * Custom execution is required to ensure delivery is canceled
- * 
- * In the base interceptHandler, a reference to a boolean called 
- * 'cancel' is accepted as an argument. That function assigns the 
+ *
+ * In the base interceptHandler, a reference to a boolean called
+ * 'cancel' is accepted as an argument. That function assigns the
  * injector's pointer (called 'cancel_') to that reference's address,
  * and that reference must be updated here after the event is destroyed
  * if the installation direction of this PortModule was set to 'Receive'.

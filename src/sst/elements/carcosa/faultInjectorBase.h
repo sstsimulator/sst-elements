@@ -149,7 +149,7 @@ protected:
 private:
     std::array<bool,2> valid_installation_ = {{false, false}};
     bool valid_installs_set = false;
-protected: 
+protected:
 
     bool doInjection();
     virtual void executeFaults(Event*& ev);
@@ -157,7 +157,7 @@ protected:
     /**
      * This function MUST be called by the derived class constructor
      * @arg params pass the same params object to this function
-     * @arg valid_install_ pass either SEND_VALID, RECEIVE_VALID, 
+     * @arg valid_install_ pass either SEND_VALID, RECEIVE_VALID,
      *      or SEND_RECEIVE_VALID
      */
     void setValidInstallation(Params& params, std::array<bool,2> valid_install);
