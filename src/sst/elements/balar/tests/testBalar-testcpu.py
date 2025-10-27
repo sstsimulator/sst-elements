@@ -1,5 +1,5 @@
 # Automatically generated SST Python input
-# Run cmd: sst testBalar-testcpu.py --model-options="-c gpu-v100-mem.cfg -v 0 -x ./vectorAdd/vectorAdd -t cuda_calls.trace"
+# Run cmd: sst testBalar-testcpu.py --model-options="-c gpu-v100-mem.cfg -v 0 -x ./balar_trace/vectorAdd -t cuda_calls.trace"
 
 # This run script will run balar with a test cpu that consumes CUDA API trace
 # To get the trace file and associated cudamemcpy data payload, you will need the
@@ -9,7 +9,7 @@
 #  `LD_PRELOAD=PATH/TO/cuda_api_tracer.so PATH/TO/CUDA_APP` to
 #  collect API trace
 # Sample run:
-#     LD_PRELOAD=cuda_api_tracer.so ./vectorAdd/vectorAdd
+#     LD_PRELOAD=cuda_api_tracer.so ./balar_trace/vectorAdd
 
 import sst
 try:
