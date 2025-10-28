@@ -24,7 +24,6 @@ libbalar_la_SOURCES = \
 	testcpu/balarTestCPU.h
 
 EXTRA_DIST = \
-	tests/refFiles/test_gpgpu_helloworld.out \
 	tests/refFiles/test_gpgpu_rodinia-2.0-backprop-1024.out \
 	tests/refFiles/test_gpgpu_rodinia-2.0-backprop-2048.out \
 	tests/refFiles/test_gpgpu_rodinia-2.0-backprop-short.out \
@@ -43,28 +42,29 @@ EXTRA_DIST = \
 	tests/refFiles/test_gpgpu_vanadisHandshake.out \
 	tests/refFiles/test_gpgpu_vecadd.out \
 	tests/refFiles/test_gpgpu_vectorAdd.out \
+	tests/libcudart/Makefile \
+	tests/libcudart/balar_vanadis.h \
+	tests/libcudart/cuda_runtime_api_vanadis.cc \
 	tests/vanadisHandshake/vanadisHandshake.c \
 	tests/vanadisHandshake/cuda_runtime_api.c \
 	tests/vanadisHandshake/cuda_runtime_api.h \
 	tests/vanadisHandshake/Makefile \
-	tests/vanadisLLVMRISCV/cudaSamplesCommon/exception.h \
-	tests/vanadisLLVMRISCV/cudaSamplesCommon/helper_cuda.h \
-	tests/vanadisLLVMRISCV/cudaSamplesCommon/helper_functions.h \
-	tests/vanadisLLVMRISCV/cudaSamplesCommon/helper_image.h \
-	tests/vanadisLLVMRISCV/cudaSamplesCommon/helper_string.h \
-	tests/vanadisLLVMRISCV/cudaSamplesCommon/helper_timer.h \
-	tests/vanadisLLVMRISCV/balar_vanadis.h \
-	tests/vanadisLLVMRISCV/cuda_runtime_api_vanadis.cc \
-	tests/vanadisLLVMRISCV/helloworld.c \
-	tests/vanadisLLVMRISCV/Makefile \
-	tests/vanadisLLVMRISCV/simpleStreams.cu \
-	tests/vanadisLLVMRISCV/vecadd.cu \
-	tests/vectorAdd/cuda_calls.trace \
-	tests/vectorAdd/cuMemcpyD2H-0-524288.data \
-	tests/vectorAdd/cuMemcpyH2D-0-524288.data \
-	tests/vectorAdd/cuMemcpyH2D-1-524288.data \
-	tests/vectorAdd/Makefile \
-	tests/vectorAdd/vecAdd.cu \
+	tests/vanadis_llvm_rv64/cudaSamplesCommon/exception.h \
+	tests/vanadis_llvm_rv64/cudaSamplesCommon/helper_cuda.h \
+	tests/vanadis_llvm_rv64/cudaSamplesCommon/helper_functions.h \
+	tests/vanadis_llvm_rv64/cudaSamplesCommon/helper_image.h \
+	tests/vanadis_llvm_rv64/cudaSamplesCommon/helper_string.h \
+	tests/vanadis_llvm_rv64/cudaSamplesCommon/helper_timer.h \
+	tests/vanadis_llvm_rv64/Makefile \
+	tests/vanadis_llvm_rv64/helloworld.c \
+	tests/vanadis_llvm_rv64/simpleStreams.cu \
+	tests/vanadis_llvm_rv64/vecadd.cu \
+	tests/balar_trace/Makefile \
+	tests/balar_trace/vecAdd.cu \
+	tests/balar_trace/cuda_calls.trace \
+	tests/balar_trace/cuMemcpyD2H-0-524288.data \
+	tests/balar_trace/cuMemcpyH2D-0-524288.data \
+	tests/balar_trace/cuMemcpyH2D-1-524288.data \
 	tests/balarBlock.py \
 	tests/gpgpusim.config \
 	tests/gpu-v100-mem.cfg \
@@ -72,9 +72,7 @@ EXTRA_DIST = \
 	tests/testBalar_testsuite_util.py \
 	tests/testBalar-testcpu.py \
 	tests/testBalar-vanadis.py \
-	tests/testsuite_default_balar_long.py \
-	tests/testsuite_default_balar_medium.py \
-	tests/testsuite_default_balar_simple.py \
+	tests/testsuite_default_balar.py \
 	tests/utils.py \
 	tests/vanadisBlock.py \
 	tests/vanadisOS.py

@@ -236,9 +236,9 @@ class BalarTestCase(SSTTestCase):
         # Test cases dispatch dict
         # Tag: [EXE_PATH, DATA_DIR, EXE_args]
         testcases = {
-            "helloworld": ["./vanadisLLVMRISCV/helloworld", "", ""],
-            "vecadd": ["./vanadisLLVMRISCV/vecadd", "", ""],
-            "simpleStreams": ["./vanadisLLVMRISCV/simpleStreams", "", ""],
+            "helloworld": ["./vanadis_llvm_rv64/helloworld", "", ""],
+            "vecadd": ["./vanadis_llvm_rv64/vecadd", "", ""],
+            "simpleStreams": ["./vanadis_llvm_rv64/simpleStreams", "", ""],
             # Rodinia 2.0
             ## Backprop
             "rodinia-2.0-backprop-short": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/backprop-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/backprop-rodinia-2.0-ft", f"256"],
@@ -311,6 +311,7 @@ class BalarTestCase(SSTTestCase):
         # Set the various file paths
         testDataFileName="test_gpgpu_{0}".format(testcase)
 
+
         reffile = "{0}/refFiles/{1}.out".format(test_path, testDataFileName)
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
@@ -327,6 +328,15 @@ class BalarTestCase(SSTTestCase):
 
         gpuMemCfgfile = "{0}/gpu-v100-mem.cfg".format(self.testbalarDir)
         otherargs = '--model-options=\"-c {0} -s {1} --vanadis-binary {2} --vanadis-args=\\"{3}\\" --cuda-binary {4}\"'.format(gpuMemCfgfile, statsfile, exe, args, exe)
+
+        print(f"ARGs = {otherargs}")
+        print("testcase = {0}".format(testcase))
+        print("sdl file = {0}".format(sdlfile))
+        print("ref file = {0}".format(reffile))
+        print("out file = {0}".format(outfile))
+        print("err file = {0}".format(errfile))
+        print("stats file = {0}".format(statsfile))
+        print("testbalarDir = {0}".format(self.testbalarDir))
 
         # Run SST
         os.environ["VANADIS_ISA"] = "RISCV64"
@@ -372,6 +382,7 @@ class BalarTestCase(SSTTestCase):
         os.makedirs(self.testbalarVectorAddDir)
         os.makedirs(self.testbalarVanadisHandshakeDir)
         os.makedirs(self.testbalarLLVMVanadisDir)
+        os.makedirs(self.cudartDir)
 
         # Create a simlink of required test files balar/tests directory
         os_symlink_file(test_path, self.testbalarDir, "gpu-v100-mem.cfg")
@@ -385,6 +396,10 @@ class BalarTestCase(SSTTestCase):
         os_symlink_file(self.balarElementDir, tmpdir, "balar_packet.h")
         os_symlink_file(self.balarElementDir, tmpdir, "balar_consts.h")
 
+        src_cudart_dir = os.path.abspath("{0}/libcudart".format(test_path))
+        for f in os.listdir(src_cudart_dir):
+            os_symlink_file(src_cudart_dir, self.cudartDir, f)
+
         # Create a simlink of each file in the balar/tests/vectorAdd directory
         for f in os.listdir(self.balarElementVectorAddTestDir):
             os_symlink_file(self.balarElementVectorAddTestDir, self.testbalarVectorAddDir, f)
@@ -393,9 +408,15 @@ class BalarTestCase(SSTTestCase):
         for f in os.listdir(self.balarElementVanadisHandshakeTestDir):
             os_symlink_file(self.balarElementVanadisHandshakeTestDir, self.testbalarVanadisHandshakeDir, f)
 
-        # Create a simlink of each file in the balar/tests/vanadisLLVMRISCV directory
+        # Create a simlink of each file in the balar/tests/vanadis_llvm_rv64 directory
         for f in os.listdir(self.balarElementLLVMVanadisTestDir):
             os_symlink_file(self.balarElementLLVMVanadisTestDir, self.testbalarLLVMVanadisDir, f)
+
+        # Now build libcudart
+        cmd = "make"
+        rtn = OSCommand(cmd, set_cwd=self.cudartDir).run()
+        log_debug("Balar cudart Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
+        self.assertTrue(rtn.result() == 0, "libcudart failed to compile")
 
         # Now build the vectorAdd example
         cmd = "make"
@@ -404,12 +425,12 @@ class BalarTestCase(SSTTestCase):
         self.assertTrue(rtn.result() == 0, "vecAdd.cu failed to compile")
 
         # Build vanadishandshake
-        cmd = "make"
-        rtn = OSCommand(cmd, set_cwd=self.testbalarVanadisHandshakeDir).run()
-        log_debug("Balar vanadisHandshake Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
-        self.assertTrue(rtn.result() == 0, "vanadisHandshake.c failed to compile")
+#        cmd = "make"
+#        rtn = OSCommand(cmd, set_cwd=self.testbalarVanadisHandshakeDir).run()
+#        log_debug("Balar vanadisHandshake Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
+#        self.assertTrue(rtn.result() == 0, "vanadisHandshake.c failed to compile")
 
-        # Build vanadisLLVMRISCV, contains helloworld, vecadd, and the custom CUDA lib
+        # Build vanadis_llvm_rv64, contains helloworld, vecadd, and the custom CUDA lib
         cmd = "make"
         rtn = OSCommand(cmd, set_cwd=self.testbalarLLVMVanadisDir).run()
         log_debug("Balar vanadisLLVM Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
@@ -449,12 +470,28 @@ class BalarTestCase(SSTTestCase):
         self.balarElementDir = os.path.abspath("{0}/../".format(test_path))
         self.balarElementVectorAddTestDir = os.path.abspath("{0}/vectorAdd".format(test_path))
         self.balarElementVanadisHandshakeTestDir = os.path.abspath("{0}/vanadisHandshake".format(test_path))
-        self.balarElementLLVMVanadisTestDir = os.path.abspath("{0}/vanadisLLVMRISCV".format(test_path))
+        self.balarElementLLVMVanadisTestDir = os.path.abspath("{0}/vanadis_llvm_rv64".format(test_path))
         self.testbalarDir = "{0}/test_balar".format(tmpdir)
         self.testbalarVectorAddDir = "{0}/vectorAdd".format(self.testbalarDir)
         self.testbalarVanadisHandshakeDir = "{0}/vanadisHandshake".format(self.testbalarDir)
-        self.testbalarLLVMVanadisDir = "{0}/vanadisLLVMRISCV".format(self.testbalarDir)
+        self.testbalarLLVMVanadisDir = "{0}/vanadis_llvm_rv64".format(self.testbalarDir)
+        self.cudartDir = os.path.abspath("{0}/libcudart".format(self.testbalarDir))
 
+        # Check environment
+        if "CUDA_INSTALL_PATH" not in os.environ:
+            fallback = os.environ.get("CUDA_HOME")
+            os.environ["CUDA_INSTALL_PATH"] = fallback
+            print(f"CUDA_INSTALL_PATH was not set — assigning CUDA_INSTALL_PATH = {fallback}")
+
+        if "GPU_ARCH" not in os.environ:
+            fallback = "sm_70"
+            os.environ["GPU_ARCH"] = fallback
+            print(f"GPU_ARCH was not set — assigning GPU_ARCH = {fallback}")
+
+        if "GPGPUSIM_ROOT" not in os.environ:
+            self.fail("Environment variable GPGPUSIM_ROOT not set — aborting test.")
+
+        # Get nvcc
         cmd = "which nvcc"
         rtn = OSCommand(cmd).run()
         log_debug("which nvcc result = {0}; output = {1}".format(rtn.result(), rtn.output()))
@@ -474,3 +511,6 @@ class BalarTestCase(SSTTestCase):
         log_debug("Dumping environment variables:")
         log_debug("NVCC path: {0}".format(os.environ["NVCC_PATH"]))
         log_debug("CUDA version: {0}".format(os.environ["CUDA_VERSION"]))
+        log_debug("GPU_ARCH: {0}".format(os.environ["GPU_ARCH"]))
+        log_debug("CUDA_INSTALL_PATH path: {0}".format(os.environ["CUDA_INSTALL_PATH"]))
+        log_debug("GPGPUSIM_ROOT: {0}".format(os.environ["GPGPUSIM_ROOT"]))

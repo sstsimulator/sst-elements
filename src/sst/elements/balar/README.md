@@ -123,9 +123,9 @@ export GPU_ARCH=sm_70
 
 #### Compiling CUDA for Balar + Vanadis
 
-In order to run CUDA on Balar + Vanadis (direct-execution), aside from the compilers, the custom CUDA library `libcudart_vanadis` (inside `vanadisLLVMRISCV`) is also needed to intercept CUDA API calls and send them to Balar's MMIO address. This custom CUDA lib can be made via `make -C vanadisLLVMRISCV vanadis_cuda`, which would generate the `libcudart_vanadis.a/so`.
+In order to run CUDA on Balar + Vanadis (direct-execution), aside from the compilers, the custom CUDA library `libcudart_vanadis` (inside `vanadis_llvm_rv64`) is also needed to intercept CUDA API calls and send them to Balar's MMIO address. This custom CUDA lib can be made via `make -C vanadis_llvm_rv64 vanadis_cuda`, which would generate the `libcudart_vanadis.a/so`.
 
-For compiler and linker flags, you can refer to the `vecadd` target in `vanadisLLVMRISCV/Makefile`.
+For compiler and linker flags, you can refer to the `vecadd` target in `vanadis_llvm_rv64/Makefile`.
 
 #### GPU Application Collection
 
@@ -141,7 +141,7 @@ git checkout sst_support
 # If you plan to compile the apps directly, you will
 # also need to set SST_CUSTOM_CUDA_LIB_PATH to
 # the directory of the custom CUDA library,
-# which normally will be `SST-ELEMENT-SOURCE/src/sst/elements/balar/tests/vanadisLLVMRISCV`
+# which normally will be `SST-ELEMENT-SOURCE/src/sst/elements/balar/tests/vanadis_llvm_rv64`
 source ./src/setup_environment sst
 ```
 
@@ -159,15 +159,15 @@ cd SST_ELEMENTS_SRC/src/sst/elements/balar
 cd tests/
 
 # Compile vector add sample CUDA program
-make -C vectorAdd
+make -C balar_trace
 
 # Generate trace file for vectorAdd
-LD_PRELOAD=PATH/TO/cuda_api_tracer_tool.so ./vectorAdd/vectorAdd
+LD_PRELOAD=PATH/TO/cuda_api_tracer_tool.so ./balar_trace/vectorAdd
 
 # Run with testCPU in tracer mode
 # You will need the trace file for this, checkout `testBalar-testcpu.py` header
 # for more information
-sst testBalar-testcpu.py --model-options='-c gpu-v100-mem.cfg -v -x vectorAdd/vectorAdd -t cuda_calls.trace'
+sst testBalar-testcpu.py --model-options='-c gpu-v100-mem.cfg -v -x balar_trace/vectorAdd -t cuda_calls.trace'
 
 # Compile vanadis binary and a custom CUDA API library
 # (currently still under testing)
@@ -186,13 +186,13 @@ The CUDA executable should be passed in `VANADIS_EXE` and `BALAR_CUDA_EXE_PATH`.
 cd SST_ELEMENTS_SRC/src/sst/elements/balar/tests/
 
 # Compile test programs
-make -C vanadisLLVMRISCV
+make -C vanadis_llvm_rv64
 
 # Run CPU only program
-VANADIS_EXE=./vanadisLLVMRISCV/helloworld VANADIS_ISA=RISCV64 sst testBalar-vanadis.py --model-options='-c gpu-v100-mem.cfg'
+VANADIS_EXE=./vanadis_llvm_rv64/helloworld VANADIS_ISA=RISCV64 sst testBalar-vanadis.py --model-options='-c gpu-v100-mem.cfg'
 
 # Run sample vecadd
-VANADIS_EXE=./vanadisLLVMRISCV/vecadd VANADIS_ISA=RISCV64 BALAR_CUDA_EXE_PATH=./vanadisLLVMRISCV/vecadd sst testBalar-vanadis.py --model-options='-c gpu-v100-mem.cfg'
+VANADIS_EXE=./vanadis_llvm_rv64/vecadd VANADIS_ISA=RISCV64 BALAR_CUDA_EXE_PATH=./vanadis_llvm_rv64/vecadd sst testBalar-vanadis.py --model-options='-c gpu-v100-mem.cfg'
 ```
 
 ### Running GPU Benchmark
@@ -201,7 +201,7 @@ Here is an example on running Rodinia 2.0 BFS with SampleGraph.txt input using C
 
 ```bash
 # Let GPU app knows about the custom CUDA lib
-export SST_CUSTOM_CUDA_LIB_PATH=SST_ELEMENTS_SRC/src/sst/elements/balar/tests/vanadisLLVMRISCV
+export SST_CUSTOM_CUDA_LIB_PATH=SST_ELEMENTS_SRC/src/sst/elements/balar/tests/vanadis_llvm_rv64
 
 # Make Rodinia 2.0
 cd gpu-app-collection
