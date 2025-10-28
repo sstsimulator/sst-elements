@@ -85,8 +85,9 @@ char *ofi_strdup_append(const char *head, const char *tail)
 
 	len = strlen(head) + strlen(tail) + 2;
 	str = malloc(len);
-	if (str)
-		sprintf(str, "%s%c%s", head, OFI_NAME_DELIM, tail);
+	if (str) {
+		snprintf(str, len, "%s%c%s", head, OFI_NAME_DELIM, tail);
+	}
 	return str;
 }
 

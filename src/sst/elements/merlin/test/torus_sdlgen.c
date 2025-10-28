@@ -77,14 +77,14 @@ void idToLoc(int router_id, int *loc)
 	loc[0] = router_id;
 }
 
-
+#define PRINTF_BUFSIZ 256
 
 void formatLoc(int *dims, char *buf)
 {
     char *p = buf;
-    p += sprintf(buf, "%d", dims[0]);
+    p += snprintf(buf, PRINTF_BUFSIZ, "%d", dims[0]);
     for ( int i = 1 ; i < params.ndim ; i++ ) {
-        p += sprintf(p, "x%d", dims[i]);
+        p += snprintf(p, PRINTF_BUFSIZ, "x%d", dims[i]);
     }
 }
 
@@ -158,7 +158,7 @@ main(int argc, char **argv)
     for ( int i = 0 ; i < num_routers ; i++ ) {
         idToLoc(i, mydims);
 
-        char mylocstr[256], otherlocstr[256];
+        char mylocstr[PRINTF_BUFSIZ], otherlocstr[PRINTF_BUFSIZ];
         formatLoc(mydims, mylocstr);
 
         fprintf(output, "  <component name=rtr.%s type=merlin.hr_router>\n", mylocstr);
