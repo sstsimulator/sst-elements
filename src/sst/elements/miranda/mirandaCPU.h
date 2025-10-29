@@ -160,6 +160,18 @@ public:
         SST_SER(cacheLine);
         SST_SER(maxOpLookup);
 
+        SST_SER(statReqs);
+        SST_SER(statSplitReqs);
+        SST_SER(statCyclesWithIssue);
+        SST_SER(statMaxIssuePerCycle);
+        SST_SER(statCyclesWithoutIssue);
+        SST_SER(statBytes);
+        SST_SER(statReqLatency);
+        SST_SER(statTime);
+        SST_SER(statCyclesHitFence);
+        SST_SER(statCyclesHitReorderLimit);
+        SST_SER(statCycles);
+
     }
 
     ImplementSerializable(SST::Miranda::RequestGenCPU)
@@ -199,12 +211,12 @@ private:
 	uint64_t cacheLine;
 	uint32_t maxOpLookup;
 
-    Statistic<uint64_t>* statReqs[OPCOUNT];
-	Statistic<uint64_t>* statSplitReqs[OPCOUNT];
+    Statistic<uint64_t>* statReqs[OPCOUNT] = {nullptr, nullptr, nullptr, nullptr};
+	Statistic<uint64_t>* statSplitReqs[OPCOUNT] = {nullptr, nullptr, nullptr, nullptr};
 	Statistic<uint64_t>* statCyclesWithIssue;
 	Statistic<uint64_t>* statMaxIssuePerCycle;
 	Statistic<uint64_t>* statCyclesWithoutIssue;
-	Statistic<uint64_t>* statBytes[OPCOUNT];
+	Statistic<uint64_t>* statBytes[OPCOUNT] = {nullptr, nullptr, nullptr, nullptr};
 	Statistic<uint64_t>* statReqLatency;
 	Statistic<uint64_t>* statTime;
 	Statistic<uint64_t>* statCyclesHitFence;
