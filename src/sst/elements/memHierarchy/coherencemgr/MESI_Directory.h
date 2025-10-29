@@ -148,7 +148,7 @@ private:
     /* Turn clocks off when idle */
     bool        clockOn;
     Clock::Handler<DirectoryController>*  clockHandler;
-    TimeConverter* defaultTimeBase;
+    TimeConverter defaultTimeBase;
     SimTime_t   lastActiveClockCycle;
 
     /* Statistics counters for profiling DC */

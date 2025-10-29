@@ -102,7 +102,7 @@ pagedMultiMemory::pagedMultiMemory(ComponentId_t id, Params &params) : DRAMSimMe
     nanoConv = getTimeConverter("1ns");
 
     minAccTime = self_link->getDefaultTimeBase()->getFactor() /
-        nanoConv->getFactor();
+        nanoConv.getFactor();
 
     const uint32_t seed = params.find<uint32_t>("seed", 1447);
 
