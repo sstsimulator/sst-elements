@@ -51,7 +51,7 @@ VanadisExitSyscall::VanadisExitSyscall( VanadisNodeOSComponent* os, SST::Link* c
 
 void VanadisExitSyscall::memReqIsDone(bool) {
 
-    auto event = getEvent<VanadisSyscallCloneEvent*>();
+    auto event = getEvent<VanadisSyscallExitEvent*>();
 
     auto syscall = m_process->findFutex( m_process->getTidAddress());
     if ( syscall ) {

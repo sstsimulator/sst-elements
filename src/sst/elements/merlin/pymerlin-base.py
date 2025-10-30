@@ -956,7 +956,7 @@ class System(TemplateBase):
     def build(self):
         # For any unallocated nodes, use EmptyJob
         if len(self._available_nodes) > 0:
-            remainder = EmptyJob(-1,len(self._available_nodes))
+            remainder = EmptyJob(-1,len(self._available_nodes) * self.allocation_block_size)
             remainder.network_interface = self.topology.router.getDefaultNetworkInterface()
             remainder.network_interface.link_bw = "1 GB/s"
             self.allocateNodes(remainder,"linear");

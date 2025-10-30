@@ -457,7 +457,7 @@ static int util_wait_yield_run(struct fid_wait *wait_fid, int timeout)
 				return ret;
 		}
 		fastlock_release(&wait->wait_lock);
-		pthread_yield();
+		sched_yield();
 	}
 
 	fastlock_acquire(&wait->signal_lock);

@@ -30,7 +30,6 @@ public:
         const uint64_t address, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, std::string msg) :
         VanadisInstruction(address, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0)
     {
-
         flagError();
         fault_msg = msg;
     }
@@ -38,7 +37,6 @@ public:
     VanadisInstructionFault(const uint64_t address, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts) :
         VanadisInstruction(address, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0)
     {
-
         flagError();
         fault_msg = "";
     }

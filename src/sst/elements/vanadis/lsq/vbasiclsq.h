@@ -411,47 +411,48 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                     switch(load_ins->getValueRegisterType()) {
                     case LOAD_INT_REGISTER: {
 
-                        if ( ! load_ins->trapsError() ) {;
+                        if ( ! load_ins->trapsError() ) {
 
+                            copyLoadResp(load_ins, &target_reg,&target_isa_reg,&target_thread,load_entry,fp);
 
-                        copyLoadResp(load_ins, &target_reg,&target_isa_reg,&target_thread,load_entry,fp);
+                            assert(target_isa_reg < load_ins->getISAOptions()->countISAIntRegisters());
+                            //sst_assert(target_isa_reg < load_ins->getISAOptions()->countISAIntRegisters(),
+                            //    CALL_INFO, -1, "target_isa_reg is incorrect");
 
-                        assert(target_isa_reg < load_ins->getISAOptions()->countISAIntRegisters());
+                            if(target_reg != load_ins->getISAOptions()->getRegisterIgnoreWrites()) {
+                                reg_width = lsq->registerFiles->at(target_thread)->getIntRegWidth();
+                                std::vector<uint8_t> register_value(reg_width);
+                                // copy entire register here
+                                lsq->registerFiles->at(target_thread)->copyFromIntRegister(target_reg, 0, &register_value[0], reg_width);
 
-                        if(target_reg != load_ins->getISAOptions()->getRegisterIgnoreWrites()) {
-                            reg_width = lsq->registerFiles->at(target_thread)->getIntRegWidth();
-                            std::vector<uint8_t> register_value(reg_width);
-                            // copy entire register here
-                            lsq->registerFiles->at(target_thread)->copyFromIntRegister(target_reg, 0, &register_value[0], reg_width);
+                                assert((reg_offset + addr_offset + ev->size) <= reg_width);
 
-                            assert((reg_offset + addr_offset + ev->size) <= reg_width);
+                                for(auto i = 0; i < ev->size; ++i) {
+                                    register_value.at(reg_offset + addr_offset + i) = ev->data[i];
+                                }
 
-                            for(auto i = 0; i < ev->size; ++i) {
-                                register_value.at(reg_offset + addr_offset + i) = ev->data[i];
-                            }
-
-                            // if we are the last request to be processed for this load (if any were split)
-                            // and we promised to do sign extension, then perform it now
-                            if(load_entry->countRequests() == 1) {
-                                if(load_ins->performSignExtension()) {
-                                    if((register_value.at(reg_offset + addr_offset + load_width - 1) & 0x80) != 0) {
-                                        for(auto i = reg_offset + addr_offset + load_width; i < reg_width; ++i) {
-                                            register_value.at(i) = 0xFF;
+                                // if we are the last request to be processed for this load (if any were split)
+                                // and we promised to do sign extension, then perform it now
+                                if(load_entry->countRequests() == 1) {
+                                    if(load_ins->performSignExtension()) {
+                                        if((register_value.at(reg_offset + addr_offset + load_width - 1) & 0x80) != 0) {
+                                            for(auto i = reg_offset + addr_offset + load_width; i < reg_width; ++i) {
+                                                register_value.at(i) = 0xFF;
+                                            }
+                                        } else {
+                                            for(auto i = reg_offset + addr_offset + load_width; i < reg_width; ++i) {
+                                                register_value.at(i) = 0x00;
+                                            }
                                         }
                                     } else {
                                         for(auto i = reg_offset + addr_offset + load_width; i < reg_width; ++i) {
                                             register_value.at(i) = 0x00;
                                         }
                                     }
-                                } else {
-                                    for(auto i = reg_offset + addr_offset + load_width; i < reg_width; ++i) {
-                                        register_value.at(i) = 0x00;
-                                    }
                                 }
-                            }
 
-                            lsq->registerFiles->at(target_thread)->copyToIntRegister(target_reg, 0, &register_value[0], register_value.size());
-                        }
+                                lsq->registerFiles->at(target_thread)->copyToIntRegister(target_reg, 0, &register_value[0], register_value.size());
+                            }
                         }
                     } break;
                     case LOAD_FP_REGISTER: {
@@ -817,9 +818,9 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
             } break;
             }
 
-            if(nullptr != store_req) {
+            if (nullptr != store_req) {
                 // equivalent to a seg-fault for the store
-                if(store_address < 4096) {
+                if (store_address < 4096) {
                     store_ins->flagError();
                 }
 

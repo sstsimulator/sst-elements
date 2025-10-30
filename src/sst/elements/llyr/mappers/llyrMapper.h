@@ -25,6 +25,8 @@
 #include "../llyrHelpers.h"
 #include "pes/peList.h"
 
+#define PRINTF_BUFSIZ 256
+
 namespace SST {
 namespace Llyr {
 
@@ -53,8 +55,8 @@ void LlyrMapper::addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< Process
     ProcessingElement* tempPE;
 
     //setup up i/o for messages
-    char prefix[256];
-    sprintf(prefix, "[t=@t][llyrMapper]: ");
+    char prefix[PRINTF_BUFSIZ];
+    snprintf(prefix, PRINTF_BUFSIZ, "[t=@t][llyrMapper]: ");
     SST::Output* output_ = new SST::Output(prefix, llyr_config->verbosity_, 0, Output::STDOUT);
 
     if( op_binding == LD ) {
@@ -162,8 +164,8 @@ void LlyrMapper::addNode(opType op_binding, QueueArgMap* arguments, uint32_t nod
     ProcessingElement* tempPE;
 
     //setup up i/o for messages
-    char prefix[256];
-    sprintf(prefix, "[t=@t][llyrMapper]: ");
+    char prefix[PRINTF_BUFSIZ];
+    snprintf(prefix, PRINTF_BUFSIZ, "[t=@t][llyrMapper]: ");
     SST::Output* output_ = new SST::Output(prefix, llyr_config->verbosity_, 0, Output::STDOUT);
 
     if( op_binding == LDADDR ) {
@@ -224,5 +226,7 @@ void LlyrMapper::addNode(opType op_binding, QueueArgMap* arguments, uint32_t nod
 
 }// namespace Llyr
 }// namespace SST
+
+#undef PRINTF_BUFSIZ
 
 #endif // _LLYR_MAPPER_H

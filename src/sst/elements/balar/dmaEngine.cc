@@ -38,7 +38,7 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) : SST::Component(id) {
     TimeConverter* tc = getTimeConverter(clockfreq);
 
     // Bind tick function
-    registerClock(tc, new Clock::Handler2<DMAEngine,&DMAEngine::tick>(this));
+    registerClock(*tc, new Clock::Handler2<DMAEngine,&DMAEngine::tick>(this));
 
     // MMIO Memory address and size
     mmio_addr = params.find<uint64_t>("mmio_addr", 0);

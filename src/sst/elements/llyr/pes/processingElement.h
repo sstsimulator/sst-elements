@@ -59,8 +59,10 @@ public:
                     pending_op_(0), llyr_config_(llyr_config)
     {
         //setup up i/o for messages
-        char prefix[256];
-        sprintf(prefix, "[t=@t][ProcessingElement-%u]: ", processor_id_);
+#define PRINTF_BUFSIZ 256
+        char prefix[PRINTF_BUFSIZ];
+        snprintf(prefix, PRINTF_BUFSIZ, "[t=@t][ProcessingElement-%u]: ", processor_id_);
+#undef PRINTF_BUFSIZ
         output_ = new SST::Output(prefix, llyr_config_->verbosity_, 0, Output::STDOUT);
 
         pending_op_ = 0;

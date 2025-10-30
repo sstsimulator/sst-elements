@@ -191,6 +191,7 @@ void VanadisFutexSyscall::memReqIsDone(bool failed )
 
                 if ( m_val == getEvent<VanadisSyscallFutexEvent*>()->getVal() ) {
 
+                    // Issue store conditional
                     writeMemory( getEvent<VanadisSyscallFutexEvent*>()->getAddr(), m_buffer, true );
 
                     m_waitStoreConditional = true;

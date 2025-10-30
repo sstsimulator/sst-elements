@@ -11,6 +11,7 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libvanadis.la
 
 VANADIS_SRC_FILES = \
+utils.h \
 datastruct/cqueue.h \
 datastruct/vcache.h \
 decoder/vauxvec.h \
@@ -156,12 +157,14 @@ os/include/page.h \
 os/include/process.h \
 os/include/threadGrp.h \
 os/include/virtMemMap.h \
+os/include/virtMemMap.cc \
 \
 os/callev/voscallaccessev.h \
 os/callev/voscallall.h \
 os/callev/voscallbrk.h \
 os/callev/voscallcheckpoint.h \
 os/callev/voscallclone.h \
+os/callev/voscallclone3.h \
 os/callev/voscallclose.h \
 os/callev/voscallexitgrp.h \
 os/callev/voscallexit.h \
@@ -192,6 +195,7 @@ os/callev/voscallsetaffinity.h \
 os/callev/voscallsetrobustlist.h \
 os/callev/voscallsettidaddr.h \
 os/callev/voscallstatx.h \
+os/callev/voscalltgkill.h \
 os/callev/voscalluname.h \
 os/callev/voscallunlinkat.h \
 os/callev/voscallunlink.h \
@@ -204,6 +208,8 @@ os/syscall/brk.h \
 os/syscall/checkpoint.h \
 os/syscall/clone.cc \
 os/syscall/clone.h \
+os/syscall/clone3.cc \
+os/syscall/clone3.h \
 os/syscall/close.h \
 os/syscall/exit.h \
 os/syscall/exit.cc \
@@ -245,6 +251,8 @@ os/syscall/settidaddress.h \
 os/syscall/statx.h \
 os/syscall/syscall.h \
 os/syscall/syscall.cc \
+os/syscall/syscall_defines.h \
+os/syscall/tgkill.h \
 os/syscall/uname.h \
 os/syscall/unlinkat.h \
 os/syscall/unlink.h \

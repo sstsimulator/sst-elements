@@ -195,12 +195,6 @@ public:
 
     }
 
-    void markExecuted()
-    {
-        hasExecuted = true;
-    }
-
-
     virtual uint16_t getLoadWidth() const { return load_width; }
 
     VanadisLoadRegisterType getValueRegisterType() const { return regType; }

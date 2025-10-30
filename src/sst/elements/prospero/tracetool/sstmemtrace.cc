@@ -43,6 +43,8 @@ REENABLE_WARNING
 # endif
 #endif
 
+#define PRINTF_BUFSIZ 256
+
 using namespace std;
 
 uint32_t max_thread_count;
@@ -199,19 +201,19 @@ VOID IncrementInstructionCount(THREADID id) {
 	thread_instr_id[id].insCount++;
 
 	if(thread_instr_id[id].insCount >= (nextFileTrip * thread_instr_id[id].currentFile)) {
-		char buffer[256];
+		char buffer[PRINTF_BUFSIZ];
 
 		if(trace_format == 0 || trace_format == 1) {
 			fclose(trace[id]);
 
 			if(trace_format == 0) {
-				sprintf(buffer, "%s-%lu-%lu.trace",
+				snprintf(buffer, PRINTF_BUFSIZ, "%s-%lu-%lu.trace",
 					KnobTraceFile.Value().c_str(),
 					(unsigned long) id,
 					(unsigned long) thread_instr_id[id].currentFile);
 				trace[id] = fopen(buffer, "wt");
 			} else {
-				sprintf(buffer,	"%s-%lu-%lu-bin.trace",
+				snprintf(buffer, PRINTF_BUFSIZ,	"%s-%lu-%lu-bin.trace",
                                         KnobTraceFile.Value().c_str(),
 					(unsigned long) id,
 					(unsigned long) thread_instr_id[id].currentFile);
@@ -349,14 +351,14 @@ int main(int argc, char *argv[])
     trace  = (FILE**) malloc(sizeof(FILE*) * max_thread_count);
     fileBuffers = (char**) malloc(sizeof(char*) * max_thread_count);
 
-    char nameBuffer[256];
+    char nameBuffer[PRINTF_BUFSIZ];
 
     if(KnobTraceFormat.Value() == "text") {
 	printf("PROSPERO: Tracing will be recorded in text format.\n");
 	trace_format = 0;
 
 	for(UINT32 i = 0; i < max_thread_count; ++i) {
-		sprintf(nameBuffer, "%s-%lu-0.trace", KnobTraceFile.Value().c_str(), (unsigned long) i);
+		snprintf(nameBuffer, PRINTF_BUFSIZ, "%s-%lu-0.trace", KnobTraceFile.Value().c_str(), (unsigned long) i);
 		trace[i] = fopen(nameBuffer, "wt");
 	}
 
@@ -369,7 +371,7 @@ int main(int argc, char *argv[])
 	trace_format = 1;
 
 	for(UINT32 i = 0; i < max_thread_count; ++i) {
-		sprintf(nameBuffer, "%s-%lu-0-bin.trace", KnobTraceFile.Value().c_str(), (unsigned long) i);
+		snprintf(nameBuffer, PRINTF_BUFSIZ, "%s-%lu-0-bin.trace", KnobTraceFile.Value().c_str(), (unsigned long) i);
 		trace[i] = fopen(nameBuffer, "wb");
 	}
 

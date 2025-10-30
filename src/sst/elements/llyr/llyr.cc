@@ -39,8 +39,10 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     const uint32_t verbosity = params.find< uint32_t >("verbose", 0);
 
     //setup up i/o for messages
-    char prefix[256];
-    sprintf(prefix, "[t=@t][%s]: ", getName().c_str());
+#define PRINTF_BUFSIZ 256
+    char prefix[PRINTF_BUFSIZ];
+    snprintf(prefix, PRINTF_BUFSIZ, "[t=@t][%s]: ", getName().c_str());
+#undef PRINTF_BUFSIZ
     output_ = new SST::Output(prefix, verbosity, 0, Output::STDOUT);
 
     //tell the simulator not to end without us

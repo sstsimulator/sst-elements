@@ -68,7 +68,7 @@ class Page {
         return refCnt;
     }
 
-    std::string checkpoint() {
+    std::string snapshot() {
         std::stringstream ss;
         ss << "ppn: " << ppn;
         ss << ", refCnt: " << refCnt;

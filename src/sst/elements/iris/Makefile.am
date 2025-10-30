@@ -13,8 +13,9 @@ AM_CPPFLAGS += \
 # unpleasant hack to make vintage automake (e.g. 1.13.4) work
 AM_LIBTOOLFLAGS = --tag=CXX
 
-compdir = $(pkglibdir)
-comp_LTLIBRARIES = libsumi.la
+ext_LTLIBRARIES = libsumi.la
+extdir = $(pkglibdir)/ext
+
 libsumi_la_SOURCES = \
   sumi/allgather.cc \
   sumi/allgatherv.cc  \
