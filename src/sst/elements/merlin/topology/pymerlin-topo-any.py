@@ -89,9 +89,9 @@ class topoAny(Topology):
     def __init__(self):
         Topology.__init__(self)
         self._declareClassVariables(["link_latency", "host_link_latency", "topo_name", "simple_routing_entry_string",
-                                     "loaded_graph", "edges", "connectivity_map", "num_R2R_ports_map", 
+                                     "loaded_graph", "edges", "connectivity_map", "num_R2R_ports_map",
                                      "tot_num_endpoints", "rtr_to_EPs", "EP_to_rtr", "simple_routing_table"])
-        self._declareParams("shared",["num_routers", "routing_mode"])
+        self._declareParams("shared",["num_routers", "routing_mode", "verbose_level"])
         self._subscribeToPlatformParamSet("topology")
         self.loaded_graph = nx.empty_graph()
         self.rtr_to_EPs = defaultdict(list)   # dict[int, list[int]], default to empty list
@@ -100,11 +100,15 @@ class topoAny(Topology):
 
     def getName(self):
         return self.topo_name
+
+    def set_verbose_level(self, level: int):
+        self.verbose_level = level
     
     def add_endpoint_mapping(self, router_id: int, endpoint_id: int):
         # This will be used to store the mapping from router ID to list of endpoint IDs and vice versa
         self.rtr_to_EPs[router_id].append(endpoint_id)
         self.EP_to_rtr[endpoint_id] = router_id
+        # print(f"In python, mapping endpoint {endpoint_id} to router {router_id}")
 
     def get_endpoint_router_mapping(self) -> dict:
         return self.EP_to_rtr
@@ -115,7 +119,11 @@ class topoAny(Topology):
     def calculate_routing_table(self, routingAlgo: Optional[Callable] = None):
         """This is an interface for generating a routing table. \n
         The implementation could be dijkstra with all shortest paths or other algorithms. \n
-        It optionally takes an input function that is defined by the user to generate custom routing tables."""
+        It optionally takes an input function that is defined by the user to generate custom routing tables.
+        
+        Note that the routing table should be: a dictionary of dictionaries, mapping from source router ID to destination router ID to a list of (weight, path) tuples.
+        The sum of weights of paths between each source-destination pair should be normalized to 1, but in this case all weights are 1 since there is only one path per pair.
+        """
         # if no routingAlgo is provided, use default Dijkstra all shortest paths
         if routingAlgo is None:
             routingAlgo = _networkx_Dijkstra_shortest_path
@@ -225,6 +233,7 @@ class topoAny(Topology):
         
         # Create routers
         routers = []
+        topos=[]
         for r in range(self.num_routers):
             router = self._instanceRouter(self.num_R2R_ports_map[r] + self.get_num_endpoints_for_router(r),r)
             routers.append(router)
@@ -252,6 +261,7 @@ class topoAny(Topology):
                 "connectivity": connectivity_str
             })
             topo.addParam("simple_routing_entry_string", serialize_routing_entry(self.simple_routing_table[r], r))
+            topos.append(topo)
         
         # Build links between routers
         for edge in self.edges:
@@ -272,11 +282,17 @@ class topoAny(Topology):
         
         # Connect endpoints to routers
         for r in range(self.num_routers):
+            endpoint_to_port_map = {}
             for local_id, global_id in enumerate(self.rtr_to_EPs[r]):
                 (networkIF, port_name) = endpoint.build(global_id, {})
                 if networkIF:
                     nicLink = sst.Link("link_r%d_localEP%d"%(r, local_id))
                     nicLink.connect( (networkIF, port_name, self.host_link_latency), (routers[r], "port%d"%(self.num_R2R_ports_map[r] + local_id), self.host_link_latency) )
-                    # print(f"router {r}'s port{port_id} is connected to EP {nodeID}'s port {port_name}")
+
+                    endpoint_to_port_map[global_id] = self.num_R2R_ports_map[r] + local_id
+                    # print(f"router {r}'s port{self.num_R2R_ports_map[r] + local_id} is connected to EP {global_id}'s port {port_name}")
                 else:
                     raise AssertionError(f"Failed to build endpoint {global_id}, local EP ID {local_id} for router {r}")
+
+            topos[r].addParam("endpoint_to_port_map", endpoint_to_port_map)
+            topos[r].addParam("port_to_endpoint_map", {v: k for k, v in endpoint_to_port_map.items()})
