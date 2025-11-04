@@ -1,8 +1,3 @@
-# TODOs:
-- write verbose debug info for anytopo => fix bugs with slimfly and polarfly
-- test with ember
-
-
 # AnyTopo Utility
 
 This directory contains utility scripts for generating input graphs for the `anytopo` topology in SST Merlin. Popular High-Performance Computing (HPC) network topologies are implemented as Python classes.
