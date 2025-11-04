@@ -6,21 +6,21 @@ class DallyDragonflyTopo(HPC_topo):
     Dally Dragonfly Topology, see paper: \n
     'Kim, John, et al. "Technology-driven, highly-scalable dragonfly topology." ACM SIGARCH Computer Architecture News 36.3 (2008): 77-88.'
     '''
-    def __init__(self, *args, **kwargs): 
+    def __init__(self, *args, **kwargs):
         super().__init__("dally_dragonfly")
 
-        # DallyDragonfly parameters: 
+        # DallyDragonfly parameters:
         # Number of routers per group = a, Number of groups = g,
         # Number of inter-group links per router = h
         # Number of terminals per router = p (p is not modeled in the inter-router graph),
         # Router radix = k = p+a+h-1
         # a=2p=2h, g=ah+1
         # Input to this class is the number of routers = R = a*g; inter-router graph degree = d = a+h-1, then we deduct all parameters
-        
+
         if len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], int):
             self.generate_DDF_topo(args[0], args[1])
         else:
-            raise ValueError('Input arguements not accepted.')      
+            raise ValueError('Input arguements not accepted.')
 
     def generate_DDF_topo(self, R, d): #Note that the k here includes host ports
         self.routers_per_group=(2*(d+1))//3 # a+h-1=d => a=2(d+1)/3
@@ -38,7 +38,7 @@ class DallyDragonflyTopo(HPC_topo):
         for group in range(self.num_groups):
             for router_in_group in range(self.routers_per_group):
                 router_id = group * self.routers_per_group + router_in_group
-                G.add_node(router_id, group=group, adjacency=dict()) 
+                G.add_node(router_id, group=group, adjacency=dict())
                 # adjacent_groups contains (core group id -> core router id)
 
         # Add intragroup links
@@ -71,13 +71,13 @@ class DallyDragonflyTopo(HPC_topo):
         assert(mean([i[1] for i in list(G.degree)])==d)
         self.nx_graph=G
         return
-    
+
     def default_routing(self):
         '''
         This calcuates the default Dally dragonfly routing paths between all pairs of routers.\n
         Returns a dictionary of paths, one path per source-destination pair, according to \n
         'Kim, John, et al. "Technology-driven, highly-scalable dragonfly topology." ACM SIGARCH Computer Architecture News 36.3 (2008): 77-88.'
-        
+
         the routing table should be: a dictionary of dictionaries, mapping from source router ID to destination router ID to a list of (weight, path) tuples.
         The sum of weights of paths between each source-destination pair should be normalized to 1, but in this case all weights are 1 since there is only one path per pair.
         '''
@@ -103,7 +103,7 @@ class DallyDragonflyTopo(HPC_topo):
                     else:
                         assert(G.nodes[v2]["group"]==G.nodes[adjacent_r]["group"] and G.has_edge(adjacent_r, v2))
                         path=[v1, adjacent_r, v2]
-                else: #route to the correct router in the same group 
+                else: #route to the correct router in the same group
                     group_id=G.nodes[v1]["group"]
                     routers_in_group = list(range(group_id * self.routers_per_group, (group_id + 1) * self.routers_per_group))
                     next_router=-1
@@ -120,5 +120,5 @@ class DallyDragonflyTopo(HPC_topo):
                         assert(G.nodes[v2]["group"]==G.nodes[adjacent_r]["group"] and G.has_edge(adjacent_r, v2))
                         path=[v1, next_router, adjacent_r, v2]
             routing_table[v1][v2].append((1.0, path))
-        
+
         return routing_table

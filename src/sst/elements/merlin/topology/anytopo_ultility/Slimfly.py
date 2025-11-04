@@ -76,7 +76,7 @@ class SlimflyTopo(HPC_topo):
         else:
             raise ValueError('Input arguements not accepted.')
 
-            
+
     def generate_slimfly_topo(self, num_vertices, degree):
         try:
             import galois

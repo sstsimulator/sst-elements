@@ -62,7 +62,7 @@ def prepare_cubical_graph(write_to_file: bool = False):
         return graph_file, "cubical"
     else:
         return G, "cubical"
-    
+
 def run_sst(input_graph: str | nx.Graph, topo_name: str, SR_routing_table: dict = None):
 
     LOAD=0.5
@@ -74,7 +74,7 @@ def run_sst(input_graph: str | nx.Graph, topo_name: str, SR_routing_table: dict 
     topo.topo_name = topo_name
     topo.import_graph(input_graph)
     # topo.set_verbose_level(16)  # Set verbose level for debugging
-    
+
     # Set up the routers
     router = hr_router()
     router.link_bw = f"{UNIFIED_ROUTER_LINK_BW}Gb/s"
@@ -83,14 +83,14 @@ def run_sst(input_graph: str | nx.Graph, topo_name: str, SR_routing_table: dict 
     router.input_latency = "20ns"
     router.output_latency = "20ns"
     router.input_buf_size = "32kB"
-    router.output_buf_size = "32kB"   
+    router.output_buf_size = "32kB"
     router.num_vns = 2
     router.xbar_arb = "merlin.xbar_arb_rr"
 
     topo.router = router
     topo.link_latency = "20ns"
     topo.host_link_latency = "10ns"
-    
+
     _SR_routing_table: dict
 
     if SR_routing_table is not None:
@@ -99,19 +99,19 @@ def run_sst(input_graph: str | nx.Graph, topo_name: str, SR_routing_table: dict 
     else:
         # Otherwise, the source routing tables can be calculated here from the topology class method
         # by default, use All Shortest Paths (ASP) will be calculated
-        _SR_routing_table = topo.calculate_routing_table() 
+        _SR_routing_table = topo.calculate_routing_table()
 
     ### use endpointNIC
     endpointNIC = EndpointNIC(use_reorderLinkControl=True, topo=topo)
 
     # source routing table is passed to the plugin here
-    endpointNIC.addPlugin("sourceRoutingPlugin", routing_table=_SR_routing_table) 
+    endpointNIC.addPlugin("sourceRoutingPlugin", routing_table=_SR_routing_table)
     #### the following parameters will be passed down to linkcontrol via callback
     endpointNIC.link_bw = f"{UNIFIED_ROUTER_LINK_BW}Gb/s"
-    endpointNIC.input_buf_size = "32kB" 
-    endpointNIC.output_buf_size = "32kB" 
+    endpointNIC.input_buf_size = "32kB"
+    endpointNIC.output_buf_size = "32kB"
     endpointNIC.vn_remap = [0]
-    
+
     targetgen=UniformTarget()
 
     ep = OfferedLoadJob(0,topo.getNumNodes())
@@ -122,7 +122,7 @@ def run_sst(input_graph: str | nx.Graph, topo_name: str, SR_routing_table: dict 
     ep.message_size = "32B"
     ep.collect_time = "200us"
     ep.warmup_time = "200us"
-    ep.drain_time = "1000us" 
+    ep.drain_time = "1000us"
 
     system = System()
     system.setTopology(topo)
@@ -143,21 +143,21 @@ if __name__ == "__main__":
 
     # Example: run complete graph with 4 vertices
     # run_sst(*prepare_complete_4())
-    
+
     # from Slimfly import SlimflyTopo
     # sf_topo = SlimflyTopo(*sf_configs[0])  # Example parameters
     # sf_topo.set_endpoints_per_router(2)  # Example: set 2 endpoints per router
     # run_sst(sf_topo.get_nx_graph(), "slimfly")
 
     parser = argparse.ArgumentParser(description='Run SST simulation with different graph topologies')
-    parser.add_argument('--topology', type=str, default='complete_4', 
+    parser.add_argument('--topology', type=str, default='complete_4',
                         choices=['complete_4', 'cubical', 'dallydragonfly', 'slimfly', 'polarfly', 'jellyfish'],
                         help='Topology to simulate.')
     parser.add_argument('--write-file', type=bool, default=False,
                         help='If True, write graph to GraphML file before running')
-    
+
     args = parser.parse_args()
-    
+
     if args.topology == 'complete_4':
         run_sst(*prepare_complete_4(write_to_file=args.write_file))
     elif args.topology == 'cubical':

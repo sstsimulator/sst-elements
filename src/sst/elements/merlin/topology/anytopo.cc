@@ -18,7 +18,7 @@ std::vector<routing_entries> topo_any::simple_routing_table;
 // Forward declaration of helper function
 static std::vector<std::vector<std::string>> parse_param_entries(const std::string& param_str, char entry_delim = ';', char token_delim = ',');
 
-topo_any::topo_any(ComponentId_t cid, Params& params, int num_ports, int rtr_id, int num_vns): 
+topo_any::topo_any(ComponentId_t cid, Params& params, int num_ports, int rtr_id, int num_vns):
     Topology(cid), router_id(rtr_id), num_vns(num_vns), output(getSimulationOutput()){
 
     num_routers = params.find<int>("num_routers", 1);
@@ -27,7 +27,7 @@ topo_any::topo_any(ComponentId_t cid, Params& params, int num_ports, int rtr_id,
     if (num_R2R_ports != num_ports - num_R2N_ports){
         fatal(CALL_INFO, -1, "Number of ports mismatch");
     }
-    
+
     vns = new vn_info[num_vns];
 
     // Read parameters for vn_info
@@ -111,7 +111,7 @@ void SST::Merlin::topo_any::Parse_routing_info(SST::Params &params)
     // Read and parse the simple source routing table for untimed routing
     // Try string format first
     std::string routing_str = params.find<std::string>("simple_routing_entry_string", "");
-    
+
     if (!routing_str.empty()) {
         output.verbose(CALL_INFO, 1, 0, "Loading routing entry from string parameter\n");
         routing_entries entries = SourceRoutingPlugin::parseRoutingEntryFromString(routing_str, num_routers, output);
@@ -217,7 +217,7 @@ Topology::PortState topo_any::getPortState(int port_id) const {
 }
 
 //===============================================================
-// The following methods now assume one port per endpoint. 
+// The following methods now assume one port per endpoint.
 // In case of multiple ports per endpoint, a mapping is then needed.
 
 int topo_any::getEndpointID(int port_id) {
@@ -292,9 +292,8 @@ void topo_any::route_simple(topo_any_event* ev) {
 
     int dest_EP_id = ev->getDest();
     int dest_router = get_router_id(dest_EP_id);
-    
+
     // Look up the simple routing table
-    
     if (dest_router == router_id){
         // Destination is local, use empty path
         sr_path = {};
@@ -306,7 +305,7 @@ void topo_any::route_simple(topo_any_event* ev) {
             fatal(CALL_INFO, -1, "ERROR: No valid routing path found from router %d to router %d in simple routing table\n",
                   router_id, dest_router);
         }
-        output.verbose(CALL_INFO, 2, 0, 
+        output.verbose(CALL_INFO, 2, 0,
             "Using simple routing table for untimed packet from router %d to router %d\n",
             router_id, dest_router);
     }
@@ -315,7 +314,7 @@ void topo_any::route_simple(topo_any_event* ev) {
     int fwd_port = -1;
     if (sr_path.empty() || sr_path.back() == router_id) {
         // Arriving at destination router, forward to endpoint
-        
+
         int dest_EP_id = ev->getDest();
         if (get_router_id(dest_EP_id) != router_id) {
             fatal(CALL_INFO, -1, "ERROR: destination endpoint %d is not contained within this router %d\n",
@@ -350,13 +349,13 @@ void topo_any::route_packet_SR(topo_any_event* ev) {
 
     // Try to get the request as ExtendedRequest and extract path from metadata
     ExtendedRequest* ext_req = dynamic_cast<ExtendedRequest*>(req);
-    
+
     if (ext_req) {
 
         // Try to get pointer to metadata without copying
         SourceRoutingMetadata* sr_meta_ptr = ext_req->getMetadataPtr<SourceRoutingMetadata>("SourceRouting");
         std::deque<int>* sr_path;
-        
+
         if (sr_meta_ptr) {
                 sr_path = &(sr_meta_ptr->path);
         } else {
@@ -367,12 +366,12 @@ void topo_any::route_packet_SR(topo_any_event* ev) {
         int fwd_port = -1;
         if (sr_path->empty() || sr_path->back() == router_id) {
             // Arriving at destination router, forward to endpoint
-            
+
             int dest_EP_id = ev->getDest();
             if (dest_EP_id == -1){
                 fatal(CALL_INFO, -1, "ERROR: Source routing packet missing destination endpoint ID\n");
             }
-            
+
             if (get_router_id(dest_EP_id) != router_id) {
                 fatal(CALL_INFO, -1, "ERROR: destination endpoint %d is not contained within this router %d\n",
                     dest_EP_id, router_id);
@@ -408,7 +407,7 @@ void topo_any::route_packet_SR(topo_any_event* ev) {
 void topo_any::route_packet_dest_tag(int input_port, int vc, topo_any_event* ev) {
     int dest_EP_id = ev->getDest();
     int dest_router = get_router_id(dest_EP_id);
-    
+
     if (dest_router == router_id) {
         // Destination is local
         ev->setNextPort(get_dest_local_port(dest_EP_id));
@@ -432,7 +431,7 @@ void topo_any::route_packet_dest_tag(int input_port, int vc, topo_any_event* ev)
 void topo_any::routeUntimedData(int input_port, internal_router_event* ev, std::vector<int> &outPorts) {
     if ( ev->getDest() == UNTIMED_BROADCAST_ADDR ) {
         fatal(CALL_INFO_LONG,1,"ERROR: routeUntimedData for UNTIMED_BROADCAST_ADDR not yet implemented");
-        // We need a topology-independent network-broadcasting protocol here, 
+        // We need a topology-independent network-broadcasting protocol here,
         // but I don't see any use case of UNTIMED_BROADCAST_ADDR for now in the whole sst-element source code?
     }else{
         route_untimed_packet(input_port, ev->getVC(), ev);

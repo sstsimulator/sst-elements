@@ -32,7 +32,7 @@ public:
 class RandomWeightedSelection : public PathSelectionAlgorithm {
 private:
     SST::RNG::Random* rng;
-    
+
 public:
     RandomWeightedSelection(ComponentId_t cid);
     ~RandomWeightedSelection();
@@ -44,7 +44,7 @@ class WeightedRoundRobinSelection : public PathSelectionAlgorithm {
 private:
     std::map<int, std::map<size_t, int>> dest_path_counters;
     std::map<int, std::map<size_t, int>> dest_path_weights;
-    
+
 public:
     WeightedRoundRobinSelection();
     ~WeightedRoundRobinSelection();
@@ -57,7 +57,7 @@ class SourceRoutingPlugin : public NICPlugin
 public:
     // Static shared data accessible by both SourceRoutingPlugin and topology classes
     static std::map<int, int> endpoint_to_router_map;  // Shared endpoint-to-router mapping
-    
+
     // Static accessor methods for external access
     static std::vector<routing_entries>& getRoutingTable() { return routing_table; }
     static std::map<int, int>& getEndpointToRouterMap() { return endpoint_to_router_map; }
@@ -67,7 +67,7 @@ private:
     size_t myRtrID;
     size_t num_routers;
     Output output;
-    
+
     // Store endpoint ID (set during init)
     SST::Interfaces::SimpleNetwork::nid_t endpoint_id;
     static std::vector<routing_entries> routing_table; // Shared routing table for all routers
@@ -95,18 +95,18 @@ public:
     // NICPlugin interface
     virtual SST::Interfaces::SimpleNetwork::Request* processOutgoing(
         SST::Interfaces::SimpleNetwork::Request* req, int vn) override;
-    
+
     virtual SST::Interfaces::SimpleNetwork::Request* processIncoming(
         SST::Interfaces::SimpleNetwork::Request* req, int vn) override;
-    
+
     virtual std::string getPluginName() const override { return "SourceRoutingPlugin"; }
-    
+
     virtual void plugin_init(unsigned int phase) override;
 
     // Configuration methods
     void setSourceRoutingEntriesForSourceRtr(const routing_entries& entries, int src_router);
     void setPathSelectionAlgorithm(PathSelectionAlgorithm* algorithm);
-    
+
     // Static method for parsing routing entries - can be called from anywhere
     static routing_entries parseRoutingEntryFromString(const std::string& routing_str, const size_t num_routers, Output& out);
 

@@ -19,7 +19,7 @@ failed=0
 # Run each topology test
 for topo in "${TOPOLOGIES[@]}"; do
     echo "Running test: $topo topology..."
-    
+
     if sst test_anytopo.py -- --topology "$topo"; then
         echo "✓ $topo passed"
         ((passed++))

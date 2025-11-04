@@ -24,7 +24,7 @@ class HPC_topo(ABC):
 
     def get_nx_graph(self) -> nx.Graph:
         return self.nx_graph
-    
+
     def get_topo_name(self) -> str:
         return self.topo_name
 
@@ -42,7 +42,7 @@ class HPC_topo(ABC):
         Returns a dictionary of paths, one path per source-destination pair.
 
         the routing table should be: a dictionary of dictionaries, mapping from source router ID to destination router ID to a list of (weight, path) tuples.
-        The sum of weights of paths between each source-destination pair should be normalized to 1.        
+        The sum of weights of paths between each source-destination pair should be normalized to 1.
         '''
         G = self.nx_graph
         vertices = G.nodes()
@@ -56,6 +56,6 @@ class HPC_topo(ABC):
                     num_paths = len(all_paths)
                     weight = 1.0 / num_paths if num_paths > 0 else 0.0
                     routing_table[v1][v2] = [(weight, path) for path in all_paths]
-        
+
         return routing_table
-    
+
