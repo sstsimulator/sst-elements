@@ -11,6 +11,10 @@ try:
     from sympy.polys.galoistools import (gf_irreducible_p, gf_add, gf_mul, gf_rem)
 except:
     pass
+try:
+    import networkx as nx
+except:
+    pass
 
 
 class testcase_merlin_Component(SSTTestCase):
@@ -70,6 +74,30 @@ class testcase_merlin_Component(SSTTestCase):
     @unittest.skipIf(not(('sympy.polys.galoistools' in sys.modules) and ('sympy.polys.domains' in sys.modules)), "Polarstar construction requires sympy")
     def test_merlin_polarstar_504(self):
         self.merlin_test_template("polarstar_504_test")
+
+    @unittest.skipIf('networkx' not in sys.modules, "Anytopo tests require networkx")
+    def test_merlin_anytopo_complete_4(self):
+        self.merlin_test_template("anytopo_complete_4_test")
+
+    @unittest.skipIf('networkx' not in sys.modules, "Anytopo tests require networkx")
+    def test_merlin_anytopo_cubical(self):
+        self.merlin_test_template("anytopo_cubical_test")
+
+    @unittest.skipIf('networkx' not in sys.modules, "Anytopo tests require networkx")
+    def test_merlin_anytopo_slimfly(self):
+        self.merlin_test_template("anytopo_slimfly_test")
+
+    @unittest.skipIf('networkx' not in sys.modules, "Anytopo tests require networkx")
+    def test_merlin_anytopo_dallydragonfly(self):
+        self.merlin_test_template("anytopo_dallydragonfly_test")
+
+    @unittest.skipIf('networkx' not in sys.modules, "Anytopo tests require networkx")
+    def test_merlin_anytopo_polarfly(self):
+        self.merlin_test_template("anytopo_polarfly_test")
+
+    @unittest.skipIf('networkx' not in sys.modules, "Anytopo tests require networkx")
+    def test_merlin_anytopo_jellyfish(self):
+        self.merlin_test_template("anytopo_jellyfish_test")
 
 
 #####
