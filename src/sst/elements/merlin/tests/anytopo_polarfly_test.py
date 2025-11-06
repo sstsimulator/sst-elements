@@ -7,7 +7,7 @@ import sys
 import sst
 
 # Add anytopo_utility directory to path
-anytopo_utility = os.path.join(os.path.dirname(__file__), '..', 'topology', 'anytopo_ultility')
+anytopo_utility = os.path.join(os.path.dirname(__file__), '..', 'topology', 'anytopo_utility')
 sys.path.insert(0, anytopo_utility)
 
 from sst.merlin.base import *

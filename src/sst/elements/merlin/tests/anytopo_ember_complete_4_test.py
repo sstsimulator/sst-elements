@@ -1,20 +1,20 @@
 #!/usr/bin/env python
 
-# Test for anytopo with cubical graph (8 vertices, 12 edges)
+# Test for anytopo with Ember using complete graph (4 vertices)
 
 import os
 import sys
 import sst
 
 # Add anytopo_utility directory to path
-anytopo_utility = os.path.join(os.path.dirname(__file__), '..', 'topology', 'anytopo_utility')
-sys.path.insert(0, anytopo_utility)
+anytopo_path = os.path.join(os.path.dirname(__file__), '..', 'topology', 'anytopo_utility')
+sys.path.insert(0, anytopo_path)
 
 from sst.merlin.base import *
 from sst.merlin.endpoint import *
 from sst.merlin.interface import *
 from sst.merlin.topology import *
-from sst.merlin.targetgen import *
+from sst.ember import *
 
 try:
     import networkx as nx
@@ -24,20 +24,31 @@ except ImportError:
 
 if __name__ == "__main__":
 
-    LOAD = 0.5
     UNIFIED_ROUTER_LINK_BW = 16
 
-    # Create a cubical graph with 8 vertices
-    G = nx.cubical_graph()
+    BENCH = "FFT3D"
+    BENCH_PARAMS = " nx=100 ny=100 nz=100 npRow=2"
+    CPE = 1
+
+    # Create a complete graph with 4 vertices
+    G = nx.complete_graph(4)
     # Add endpoint attributes to each vertex
     for node in G.nodes():
         G.nodes[node]['endpoints'] = 2
 
+    EPR = G.nodes[0]['endpoints']  # Endpoints per router
+
     ### Setup the topology
     topo = topoAny()
     topo.routing_mode = "source_routing"
-    topo.topo_name = "cubical"
+    topo.topo_name = "complete_4_ember"
     topo.import_graph(G)
+
+    defaults_z = PlatformDefinition.compose("firefly-defaults-test", [("firefly-defaults", "ALL")])
+    defaults_z.addParamSet("nic", {
+        "num_vNics": CPE,
+    })
+    PlatformDefinition.setCurrentPlatform("firefly-defaults-test")
 
     # Set up the routers
     router = hr_router()
@@ -69,17 +80,12 @@ if __name__ == "__main__":
     endpointNIC.output_buf_size = "32kB"
     endpointNIC.vn_remap = [0]
 
-    targetgen = UniformTarget()
-
-    ep = OfferedLoadJob(0, topo.getNumNodes())
+    ep = EmberMPIJob(0, topo.getNumNodes(), numCores=CPE*EPR)
     ep.setEndpointNIC(endpointNIC)
-    ep.pattern = targetgen
-    ep.offered_load = LOAD
-    ep.link_bw = f"{UNIFIED_ROUTER_LINK_BW}Gb/s"
-    ep.message_size = "32B"
-    ep.collect_time = "200us"
-    ep.warmup_time = "200us"
-    ep.drain_time = "1000us"
+    ep.addMotif("Init")
+    ep.addMotif(BENCH + BENCH_PARAMS)
+    ep.addMotif("Fini")
+    ep.nic.nic2host_lat = "10ns"
 
     system = System()
     system.setTopology(topo)
