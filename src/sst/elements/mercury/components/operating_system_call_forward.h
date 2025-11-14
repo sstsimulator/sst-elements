@@ -2,7 +2,7 @@ void requireLibraryForward(std::string library) override {
   requireLibrary(library);
 }
 
-Link *selfEventLink() override { 
+Link *selfEventLink() override {
   return selfEventLink_;
 }
 
@@ -22,7 +22,7 @@ void setParentNode(NodeBase *parent) override {
   OperatingSystemImpl::setParentNode(parent);
 }
 
-NodeBase *node() const override { 
+NodeBase *node() const override {
   return OperatingSystemImpl::node();
 }
 
@@ -58,11 +58,11 @@ Thread *activeThread() const override {
   return OperatingSystemImpl::activeThread();
 }
 
-void startThread(Thread *t) override { 
+void startThread(Thread *t) override {
   OperatingSystemImpl::startThread(t);
 }
 
-void joinThread(Thread *t) override { 
+void joinThread(Thread *t) override {
   OperatingSystemImpl::joinThread(t);
 }
 
@@ -78,21 +78,15 @@ void completeActiveThread() override {
   OperatingSystemImpl::completeActiveThread();
 }
 
-void
-block() override
-{
+void block() override {
   OperatingSystemImpl::block();
 }
 
-void
-unblock(Thread* thr) override
-{
+void unblock(Thread* thr) override {
   OperatingSystemImpl::unblock(thr);
 }
 
-void
-blockTimeout(TimeDelta delay) override
-{
+void blockTimeout(TimeDelta delay) override {
   OperatingSystemImpl::blockTimeout(delay);
 }
 
@@ -100,15 +94,15 @@ UniqueEventId allocateUniqueId() override {
   return OperatingSystemImpl::allocateUniqueId();
 }
 
-int allocateMutex() override { 
+int allocateMutex() override {
   return OperatingSystemImpl::allocateMutex();
 }
 
-mutex_t *getMutex(int id) override { 
+mutex_t *getMutex(int id) override {
   return OperatingSystemImpl::getMutex(id);
 }
 
-bool eraseMutex(int id) override { 
+bool eraseMutex(int id) override {
   return OperatingSystemImpl::eraseMutex(id);
 }
 

@@ -30,24 +30,16 @@
 namespace SST {
 namespace Hg {
 
-// Components inherit from SST::Component
 class Node : public NodeBase {
 public:
-  /*
-   *  SST Registration macros register Components with the SST Core and
-   *  document their parameters, ports, etc.
-   *  SST_ELI_REGISTER_COMPONENT is required, the documentation macros
-   *  are only required if relevant
-   */
-  // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
   SST_ELI_REGISTER_COMPONENT(
-      SST::Hg::Node,      // Component class
-      "hg", // Component library (for Python/library lookup)
-      "Node",    // Component name (for Python/library lookup)
+      SST::Hg::Node,
+      "hg",
+      "Node",
       SST_ELI_ELEMENT_VERSION(
-          0, 0, 1),   // Version of the component (not related to SST version)
-      "Simple Mercury node", // Description
-      COMPONENT_CATEGORY_UNCATEGORIZED // Category
+          0, 0, 1),
+      "Simple Mercury node",
+      COMPONENT_CATEGORY_UNCATEGORIZED
   )
 
   Node(SST::ComponentId_t id, SST::Params &params);
