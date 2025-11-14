@@ -196,7 +196,7 @@ private:
   std::map<int, condition_t> conditions_;
   std::map<int, mutex_t> mutexes_;
 
-  
+
   std::map<std::string, Library*> internal_apis_;
   std::list<AppLaunchRequest*> requests_;
   std::unordered_map<std::string, EventLibrary*> libs_;
