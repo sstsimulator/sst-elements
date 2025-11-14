@@ -253,8 +253,8 @@ class App : public Thread
 class UserAppCxxFullMain : public App
 {
  public:
-   SST_ELI_REGISTER_DERIVED(App, 
-                            UserAppCxxFullMain, 
+   SST_ELI_REGISTER_DERIVED(App,
+                            UserAppCxxFullMain,
                             "hg",
                             "UserAppCxxFullMain",
                             SST_ELI_ELEMENT_VERSION(1, 0, 0),
