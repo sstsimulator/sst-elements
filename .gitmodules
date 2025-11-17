@@ -1,0 +1,3 @@
+[submodule "src/sst/elements/SnnDL"]
+	path = src/sst/elements/SnnDL
+	url = https://github.com/NJUAIXGY/SnnDL.git
