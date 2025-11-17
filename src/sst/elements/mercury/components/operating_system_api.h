@@ -65,8 +65,6 @@ public:
 
    virtual void startApp(App *theapp, const std::string &unique_name) = 0;
 
-   virtual void setActiveOs() = 0;
-
    virtual Thread *activeThread() const = 0;
 
   virtual void startThread(Thread *t) = 0;

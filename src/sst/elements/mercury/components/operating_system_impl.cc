@@ -30,9 +30,6 @@
 #include <sst/core/params.h>
 #include <stdlib.h>
 #include <sys/mman.h>
-// #include <sst/core/component.h> // or
-// #include <sst/core/subcomponent.h> // or
-// #include <sst/core/componentExtension.h>
 
 extern "C" {
 void* sst_hg_nullptr = nullptr;
@@ -45,7 +42,7 @@ static uintptr_t sst_hg_nullptr_range = 0;
 namespace SST {
 namespace Hg {
 
-OperatingSystemAPI* OperatingSystemImpl::active_os_;
+std::vector<OperatingSystemAPI*> OperatingSystemImpl::active_os_;
 
 class DeleteThreadEvent :
     public ExecutionEvent
@@ -72,6 +69,11 @@ OperatingSystemImpl::OperatingSystemImpl(SST::ComponentId_t id, SST::Params& par
   os_api_(api)
 {
   TimeDelta::initStamps(TimeDelta::ASEC_PER_TICK);
+
+  if (active_os_.size() == 0){
+    RankInfo num_ranks = os_api_->getNumRanks();
+    active_os_.resize(num_ranks.thread);
+  }
 
   if (sst_hg_nullptr == nullptr){
 
@@ -112,6 +114,7 @@ OperatingSystemImpl::~OperatingSystemImpl()
 void 
 OperatingSystemImpl::init(unsigned phase) {
   if (phase == 0) {
+    active_os_[physical_thread_id_] = nullptr;
     my_addr_ = node_->addr();
     next_outgoing_id_.src_node = my_addr_;
     next_outgoing_id_.msg_num = 0;
@@ -160,7 +163,7 @@ void
 OperatingSystemImpl::startApp(App *theapp,
                           const std::string & /*unique_name*/) {
   out_->debug(CALL_INFO, 1, 0, "starting app %d:%d on physical thread %d\n",
-                int(theapp->tid()), int(theapp->aid()), threadId());
+                int(theapp->tid()), int(theapp->aid()), physical_thread_id_);
   theapp->set_os_api(os_api_);
   // this should be called from the actual thread running it
   initThreading(params_);
@@ -175,13 +178,14 @@ OperatingSystemImpl::startThread(Thread* t)
       os_api_->selfEventLink()->send(0,newCallback(this, &OperatingSystemImpl::startThread, t));
     } else {
       active_thread_ = t;
-      activeOs() = os_api_;
+      //activeOs() = this;
       //os_api_->setActiveOs();
+      activeOs() = os_api_;
       App* parent = t->parentApp();
       void* stack = StackAlloc::alloc();
       t->initThread(
             parent->params(),
-            threadId(),
+            physical_thread_id_,
             des_context_,
             stack,
             StackAlloc::stacksize(),
@@ -225,17 +229,18 @@ OperatingSystemImpl::switchToThread(Thread* tothread)
 
   out_->debug(CALL_INFO, 1, 0,
                 "switching to context %d on physical thread %d\n",
-                tothread->threadId(), threadId());
+                tothread->threadId(), physical_thread_id_);
   if (active_thread_ == blocked_thread_) {
     blocked_thread_ = nullptr;
   }
   active_thread_ = tothread;
   //activeOs() = this;
-  os_api_->setActiveOs();
+  //os_api_->setActiveOs();
+  activeOs() = os_api_;
   tothread->context()->resumeContext(des_context_);
   out_->debug(CALL_INFO, 1, 0,
                 "switched back from context %d to main thread %d\n",
-                tothread->threadId(), threadId());
+                tothread->threadId(), physical_thread_id_);
   /** back to main thread */
   active_thread_ = nullptr;
 }
@@ -271,7 +276,7 @@ OperatingSystemImpl::completeActiveThread()
   }
   active_thread_ = nullptr;
   out_->debug(CALL_INFO, 1, 0, "completing context %d on thread %d\n",
-                thr_todelete->threadId(), threadId());
+                thr_todelete->threadId(), physical_thread_id_);
   thr_todelete->context()->completeContext(des_context_);
 }
 
@@ -291,15 +296,17 @@ OperatingSystemImpl::block()
   //reset the time flag
   active_thread_->setTimedOut(false);
   out_->debug(CALL_INFO, 1, 0, "pausing context %d on physical thread %d\n",
-                active_thread_->threadId(), threadId());
+                active_thread_->threadId(), physical_thread_id_);
   blocked_thread_ = active_thread_;
   active_thread_ = nullptr;
   old_context->pauseContext(des_context_);
 
   //restore state to indicate this thread and this OS are active again
-  os_api_->setActiveOs();
+  //activeOs() = this;
+  //os_api_->setActiveOs();
+  activeOs() = os_api_;
   out_->debug(CALL_INFO, 1, 0, "resuming context %d on physical thread %d\n",
-                active_thread_->threadId(), threadId());
+                active_thread_->threadId(), physical_thread_id_);
   active_thread_ = old_thread;
   active_thread_->incrementBlockCounter();
 

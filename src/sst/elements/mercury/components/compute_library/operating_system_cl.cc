@@ -34,6 +34,8 @@ OperatingSystemCL::OperatingSystemCL(SST::ComponentId_t id, SST::Params& params)
   assert(selfEventLink_);
   selfEventLink_->setDefaultTimeBase(time_converter_);
 
+  OperatingSystemImpl::setThreadId(threadId());
+
   compute_sched_ = new ComputeScheduler( params, this);
 
   requireDependencies(params);

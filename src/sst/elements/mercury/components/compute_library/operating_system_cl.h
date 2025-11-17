@@ -58,31 +58,6 @@ class OperatingSystemCL : public OperatingSystemCLAPI, public OperatingSystemImp
     return sst_hg_global_stacksize;
   }
 
-  static Thread *currentThread() {
-    return staticOsThreadContext()->activeThread();
-  }
-
-  static inline OperatingSystemAPI *&staticOsThreadContext() {
-    //  #if SST_HG_USE_MULTITHREAD
-    //    int thr = ThreadInfo::currentPhysicalThreadId();
-    //    return active_os_[thr];
-    //  #else
-    return active_os_;
-    //  #endif
-  }
-
-  inline OperatingSystemAPI *&activeOs() {
-    // #if SST_HG_USE_MULTITHREAD
-    //   return active_os_[threadId()];
-    // #else
-    return active_os_;
-    // #endif
-  }
-
-  static OperatingSystemAPI *currentOs() { 
-    return staticOsThreadContext();
-  }
-
   // Forward calls to OperatingSystemImpl here
   #include <mercury/components/operating_system_call_forward.h>
 

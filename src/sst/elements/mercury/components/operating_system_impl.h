@@ -38,12 +38,8 @@ public:
   ~OperatingSystemImpl();
 
   static inline OperatingSystemAPI*& staticOsThreadContext(){
-//  #if SST_HG_USE_MULTITHREAD
-    // int thr = ThreadInfo::currentPhysicalThreadId();
-    // return active_os_[thr];
-//  #else
-    return active_os_;
-//  #endif
+    int thr = ThreadInfo::currentPhysicalThreadId();
+    return active_os_[thr];
   }
 
   static Thread *currentThread() {
@@ -55,11 +51,7 @@ public:
   }
 
   inline OperatingSystemAPI *&activeOs() {
-    // #if SST_HG_USE_MULTITHREAD
-    //   return active_os_[threadId()];
-    // #else
-    return active_os_;
-    // #endif
+    return active_os_[physical_thread_id_];
   }
 
   void init(unsigned phase);
@@ -110,10 +102,6 @@ protected:
 
   void startApp(App* theapp, const std::string&  /*unique_name*/);
 
-  void setActiveOs(OperatingSystemAPI* os) {
-    active_os_ = os;
-  }
-
   Thread *activeThread() const { 
     return active_thread_; 
   }
@@ -159,17 +147,13 @@ protected:
 
   void handleRequest(Request* req);
 
-  // void requireLibraryForward2(std::string library) {
-  //   os_api_->requireLibraryForward(library);
-  // }
-
 ///////////
 // Private
 ///////////
 
 private:
 
-  static OperatingSystemAPI* active_os_;
+  static std::vector<OperatingSystemAPI*> active_os_;
 
   SST::Params params_;
   std::unique_ptr<SST::Output> out_;
@@ -187,7 +171,7 @@ private:
   /// to this context on every context switch.
   ThreadContext *des_context_;
 
-  uint32_t thread_id_ ;
+  uint32_t physical_thread_id_;
   Thread* active_thread_;
   Thread* blocked_thread_;
   int next_condition_;
@@ -213,12 +197,12 @@ private:
   void addLaunchRequests(SST::Params& params);
 
   void setThreadId(uint32_t threadId) {
-    thread_id_ = threadId;
+    physical_thread_id_ = threadId;
   }
 
-  uint32_t threadId() {
-    return thread_id_;
-  }
+  // uint32_t threadId() {
+  //   return thread_id_;
+  // }
 
   bool handleEventLibraryRequest(const std::string& name, Request* req);
 };

@@ -50,10 +50,6 @@ void startApp(App *theapp, const std::string &unique_name) override {
   OperatingSystemImpl::startApp(theapp, unique_name);
 }
 
-void setActiveOs() override {
-  OperatingSystemImpl::setActiveOs(this);
-}
-
 Thread *activeThread() const override {
   return OperatingSystemImpl::activeThread();
 }
