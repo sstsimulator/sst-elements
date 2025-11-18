@@ -408,7 +408,7 @@ NIC::sendToNode(NetworkMessage* payload)
   parent_->sendExecutionEventNow(forward_ev);
 }
 
-void 
+void
 NIC::set_parent(NodeBase *parent) {
   parent_ = parent;
 }

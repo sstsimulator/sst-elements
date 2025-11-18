@@ -46,7 +46,7 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params) :
   selfEventLink_ = configureSelfLink("self", time_converter_, new Event::Handler2<Hg::OperatingSystem,&OperatingSystem::handleEvent>(this));
   assert(selfEventLink_);
   selfEventLink_->setDefaultTimeBase(time_converter_);
-  
+
   OperatingSystemImpl::setThreadId(threadId());
 
   // These are libraries that a SST::Hg::Library depends on. We have core load them early

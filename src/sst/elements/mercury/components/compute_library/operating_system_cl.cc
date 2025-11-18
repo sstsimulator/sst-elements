@@ -26,7 +26,7 @@ namespace Hg {
 
 OperatingSystemAPI* OperatingSystemCL::active_os_;
 
-OperatingSystemCL::OperatingSystemCL(SST::ComponentId_t id, SST::Params& params) : 
+OperatingSystemCL::OperatingSystemCL(SST::ComponentId_t id, SST::Params& params) :
   OperatingSystemCLAPI(id,params), OperatingSystemImpl(id,params,this)
 {
   // Configure self link to handle event timing

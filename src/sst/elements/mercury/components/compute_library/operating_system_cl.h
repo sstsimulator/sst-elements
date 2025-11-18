@@ -42,7 +42,7 @@ class OperatingSystemCL : public OperatingSystemCLAPI, public OperatingSystemImp
 
   ~OperatingSystemCL() { delete compute_sched_; }
 
-  void init(unsigned phase) override { 
+  void init(unsigned phase) override {
     OperatingSystemImpl::init(phase);
   }
 

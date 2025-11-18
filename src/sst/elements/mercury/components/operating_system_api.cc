@@ -18,7 +18,7 @@
 namespace SST {
 namespace Hg {
 
-OperatingSystemAPI::OperatingSystemAPI(ComponentId_t id, SST::Params& params) 
+OperatingSystemAPI::OperatingSystemAPI(ComponentId_t id, SST::Params& params)
 : SST::Hg::SubComponent(id) {}
 
 } // namespace Hg

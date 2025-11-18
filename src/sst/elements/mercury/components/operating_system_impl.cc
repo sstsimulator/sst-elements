@@ -111,7 +111,7 @@ OperatingSystemImpl::~OperatingSystemImpl()
   }
 }
 
-void 
+void
 OperatingSystemImpl::init(unsigned phase) {
   if (phase == 0) {
     active_os_[physical_thread_id_] = nullptr;

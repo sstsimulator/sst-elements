@@ -216,7 +216,7 @@ public:
 
 protected:
 
-  SST::Hg::NodeBase *parent() const 
+  SST::Hg::NodeBase *parent() const
   { return parent_; }
 
   bool negligibleSize(int bytes) const {

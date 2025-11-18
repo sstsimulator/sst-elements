@@ -102,8 +102,8 @@ protected:
 
   void startApp(App* theapp, const std::string&  /*unique_name*/);
 
-  Thread *activeThread() const { 
-    return active_thread_; 
+  Thread *activeThread() const {
+    return active_thread_;
   }
 
   void startThread(Thread* t);
