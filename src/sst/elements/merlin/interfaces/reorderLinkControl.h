@@ -35,63 +35,77 @@ class Component;
 
 namespace Merlin {
 
-// Need our own version of Request to add a sequence number
-class ReorderRequest : public SST::Interfaces::SimpleNetwork::Request {
+// // Need our own version of Request to add a sequence number
+// class ReorderRequest : public SST::Interfaces::SimpleNetwork::Request {
 
-public:
-    uint32_t seq;
+// public:
+//     uint32_t seq;
 
-    ReorderRequest() :
-        Request(),
-        seq(0)
-        {}
+//     ReorderRequest() :
+//         Request(),
+//         seq(0)
+//         {}
 
-    // ReorderRequest(SST::Interfaces::SimpleNetwork::nid_t dest, SST::Interfaces::SimpleNetwork::nid_t src,
-    //                size_t size_in_bits, bool head, bool tail, uint32_t seq, Event* payload = NULL) :
-    //     Request(dest, src, size_in_bits, head, tail, payload ),
-    //     seq(seq)
-    //     {
-    //     }
+//     // ReorderRequest(SST::Interfaces::SimpleNetwork::nid_t dest, SST::Interfaces::SimpleNetwork::nid_t src,
+//     //                size_t size_in_bits, bool head, bool tail, uint32_t seq, Event* payload = NULL) :
+//     //     Request(dest, src, size_in_bits, head, tail, payload ),
+//     //     seq(seq)
+//     //     {
+//     //     }
 
-    ReorderRequest(SST::Interfaces::SimpleNetwork::Request* req, uint32_t seq = 0) :
-        Request(req->dest, req->src, req->size_in_bits, req->head, req->tail),
-        seq(seq)
-        {
-            givePayload(req->takePayload());
-            trace = req->getTraceType();
-            traceID = req->getTraceID();
-        }
+//     ReorderRequest(SST::Interfaces::SimpleNetwork::Request* req, uint32_t seq = 0) :
+//         Request(req->dest, req->src, req->size_in_bits, req->head, req->tail),
+//         seq(seq)
+//         {
+//             givePayload(req->takePayload());
+//             trace = req->getTraceType();
+//             traceID = req->getTraceID();
+//         }
 
-    ~ReorderRequest() {}
+//     ~ReorderRequest() {}
 
 
-    // This is here just for the priority_queue insertion, so is
-    // sorting based on what comes out of queue first (i.e. lowest
-    // number, which makes this look backwards)
-    class Priority {
-    public:
-        bool operator()(ReorderRequest* const& lhs, ReorderRequest* const& rhs) {
-            return lhs->seq > rhs->seq;
-        }
-    };
+//     // This is here just for the priority_queue insertion, so is
+//     // sorting based on what comes out of queue first (i.e. lowest
+//     // number, which makes this look backwards)
+//     class Priority {
+//     public:
+//         bool operator()(ReorderRequest* const& lhs, ReorderRequest* const& rhs) {
+//             return lhs->seq > rhs->seq;
+//         }
+//     };
 
-    typedef std::priority_queue<ReorderRequest*, std::vector<ReorderRequest*>, Priority> PriorityQueue;
+//     typedef std::priority_queue<ReorderRequest*, std::vector<ReorderRequest*>, Priority> PriorityQueue;
 
-    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
-        SST::Interfaces::SimpleNetwork::Request::serialize_order(ser);
-        SST_SER(seq);
-    }
+//     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
+//         SST::Interfaces::SimpleNetwork::Request::serialize_order(ser);
+//         SST_SER(seq);
+//     }
 
-private:
-    ImplementSerializable(SST::Merlin::ReorderRequest)
-};
+// private:
+//     ImplementSerializable(SST::Merlin::ReorderRequest)
+// };
 
 
 
 struct ReorderInfo {
     uint32_t send;
     uint32_t recv;
-    ReorderRequest::PriorityQueue queue;
+
+    // Priority queue that stores (seq_number, Request*) pairs
+    struct QueueEntry {
+        uint32_t seq;
+        SST::Interfaces::SimpleNetwork::Request* req;
+
+        QueueEntry(uint32_t s, SST::Interfaces::SimpleNetwork::Request* r) : seq(s), req(r) {}
+
+        bool operator>(const QueueEntry& other) const {
+            return seq > other.seq;
+        }
+    };
+
+    typedef std::priority_queue<QueueEntry, std::vector<QueueEntry>, std::greater<QueueEntry>> PriorityQueue;
+    PriorityQueue queue;
 
     ReorderInfo() :
         send(0),
@@ -101,9 +115,7 @@ struct ReorderInfo {
         // on when looking for fragments to deliver.  This does mean
         // we can't handle more than 4 billion fragments to each host
         // with overflow.
-        ReorderRequest* req = new ReorderRequest();
-        req->seq = 0xffffffff;
-        queue.push(req);
+        queue.push(QueueEntry(0xffffffff, nullptr));
     }
 };
 

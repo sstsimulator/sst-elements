@@ -510,7 +510,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
     SST::Interfaces::SimpleNetwork::Request* ret = event->takeRequest();
     if ( use_nid_map ) ret->dest = logical_nid;
     delete event;
-;
+
     return ret;
 }
 
