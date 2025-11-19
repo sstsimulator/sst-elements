@@ -15,33 +15,10 @@
 
 #pragma once
 
-#include <mercury/common/component.h>
-
-#include <mercury/components/node_base.h>
-#include <sst/core/timeConverter.h>
-#include <sst/core/link.h>
-#include <mercury/common/request_fwd.h>
-#include <mercury/common/node_address.h>
-#include <cstdint>
-#include <memory>
-
 namespace SST {
 namespace Hg {
 
-class Node : public NodeBase {
-public:
-  SST_ELI_REGISTER_COMPONENT(
-      SST::Hg::Node,
-      "hg",
-      "Node",
-      SST_ELI_ELEMENT_VERSION(
-          0, 0, 1),
-      "Simple Mercury node",
-      COMPONENT_CATEGORY_UNCATEGORIZED
-  )
-
-  Node(SST::ComponentId_t id, SST::Params &params);
-};
+class OperatingSystemAPI;
 
 } // namespace Hg
 } // namespace SST

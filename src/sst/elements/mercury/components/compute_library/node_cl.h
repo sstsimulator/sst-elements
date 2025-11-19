@@ -16,11 +16,9 @@
 #pragma once
 
 #include <mercury/common/component.h>
-
 #include <sst/core/timeConverter.h>
 #include <mercury/components/node_base.h>
-#include <mercury/components/node.h>
-#include <mercury/components/operating_system_CL.h>
+#include <mercury/components/compute_library/operating_system_cl_api.h>
 #include <mercury/libraries/compute/instruction_processor.h>
 #include <mercury/libraries/compute/memory_model.h>
 #include <cstdint>
@@ -29,8 +27,8 @@
 namespace SST {
 namespace Hg {
 
-// Components inherit from SST::Component
 class NodeCL : public NodeBase {
+
 public:
   /*
    *  SST Registration macros register Components with the SST Core and
@@ -46,11 +44,11 @@ public:
       SST_ELI_ELEMENT_VERSION(
           0, 0, 1),   // Version of the component (not related to SST version)
       "Mercury Node including ComputeLibrary", // Description
-      COMPONENT_CATEGORY_UNCATEGORIZED, // Category
-      SST::Hg::NodeBase
+      COMPONENT_CATEGORY_UNCATEGORIZED // Category
   )
 
   NodeCL(SST::ComponentId_t id, SST::Params &params);
+
   ~NodeCL() {
     delete proc_;
     delete mem_;
@@ -68,7 +66,7 @@ private:
   int nsockets_;
   InstructionProcessor* proc_;
   MemoryModel* mem_;
-  OperatingSystemCL* osCL_;
+  OperatingSystemCLAPI* osCL_;
 };
 
 } // namespace Hg

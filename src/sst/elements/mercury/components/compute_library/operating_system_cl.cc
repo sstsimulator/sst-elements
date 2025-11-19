@@ -13,38 +13,55 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <mercury/components/node_CL.h>
-#include <mercury/components/operating_system_CL.h>
-#include <mercury/components/operating_system.h>
-#include <mercury/common/errors.h>
+#include <mercury/components/compute_library/operating_system_cl.h>
+#include <mercury/components/compute_library/node_cl.h>
+#include <mercury/components/operating_system_impl.h>
 #include <mercury/common/events.h>
 #include <mercury/common/util.h>
-#include <mercury/libraries/compute/compute_event.h>
 #include <mercury/libraries/compute/compute_scheduler.h>
+#include <mercury/libraries/compute/compute_event.h>
 
 namespace SST {
 namespace Hg {
 
-  OperatingSystemCL::OperatingSystemCL(SST::ComponentId_t id, SST::Params& params, NodeCL* parent) :
-  OperatingSystem(id,params, parent), nodeCL_(parent)
+OperatingSystemAPI* OperatingSystemCL::active_os_;
+
+OperatingSystemCL::OperatingSystemCL(SST::ComponentId_t id, SST::Params& params) :
+  OperatingSystemCLAPI(id,params), OperatingSystemImpl(id,params,this)
 {
+  // Configure self link to handle event timing
+  selfEventLink_ = configureSelfLink("self", time_converter_, new Event::Handler2<Hg::OperatingSystemCL,&OperatingSystemCL::handleEvent>(this));
+  assert(selfEventLink_);
+  selfEventLink_->setDefaultTimeBase(time_converter_);
+
+  OperatingSystemImpl::setThreadId(threadId());
+
   compute_sched_ = new ComputeScheduler( params, this);
+
+  requireDependencies(params);
+}
+
+void OperatingSystemCL::setup() {
+  app_launcher_ = new AppLauncher(this, npernode_);
+  addLaunchRequests(params_);
+  for (auto r : requests_)
+    selfEventLink_->send(r);
 }
 
 void
 OperatingSystemCL::execute(COMP_FUNC func, Event *data, int nthr)
 {
-  int owned_ncores = active_thread_->numActiveCcores();
+  int owned_ncores = activeThread()->numActiveCcores();
   if (owned_ncores < nthr){
     compute_sched_->reserveCores(nthr-owned_ncores, active_thread_);
   }
 
   //initiate the hardware events
-  ExecutionEvent* cb = newCallback(this, &OperatingSystem::unblock, active_thread_);
+  ExecutionEvent* cb = newCallback(this, &OperatingSystemImpl::unblock, active_thread_);
 
   switch (func) {
     case COMP_INSTR:
-      nodeCL_->proc()->compute(data, cb);
+      node_cl_->proc()->compute(data, cb);
       break;
     case COMP_TIME: {
       TimedComputeEvent* ev = safe_cast(TimedComputeEvent, data);

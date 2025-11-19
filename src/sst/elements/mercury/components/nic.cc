@@ -34,11 +34,8 @@ NicEvent::serialize_order(SST::Core::Serialization::serializer& ser)
   SST_SER(msg_);
 }
 
-NIC::NIC(uint32_t id, SST::Params& params, NodeBase* parent) :
-  SST::Hg::SubComponent(id),
-  parent_(parent),
-  my_addr_(parent->os()->addr()),
-  os_(parent->os())
+NIC::NIC(uint32_t id, SST::Params& params) :
+  SST::Hg::SubComponent(id)
 {
   unsigned int verbose = params.find<unsigned int>("verbose", 0);
   out_ = std::unique_ptr<SST::Output>(
@@ -68,6 +65,9 @@ NIC::init(unsigned int phase) {
     auto send_notify = new SST::Interfaces::SimpleNetwork::Handler2<SST::Hg::NIC,&SST::Hg::NIC::incomingCredit>(this);
     link_control_->setNotifyOnReceive(recv_notify);
     link_control_->setNotifyOnSend(send_notify);
+
+    my_addr_ = parent_->os()->addr();
+    os_ = parent_->os();
   }
   link_control_->init(phase);
 }
@@ -212,7 +212,7 @@ NIC::sendWhatYouCan(int vn, Pending& p) {
       ack_queue_[vn].push(nullptr);
     }
     req->src = my_addr_;
-    req->dest = p.payload->toaddr() / os_->npernode();
+    req->dest = p.payload->toaddr() / os_->ranksPerNode();
     req->size_in_bits = next_bits;
     req->vn = 0;
 
@@ -271,7 +271,7 @@ NIC::dataIoctl()
 void
 NIC::injectSend(NetworkMessage* netmsg)
 {
-  if (netmsg->toaddr() / os_->npernode() == my_addr_){
+  if (netmsg->toaddr() / os_->ranksPerNode() == my_addr_){
     intranodeSend(netmsg);
   } else {
     netmsg->putOnWire();
@@ -406,6 +406,11 @@ NIC::sendToNode(NetworkMessage* payload)
 {
   auto forward_ev = newCallback(parent_, &NodeBase::handle, payload);
   parent_->sendExecutionEventNow(forward_ev);
+}
+
+void
+NIC::set_parent(NodeBase *parent) {
+  parent_ = parent;
 }
 
 } // end of namespace Hg

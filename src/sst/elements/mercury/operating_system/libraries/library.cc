@@ -74,7 +74,8 @@ Library::endLibraryCall()
 Timestamp
 Library::now() const
 {
-  return api_parent_app_->os()->now();
+  //return api_parent_app_->os()->now();
+  return api_parent_app_->os_api()->now();
 }
 
 void

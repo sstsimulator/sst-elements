@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <mercury/components/operating_system_fwd.h>
+#include <mercury/components/operating_system_api.h>
 #include <mercury/operating_system/libraries/event_library.h>
 
 namespace SST {
@@ -29,11 +29,11 @@ class Service :
   virtual void start() {}
 
  protected:
-  Service(const std::string& libname, SoftwareId sid, OperatingSystem* os) :
+  Service(const std::string& libname, SoftwareId sid, OperatingSystemAPI* os) :
     EventLibrary(libname, sid, os)
   {}
 
-  Service(const char* prefix, SoftwareId sid, OperatingSystem* os) :
+  Service(const char* prefix, SoftwareId sid, OperatingSystemAPI* os) :
     EventLibrary(prefix, sid, os)
   {}
 

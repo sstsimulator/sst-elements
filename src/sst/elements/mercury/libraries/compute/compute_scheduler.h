@@ -15,8 +15,7 @@
 
 #pragma once
 
-#include <mercury/operating_system/libraries/library.h>
-#include <mercury/components/operating_system_CL_fwd.h>
+#include <mercury/components/compute_library/operating_system_cl_api.h>
 #include <mercury/libraries/compute/compute_scheduler_api.h>
 #include <mercury/operating_system/process/thread.h>
 #include <list>
@@ -24,15 +23,10 @@
 namespace SST {
 namespace Hg {
 
-//class ComputeScheduler : public ComputeSchedulerAPI, public Library
 class ComputeScheduler : public ComputeSchedulerAPI
 {
 public:
-  // SST_ELI_REGISTER_DERIVED(Library, ComputeScheduler, "hg", "ComputeScheduler",
-  //                          SST_ELI_ELEMENT_VERSION(1, 0, 0),
-  //                          "provides compute scheduler")
-
-  ComputeScheduler(SST::Params& params, SST::Hg::OperatingSystemCL* os);
+  ComputeScheduler(SST::Params& params, SST::Hg::OperatingSystemCLAPI* os);
 
   ~ComputeScheduler() {}
 
@@ -56,7 +50,7 @@ private:
   int ncores_;
   int nsockets_;
   int ncore_active_;
-  SST::Hg::OperatingSystemCL* os_;
+  SST::Hg::OperatingSystemCLAPI* os_;
   std::list<std::pair<int,Thread*>> pending_threads_;
 };
 

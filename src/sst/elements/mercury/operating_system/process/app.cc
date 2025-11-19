@@ -123,12 +123,11 @@ App::allocateDataSegment(bool tls)
  }
 }
 
-App::App(SST::Params& params, SoftwareId sid,
-         OperatingSystem* os) :
+App::App(SST::Params& params, SoftwareId sid, OperatingSystemAPI* os) :
   Thread(params, sid, os),
   params_(params),
+  os_api_(os),
 //  compute_lib_(nullptr),
-  os_(os),
   next_tls_key_(0),
   min_op_cutoff_(0),
   globals_storage_(nullptr),
@@ -449,8 +448,7 @@ UserAppCxxFullMain::deleteStatics()
   main_fxns_ = nullptr;
 }
 
-UserAppCxxFullMain::UserAppCxxFullMain(SST::Params& params, SoftwareId sid,
-                                       OperatingSystem* os) :
+UserAppCxxFullMain::UserAppCxxFullMain(SST::Params& params, SoftwareId sid, OperatingSystemAPI* os) :
   App(params, sid, os)
 {
   if (!main_fxns_){
@@ -568,8 +566,7 @@ UserAppCxxFullMain::skeletonMain()
   return rc;
 }
 
-UserAppCxxEmptyMain::UserAppCxxEmptyMain(SST::Params& params, SoftwareId sid,
-                                         OperatingSystem* os) :
+UserAppCxxEmptyMain::UserAppCxxEmptyMain(SST::Params& params, SoftwareId sid, OperatingSystemAPI* os) :
   App(params, sid, os)
 {
   if (!empty_main_fxns_){

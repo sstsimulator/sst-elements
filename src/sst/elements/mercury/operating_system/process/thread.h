@@ -19,6 +19,7 @@
 #include <mercury/common/node_address.h>
 #include <mercury/common/timestamp.h>
 #include <mercury/components/operating_system_fwd.h>
+//#include <mercury/components/operating_system_api.h>
 #include <mercury/operating_system/process/process_context.h>
 #include <mercury/operating_system/process/software_id.h>
 #include <mercury/operating_system/process/app_fwd.h>
@@ -33,6 +34,9 @@
 
 namespace SST {
 namespace Hg {
+
+class OperatingSystemAPI;
+
 
 /**
  * @brief The thread class
@@ -164,7 +168,7 @@ class Thread
     }
   }
 
-  OperatingSystem* os() const {
+  SST::Hg::OperatingSystemAPI* os() const {
     return os_;
   }
 
@@ -279,9 +283,11 @@ class Thread
 
   void endLibraryCall();
 
+  std::queue<Thread*> joiners_;
+
  protected:
   Thread(SST::Params& params,
-         SoftwareId sid, OperatingSystem* os);
+         SoftwareId sid, OperatingSystemAPI* os);
 
  private:
   struct omp_context {
@@ -315,9 +321,8 @@ class Thread
  protected:
   state state_;
 
-  OperatingSystem* os_;
-
-  std::queue<Thread*> joiners_;
+  OperatingSystemAPI* os_;
+  //OperatingSystemAPI* os_api_;
 
   App* parent_app_; // who created this one. null if launch/os.
 
