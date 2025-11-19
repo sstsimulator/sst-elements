@@ -19,7 +19,7 @@
 
 #include <sst/core/timeConverter.h>
 #include <sst/core/link.h>
-#include <mercury/components/operating_system_api.h>
+#include <mercury/components/operating_system_api_fwd.h>
 #include <mercury/components/nic.h>
 #include <mercury/common/request_fwd.h>
 #include <mercury/common/node_address.h>

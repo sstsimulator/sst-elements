@@ -15,6 +15,7 @@
 
 #include <mercury/components/node.h>
 #include <mercury/components/operating_system.h>
+#include <mercury/components/nic.h>
 #include <mercury/operating_system/launch/app_launch_request.h>
 #include <mercury/operating_system/process/app.h>
 
