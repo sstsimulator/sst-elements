@@ -145,6 +145,7 @@ nobase_library_include_HEADERS = \
   components/node_base_fwd.h \
   components/operating_system.h \
   components/operating_system_api.h \
+  components/operating_system_api_fwd.h \
   components/operating_system_call_forward.h \
   components/operating_system_fwd.h \
   components/operating_system_impl.h \
