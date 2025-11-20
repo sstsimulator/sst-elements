@@ -14,7 +14,7 @@
 // distribution.
 
 #include <mercury/libraries/compute/instruction_processor.h>
-#include <mercury/components/node_CL.h>
+#include <mercury/components/compute_library/node_cl.h>
 #include <mercury/common/util.h>
 #include <sst/core/unitAlgebra.h>
 

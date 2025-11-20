@@ -20,6 +20,7 @@
 #include <sst/core/eli/elementinfo.h>
 #include <mercury/operating_system/libraries/library.h>
 #include <mercury/libraries/system/system_api.h>
+#include <mercury/components/operating_system_api.h>
 
 namespace SST {
 namespace Hg {
@@ -72,6 +73,10 @@ static unsigned int ssthg_sleep(unsigned int secs);
 //void* ssthg_alloc_stack(int sz, int md_sz);
 
 //void ssthg_free_stack(void* ptr);
+
+private:
+App* app_;
+OperatingSystemAPI* os_;
 
 };
 

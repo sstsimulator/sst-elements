@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <mercury/components/operating_system_fwd.h>
+#include <mercury/components/operating_system_api.h>
 #include <mercury/operating_system/launch/app_launch_request.h>
 #include <mercury/operating_system/process/app.h>
 #include <mercury/operating_system/process/app_id.h>
@@ -31,7 +31,7 @@ namespace Hg {
 class AppLauncher
 {
  public:
-  AppLauncher(OperatingSystem* os, unsigned int npernode);
+  AppLauncher(OperatingSystemAPI* os, unsigned int npernode);
 
   ~AppLauncher() {}
 
@@ -46,7 +46,7 @@ class AppLauncher
 
   unsigned int npernode_;
   std::unordered_map<AppId, unsigned int> local_offset;
-  OperatingSystem* os_;
+  OperatingSystemAPI* os_;
 };
 
 } // end of namespace Hg

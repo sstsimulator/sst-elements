@@ -210,7 +210,7 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent) :
   page_size_ = params.find<SST::UnitAlgebra>("rdma_page_size", "4096 B").getRoundedValue();
 
   output.output("%d", sid().app_);
-  nproc_ = os_->nranks();
+  nproc_ = os_->numRanks();
 
   auto qos_params = params.get_scoped_params("qos");
   auto qos_name = qos_params.find<std::string>("name", "null");

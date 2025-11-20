@@ -30,6 +30,9 @@
 namespace SST {
 namespace Hg {
 
+void apiLock();
+void apiUnlock();
+
 class Library
 {
  public:
@@ -80,9 +83,6 @@ class Library
   App* api_parent_app_;
 
 };
-
-void apiLock();
-void apiUnlock();
 
 } // end namespace Hg
 } // end namespace SST

@@ -13,7 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <mercury/components/operating_system.h>
+#include <mercury/components/operating_system_api.h>
 #include <mercury/operating_system/libraries/event_library.h>
 
 namespace SST {
@@ -22,7 +22,7 @@ namespace Hg {
 extern template class  HgBase<SST::Component>;
 extern template class  HgBase<SST::SubComponent>;
 
-EventLibrary::EventLibrary(const std::string& libname, SoftwareId sid, OperatingSystem* os) :
+EventLibrary::EventLibrary(const std::string& libname, SoftwareId sid, OperatingSystemAPI* os) :
   os_(os),
   sid_(sid),
   addr_(os->addr()),

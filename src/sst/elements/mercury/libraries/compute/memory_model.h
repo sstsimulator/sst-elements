@@ -16,7 +16,7 @@
 #pragma once
 
 #include <mercury/common/events.h>
-#include <mercury/components/node_CL_fwd.h>
+#include <mercury/components/compute_library/node_cl_fwd.h>
 #include <mercury/common/unique_id.h>
 #include <mercury/libraries/compute/compute_event.h>
 
