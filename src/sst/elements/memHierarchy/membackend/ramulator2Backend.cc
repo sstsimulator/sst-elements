@@ -43,6 +43,10 @@ ramulator2Memory::ramulator2Memory(ComponentId_t id, Params &params) :
 }
 
 bool ramulator2Memory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes){
+    output->verbose(CALL_INFO, 1, 0,
+        "[ramu2] issueRequest id=%" PRIu64 " addr=0x%" PRIx64 " isWrite=%d size=%u\n",
+        (uint64_t)reqId, (uint64_t)addr, (int)isWrite, numBytes);
+
     bool enqueue_success = false;
 
     if (isWrite) {
@@ -54,7 +58,9 @@ bool ramulator2Memory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsign
     } else {
         enqueue_success = ramulator2_frontend->receive_external_requests(0, addr, 0,
             [this](Ramulator::Request& req) {
-                output->debug(_L10_, "Ramulator2Backend: Read callback\n");
+                output->verbose(CALL_INFO, 1, 0,
+                    "[ramu2] Read callback addr=0x%" PRIx64 " outstanding=%zu\n",
+                    (uint64_t)req.addr, dramReqs.count(req.addr) ? dramReqs.at(req.addr).size() : 0);
                 std::deque<ReqId> &reqs = dramReqs[req.addr];
 
                 if (reqs.empty())
@@ -76,15 +82,17 @@ bool ramulator2Memory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsign
             }
         }
     }
-    output->debug(_L10_, "Ramulator2Backend: enqueue %s\n", enqueue_success ? "successful" : "unsuccessful");
+    output->verbose(CALL_INFO, 1, 0,
+        "[ramu2] enqueue %s (queue size=%zu writes=%zu)\n",
+        enqueue_success ? "successful" : "unsuccessful", dramReqs.size(), writes.size());
 
     return enqueue_success;
 }
 
 bool ramulator2Memory::clock(Cycle_t cycle){
-#ifdef __SST_DEBUG_OUTPUT__
-    output->debug(_L10_, "Ramulator2Backend: Ticking memory system.\n");
-#endif
+    output->verbose(CALL_INFO, 2, 0,
+        "[ramu2] clock cycle=%" PRIu64 " pending_reads=%zu pending_writes=%zu\n",
+        (uint64_t)cycle, dramReqs.size(), writes.size());
     ramulator2_frontend->tick();
     // Ack writes since ramulator won't
     while (!writes.empty()) {

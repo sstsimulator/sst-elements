@@ -20,6 +20,17 @@
 #include "membackend/simpleMemBackendConvertor.h"
 #include "membackend/memBackend.h"
 
+namespace {
+inline bool logConvReadsEnabled() {
+    static int cached = -1;
+    if (cached == -1) {
+        const char* env = std::getenv("SNNDL_MEM_CONV_DEBUG");
+        cached = (env && std::atoi(env) != 0) ? 1 : 0;
+    }
+    return cached == 1;
+}
+}
+
 using namespace SST;
 using namespace SST::MemHierarchy;
 
@@ -34,7 +45,14 @@ SimpleMemBackendConvertor::SimpleMemBackendConvertor(ComponentId_t id, Params &p
 bool SimpleMemBackendConvertor::issue( BaseReq* req ) {
     if (req->isMemEv()) {
         MemReq * mreq = static_cast<MemReq*>(req);
-        return static_cast<SimpleMemBackend*>(m_backend)->issueRequest( mreq->id(), mreq->addr(), mreq->isWrite(), m_backendRequestWidth );
+        uint32_t remaining = mreq->size() - mreq->processed();
+        uint32_t chunk = remaining < m_backendRequestWidth && remaining > 0 ? remaining : m_backendRequestWidth;
+        if (!mreq->isWrite() && chunk == 0) chunk = remaining;
+        if (!mreq->isWrite() && logConvReadsEnabled()) {
+            std::printf("[conv-read] issue id=%" PRIu64 " addr=0x%" PRIx64 " chunk=%u remaining=%u\n",
+                (uint64_t)mreq->id(), (uint64_t)mreq->addr(), chunk, remaining);
+        }
+        return static_cast<SimpleMemBackend*>(m_backend)->issueRequest( mreq->id(), mreq->addr(), mreq->isWrite(), chunk );
     } else {
         CustomReq * creq = static_cast<CustomReq*>(req);
         return static_cast<SimpleMemBackend*>(m_backend)->issueCustomRequest( creq->id(), creq->getInfo() );

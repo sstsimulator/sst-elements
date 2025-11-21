@@ -34,18 +34,16 @@ SimpleMemory::SimpleMemory(ComponentId_t id, Params &params) : SimpleMemBackend(
 
 void SimpleMemory::handleSelfEvent(SST::Event *event){
     MemCtrlEvent *ev = static_cast<MemCtrlEvent*>(event);
-#ifdef __SST_DEBUG_OUTPUT__
-    output->debug(_L10_, "%s: Transaction done for id %" PRIx64 "\n", getName().c_str(),ev->reqId);
-#endif
+    output->verbose(CALL_INFO, 1, 0,
+        "[diag-simpleMem] complete id=%" PRIx64 "\n", ev->reqId);
     handleMemResponse(ev->reqId);
     delete event;
 }
 
 bool SimpleMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned numBytes ){
-#ifdef __SST_DEBUG_OUTPUT__
-    output->debug(_L10_, "%s: Issued transaction for address %" PRIx64 " id %" PRIx64"\n", getName().c_str(),(Addr)addr,id);
-#endif
+    output->verbose(CALL_INFO, 1, 0,
+        "[diag-simpleMem] issue id=%" PRIx64 " addr=0x%" PRIx64 " isWrite=%d size=%u\n",
+        id, (Addr)addr, (int)isWrite, numBytes);
     self_link->send(1, new MemCtrlEvent(id));
     return true;
 }
-
