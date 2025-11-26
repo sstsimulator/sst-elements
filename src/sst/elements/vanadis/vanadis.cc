@@ -277,6 +277,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
             if (lists->isPopulated(i)) {
                 roccs_.push_back(lists->create<SST::Vanadis::VanadisRoCCInterface>(i, ComponentInfo::SHARE_NONE));
                 rocc_queues_.push_back(std::deque<VanadisInstruction*>());
+                rocc_wait_queues_.push_back(std::deque<VanadisInstruction*>());
                 output->verbose(CALL_INFO, 1, 0, "Successfully loaded RoCC Interface");
             }
         }
@@ -734,6 +735,50 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
 void
 VANADIS_COMPONENT::performExecute(const uint64_t cycle)
 {
+    // Process RoCC instruction dispatching
+    for (int i = 0; i < roccs_.size(); ++i) {
+        if (rocc_wait_queues_[i].empty()) {
+            continue;
+        }
+
+        if (roccs_[i]->RoCCFull()) {
+            continue;
+        }
+         
+        VanadisInstruction* ins_to_dispatch = rocc_wait_queues_[i].front();
+        const uint32_t hw_thr = ins_to_dispatch->getHWThread();
+
+        // --- Ready to dispatch ---
+
+        // 1. pop instruction from wait queue
+        rocc_wait_queues_[i].pop_front();
+
+        // 2. read value from source registers
+        VanadisRegisterFile* regFile = register_files[hw_thr];
+        uint64_t rs1_val = 0;
+        uint64_t rs2_val = 0;
+
+        if (ins_to_dispatch->countISAIntRegIn() > 0) {
+            rs1_val = regFile->getIntReg<uint64_t>(ins_to_dispatch->getPhysIntRegIn(0));
+        }
+        if (ins_to_dispatch->countISAIntRegIn() > 1) {
+            rs2_val = regFile->getIntReg<uint64_t>(ins_to_dispatch->getPhysIntRegIn(1));
+        }
+
+        // 3. create RoCC instruction and push to RoCC interface 
+        VanadisRoCCInstruction* vrocc_inst = static_cast<VanadisRoCCInstruction*>(ins_to_dispatch);
+        RoCCInstruction* rocc_inst = new RoCCInstruction(
+            vrocc_inst->func7, vrocc_inst->rd, vrocc_inst->xs1, vrocc_inst->xs2, vrocc_inst->xd
+        );
+        roccs_[i]->push(new RoCCCommand(rocc_inst, rs1_val, rs2_val));
+
+        // 4. push instruction to trace queue
+        rocc_queues_[i].push_back(ins_to_dispatch);
+
+        output->verbose(CALL_INFO, 8, 0, "[RoCC Dispatch] Instruction 0x%" PRI_ADDR " dispatched to RoCC-%d.\n",
+            ins_to_dispatch->getInstructionAddress(), i);
+    }
+
 
     #ifdef VANADIS_BUILD_DEBUG
     const uint32_t verbose_level = output->getVerboseLevel();
@@ -793,7 +838,18 @@ VANADIS_COMPONENT::performExecute(const uint64_t cycle)
         RoCCResponse* resp;
         if (!(roccs_[i]->isBusy()) && (resp = roccs_[i]->respond())) {
             VanadisInstruction* ins = rocc_queues_[i].front();
-            register_files[ins->getHWThread()]->setIntReg<uint64_t>(resp->rd, resp->rd_val);
+            // Check if instruction has a destination register
+            if (ins->countISAIntRegOut() > 0) {
+                // Acquire physical and ISA register numbers
+                const uint16_t phys_reg_out = ins->getPhysIntRegOut(0);
+                const uint16_t ISA_reg_out = ins->getISAIntRegOut(0);
+                output->verbose(CALL_INFO, 0, 0, "[VanadisCPU-writeback] Cycle: %" PRIu64 ", ISA_reg_out=%u, phys_reg_out=%u\n",
+                (uint64_t)cycle,
+                ISA_reg_out,
+                phys_reg_out);
+                // Write back to register file
+                register_files[ins->getHWThread()]->setIntReg<uint64_t>(phys_reg_out, resp->rd_val);
+            }
             ins->markExecuted();
             rocc_queues_[i].pop_front();
         }
@@ -1266,8 +1322,8 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
 
         output->verbose(CALL_INFO, 16, 0, "allocating rocc%d instruction\n", rocc_index);
         if (!roccs_[rocc_index]->RoCCFull()) {
-            output->verbose(CALL_INFO, 16, 0, "pushing to RoCC%d queue\n", rocc_index);
-            rocc_queues_[rocc_index].push_back(ins);
+            output->verbose(CALL_INFO, 16, 0, "pushing to RoCC%d wait queue\n", rocc_index);
+            rocc_wait_queues_[rocc_index].push_back(ins);
             allocated_fu = true;
         }
         break;
@@ -1629,6 +1685,13 @@ VANADIS_COMPONENT::checkInstructionResources(
     for ( uint16_t i = 0; i < int_reg_in_count; ++i ) {
         const uint16_t ins_isa_reg = ins->getISAIntRegIn(i);
         resources_good &= (!isa_table->pendingIntWrites(ins_isa_reg)) && (!int_reg_write[ins_isa_reg]);
+
+        if (!resources_good) {
+            #ifdef VANADIS_BUILD_DEBUG
+            output->verbose(CALL_INFO, 8, 0, "DEBUG_ISSUE: FAILED at check 2 (RAW on input reg %u) for ins 0x%" PRI_ADDR "\n",
+                 ins->getISAIntRegIn(i), ins->getInstructionAddress());
+            #endif
+        }
     }
 
     #ifdef VANADIS_BUILD_DEBUG
@@ -1839,34 +1902,6 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
             isa_table->incFPWrite(ins_isa_reg);
 
             ins->setPhysFPRegOut(i, out_reg);
-        }
-    }
-
-
-    if (ins->getInstFuncType() >= INST_ROCC0 && ins->getInstFuncType() <= INST_ROCC3) {
-        int rocc_index = ins->getInstFuncType() - INST_ROCC0;
-        output->verbose(CALL_INFO, 16, 0, "issuing rocc%d instruction\n", rocc_index);
-
-        if (rocc_index > roccs_.size() - 1) {
-            output->fatal(
-                CALL_INFO, -1,
-                "Error: rocc%d instruction (ins-addr: 0x%" PRI_ADDR ") attempted to issue but rocc%d interface is not loaded\n",
-                rocc_index, ins->getInstructionAddress(), rocc_index);
-        }
-
-        if (!roccs_[rocc_index]->RoCCFull()) {
-            VanadisRegisterFile* regFile = register_files[ins->getHWThread()];
-            regFile->print(output);
-
-            uint64_t rs1_val = regFile->getIntReg<int64_t>(ins->getPhysIntRegIn(0));
-            uint64_t rs2_val = regFile->getIntReg<int64_t>(ins->getPhysIntRegIn(1));
-
-            VanadisRoCCInstruction* vrocc_inst = static_cast<VanadisRoCCInstruction*>(ins);
-            RoCCInstruction* rocc_inst = new RoCCInstruction(
-                vrocc_inst->func7, vrocc_inst->rd, vrocc_inst->xs1, vrocc_inst->xs2, vrocc_inst->xd
-            );
-
-            roccs_[rocc_index]->push(new RoCCCommand(rocc_inst, rs1_val, rs2_val));
         }
     }
 

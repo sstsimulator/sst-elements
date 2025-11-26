@@ -328,6 +328,7 @@ private:
 
     std::vector<VanadisRoCCInterface*> roccs_;
     std::vector<std::deque<VanadisInstruction*>> rocc_queues_;
+    std::vector<std::deque<VanadisInstruction*>> rocc_wait_queues_;
 
     uint32_t decode_start_thread_ = 0;
 
