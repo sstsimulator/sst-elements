@@ -29,6 +29,7 @@ libhg_la_SOURCES = \
   components/compute_library/operating_system_cl.cc \
   components/compute_library/operating_system_cl_api.cc \
   components/nic.cc \
+  components/nic_api.cc \
   components/node.cc \
   components/node_base.cc \
   components/operating_system.cc \
@@ -138,6 +139,7 @@ nobase_library_include_HEADERS = \
   components/compute_library/operating_system_cl_api.h \
   components/compute_library/operating_system_cl_fwd.h \
   components/nic.h \
+  components/nic_api.h \
   components/nic_fwd.h \
   components/node.h \
   components/node_fwd.h \
