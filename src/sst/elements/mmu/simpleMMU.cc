@@ -101,7 +101,7 @@ void SimpleMMU::map( unsigned pid, uint32_t vpn, uint32_t ppn, int pageSize, uin
 }
 
 void SimpleMMU::map( unsigned pid, uint32_t vpn, std::vector<uint32_t>& ppns, int pageSize, uint64_t flags ) {
-    
+
     m_dbg.fatal(CALL_INFO_LONG,-1,"pid=%d vpn=%d numPages=%zu pageSize=%d flags=%#" PRIx64 "\n", pid, vpn, ppns.size(), pageSize, flags );
 }
 
