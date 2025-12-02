@@ -23,7 +23,6 @@
 #include <mercury/components/nic.h>
 #include <mercury/common/request_fwd.h>
 #include <mercury/common/node_address.h>
-#include <cstdint>
 #include <memory>
 
 namespace SST {
@@ -74,7 +73,7 @@ public:
 
   void handle(Request* req);
 
-  SST::Hg::NIC* nic() { return nic_; }
+  SST::Hg::NicAPI* nic() { return nic_; }
 
   virtual std::string toString() { return sprintf("HgNode%d:",my_addr_); }
 
@@ -82,7 +81,7 @@ protected:
 
   int nranks_;
   int npernode_;
-  SST::Hg::NIC* nic_;
+  SST::Hg::NicAPI* nic_;
   SST::Hg::OperatingSystemAPI* os_;
   SST::Interfaces::SimpleNetwork* link_control_;
   SST::Link* netLink_;

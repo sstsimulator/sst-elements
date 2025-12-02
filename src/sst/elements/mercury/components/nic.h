@@ -32,43 +32,23 @@
 #include <mercury/hardware/common/recv_cq.h>
 #include <mercury/hardware/common/flow_fwd.h>
 #include <mercury/hardware/network/network_message.h>
+#include <mercury/components/nic_api.h>
 
 #include <vector>
 #include <queue>
 #include <functional>
 
-namespace SST {
-namespace Hg {
 
-class NicEvent :
-  public Event, public SST::Hg::thread_safe_new<NicEvent>
-{
-  ImplementSerializable(NicEvent)
- public:
-  NicEvent(NetworkMessage* msg) : msg_(msg) {}
-
-  NetworkMessage* msg() const {
-    return msg_;
-  }
-
-  void serialize_order(SST::Core::Serialization::serializer& ser) override;
-
- private:
-  NicEvent(){} //for serialization
-
-  NetworkMessage* msg_;
-};
+namespace SST::Hg {
 
 /**
  * A networkinterface is a delegate between a node and a server module.
  * This object helps ornament network operations with information about
  * the process (ppid) involved.
  */
-class NIC : public SST::Hg::SubComponent
+class NIC : public NicAPI
 {
  public:
-
-  SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::NIC)
 
   SST_ELI_REGISTER_SUBCOMPONENT(
     NIC,
@@ -79,88 +59,47 @@ class NIC : public SST::Hg::SubComponent
     SST::Hg::NIC
   )
 
-  typedef enum {
-    Injection,
-    LogP
-  } Port;
-
-  class FlowTracker : public Event {
-private:
-    uint64_t flow_id;
-public:
-    FlowTracker(uint64_t id) : flow_id(id) {}
-    uint64_t id() const {return flow_id;}
-  };
-
-private:
-  struct Pending {
-    NetworkMessage* payload;
-    uint64_t bytesLeft;
-    Pending(NetworkMessage* p) :
-      payload(p),
-      bytesLeft(p->byteLength())
-    {
-    }
-  };
-
-public:
+  NIC(uint32_t id, SST::Params& params);
 
   virtual ~NIC();
 
-  /**
-   * @return A unique ID for the NIC positions. Opaque typedef to an int.
-   */
-  NodeId addr() const {
-    return my_addr_;
-  }
+  NodeId addr() const override;
 
-  std::string toString();
+  std::string toString() override;
 
-  void init(unsigned int phase);
+  void init(unsigned int phase) override;
 
-  void inject(int vn, NetworkMessage* payload);
+  void inject(int vn, NetworkMessage* payload) override;
 
-  void setup();
+  void setup() override;
 
-  void complete(unsigned int phase);
+  void complete(unsigned int phase) override;
 
-  void finish();
+  void finish() override;
 
-  bool incomingCredit(int vn);
+  bool incomingCredit(int vn) override;
 
-  bool incomingPacket(int vn);
+  bool incomingPacket(int vn) override;
 
-  void connectOutput(int  /*src_outport*/, int  /*dst_inport*/, EventLink::ptr&&  /*link*/);
+  void connectOutput(int  /*src_outport*/, int  /*dst_inport*/, EventLink::ptr&&  /*link*/) override;
 
-  void connectInput(int  /*src_outport*/, int  /*dst_inport*/, EventLink::ptr&&  /*link*/);
+  void connectInput(int  /*src_outport*/, int  /*dst_inport*/, EventLink::ptr&&  /*link*/) override;
 
-  SST::Event::HandlerBase* creditHandler(int  /*port*/);
+  SST::Event::HandlerBase* creditHandler(int  /*port*/) override;
 
-  SST::Event::HandlerBase* payloadHandler(int  /*port*/);
+  SST::Event::HandlerBase* payloadHandler(int  /*port*/) override;
 
-  void sendWhatYouCan(int vn);
+  void sendWhatYouCan(int vn) override;
 
-  bool sendWhatYouCan(int vn, Pending& p);
+  bool sendWhatYouCan(int vn, Pending& p) override;
 
-  void set_link_control(SST::Interfaces::SimpleNetwork* link_control) {
-      link_control_ = link_control;
-  }
+  void set_link_control(SST::Interfaces::SimpleNetwork *link_control) override;
 
-  /**
-   * @brief injectSend Perform an operation on the NIC.
-   *  This assumes an exlcusive model of NIC use. If NIC is busy,
-   *  operation may complete far in the future. If wishing to query for how busy the NIC is,
-   *  use #next_free. Calls to hardware taking an OS parameter
-   *  indicate 1) they MUST occur on a user-space software thread
-   *  and 2) that they should us the os to block and compute
-   * @param netmsg The message being injected
-   * @param os     The OS to use form software compute delays
-   */
-  void injectSend(NetworkMessage* netmsg);
+  void injectSend(NetworkMessage* netmsg) override;
 
-  EventHandler* mtlHandler() const;
+  EventHandler* mtlHandler() const override;
 
-  virtual void mtlHandle(Event* ev);
+  virtual void mtlHandle(Event* ev) override;
 
   /**
    * Delete all static variables associated with this class.
@@ -168,67 +107,40 @@ public:
    */
   static void deleteStatics();
 
-  /**
-    Perform the set of operations standard to all NICs.
-    This then passes control off to a model-specific #doSend
-    function to actually carry out the send
-    @param payload The network message to send
-  */
-  void internodeSend(NetworkMessage* payload);
+  void internodeSend(NetworkMessage* payload) override;
 
-  /**
-    Perform the set of operations standard to all NICs
-    for transfers within a node. This function is model-independent,
-    unlike #internodeSend which must pass control to #doSend.
-   * @param payload
-   */
-  void intranodeSend(NetworkMessage* payload);
+  void intranodeSend(NetworkMessage* payload) override;
 
-  /**
-   The NIC can either receive an entire message (bypass the byte-transfer layer)
-   or it can receive packets.  If an incoming message is a full message (not a packet),
-   it gets routed here. Unlike #recv_chunk, this has a default implementation and does not throw.
-   @param chunk
-   */
-  void recvMessage(NetworkMessage* msg);
+  void recvMessage(NetworkMessage* msg) override;
 
-  void sendToNode(NetworkMessage* netmsg);
+  void sendToNode(NetworkMessage* netmsg) override;
 
-  virtual void deadlockCheck(){}
+  virtual void deadlockCheck() override {}
 
-  virtual void sendManagerMsg(NetworkMessage* msg);
+  virtual void sendManagerMsg(NetworkMessage* msg) override;
 
-  virtual std::function<void(NetworkMessage*)> ctrlIoctl();
+  virtual std::function<void(NetworkMessage*)> ctrlIoctl() override ;
 
-  virtual std::function<void(NetworkMessage*)> dataIoctl();
+  virtual std::function<void(NetworkMessage*)> dataIoctl() override;
 
-  virtual std::string toString() const { return "nic"; }
+  void doSend(NetworkMessage *payload) override;
 
-  void doSend(NetworkMessage* payload) {
-    inject(0, payload);
-  }
+  std::string toString() const override { return "nic"; }
 
- public:
-  NIC(uint32_t id, SST::Params& params);
-
-  void set_parent(NodeBase*);
+  void set_parent(NodeBase*) override;
 
 protected:
+  NodeBase *parent() const override;
 
-  SST::Hg::NodeBase *parent() const
-  { return parent_; }
+  bool negligibleSize(int bytes) const override;
 
-  bool negligibleSize(int bytes) const {
-    return bytes <= negligibleSize_;
-  }
+private:
 
-protected:
   int negligibleSize_;
   SST::Hg::NodeBase* parent_;
   NodeId my_addr_;
   EventLink::ptr logp_link_;
-
- private:
+  SST::Hg::OperatingSystemAPI* os_;
 
   SST::Interfaces::SimpleNetwork* link_control_;
   std::vector<std::queue<Pending>> pending_;
@@ -239,10 +151,6 @@ protected:
   int test_size_;
   std::unique_ptr<SST::Output> out_;
 
- protected:
-  SST::Hg::OperatingSystemAPI* os_;
-
- private:
   /**
    For messages requiring an NIC ACK to signal that the message
    has injected into the interconnect.  Create an ack and
@@ -255,5 +163,4 @@ protected:
   void finishMemcpy(NetworkMessage* msg);
 };
 
-} // end of namespace Hg
-} // end of namespace SST
+} // end of namespace SST::Hg
