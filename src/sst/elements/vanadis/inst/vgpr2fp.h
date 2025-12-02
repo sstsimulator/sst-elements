@@ -76,7 +76,7 @@ public:
     void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
                             uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0) override
         {
-
+            #ifdef VANADIS_BUILD_DEBUG
             if(output->getVerboseLevel() >= verboselevel) {
                 output->verbose(
                 CALL_INFO, verboselevel, 0,
@@ -85,6 +85,7 @@ public:
                 getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), phys_int_regs_out_0, phys_int_regs_in_0,
                  isa_fp_regs_out[0], isa_int_regs_in[0]);
             }
+            #endif
         }
 
     inline void bitwise_convert(VanadisRegisterFile* regFile,
@@ -166,7 +167,9 @@ public:
             phys_fp_regs_out_1 = getPhysFPRegOut(1);
         }
         instOp(regFile, phys_fp_regs_out_0, phys_fp_regs_out_1, phys_int_regs_in_0);
+        #ifdef VANADIS_BUILD_DEBUG
         log(output,16, 65535, phys_fp_regs_out_0,phys_int_regs_in_0);
+        #endif
         markExecuted();
     }
 };

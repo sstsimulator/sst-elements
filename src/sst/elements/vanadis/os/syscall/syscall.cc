@@ -33,13 +33,14 @@ VanadisSyscall::~VanadisSyscall() {
 
     resp->setHWThread( m_event->getThreadID() );
 
+    #ifdef VANADIS_BUILD_DEBUG
     m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,"syscall '%s' has finished, send response to core %d hwThead %d, %s, returnCode=%" PRIu64 "\n",
         getName().c_str(),
         m_event->getCoreID(),
         m_event->getThreadID(),
         resp->isSuccessful() ? "Success" : "Failed",
         resp->getReturnCode() );
-
+    #endif
     m_coreLink->send( resp );
 
     m_os->clearSyscall( getCoreId(), getThreadId() );

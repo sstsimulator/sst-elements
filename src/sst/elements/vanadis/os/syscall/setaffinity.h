@@ -31,8 +31,10 @@ public:
         VanadisSyscallSetaffinityEvent* event )
     : VanadisSyscall(os, coreLink, process, event, "setaffinity")
     {
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL, "[syscall-setaffinity] pid=%" PRIu64 " cpusetsize=%" PRIu64 " maskAddr=%#" PRIx64 "\n",
                                       event->getPid(), event->getCpusetsize(), event->getMaskAddr());
+        #endif
 
         // Load the CPU mask from memory
         m_mask.resize(event->getCpusetsize(), 0);

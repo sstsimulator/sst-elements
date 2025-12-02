@@ -35,10 +35,17 @@ namespace Vanadis {
 class VanadisRoCCBasic : public SST::Vanadis::VanadisRoCCInterface {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(VanadisRoCCBasic, "vanadis", "VanadisRoCCBasic",
-                                          SST_ELI_ELEMENT_VERSION(1, 0, 0),
-                                          "Implements a basic example of a RoCC accelerator",
-                                          SST::Vanadis::VanadisRoCCInterface)
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        VanadisRoCCBasic,
+    #ifdef VANADIS_BUILD_DEBUG
+        "vanadisdbg",
+    #else
+        "vanadis",
+    #endif
+        "VanadisRoCCBasic",
+        SST_ELI_ELEMENT_VERSION(1, 0, 0),
+        "Implements a basic example of a RoCC accelerator",
+        SST::Vanadis::VanadisRoCCInterface)
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS({ "memory_interface", "Set the interface to memory",
                                             "SST::Interfaces::StandardMem" })

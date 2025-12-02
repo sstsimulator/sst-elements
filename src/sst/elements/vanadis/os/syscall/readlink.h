@@ -27,17 +27,20 @@ public:
     VanadisReadlinkSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallReadLinkEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "readlink" ), m_data( event->getBufferSize() ), m_done(false)
     {
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-readlink] -> readlink( 0x%0" PRI_ADDR ", 0x%" PRI_ADDR ", %" PRId64 " )\n",
                                 event->getPathPointer(), event->getBufferPointer(),
                                 event->getBufferSize());
-
+        #endif
         readString(event->getPathPointer(),m_filename);
     }
 
     void memReqIsDone(bool) {
         if ( ! m_done ) {
             m_done = true;
+            #ifdef VANADIS_BUILD_DEBUG
             m_output->verbose(CALL_INFO, 16, 0, "[syscall-readlink] path: \"%s\"\n", m_filename.c_str());
+            #endif
 
             int ret = readlink( m_filename.c_str(), (char*) m_data.data(), m_data.size() );
             if ( -1 == ret ) {

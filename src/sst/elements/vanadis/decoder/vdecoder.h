@@ -215,7 +215,9 @@ public:
     {
         ip = newIP;
 
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 16, 0, "[decoder] -> clear decode-q and set new ip: 0x%" PRI_ADDR "\n", newIP);
+        #endif
 
         // Clear out the decode queue, need to restart
         // decoded_q->clear();

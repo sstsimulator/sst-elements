@@ -57,10 +57,12 @@ public:
     void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
                             uint16_t phys_int_regs_in_0, uint64_t mask_in)
     {
+        #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= verboselevel) {
 				output->verbose(CALL_INFO, verboselevel, 0, "hw_thr=%d sw_thr = %d Execute: 0x%" PRI_ADDR " %s in-reg: %" PRIu16 " / phys: %" PRIu16 " -> mask = %" PRIu64 " (0x%" PRI_ADDR ")\n",
 					getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), isa_int_regs_in[0], phys_int_regs_in_0, mask_in, mask_in);
 			}
+        #endif
     }
 
     void instOp(VanadisRegisterFile* regFile, uint16_t phys_int_regs_in_0, uint64_t* mask_in)
@@ -75,10 +77,14 @@ public:
             uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0);
             uint64_t mask_in = 0;
 			instOp(regFile, phys_int_regs_in_0, &mask_in);
+            #ifdef VANADIS_BUILD_DEBUG
             log(output, 16, 65535, phys_int_regs_in_0, mask_in);
+            #endif
 			markExecuted();
+        #ifdef VANADIS_BUILD_DEBUG
 		} else {
 			output->verbose(CALL_INFO, 16, 0, "hw_thr=%d, sw_thr=%d, not front of ROB for ins: 0x%" PRI_ADDR " %s\n", getHWThread(), 65535,  getInstructionAddress(), getInstCode());
+        #endif
 		}
     }
 protected:

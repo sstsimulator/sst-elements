@@ -28,7 +28,6 @@
 
 #include <cstring>
 #include <cmath>
-#include <sst/core/output.h>
 
 namespace SST {
 namespace Vanadis {

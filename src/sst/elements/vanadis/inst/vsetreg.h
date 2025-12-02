@@ -74,7 +74,9 @@ public:
     virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
         uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
+        #ifdef VANADIS_BUILD_DEBUG
         log(output, 16, 65535,phys_int_regs_out_0);
+        #endif
         instOp(regFile,phys_int_regs_out_0);
         markExecuted();
     }

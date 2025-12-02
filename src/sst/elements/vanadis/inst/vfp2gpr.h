@@ -115,7 +115,9 @@ public:
             phys_fp_regs_in_1 = getPhysFPRegIn(1);
         }
         instOp(regFile,phys_fp_regs_in_0,phys_fp_regs_in_1,phys_int_regs_out_0 );
+        #ifdef VANADIS_BUILD_DEBUG
         log(output, 16, 65535,phys_int_regs_out_0,phys_fp_regs_in_0);
+        #endif
 
         markExecuted();
     }

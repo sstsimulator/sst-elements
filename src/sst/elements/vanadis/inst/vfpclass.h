@@ -139,7 +139,9 @@ public:
         uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
         uint16_t phys_fp_regs_in_0 = getPhysFPRegIn(0);
         uint16_t phys_fp_regs_in_1 = getPhysFPRegIn(1);
+        #ifdef VANADIS_BUILD_DEBUG
         log(output, 16, 65535, phys_int_regs_out_0, phys_fp_regs_in_0, phys_fp_regs_in_1);
+        #endif
         instOp(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1, phys_int_regs_out_0);
         markExecuted();
     }

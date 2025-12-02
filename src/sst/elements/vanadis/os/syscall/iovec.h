@@ -69,9 +69,11 @@ public:
         : VanadisSyscall( os, coreLink, process, event, name ), m_ioVecTable(nullptr), m_currentVec(0), m_totalBytes(0), m_state(ReadIoVecTable)
     {
 
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
                             "[syscall-%s] call is %s( %" PRId64 ", 0x%0" PRI_ADDR ", %" PRId64 " )\n",
                             getName().c_str(), getName().c_str(), event->getFileDescriptor(), event->getIOVecAddress(), event->getIOVecCount());
+        #endif
 
         m_fd = process->getFileDescriptor( event->getFileDescriptor() );
         if ( -1 == m_fd ) {
@@ -100,11 +102,15 @@ public:
 
     void memReqIsDone(bool) {
         if ( ReadIoVecTable == m_state ) {
+            #ifdef VANADIS_BUILD_DEBUG
             m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "[syscall-%s] read ioVecTable complete\n", getName().c_str());
+            #endif
             m_state = IoVecTransfer;
             for ( int i =0; i < getEvent<VanadisSyscallIoVecEvent*>()->getIOVecCount(); i++ ) {
+                #ifdef VANADIS_BUILD_DEBUG
                 m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "[syscall-%s] addr=%#" PRIx64 " length=%zu\n",
                     getName().c_str(), m_ioVecTable->getAddr(i),m_ioVecTable->getLength(i));
+                #endif
             }
             if ( findNonZeroIoVec() )  {
                 startIoVecTransfer();
@@ -124,18 +130,23 @@ public:
         if ( m_ioVecTable->getLength(m_currentVec) - m_currentVecOffset < 4096 ) {
             retval = m_ioVecTable->getLength(m_currentVec) - m_currentVecOffset;
         }
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"[syscall-%s] buff size %zu\n", getName().c_str(), retval);
+        #endif
         return retval;
     }
 
     bool findNonZeroIoVec() {
 
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-%s] count=%" PRIu64 "\n",
             getName().c_str(), getEvent<VanadisSyscallIoVecEvent*>()->getIOVecCount());
-
+        #endif
         while ( m_currentVec < getEvent<VanadisSyscallIoVecEvent*>()->getIOVecCount() ) {
             if ( m_ioVecTable->getLength(m_currentVec) ) {
+                #ifdef VANADIS_BUILD_DEBUG
                 m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-%s] found pos=%d\n", getName().c_str(), m_currentVec );
+                #endif
                 return true;
             }
             ++m_currentVec;

@@ -147,6 +147,7 @@ public:
 
         mem_addr_reg_val = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
 
+        #ifdef VANADIS_BUILD_DEBUG
         switch ( regType ) {
         case LOAD_INT_REGISTER:
         {
@@ -173,7 +174,6 @@ public:
         } break;
         }
 
-        #ifdef VANADIS_BUILD_DEBUG
         // if(output->getVerboseLevel() >= 16)
         {
             output->verbose(

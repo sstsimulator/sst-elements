@@ -47,12 +47,6 @@
 namespace SST {
 namespace Vanadis {
 
-#ifdef VANADIS_BUILD_DEBUG
-#define VANADIS_COMPONENT VanadisDebugComponent
-#else
-#define VANADIS_COMPONENT VanadisComponent
-#endif
-
 class VanadisInsCacheLoadRecord
 {
 public:
@@ -93,24 +87,25 @@ private:
     const uint32_t hw_thr;
 };
 
-#ifdef VANADIS_BUILD_DEBUG
-class VanadisDebugComponent : public SST::Component
+class VanadisCore : public SST::Component
 {
-#else
-class VanadisComponent : public SST::Component
-{
-#endif
 
 public:
     SST_ELI_REGISTER_COMPONENT(
+        VanadisCore,
 #ifdef VANADIS_BUILD_DEBUG
-
-        VanadisDebugComponent, "vanadis", "dbg_VanadisCPU", SST_ELI_ELEMENT_VERSION(1, 0, 0),
-        "Vanadis Debug Processor Component",
+        "vanadisdbg",
 #else
-        VanadisComponent, "vanadis", "VanadisCPU", SST_ELI_ELEMENT_VERSION(1, 0, 0), "Vanadis Processor Component",
+        "vanadis",
 #endif
-        COMPONENT_CATEGORY_PROCESSOR)
+        "core",
+        SST_ELI_ELEMENT_VERSION(1, 0, 0),
+        "Vanadis Processor Component",
+        COMPONENT_CATEGORY_PROCESSOR
+    )
+
+    // This is the old name, allow use so that existing config files don't break
+    SST_ELI_REGISTER_ALIAS("dbg_VanadisCPU")
 
     SST_ELI_DOCUMENT_PARAMS(
         { "verbose", "Set the level of output verbosity, 0 is no output, higher "
@@ -185,13 +180,8 @@ public:
         { "mem_interface_inst", "Interface to memory system for instructions", "SST::Interfaces::StandardMem" },
     )
 
-#ifdef VANADIS_BUILD_DEBUG
-    VanadisDebugComponent(SST::ComponentId_t id, SST::Params& params);
-    ~VanadisDebugComponent();
-#else
-    VanadisComponent(SST::ComponentId_t id, SST::Params& params);
-    ~VanadisComponent();
-#endif
+    VanadisCore(SST::ComponentId_t id, SST::Params& params);
+    ~VanadisCore();
 
     virtual void init(unsigned int phase);
 
@@ -219,15 +209,9 @@ public:
     void dumpRegs( VanadisDumpRegsReq* req );
 
 private:
-#ifdef VANADIS_BUILD_DEBUG
-    VanadisDebugComponent();                             // for serialization only
-    VanadisDebugComponent(const VanadisDebugComponent&); // do not implement
-    void operator=(const VanadisDebugComponent&);        // do not implement
-#else
-    VanadisComponent();                        // for serialization only
-    VanadisComponent(const VanadisComponent&); // do not implement
-    void operator=(const VanadisComponent&);   // do not implement
-#endif
+    VanadisCore();                        // for serialization only
+    VanadisCore(const VanadisCore&); // do not implement
+    void operator=(const VanadisCore&);   // do not implement
 
     virtual bool tick(SST::Cycle_t);
 
@@ -282,7 +266,7 @@ private:
 
     void resetHwThread(uint32_t thr);
 
-    SST::Output* output;
+    SST::Output* output = nullptr;
 
     uint16_t core_id;
     uint64_t current_cycle;
@@ -302,7 +286,6 @@ private:
     std::vector<VanadisDecoder*>                            thread_decoders;
     std::vector<const VanadisDecoderOptions*>               isa_options;
 
-
     std::vector<VanadisFunctionalUnit*> fu_int_arith;
     std::vector<VanadisFunctionalUnit*> fu_int_div;
     std::vector<VanadisFunctionalUnit*> fu_branch;
@@ -310,8 +293,8 @@ private:
     std::vector<VanadisFunctionalUnit*> fu_fp_div;
 
     std::vector<VanadisRegisterFile*>  register_files;
-    VanadisRegisterStack* int_register_stack;
-    VanadisRegisterStack* fp_register_stack;
+    VanadisRegisterStack* int_register_stack = nullptr;
+    VanadisRegisterStack* fp_register_stack = nullptr;
 
     std::vector<VanadisISATable*> issue_isa_tables;
     std::vector<VanadisISATable*> retire_isa_tables;
@@ -321,17 +304,17 @@ private:
     std::vector<uint8_t*> tmp_not_issued_fp_reg_read;
     std::vector<uint8_t*> tmp_fp_reg_write;
 
-    std::list<VanadisInsCacheLoadRecord*>* icache_load_records;
+    std::list<VanadisInsCacheLoadRecord*>* icache_load_records = nullptr;
 
-    VanadisLoadStoreQueue* lsq;
-    StandardMem*           memInstInterface;
+    VanadisLoadStoreQueue* lsq = nullptr;
+    StandardMem*           memInstInterface = nullptr;
 
     std::vector<VanadisRoCCInterface*> roccs_;
     std::vector<std::deque<VanadisInstruction*>> rocc_queues_;
 
     uint32_t decode_start_thread_ = 0;
 
-    bool* halted_masks;
+    bool* halted_masks = nullptr;
     bool  print_int_reg;
     bool  print_fp_reg;
     bool  print_issue_tables;
@@ -339,28 +322,31 @@ private:
     bool  print_rob;
     bool enable_simt; //for future use
 
-    char*    instPrintBuffer;
-    uint64_t nextInsID;
+    // Tracing, debug, etc.
+    #ifdef VANADIS_BUILD_DEBUG
+    char*    inst_print_buffer_ = nullptr;
+    #endif
+    FILE*    pipeline_trace_file_ = nullptr;
+
     uint64_t dCacheLineWidth;
     uint64_t iCacheLineWidth;
 
     TimeConverter           clock_tc_;
-    Clock::HandlerBase*     clock_handler_;
-    FILE*           pipelineTrace;
+    Clock::HandlerBase*     clock_handler_ = nullptr;
 
-    Statistic<uint64_t>* stat_ins_retired;
-    Statistic<uint64_t>* stat_ins_decoded;
-    Statistic<uint64_t>* stat_ins_issued;
-    Statistic<uint64_t>* stat_loads_issued;
-    Statistic<uint64_t>* stat_stores_issued;
-    Statistic<uint64_t>* stat_branch_mispredicts;
-    Statistic<uint64_t>* stat_branches;
-    Statistic<uint64_t>* stat_cycles;
-    Statistic<uint64_t>* stat_rob_entries;
-    Statistic<uint64_t>* stat_rob_cleared_entries;
-    Statistic<uint64_t>* stat_syscall_cycles;
-    Statistic<uint64_t>* stat_int_phys_regs_in_use;
-    Statistic<uint64_t>* stat_fp_phys_regs_in_use;
+    Statistic<uint64_t>* stat_ins_retired = nullptr;
+    Statistic<uint64_t>* stat_ins_decoded = nullptr;
+    Statistic<uint64_t>* stat_ins_issued = nullptr;
+    Statistic<uint64_t>* stat_loads_issued = nullptr;
+    Statistic<uint64_t>* stat_stores_issued = nullptr;
+    Statistic<uint64_t>* stat_branch_mispredicts = nullptr;
+    Statistic<uint64_t>* stat_branches = nullptr;
+    Statistic<uint64_t>* stat_cycles = nullptr;
+    Statistic<uint64_t>* stat_rob_entries = nullptr;
+    Statistic<uint64_t>* stat_rob_cleared_entries = nullptr;
+    Statistic<uint64_t>* stat_syscall_cycles = nullptr;
+    Statistic<uint64_t>* stat_int_phys_regs_in_use = nullptr;
+    Statistic<uint64_t>* stat_fp_phys_regs_in_use = nullptr;
 
     uint32_t ins_issued_this_cycle;
     uint32_t ins_retired_this_cycle;
@@ -371,9 +357,9 @@ private:
     uint64_t stop_verbose_when_retire_address;
 
     std::vector<VanadisFloatingPointFlags*> fp_flags;
-    SST::Link* os_link;
+    SST::Link* os_link = nullptr;
 
-    bool* m_checkpointing;
+    bool* m_checkpointing = nullptr;
     std::string m_checkpointDir;
     enum { NO_CHECKPOINT, CHECKPOINT_LOAD, CHECKPOINT_SAVE } m_checkpoint;
     void checkpoint(FILE*);

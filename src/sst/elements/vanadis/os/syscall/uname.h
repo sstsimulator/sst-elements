@@ -27,7 +27,9 @@ public:
     VanadisUnameSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallUnameEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "uname" )
     {
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-uname] ---> uname struct is at address 0x%0" PRI_ADDR "\n", event->getUnameInfoAddress());
+        #endif
 
 #if 0
 struct new_utsname {

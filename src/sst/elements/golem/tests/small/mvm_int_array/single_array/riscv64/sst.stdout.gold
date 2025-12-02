@@ -1,6 +1,6 @@
 [RoCC 0]: node0.cpu0:rocc: numArrays: 1, arrayInputSize: 6, arrayOutputSize: 6 
 pid=100 tid=100 has exited
-all process have exited
+all processes have exited
  node0.cpu0:decoder:branch_unit.branch_cache_hit.1 : Accumulator : Sum.u64 = 38601; SumSQ.u64 = 38601; Count.u64 = 38601; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:decoder:branch_unit.branch_cache_miss.1 : Accumulator : Sum.u64 = 41855; SumSQ.u64 = 41855; Count.u64 = 41855; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:decoder:branch_unit.branch_cache_castout.1 : Accumulator : Sum.u64 = 7892; SumSQ.u64 = 7892; Count.u64 = 7892; Min.u64 = 1; Max.u64 = 1; 
