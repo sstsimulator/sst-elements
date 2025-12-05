@@ -205,7 +205,9 @@ endif
 EXTRA_DIST = \
     tests/testsuite_default_hg.py \
     tests/ostest.py \
-    tests/refFiles/ostest.out
+    tests/ostest-nano.py \
+    tests/refFiles/ostest.out \
+    tests/refFiles/ostest-nano.out
 
 deprecated_EXTRA_DIST =
 
