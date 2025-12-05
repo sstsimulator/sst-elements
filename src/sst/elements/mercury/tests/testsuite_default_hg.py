@@ -19,7 +19,7 @@ class testcase_hg(SSTTestCase):
 
 #####
 
-    def test_testme(self):
+    def test_os(self):
         testdir = self.get_testsuite_dir()
         libdir = sstsimulator_conf_get_value("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR", str)
         path = os.environ.get("SST_LIB_PATH")
@@ -29,6 +29,17 @@ class testcase_hg(SSTTestCase):
             os.environ["SST_LIB_PATH"] = path + ":" + libdir + "/ext"
         print(os.environ["SST_LIB_PATH"])
         self.simple_components_template("ostest")
+
+    def test_os_nano(self):
+        testdir = self.get_testsuite_dir()
+        libdir = sstsimulator_conf_get_value("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR", str)
+        path = os.environ.get("SST_LIB_PATH")
+        if path is None or path == "":
+            os.environ["SST_LIB_PATH"] = libdir + "/ext"
+        else:
+            os.environ["SST_LIB_PATH"] = path + ":" + libdir + "/ext"
+        print(os.environ["SST_LIB_PATH"])
+        self.simple_components_template("ostest-nano")
 
 #####
 

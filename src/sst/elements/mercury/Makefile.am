@@ -12,7 +12,7 @@ AM_LIBTOOLFLAGS = --tag=CXX
 comp_LTLIBRARIES = libhg.la
 compdir = $(pkglibdir)
 
-ext_LTLIBRARIES = libsystemlibrary.la libcomputelibrary.la libostest.la
+ext_LTLIBRARIES = libcomputelibrary.la libostest.la libostest-nano.la
 extdir = $(pkglibdir)/ext
 
 libhg_la_SOURCES = \
@@ -89,17 +89,14 @@ if SST_HG_A64
 endif
 endif
 
-libsystemlibrary_la_SOURCES = \
-  libraries/system/system_library.cc
-
 libcomputelibrary_la_SOURCES = \
   libraries/compute/compute_library.cc
-#  libraries/compute/compute_scheduler.cc \
-#  libraries/compute/instruction_processor.cc \
-#  libraries/compute/memory_model.cc
 
 libostest_la_SOURCES = \
   tests/ostest.cc
+
+libostest_nano_la_SOURCES = \
+  tests/ostest-nano.cc
 
 library_includedir=$(includedir)/sst/elements/mercury
 
@@ -160,9 +157,6 @@ nobase_library_include_HEADERS = \
   hardware/common/packet.h \
   hardware/common/flow.h \
   hardware/common/packet_fwd.h \
-  libraries/system/system_api.h \
-  libraries/system/system_library.h \
-  libraries/system/replacements/unistd.h \
   libraries/compute/compute_api.h \
   libraries/compute/compute_event.h \
   libraries/compute/compute_library.h \
@@ -220,7 +214,6 @@ EXTRA_DIST += $(deprecated_EXTRA_DIST)
 endif
 
 libhg_la_LDFLAGS = -module -avoid-version -shared
-libsystemlibrary_la_LDFLAGS = -module -avoid-version -shared
 libcomputelibrary_la_LDFLAGS = -module -avoid-version -shared
 libostest_la_LDFLAGS = -module -avoid-version
 
