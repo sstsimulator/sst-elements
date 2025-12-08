@@ -97,9 +97,6 @@ App::requireLibraries(SST::Params& params)
   if (params.contains("libraries")){
     params.find_array<std::string>("libraries", libs);
   }
-  else {
-    libs.push_back("systemlibrary:SystemLibrary");
-  }
 
   for (auto &str : libs) {
     auto pos = str.find(":");
@@ -219,8 +216,6 @@ App::createLibraries() {
   std::vector<std::string> libraries;
   if (params_.contains("libraries")){
     params_.find_array("libraries", libraries);
-  } else {
-      libraries.push_back("systemlibrary:SystemLibrary");
   }
 
   for (auto &str : libraries) {
