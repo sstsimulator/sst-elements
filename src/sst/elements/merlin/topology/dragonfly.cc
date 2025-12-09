@@ -1010,7 +1010,7 @@ void topo_dragonfly::routeUntimedData(int port, internal_router_event* ev, std::
         }
 
         if ( broadcast_to_groups ) {
-            for ( int p = 0; p < (int)(params.g - 1); p++ ) {
+            for ( int p = 0; p < (int)(params.g); p++ ) {
                 auto dst_group = p;
                 if ( dst_group >= (int)group_id && global_route_mode==global_route_mode_t::ABSOLUTE) dst_group++;
                 const RouterPortPair& pair = group_to_global_port.getRouterPortPair(dst_group,0);
