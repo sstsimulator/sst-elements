@@ -1014,7 +1014,7 @@ void topo_dragonfly::routeUntimedData(int port, internal_router_event* ev, std::
                 auto dst_group = p;
                 if ( dst_group >= (int)group_id && global_route_mode==global_route_mode_t::ABSOLUTE) dst_group++;
                 const RouterPortPair& pair = group_to_global_port.getRouterPortPair(dst_group,0);
-                if ( pair.router == router_id ) outPorts.push_back((int)(pair.port));
+                if ( pair.router == router_id && p != td_ev->src_group) outPorts.push_back((int)(pair.port));
             }
         }
     } else {
