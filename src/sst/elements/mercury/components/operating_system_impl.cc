@@ -126,13 +126,9 @@ OperatingSystemImpl::init(unsigned phase) {
 }
 
 //////////////////////////////////////////////////////////////////
-// OperatingSystemAPI Implemetations (forwarded by OS components)
+// OperatingSystemAPI implemetations (forwarded by OS components)
 //////////////////////////////////////////////////////////////////
 
-/* Event handler
-   * Incoming events are scanned and deleted
-   * Record if the event received is the last one our neighbor will send
-   */
 void
 OperatingSystemImpl::handleEvent(SST::Event *ev) {
   if (auto *req = dynamic_cast<AppLaunchRequest *>(ev)) {
@@ -141,10 +137,9 @@ OperatingSystemImpl::handleEvent(SST::Event *ev) {
                   params.find<std::string>("name").c_str());
     app_launcher_->incomingRequest(req);
   }
-  // else {
-  //   sst_hg_abort_printf("Error! Bad Event Type received by %s!\n",
-  //                       getName().c_str());
-  // }
+  else {
+    sst_hg_abort_printf("Event received with unknown type")
+  }
 }
 
 std::function<void(NetworkMessage*)>
@@ -174,12 +169,10 @@ void
 OperatingSystemImpl::startThread(Thread* t)
 {
   if (active_thread_){
-      //crap - can't do this on this thread - need to do on DES thread
+      //can't do this on this thread - need to do on DES thread
       os_api_->selfEventLink()->send(0,newCallback(this, &OperatingSystemImpl::startThread, t));
     } else {
       active_thread_ = t;
-      //activeOs() = this;
-      //os_api_->setActiveOs();
       activeOs() = os_api_;
       App* parent = t->parentApp();
       void* stack = StackAlloc::alloc();
@@ -234,8 +227,6 @@ OperatingSystemImpl::switchToThread(Thread* tothread)
     blocked_thread_ = nullptr;
   }
   active_thread_ = tothread;
-  //activeOs() = this;
-  //os_api_->setActiveOs();
   activeOs() = os_api_;
   tothread->context()->resumeContext(des_context_);
   out_->debug(CALL_INFO, 1, 0,
@@ -302,8 +293,6 @@ OperatingSystemImpl::block()
   old_context->pauseContext(des_context_);
 
   //restore state to indicate this thread and this OS are active again
-  //activeOs() = this;
-  //os_api_->setActiveOs();
   activeOs() = os_api_;
   out_->debug(CALL_INFO, 1, 0, "resuming context %d on physical thread %d\n",
                 active_thread_->threadId(), physical_thread_id_);
@@ -455,11 +444,7 @@ OperatingSystemImpl::handleRequest(Request* req)
   //this better be an incoming event to a library, probably from off node
   Flow* libmsg = dynamic_cast<Flow*>(req);
   if (!libmsg) {
-    out_->debug(CALL_INFO, 1, 0,
-                "OperatingSystem::handle_event: got event %s instead of library event\n",
-                toString(req).c_str());
-    // if libmsg is null we cannot continue
-    return;
+    sst_hg_abort_printf("OperatingSystemImpl::handle_event: cannot cast to Flow");
   }
 
   bool found = handleEventLibraryRequest(libmsg->libname(), req);

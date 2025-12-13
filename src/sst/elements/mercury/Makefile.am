@@ -12,7 +12,7 @@ AM_LIBTOOLFLAGS = --tag=CXX
 comp_LTLIBRARIES = libhg.la
 compdir = $(pkglibdir)
 
-ext_LTLIBRARIES = libsystemlibrary.la libcomputelibrary.la libostest.la
+ext_LTLIBRARIES = libcomputelibrary.la libostest.la libostest-nano.la
 extdir = $(pkglibdir)/ext
 
 libhg_la_SOURCES = \
@@ -29,6 +29,7 @@ libhg_la_SOURCES = \
   components/compute_library/operating_system_cl.cc \
   components/compute_library/operating_system_cl_api.cc \
   components/nic.cc \
+  components/nic_api.cc \
   components/node.cc \
   components/node_base.cc \
   components/operating_system.cc \
@@ -88,17 +89,14 @@ if SST_HG_A64
 endif
 endif
 
-libsystemlibrary_la_SOURCES = \
-  libraries/system/system_library.cc
-
 libcomputelibrary_la_SOURCES = \
   libraries/compute/compute_library.cc
-#  libraries/compute/compute_scheduler.cc \
-#  libraries/compute/instruction_processor.cc \
-#  libraries/compute/memory_model.cc
 
 libostest_la_SOURCES = \
   tests/ostest.cc
+
+libostest_nano_la_SOURCES = \
+  tests/ostest-nano.cc
 
 library_includedir=$(includedir)/sst/elements/mercury
 
@@ -138,6 +136,7 @@ nobase_library_include_HEADERS = \
   components/compute_library/operating_system_cl_api.h \
   components/compute_library/operating_system_cl_fwd.h \
   components/nic.h \
+  components/nic_api.h \
   components/nic_fwd.h \
   components/node.h \
   components/node_fwd.h \
@@ -158,9 +157,6 @@ nobase_library_include_HEADERS = \
   hardware/common/packet.h \
   hardware/common/flow.h \
   hardware/common/packet_fwd.h \
-  libraries/system/system_api.h \
-  libraries/system/system_library.h \
-  libraries/system/replacements/unistd.h \
   libraries/compute/compute_api.h \
   libraries/compute/compute_event.h \
   libraries/compute/compute_library.h \
@@ -209,7 +205,9 @@ endif
 EXTRA_DIST = \
     tests/testsuite_default_hg.py \
     tests/ostest.py \
-    tests/refFiles/ostest.out
+    tests/ostest-nano.py \
+    tests/refFiles/ostest.out \
+    tests/refFiles/ostest-nano.out
 
 deprecated_EXTRA_DIST =
 
@@ -218,7 +216,6 @@ EXTRA_DIST += $(deprecated_EXTRA_DIST)
 endif
 
 libhg_la_LDFLAGS = -module -avoid-version -shared
-libsystemlibrary_la_LDFLAGS = -module -avoid-version -shared
 libcomputelibrary_la_LDFLAGS = -module -avoid-version -shared
 libostest_la_LDFLAGS = -module -avoid-version
 

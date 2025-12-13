@@ -56,10 +56,6 @@ AppLauncher::requireLibraries(SST::Params& params)
   if (params.contains("libraries")){
     params.find_array<std::string>("libraries", libs);
   }
-  else {
-    libs.push_back("systemlibrary:SystemLibrary");
-  }
-
   for (auto &str : libs) {
     auto pos = str.find(":");
     std::string libname = str.substr(0, pos);

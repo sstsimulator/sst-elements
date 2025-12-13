@@ -36,7 +36,7 @@ NodeCL::NodeCL(ComponentId_t id, Params &params)
       "link_control_slot", SST::ComponentInfo::SHARE_NONE, 1);
   if (link_control_) {
     out_->debug(CALL_INFO, 1, 0, "loading hg.NIC\n");
-    nic_ = loadUserSubComponent<NIC>("nic_slot", SST::ComponentInfo::SHARE_NONE);
+    nic_ = loadUserSubComponent<NicAPI>("nic_slot", SST::ComponentInfo::SHARE_NONE);
     assert(nic_);
     nic_->set_parent(this);
     nic_->set_link_control(link_control_);

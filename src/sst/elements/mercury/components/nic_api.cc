@@ -13,20 +13,11 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#define ssthg_app_name ostest
-#include <iostream>
-#include <mercury/common/skeleton.h>
-using namespace SST::Hg;
+#include <mercury/components/nic_api.h>
 
-int main(int argc, char** argv) {
-  for (int i = 0; i < argc; i++) {
-    std::cout << argv[i] << "\n";
-  }
+namespace SST::Hg {
 
-  std::cout << "Hello from Mercury!\n";
-  std::cout << "Now I will sleep\n";
-  ssthg_sleep(5);
-  std::cout << "I'm back!\n";
-  std::cout << "Bye!\n";
-  return 0;
+NicAPI::NicAPI(uint32_t id, SST::Params& params) :
+  SST::Hg::SubComponent(id) { }
+
 }

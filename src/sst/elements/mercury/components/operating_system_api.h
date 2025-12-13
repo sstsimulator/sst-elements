@@ -121,10 +121,6 @@ public:
    virtual void unregisterEventLib(EventLibrary *lib) = 0;
 
    virtual void handleRequest(Request *req) = 0;
-
-   // void sleep(TimeDelta time);
-   // void compute(TimeDelta time);
-
 };
 
 } // namespace Hg

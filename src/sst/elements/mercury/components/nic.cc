@@ -20,12 +20,13 @@
 #include <mercury/components/operating_system.h>
 #include <mercury/hardware/network/network_message.h>
 
+#include <memory>
 #include <sstream>
 
 static std::string _tick_spacing_string_("1ps");
 
-namespace SST {
-namespace Hg {
+
+namespace SST::Hg {
 
 void
 NicEvent::serialize_order(SST::Core::Serialization::serializer& ser)
@@ -34,18 +35,22 @@ NicEvent::serialize_order(SST::Core::Serialization::serializer& ser)
   SST_SER(msg_);
 }
 
-NIC::NIC(uint32_t id, SST::Params& params) :
-  SST::Hg::SubComponent(id)
+NIC::NIC(uint32_t id, SST::Params& params) : NicAPI(id, params)
 {
   unsigned int verbose = params.find<unsigned int>("verbose", 0);
-  out_ = std::unique_ptr<SST::Output>(
-      new SST::Output(toString(), verbose, 0, Output::STDOUT));
+  out_ = std::make_unique<SST::Output>(
+      toString(), verbose, 0, Output::STDOUT);
 
   pending_.resize(1);
   ack_queue_.resize(1);
 
   mtu_ = params.find<unsigned int>("mtu", 4096);
   out_->debug(CALL_INFO, 1, 0, "setting mtu to %d\n", mtu_);
+}
+
+NodeId
+NIC::addr() const {
+  return my_addr_;
 }
 
 std::string
@@ -120,7 +125,7 @@ NIC::incomingPacket(int vn){
     auto bytes = req->size_in_bits/8;
     auto* payload = req->takePayload();
 
-    uint64_t flow_id;
+    uint64_t flow_id = 0;
     auto* tracker = dynamic_cast<FlowTracker*>(payload);
     if (tracker != nullptr) {
       flow_id = tracker->id();
@@ -128,11 +133,11 @@ NIC::incomingPacket(int vn){
     }
 
     if (req->tail) {
-      auto* incoming_msg = payload ? static_cast<NetworkMessage*>(payload) : nullptr;
+      auto* incoming_msg = payload ? dynamic_cast<NetworkMessage*>(payload) : nullptr;
       if (incoming_msg == nullptr) sst_hg_abort_printf("couldn't cast event to NetworkMessage\n");
       Flow* flow = cq_.recv(incoming_msg->flowId(), bytes, incoming_msg);
       if (flow == nullptr) sst_hg_abort_printf("couldn't get a flow\n");
-      auto* msg = static_cast<NetworkMessage*>(flow);
+      auto* msg = dynamic_cast<NetworkMessage*>(flow);
       if (msg == nullptr) sst_hg_abort_printf("couldn't cast flow to message\n");
       out_->debug(CALL_INFO, 1, 0, "fully received message %s\n",
                   msg->toString().c_str());
@@ -242,7 +247,7 @@ void
 NIC::mtlHandle(Event *ev)
 {
   out_->debug(CALL_INFO, 1, 0, "MTL handle\n");
-  NicEvent* nev = static_cast<NicEvent*>(ev);
+  NicEvent* nev = dynamic_cast<NicEvent*>(ev);
   NetworkMessage* msg = nev->msg();
   delete nev;
   recvMessage(msg);
@@ -413,5 +418,24 @@ NIC::set_parent(NodeBase *parent) {
   parent_ = parent;
 }
 
-} // end of namespace Hg
-} // end of namespace SST
+void
+NIC::doSend(NetworkMessage *payload) {
+  inject(0, payload);
+}
+
+void
+NIC::set_link_control(SST::Interfaces::SimpleNetwork *link_control) {
+  link_control_ = link_control;
+}
+
+NodeBase *
+NIC::parent() const {
+  return parent_;
+}
+
+bool
+NIC::negligibleSize(int bytes) const {
+  return bytes <= negligibleSize_;
+}
+
+} // end of namespace SST::Hg

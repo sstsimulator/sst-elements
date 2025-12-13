@@ -13,7 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#define ssthg_app_name ostest
+#define ssthg_app_name ostest-nano
 #include <iostream>
 #include <mercury/common/skeleton.h>
 using namespace SST::Hg;
@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
 
   std::cout << "Hello from Mercury!\n";
   std::cout << "Now I will sleep\n";
-  ssthg_sleep(5);
+  ssthg_nanosleep(5);
   std::cout << "I'm back!\n";
   std::cout << "Bye!\n";
   return 0;
