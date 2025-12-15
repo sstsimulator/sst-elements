@@ -267,7 +267,7 @@ VanadisNodeOSComponent::checkpoint( std::string dir )
     auto fp = fopen(filename.str().c_str(),"w+");
     assert(fp);
 
-    m_mmu->checkpoint( dir );
+    m_mmu->snapshot( dir );
     m_physMemMgr->checkpoint( output, dir );
 
     // dump ELF map
@@ -335,7 +335,7 @@ int VanadisNodeOSComponent::checkpointLoad( std::string dir )
     auto fp = fopen(filename.str().c_str(),"r");
     assert(fp);
 
-    m_mmu->checkpointLoad( dir );
+    m_mmu->snapshotLoad( dir );
     m_physMemMgr->checkpointLoad( output, dir );
 
     // load ELF map

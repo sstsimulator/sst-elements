@@ -20,132 +20,150 @@
 using namespace SST;
 using namespace SST::MMU_Lib;
 
-TLB_Wrapper::TLB_Wrapper(SST::ComponentId_t id, SST::Params& params): Component(id), m_pending(0)
+TLB_Wrapper::TLB_Wrapper(SST::ComponentId_t id, SST::Params& params): Component(id)
 {
     char buffer[100];
     snprintf(buffer,100,"@t:%s:TLB_Wrapper::@p():@l ",getName().c_str());
-    m_dbg.init( buffer,
+    dbg_.init( buffer,
         params.find<int>("debug_level", 0),
         0, // Mask
         Output::STDOUT );
 
-    m_exe = params.find<bool>("exe", 0 );
+    exe_ = params.find<bool>("exe", 0 );
 
-    m_cpu_if = configureLink("cpu_if", new Event::Handler2<TLB_Wrapper,&TLB_Wrapper::handleCpuEvent>(this));
-    if ( nullptr == m_cpu_if ) {
-        m_dbg.fatal(CALL_INFO, -1, "Error: was unable to configure link `cpu_if`\n");
+    cpu_if_ = configureLink("cpu_if", new Event::Handler2<TLB_Wrapper,&TLB_Wrapper::handleCpuEvent>(this));
+    if ( nullptr == cpu_if_ ) {
+        dbg_.fatal(CALL_INFO, -1, "Error: was unable to configure link `cpu_if`\n");
     }
 
-    m_cache_if = configureLink("cache_if", new Event::Handler2<TLB_Wrapper,&TLB_Wrapper::handleCacheEvent>(this));
-    if ( nullptr == m_cache_if ) {
-        m_dbg.fatal(CALL_INFO, -1, "Error: was unable to configure link `cache_if`\n");
+    cache_if_ = configureLink("cache_if", new Event::Handler2<TLB_Wrapper,&TLB_Wrapper::handleCacheEvent>(this));
+    if ( nullptr == cache_if_ ) {
+        dbg_.fatal(CALL_INFO, -1, "Error: was unable to configure link `cache_if`\n");
     }
 
-    m_tlb = loadUserSubComponent<SST::MMU_Lib::TLB>("tlb");
-    if ( nullptr == m_tlb ) {
-        m_dbg.fatal(CALL_INFO, -1, "Error: was unable to load subComponent `tlb`\n");
+    tlb_ = loadUserSubComponent<SST::MMU_Lib::TLB>("tlb");
+    if ( nullptr == tlb_ ) {
+        dbg_.fatal(CALL_INFO, -1, "Error: was unable to load subComponent `tlb`\n");
     }
 
     TLB::Callback callback = std::bind(&TLB_Wrapper::tlbCallback, this, std::placeholders::_1, std::placeholders::_2);
-    m_tlb->registerCallback( callback );
+    tlb_->registerCallback( callback );
 }
 
 void TLB_Wrapper::init(unsigned int phase)
 {
     SST::Event * ev;
 
-    while ((ev = m_cpu_if->recvUntimedData())) { //incoming from CPU forward to mem/caches
-        m_cache_if->sendUntimedData(ev);
+    while ((ev = cpu_if_->recvUntimedData())) { //incoming from CPU forward to mem/caches
+        cache_if_->sendUntimedData(ev);
     }
 
-    while ((ev = m_cache_if->recvUntimedData())) { //incoming from mem/caches forward to the CPU
-        auto memEvent = dynamic_cast<MemHierarchy::MemEventInit*>(ev);
-        if (memEvent) {
+    while ((ev = cache_if_->recvUntimedData())) { //incoming from mem/caches forward to the CPU
+        auto mem_event_init = dynamic_cast<MemHierarchy::MemEventInit*>(ev);
+        if (mem_event_init) {
 
             //
-            if (memEvent->getCmd() == MemHierarchy::Command::NULLCMD) {
-                if (memEvent->getInitCmd() == MemHierarchy::MemEventInit::InitCommand::Coherence) {
-                    m_cpu_if->sendUntimedData(ev);
-
-                } else if (memEvent->getInitCmd() == MemHierarchy::MemEventInit::InitCommand::Endpoint) {
-                    auto memEventE = static_cast<MemHierarchy::MemEventInitEndpoint*>(memEvent);
-                    m_dbg.debug(CALL_INFO_LONG,1,0,"Received initEndpoint message: %s\n", memEventE->getVerboseString(11).c_str());
-                    std::vector<std::pair<MemHierarchy::MemRegion,bool>> regions = memEventE->getRegions();
+            if (mem_event_init->getCmd() == MemHierarchy::Command::NULLCMD) {
+                if (mem_event_init->getInitCmd() == MemHierarchy::MemEventInit::InitCommand::Coherence) {
+                    // Read cache line size
+                    MemHierarchy::MemEventInitCoherence * mem_event_init_coherence = static_cast<MemHierarchy::MemEventInitCoherence*>(mem_event_init);
+                    if (mem_event_init_coherence->getType() == MemHierarchy::Endpoint::Cache || mem_event_init_coherence->getType() == MemHierarchy::Endpoint::Directory) {
+                        line_size_ = mem_event_init_coherence->getLineSize();
+                    }
+                    // Forward event to standard interface
+                    cpu_if_->sendUntimedData(ev);
+                } else if (mem_event_init->getInitCmd() == MemHierarchy::MemEventInit::InitCommand::Endpoint) {
+                    auto mem_event_init_endpoint = static_cast<MemHierarchy::MemEventInitEndpoint*>(mem_event_init);
+                    dbg_.debug(CALL_INFO_LONG,1,0,"Received initEndpoint message: %s\n", mem_event_init_endpoint->getVerboseString(11).c_str());
+                    std::vector<std::pair<MemHierarchy::MemRegion,bool>> regions = mem_event_init_endpoint->getRegions();
                     for (auto it = regions.begin(); it != regions.end(); it++) {
                         if (!it->second) {
                             // we don't want to pass this event to the CPU
-                            noncacheableRegions.insert(std::make_pair(it->first.start, it->first));
+                            noncacheable_regions_.insert(std::make_pair(it->first.start, it->first));
                         } else {
-                            m_cpu_if->sendUntimedData(ev);
+                            cpu_if_->sendUntimedData(ev);
                         }
                     }
                 } else {
-                    m_cpu_if->sendUntimedData(ev);
+                    cpu_if_->sendUntimedData(ev);
                 }
             }
         }
     }
 
-    m_tlb->init( phase );
+    tlb_->init( phase );
 }
 
-void TLB_Wrapper::tlbCallback( RequestID reqId, uint64_t physAddr )
+void TLB_Wrapper::setup()
 {
-    auto memEv = reinterpret_cast<MemHierarchy::MemEvent*>( reqId );
-    uint64_t addr = memEv->getAddr();
-    m_dbg.debug(CALL_INFO_LONG,1,0,"reqId=%#" PRIx64 " virtAddr=%#" PRIx64 "  physAddr=%#" PRIx64 "\n",reqId,addr,physAddr);
+    if ( line_size_ == 0 ) {
+        dbg_.fatal(CALL_INFO, -1, "Error: No line size was received during the init() phase\n");
+    }
+}
 
-    if( physAddr == -1 ) {
-        auto resp = memEv->makeResponse();
+void TLB_Wrapper::tlbCallback( RequestID req_id, uint64_t phys_addr )
+{
+    auto mem_event = reinterpret_cast<MemHierarchy::MemEvent*>( req_id );
+    uint64_t addr = mem_event->getAddr();
+#ifdef __SST_DEBUG_OUTPUT__
+    dbg_.debug(CALL_INFO_LONG,1,0,"reqId=%#" PRIx64 " virtAddr=%#" PRIx64 "  physAddr=%#" PRIx64 "\n", req_id, addr, phys_addr);
+#endif
+
+    if( phys_addr == -1 ) {
+        auto resp = mem_event->makeResponse();
         static_cast<MemHierarchy::MemEvent*>(resp)->setFail();
-        m_cpu_if->send( resp );
-        delete memEv;
+        cpu_if_->send( resp );
+        delete mem_event;
     } else {
 
-        memEv->setVirtualAddress( memEv->getAddr()  );
-        memEv->setBaseAddr(roundDown(physAddr,64));
-        memEv->setAddr(physAddr);
+        mem_event->setVirtualAddress( mem_event->getAddr()  );
+        mem_event->setBaseAddr(roundDown(phys_addr, line_size_));
+        mem_event->setAddr(phys_addr);
 
-        if (!((noncacheableRegions).empty())) {
+        if (!((noncacheable_regions_).empty())) {
             // Check if addr lies in noncacheable regions.
             // For simplicity we are not dealing with the case where the address range splits a noncacheable + cacheable region
-            std::multimap<MemHierarchy::Addr, MemHierarchy::MemRegion>::iterator ep = (noncacheableRegions).upper_bound(physAddr);
-            for (std::multimap<MemHierarchy::Addr, MemHierarchy::MemRegion>::iterator it = (noncacheableRegions).begin(); it != ep; it++) {
-                if (it->second.contains(physAddr)) {
-                    memEv->setFlag(MemHierarchy::MemEvent::F_NONCACHEABLE);
+            std::multimap<MemHierarchy::Addr, MemHierarchy::MemRegion>::iterator ep = (noncacheable_regions_).upper_bound(phys_addr);
+            for (std::multimap<MemHierarchy::Addr, MemHierarchy::MemRegion>::iterator it = (noncacheable_regions_).begin(); it != ep; it++) {
+                if (it->second.contains(phys_addr)) {
+                    mem_event->setFlag(MemHierarchy::MemEvent::F_NONCACHEABLE);
                     break;
                 }
             }
         }
 
-        m_dbg.debug(CALL_INFO_LONG,1,0,"memEvent thread=%d  addr=%#" PRIx64 " -> %#" PRIx64 "\n",
-                memEv->getThreadID(), addr, memEv->getAddr() );
-
-        m_cache_if->send( memEv );
+#ifdef __SST_DEBUG_OUTPUT__
+        dbg_.debug(CALL_INFO_LONG,1,0,"memEvent thread=%d  addr=%#" PRIx64 " -> %#" PRIx64 "\n",
+                mem_event->getThreadID(), addr, mem_event->getAddr() );
+#endif
+        cache_if_->send( mem_event );
     }
-    --m_pending;
+    --pending_;
 }
 
 void TLB_Wrapper::handleCpuEvent( Event* ev )
 {
-    ++m_pending;
-    MemHierarchy::MemEvent* memEv = dynamic_cast<MemHierarchy::MemEvent*>(ev);
-    m_dbg.debug(CALL_INFO_LONG,1,0,"memEvent thread=%d baseAddr=%#" PRIx64  " addr=%#"  PRIx64  "\n",  memEv->getThreadID(), memEv->getBaseAddr(), memEv->getAddr() );
-    m_dbg.debug(CALL_INFO_LONG,1,0," %s \n", memEv->getVerboseString(16).c_str() );
+    ++pending_;
+    MemHierarchy::MemEvent* mem_event = static_cast<MemHierarchy::MemEvent*>(ev);
+#ifdef __SST_DEBUG_OUTPUT__
+    dbg_.debug(CALL_INFO_LONG,1,0,"memEvent thread=%d baseAddr=%#" PRIx64  " addr=%#"  PRIx64  "\n",  mem_event->getThreadID(), mem_event->getBaseAddr(), mem_event->getAddr() );
+    dbg_.debug(CALL_INFO_LONG,1,0," %s \n", mem_event->getVerboseString(16).c_str() );
+#endif
+    auto req_id = reinterpret_cast<RequestID>(mem_event);
+    int hw_thread = mem_event->getThreadID();
+    uint64_t virt_addr = mem_event->getAddr(); // getVirtualAddress()
+    uint64_t inst_ptr = mem_event->getInstructionPointer();
+    uint32_t perms = getPerms( mem_event );
 
-    auto reqId = reinterpret_cast<RequestID>(memEv);
-    int hwThread = memEv->getThreadID();
-    uint64_t virtAddr = memEv->getAddr(); // getVirtualAddress()
-    uint64_t instPtr = memEv->getInstructionPointer();
-    uint32_t perms = getPerms( memEv );
-
-    m_tlb->getVirtToPhys( reqId, hwThread, virtAddr, perms, instPtr );
+    tlb_->getVirtToPhys( req_id, hw_thread, virt_addr, perms, inst_ptr );
 }
 
 void TLB_Wrapper::handleCacheEvent( Event* ev ) {
-    MemHierarchy::MemEvent* memEv = dynamic_cast<MemHierarchy::MemEvent*>(ev);
-    assert( memEv );
+#ifdef __SST_DEBUG_OUTPUT__
+    MemHierarchy::MemEvent* mem_event = dynamic_cast<MemHierarchy::MemEvent*>(ev);
+    assert( mem_event );
 
-    m_dbg.debug(CALL_INFO_LONG,1,0," %s \n", memEv->getVerboseString(16).c_str() );
-    m_cpu_if->send(ev);
+    dbg_.debug(CALL_INFO_LONG,1,0," %s \n", mem_event->getVerboseString(16).c_str() );
+#endif
+    cpu_if_->send(ev);
 }

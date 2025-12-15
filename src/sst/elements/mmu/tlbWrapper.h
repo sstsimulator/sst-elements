@@ -58,6 +58,7 @@ class TLB_Wrapper : public SST::Component {
     ~TLB_Wrapper() {}
 
     void init(unsigned int phase);
+    void setup();
 
   private:
 
@@ -66,7 +67,7 @@ class TLB_Wrapper : public SST::Component {
     }
 
     uint32_t getPerms( MemHierarchy::MemEvent* ev ) {
-        uint32_t perms = m_exe;
+        uint32_t perms = exe_;
         switch( ev->getCmd() ) {
           case MemHierarchy::Command::GetS:
           case MemHierarchy::Command::GetSX:
@@ -86,16 +87,17 @@ class TLB_Wrapper : public SST::Component {
     void handleCpuEvent( Event* );
     void handleCacheEvent( Event* );
 
-    Link* m_cpu_if;
-    Link* m_cache_if;
-    TLB* m_tlb;
-    uint32_t m_exe;
+    Link* cpu_if_ = nullptr;
+    Link* cache_if_ = nullptr;
+    TLB* tlb_ = nullptr;
+    uint32_t exe_ = 0;
+    uint32_t line_size_ = 0;
 
-    SST::Output m_dbg;
-    int m_pending;
+    SST::Output dbg_;
+    int pending_ = 0;
 
     /* Record noncacheable regions (e.g., MMIO device addresses) */
-    std::multimap<MemHierarchy::Addr, MemHierarchy::MemRegion> noncacheableRegions;
+    std::multimap<MemHierarchy::Addr, MemHierarchy::MemRegion> noncacheable_regions_;
 
 };
 
