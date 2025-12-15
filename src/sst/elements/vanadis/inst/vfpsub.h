@@ -170,7 +170,9 @@ public:
         instOp(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1,
                         phys_fp_regs_in_2, phys_fp_regs_in_3,
                         phys_fp_regs_out_0,phys_fp_regs_out_1);
+        #ifdef VANADIS_BUILD_DEBUG
         log(output, 16, 65535, phys_fp_regs_out_0, phys_fp_regs_in_0, phys_fp_regs_in_1);
+        #endif
         markExecuted();
     }
 };

@@ -91,7 +91,9 @@ public:
         uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0);
         bool compare_result = false;
         instOp(output, regFile, phys_int_regs_in_0, &compare_result);
+        #ifdef VANADIS_BUILD_DEBUG
         log(output, 16, 65535,compare_result,phys_int_regs_in_0);
+        #endif
         markExecuted();
     }
 

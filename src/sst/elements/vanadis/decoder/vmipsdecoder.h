@@ -171,10 +171,17 @@ namespace Vanadis {
 class VanadisMIPSDecoder : public VanadisDecoder
 {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(VanadisMIPSDecoder, "vanadis", "VanadisMIPSDecoder",
-                                          SST_ELI_ELEMENT_VERSION(1, 0, 0),
-                                          "Implements a MIPS-compatible decoder for Vanadis CPU processing.",
-                                          SST::Vanadis::VanadisDecoder)
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        VanadisMIPSDecoder,
+    #ifdef VANADIS_BUILD_DEBUG
+        "vanadisdbg",
+    #else
+        "vanadis",
+    #endif
+        "VanadisMIPSDecoder",
+        SST_ELI_ELEMENT_VERSION(1, 0, 0),
+        "Implements a MIPS-compatible decoder for Vanadis CPU processing.",
+        SST::Vanadis::VanadisDecoder)
 
     SST_ELI_DOCUMENT_PARAMS({ "entry_point", "Starting instruction pointer; if not specified (set to 0), "
                                              "falls back to the core's ELF reader to discover", "0"})
@@ -295,48 +302,68 @@ public:
     virtual VanadisFPRegisterMode getFPRegisterMode() const { return VANADIS_REGISTER_MODE_FP32; }
 
     void setStackPointer( VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t start_stack_address ) {
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(
             CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting SP to (64B-aligned):          %" PRIu64 " / 0x%0" PRI_ADDR "\n", start_stack_address,
             start_stack_address);
+        #endif
         const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(29);
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Stack Pointer (r29) maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        #endif
         // Set up the stack pointer
         // Register 29 is MIPS for Stack Pointer
         regFile->setIntReg(sp_phys_reg, start_stack_address);
     }
 
     void setArg1Register( VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(
             CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting argument 1 register to (64B-aligned):          %" PRIu64 " / 0x%0" PRI_ADDR "\n", value,
             value);
+        #endif
         const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(4);
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> argument 1 (r4) maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        #endif
         regFile->setIntReg(sp_phys_reg, value);
     }
 
     virtual void setFuncPointer( VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(
             CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 25 to (64B-aligned):          %" PRIu64 " / 0x%0" PRI_ADDR "\n", value,
             value);
+        #endif
         const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(25);
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> r25 maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        #endif
         regFile->setIntReg(sp_phys_reg, value);
     }
     virtual void setReturnRegister( VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(
             CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 2 to (64B-aligned):          %" PRIu64 " / 0x%0" PRI_ADDR "\n", value,
             value);
+        #endif
         const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(2);
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> r2 maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        #endif
         regFile->setIntReg(sp_phys_reg, value);
     }
 
     virtual void setSuccessRegister( VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(
             CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 7 to (64B-aligned):          %" PRIu64 " / 0x%0" PRI_ADDR "\n", value,
             value);
+        #endif
         const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(7);
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> r7 maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        #endif
         regFile->setIntReg(sp_phys_reg, value);
     }
 
@@ -429,7 +456,9 @@ public:
 
     virtual bool tick( uint64_t cycle )
     {
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Decode step for thr: %" PRIu32 "\n", hw_thr);
+        #endif
 
         cycle_count = cycle;
 
@@ -444,14 +473,18 @@ public:
         // decode the input, put it in the queue for issue.
         if ( !thread_rob->full() ) {
             if ( ins_loader->hasBundleAt(ip) ) {
+                #ifdef VANADIS_BUILD_DEBUG
                 output_->verbose(
                     CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "---> Found uop bundle for ip=0x0%" PRI_ADDR ", loading from cache...\n", ip);
+                #endif
                 VanadisInstructionBundle* bundle = ins_loader->getBundleAt(ip);
                 stat_uop_hit->addData(1);
 
+                #ifdef VANADIS_BUILD_DEBUG
                 output_->verbose(
                     CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-----> Bundle contains %" PRIu32 " entries.\n",
                     bundle->getInstructionCount());
+                #endif
 
                 if ( 0 == bundle->getInstructionCount() ) {
                     output_->fatal(CALL_INFO, -1, "------> STOP - bundle at 0x%0" PRI_ADDR " contains zero entries.\n", ip);
@@ -459,18 +492,22 @@ public:
 
                 bool q_contains_store = false;
 
+                #ifdef VANADIS_BUILD_DEBUG
                 output_->verbose(
                     CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "----> thr-rob contains %" PRIu32 " entries.\n",
                     (uint32_t)thread_rob->size());
+                #endif
 
                 // Check if last instruction is a BRANCH, if yes, we need to also
                 // decode the branch-delay slot AND handle the prediction
                 if ( bundle->getInstructionByIndex(bundle->getInstructionCount() - 1)->getInstFuncType() ==
                      INST_BRANCH ) {
+                    #ifdef VANADIS_BUILD_DEBUG
                     output_->verbose(
                         CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                         "-----> Last instruction in the bundle causes potential "
                         "branch, checking on branch delay slot\n");
+                    #endif
 
                     VanadisInstructionBundle* delay_bundle = nullptr;
                     uint32_t                  temp_delay   = 0;
@@ -481,15 +518,19 @@ public:
                         stat_uop_hit->addData(1);
                     }
                     else {
+                        #ifdef VANADIS_BUILD_DEBUG
                         output_->verbose(
                             CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                             "-----> Branch delay slot is not currently "
                             "decoded into a bundle.\n");
+                        #endif
                         if ( ins_loader->hasPredecodeAt(ip + 4, 4) ) {
+                            #ifdef VANADIS_BUILD_DEBUG
                             output_->verbose(
                                 CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                 "-----> Branch delay slot is a pre-decode "
                                 "cache item, decode it and keep bundle.\n");
+                            #endif
                             delay_bundle = new VanadisInstructionBundle(ip + 4);
 
                             if ( ins_loader->getPredecodeBytes(ip + 4, (uint8_t*)&temp_delay, sizeof(temp_delay)) ) {
@@ -508,10 +549,12 @@ public:
                             }
                         }
                         else {
+                            #ifdef VANADIS_BUILD_DEBUG
                             output_->verbose(
                                 CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                 "-----> Branch delay slot also misses in "
                                 "pre-decode cache, need to request it.\n");
+                            #endif
                             ins_loader->requestLoadAt(ip + 4, 4);
                             stat_ins_bytes_loaded->addData(4);
                             stat_predecode_miss->addData(1);
@@ -523,17 +566,21 @@ public:
                         if ( (bundle->getInstructionCount() + delay_bundle->getInstructionCount()) <
                              (thread_rob->capacity() - thread_rob->size()) ) {
 
+                            #ifdef VANADIS_BUILD_DEBUG
                             output_->verbose(
                                 CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                 "---> Proceeding with issue the branch and its "
                                 "delay slot...\n");
+                            #endif
 
                             for ( uint32_t i = 0; i < bundle->getInstructionCount(); ++i ) {
                                 VanadisInstruction* next_ins = bundle->getInstructionByIndex(i)->clone();
 
+                                #ifdef VANADIS_BUILD_DEBUG
                                 output_->verbose(
                                     CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "---> --> issuing ins addr: 0x0%" PRI_ADDR ", %s...\n",
                                     next_ins->getInstructionAddress(), next_ins->getInstCode());
+                                #endif
 
                                 thread_rob->push(next_ins);
 
@@ -551,38 +598,46 @@ public:
 
                                         // This is essentially a predicted not taken branch
                                         if ( predicted_address == (ip + 8) ) {
+                                            #ifdef VANADIS_BUILD_DEBUG
                                             output_->verbose(
                                                 CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                                 "---> Branch 0x%" PRI_ADDR " predicted not "
                                                 "taken, ip set to: 0x%0" PRI_ADDR "\n",
                                                 ip, predicted_address);
+                                            #endif
                                             // speculated_ins->setSpeculatedDirection(
                                             // BRANCH_NOT_TAKEN );
                                         }
                                         else {
+                                            #ifdef VANADIS_BUILD_DEBUG
                                             output_->verbose(
                                                 CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                                 "---> Branch 0x%" PRI_ADDR " predicted taken, "
                                                 "jump to 0x%0" PRI_ADDR "\n",
                                                 ip, predicted_address);
+                                            #endif
                                             // speculated_ins->setSpeculatedDirection(
                                             // BRANCH_TAKEN );
                                         }
 
                                         ip = predicted_address;
+                                        #ifdef VANADIS_BUILD_DEBUG
                                         output_->verbose(
                                             CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                             "---> Forcing IP update according to branch "
                                             "prediction table, new-ip: %0" PRI_ADDR "\n",
                                             ip);
+                                        #endif
                                     }
                                     else {
+                                        #ifdef VANADIS_BUILD_DEBUG
                                         output_->verbose(
                                             CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                             "---> Branch table does not contain an "
                                             "entry for ins: 0x%0" PRI_ADDR ", continue with "
                                             "normal ip += 8 = 0x%0" PRI_ADDR "\n",
                                             ip, (ip + 8));
+                                        #endif
 
                                         // speculated_ins->setSpeculatedDirection(
                                         // BRANCH_NOT_TAKEN );
@@ -599,9 +654,11 @@ public:
                             for ( uint32_t i = 0; i < delay_bundle->getInstructionCount(); ++i ) {
                                 VanadisInstruction* next_ins = delay_bundle->getInstructionByIndex(i)->clone();
 
+                                #ifdef VANADIS_BUILD_DEBUG
                                 output_->verbose(
                                     CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "---> --> issuing ins addr: 0x0%" PRI_ADDR ", %s...\n",
                                     next_ins->getInstructionAddress(), next_ins->getInstCode());
+                                #endif
                                 thread_rob->push(next_ins);
                             }
 
@@ -609,19 +666,23 @@ public:
                             success = true;
                         }
                         else {
+                            #ifdef VANADIS_BUILD_DEBUG
                             output_->verbose(
                                 CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                 "---> --> micro-op for branch and delay exceed "
                                 "decode-q space. Cannot issue this cycle.\n");
+                            #endif
                             stat_uop_delayed_rob_full->addData(1);
                         }
                     }
                 }
                 else {
+                    #ifdef VANADIS_BUILD_DEBUG
                     output_->verbose(
                         CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                         "---> Instruction for issue is not a branch, "
                         "continuing with normal copy to issue-queue...\n");
+                    #endif
                     // Do we have enough space in the decode queue for the bundle
                     // contents?
                     if ( bundle->getInstructionCount() < (thread_rob->capacity() - thread_rob->size()) ) {
@@ -629,9 +690,11 @@ public:
                         for ( uint32_t i = 0; i < bundle->getInstructionCount(); ++i ) {
                             VanadisInstruction* next_ins = bundle->getInstructionByIndex(i);
 
+                            #ifdef VANADIS_BUILD_DEBUG
                             output_->verbose(
                                 CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "---> --> issuing ins addr: 0x0%" PRI_ADDR ", %s...\n",
                                 next_ins->getInstructionAddress(), next_ins->getInstCode());
+                            #endif
                             thread_rob->push(next_ins->clone());
                         }
 
@@ -642,6 +705,7 @@ public:
                         ip += 4;
                     }
                     else {
+                        #ifdef VANADIS_BUILD_DEBUG
                         output_->verbose(
                             CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                             "---> --> micro-op bundle for %p contains %" PRIu32 " ops, we only have %" PRIu32
@@ -649,6 +713,7 @@ public:
                             "become available.\n",
                             (void*)ip, (uint32_t)bundle->getInstructionCount(),
                             (uint32_t)(thread_rob->capacity() - thread_rob->size()));
+                        #endif
                         // We don't have enough space, so we have to stop and wait for
                         // more entries to free up.
                         stat_uop_delayed_rob_full->addData(1);
@@ -658,29 +723,35 @@ public:
             else if ( ins_loader->hasPredecodeAt(ip, 4) ) {
                 // We do have a locally cached copy of the data at the IP though, so
                 // decode into a bundle
+                #ifdef VANADIS_BUILD_DEBUG
                 output_->verbose(
                     CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                     "---> uop not found, but matched in predecoded "
                     "L0-icache (ip=%p)\n",
                     (void*)ip);
+                #endif
                 stat_predecode_hit->addData(1);
 
                 uint32_t                  temp_ins       = 0;
                 VanadisInstructionBundle* decoded_bundle = new VanadisInstructionBundle(ip);
 
                 if ( ins_loader->getPredecodeBytes(ip, (uint8_t*)&temp_ins, sizeof(temp_ins)) ) {
+                    #ifdef VANADIS_BUILD_DEBUG
                     output_->verbose(
                         CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                         "---> performing a decode of the bytes found "
                         "(ins-bytes: 0x%x)\n",
                         temp_ins);
+                    #endif
                     decode(ip, temp_ins, decoded_bundle);
 
+                    #ifdef VANADIS_BUILD_DEBUG
                     output_->verbose(
                         CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                         "---> performing a decode of the bytes found "
                         "(generates %" PRIu32 " micro-op bundle).\n",
                         (uint32_t)decoded_bundle->getInstructionCount());
+                    #endif
                     ins_loader->cacheDecodedBundle(decoded_bundle);
                     decodes_performed++;
                     success = true;
@@ -694,17 +765,20 @@ public:
                 }
             }
             else if ( !ins_loader->pendingLoad(ip, 4) ) {
+                #ifdef VANADIS_BUILD_DEBUG
                 output_->verbose(
                     CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                     "---> uop bundle and pre-decoded bytes are not found "
                     "(ip=%p), requesting icache read (line-width=%" PRIu64 ")\n",
                     (void*)ip, ins_loader->getCacheLineWidth());
+                #endif
                 ins_loader->requestLoadAt(ip, 4);
                 stat_ins_bytes_loaded->addData(4);
                 stat_predecode_miss->addData(1);
                 success = true;
             }
         }
+        #ifdef VANADIS_BUILD_DEBUG
         else {
             output_->verbose(
                 CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
@@ -716,6 +790,7 @@ public:
             CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
             "---> Performed %" PRIu16 " decodes this cycle, %" PRIu16 " uop-bundles used / updated-ip: 0x%" PRI_ADDR ".\n",
             decodes_performed, uop_bundles_used, ip);
+        #endif
         return success;
     }
 
@@ -739,15 +814,19 @@ protected:
 
     void decode( const uint64_t ins_addr, const uint32_t next_ins, VanadisInstructionBundle* bundle)
     {
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "[decode] > addr: 0x%" PRI_ADDR " ins: 0x%08x\n", ins_addr, next_ins);
+        #endif
 
         const uint32_t hw_thr    = getHardwareThread();
         const uint32_t ins_mask  = next_ins & MIPS_OP_MASK;
         const uint32_t func_mask = next_ins & MIPS_FUNC_MASK;
 
         if ( 0 != (ins_addr & 0x3) ) {
+            #ifdef VANADIS_BUILD_DEBUG
             output_->verbose(
                 CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "[decode] ---> fault address 0x%" PRIu64 " is not aligned at 4 bytes.\n", ins_addr);
+            #endif
             bundle->addInstruction(new VanadisInstructionDecodeFault(ins_addr, hw_thr, options));
             return;
         }
@@ -757,7 +836,9 @@ protected:
             return;
         }
 
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "[decode] ---> ins-mask: 0x%08x / 0x%08x\n", ins_mask, func_mask);
+        #endif
 
         uint16_t rt = 0;
         uint16_t rs = 0;
@@ -769,7 +850,9 @@ protected:
         extract_three_regs(next_ins, &rt, &rs, &rd);
         extract_imm(next_ins, &imm);
 
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "[decode] rt=%" PRIu32 ", rs=%" PRIu32 ", rd=%" PRIu32 "\n", rt, rs, rd);
+        #endif
 
         const uint64_t imm64 = (uint64_t)imm;
 
@@ -783,7 +866,9 @@ protected:
         }
         else {
 
+            #ifdef VANADIS_BUILD_DEBUG
             output_->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "[decode] -> inst-mask: 0x%08x\n", ins_mask);
+            #endif
 
             switch ( ins_mask ) {
             case 0:
@@ -791,13 +876,17 @@ protected:
                 // The SHIFT 5 bits must be zero for these operations according to the
                 // manual
                 if ( 0 == (next_ins & MIPS_SHFT_MASK) ) {
+                    #ifdef VANADIS_BUILD_DEBUG
                     output_->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "[decode] -> special-class, func-mask: 0x%x\n", func_mask);
+                    #endif
 
                     if ( (0 == func_mask) && (0 == rs) ) {
+                        #ifdef VANADIS_BUILD_DEBUG
                         output_->verbose(
                             CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                             "[decode] -> rs is also zero, implies truncate "
                             "(generate: 64 to 32 truncate)\n");
+                        #endif
                         bundle->addInstruction(
                             new VanadisTruncateInstruction<
                                 VanadisRegisterFormat::VANADIS_FORMAT_INT64,
@@ -1065,9 +1154,11 @@ protected:
                     {
                         const uint64_t shf_amnt = ((uint64_t)(next_ins & MIPS_SHFT_MASK)) >> 6;
 
+                        #ifdef VANADIS_BUILD_DEBUG
                         output_->verbose(
                             CALL_INFO, 16, 0, "[decode/SLL]-> out: %" PRIu16 " / in: %" PRIu16 " shft: %" PRIu64 "\n",
                             rd, rt, shf_amnt);
+                        #endif
 
                         bundle->addInstruction(
                             new VanadisShiftLeftLogicalImmInstruction<uint32_t>(
@@ -1080,9 +1171,11 @@ protected:
                     {
                         const uint64_t shf_amnt = ((uint64_t)(next_ins & MIPS_SHFT_MASK)) >> 6;
 
+                        #ifdef VANADIS_BUILD_DEBUG
                         output_->verbose(
                             CALL_INFO, 16, 0, "[decode/SRL]-> out: %" PRIu16 " / in: %" PRIu16 " shft: %" PRIu64 "\n",
                             rd, rt, shf_amnt);
+                        #endif
 
                         bundle->addInstruction(
                             new VanadisShiftRightLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
@@ -2087,10 +2180,12 @@ protected:
             stat_uop_generated->addData(bundle->getInstructionCount());
         }
 
+        #ifdef VANADIS_BUILD_DEBUG
         for ( uint32_t i = 0; i < bundle->getInstructionCount(); ++i ) {
             output_->verbose(
                 CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> [%3" PRIu32 "]: %s\n", i, bundle->getInstructionByIndex(i)->getInstCode());
         }
+        #endif
 
         // Mark the end of a micro-op group so we can count real instructions and
         // not just micro-ops

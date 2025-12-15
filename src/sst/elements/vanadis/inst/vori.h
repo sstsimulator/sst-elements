@@ -82,7 +82,9 @@ public:
 
 
         instOp(regFile,phys_int_regs_out_0, phys_int_regs_in_0);
+        #ifdef VANADIS_BUILD_DEBUG
         log(output, 16, 65535,phys_int_regs_out_0,phys_int_regs_in_0,0);
+        #endif
         markExecuted();
     }
 

@@ -1,5 +1,5 @@
 pid=100 tid=100 has exited
-all process have exited
+all processes have exited
  node0.cpu0:decoder:branch_unit.branch_cache_hit.1 : Accumulator : Sum.u64 = 3499; SumSQ.u64 = 3499; Count.u64 = 3499; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:decoder:branch_unit.branch_cache_miss.1 : Accumulator : Sum.u64 = 5013; SumSQ.u64 = 5013; Count.u64 = 5013; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:decoder:branch_unit.branch_cache_castout.1 : Accumulator : Sum.u64 = 911; SumSQ.u64 = 911; Count.u64 = 911; Min.u64 = 1; Max.u64 = 1; 

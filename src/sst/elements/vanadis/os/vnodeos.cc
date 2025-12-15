@@ -139,7 +139,9 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
                         output->fatal( CALL_INFO, -1, "--> error - exe %s is not statically linked\n",exe.c_str());
                     }
                     m_elfMap[exe] = elfInfo;
+                    #ifdef VANADIS_BUILD_DEBUG
                     elfInfo->print(output);
+                    #endif
                 }
 
                 unsigned tid = getNewTid();
@@ -159,7 +161,11 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
 
     output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_INIT, "number of process %d\n",numProcess);
 
+#ifdef VANADIS_BUILD_DEBUG
+    std::string modName = "vanadisdbg.AppRuntimeMemory";
+#else
     std::string modName = "vanadis.AppRuntimeMemory";
+#endif
     modName += m_threadMap.begin()->second->isELF32() ? "32" : "64";
     output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_INIT, "load app runtime memory module: %s\n",modName.c_str());
 
@@ -215,7 +221,9 @@ VanadisNodeOSComponent::~VanadisNodeOSComponent() {
 
 void
 VanadisNodeOSComponent::init(unsigned int phase) {
+    #ifdef VANADIS_BUILD_DEBUG
     output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_INIT, "Performing init-phase %u...\n", phase);
+    #endif
     mem_if->init(phase);
     if ( nullptr != m_mmu ) {
         m_mmu->init(phase);
@@ -557,25 +565,28 @@ VanadisNodeOSComponent::startProcess( OS::HwThreadID& threadID, OS::ProcessInfo*
     uint64_t stackRegionEnd = aligned_stack_address + stackBacking->data_.size();
     process->addMemRegion( "stack", phdrRegionEnd, stackRegionEnd - phdrRegionEnd, 0x6, stackBacking );
 
+    #ifdef VANADIS_BUILD_DEBUG
     output->verbose( CALL_INFO, 16, VANADIS_OS_DBG_APP_INIT,
         "stack_pointer=%#" PRIx64 " stack_memory_region_start=%#" PRIx64" stack_region_length=%" PRIu64 "\n",
         stack_pointer, (uint64_t) phdrRegionEnd, stackRegionEnd - phdrRegionEnd);
-
+    #endif
     process->printRegions("after app runtime setup");
 
     m_coreInfoMap.at(threadID.core).setProcess( threadID.hwThread, process );
 
     uint64_t entry = process->getEntryPoint();
+    #ifdef VANADIS_BUILD_DEBUG
     output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_APP_INIT,
         "stack_pointer=%#" PRIx64 " entry=%#" PRIx64 "\n",stack_pointer, entry );
-
+    #endif
     core_links.at(threadID.core)->send( new VanadisStartThreadFirstReq( threadID.hwThread, entry, stack_pointer ) );
 }
 
 void VanadisNodeOSComponent::writeMem( OS::ProcessInfo* process, uint64_t virtAddr, std::vector<uint8_t>* data, int perms, unsigned pageSize, Callback* callback )
 {
+    #ifdef VANADIS_BUILD_DEBUG
     output->verbose(CALL_INFO, 8, VANADIS_OS_DBG_PAGE_FAULT,"virtAddr=%#" PRIx64 " length=%zu perm=%x\n",virtAddr,data->size(), perms);
-
+    #endif
     OS::Page* page;
     try {
         page = allocPage( );
@@ -649,6 +660,7 @@ VanadisNodeOSComponent::handleIncomingSyscallEvent(SST::Event* ev) {
 
 		    processSyscallPost( syscall );
 	    } else {
+            // Probable error, do not ifdef
 		    output->output("%s: no active process for core %d, hwthread %d\n", getName().c_str(), sys_ev->getCoreID(), sys_ev->getThreadID() );
 		    delete ev;
 	    }
@@ -659,32 +671,43 @@ void VanadisNodeOSComponent::processSyscallPost( VanadisSyscall* syscall ) {
 
     auto core = syscall->getCoreId();
     auto hwThread = syscall->getThreadId();
+    #ifdef VANADIS_BUILD_DEBUG
     output->verbose(CALL_INFO, 16, 0,"syscall '%s' for core %d\n",syscall->getName().c_str(),core);
-
+    #endif
     if ( syscall->isComplete() ) {
+        #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 16, 0,"syscall '%s' for core %d has finished\n",syscall->getName().c_str(),core);
+        #endif
         delete syscall;
 
     } else {
+        #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 16, 0,"syscall '%s' for core %d get memory reqeust\n",syscall->getName().c_str(),core);
+        #endif
         auto ev = syscall->getMemoryRequest();
 
         if ( ev ) {
+            #ifdef VANADIS_BUILD_DEBUG
             output->verbose(CALL_INFO, 16, 0,"syscall '%s' for core %d has a memory request\n",syscall->getName().c_str(),core);
+            #endif
             sendMemoryEvent(syscall, ev );
         } else if ( syscall->causedPageFault() ) {
             uint64_t virtAddr;
             bool isWrite;
             std::tie( virtAddr, isWrite) = syscall->getPageFault();
             processOsPageFault( syscall, virtAddr, isWrite );
+        #ifdef VANADIS_BUILD_DEBUG
         } else {
             output->verbose(CALL_INFO, 16, 0,"syscall '%s' for core %d is blocked\n",syscall->getName().c_str(),core);
+        #endif
         }
     }
 }
 
 void VanadisNodeOSComponent::processOsPageFault( VanadisSyscall* syscall, uint64_t virtAddr, bool isWrite ) {
+    #ifdef VANADIS_BUILD_DEBUG
     output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "virtAddr=%#" PRIx64 " isWrite=%d\n",virtAddr, isWrite);
+    #endif
 
     uint32_t vpn = virtAddr >> m_pageShift;
     uint32_t faultPerms = isWrite ? 1 << 1:  1<< 2;
@@ -695,23 +718,28 @@ void VanadisNodeOSComponent::processOsPageFault( VanadisSyscall* syscall, uint64
 void VanadisNodeOSComponent::pageFaultHandler2( MMU_Lib::RequestID reqId, unsigned link, unsigned core, unsigned hwThread,
                 unsigned pid,  uint32_t vpn, uint32_t faultPerms, uint64_t instPtr, uint64_t memVirtAddr, VanadisSyscall* syscall )
 {
+    #ifdef VANADIS_BUILD_DEBUG
     output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "RequestID=%#" PRIx64 " link=%d pid=%d vpn=%d perms=%#x instPtr=%#" PRIx64 " syscall=%p\n",
             reqId, link, pid, vpn, faultPerms, instPtr, syscall );
+    #endif
 
     auto tmp = new PageFault( reqId, link, core, hwThread, pid, vpn, faultPerms, instPtr, memVirtAddr, syscall );
     m_pendingFault.push( tmp );
     if ( 1 == m_pendingFault.size() ) {
         pageFault( tmp );
+    #ifdef VANADIS_BUILD_DEBUG
     } else {
         output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "queue page fault\n" );
+    #endif
     }
 }
 
 void VanadisNodeOSComponent::pageFaultFini( PageFault* info, bool success )
 {
+    #ifdef VANADIS_BUILD_DEBUG
     output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"link=%d pid=%d vpn=%d %#" PRIx32 " %s\n",
                 info->link,info->pid,info->vpn, info->vpn << m_pageShift, success ? "success":"fault" );
-
+    #endif
     if( info->syscall ) {
         auto ev = info->syscall->getMemoryRequest();
         assert(ev);
@@ -747,6 +775,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
 
     // this is confusing because we have two virtAddrs: one is the page virtaddr and the other is the address of the memory req that faulted,
     // the full address was added for debug, we should get rid of the VPN at some point.
+    #ifdef VANADIS_BUILD_DEBUG
     output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"link=%d pid=%d virtAddr=%#" PRIx64 " %c%c%c instPtr=%#" PRIx64 " virtMemAddr=%#" PRIx64 "\n",
             link,pid,virtAddr,
             faultPerms & 0x4 ? 'R' : '-',
@@ -754,7 +783,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
             faultPerms & 0x1 ? 'X' : '-',
             info->instPtr,
             info->memVirtAddr);
-
+    #endif
     auto region = thread->findMemRegion( virtAddr + 1 );
 
     if ( region ) {
@@ -766,6 +795,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
         // 1) Read or Write from a data tlb
         // 2) Read with Execute from a inst tlb
 
+        #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"found region %#" PRIx64 "-%#" PRIx64 "\n",region->addr_,region->addr_ + region->length_);
 
         output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"virtAddr=%#010" PRIx64 ": fault-perms %c%c%c, VM-perms %c%c%c pagePerms=%#x\n",virtAddr,
@@ -776,17 +806,20 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
             region->perms_ & 0x2 ? 'W' : '-',
             region->perms_ & 0x1 ? 'X' : '-',
             pagePerms);
-
+        #endif
         // if the page is present the fault wants to write but the page doesn't have write, could be COW
         if( pagePerms != -1 && faultPerms & 0x2 &&  0 == (pagePerms & 0x2 ) ) {
             OS::Page* newPage;
             int origPPN = m_mmu->virtToPhys(pid,vpn);
+            #ifdef VANADIS_BUILD_DEBUG
             output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"COW ppn of origin page %d\n",origPPN);
-
+            #endif
             // check if we can upgrade the permission for this page
             if ( ! MMU_Lib::checkPerms( faultPerms, region->perms_ ) ) {
+                #ifdef VANADIS_BUILD_DEBUG
                 output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"core %d, hwThread %d, instPtr %#" PRIx64 " caused page fault at address %#" PRIx64 "\n",
                     info->core,info->hwThread,info->instPtr,info->memVirtAddr);
+                #endif
                 pageFaultFini( info, false );
                 return;
             }
@@ -799,7 +832,9 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
 
             thread->mapVirtToPage( vpn, newPage );
 
+            #ifdef VANADIS_BUILD_DEBUG
             output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"origin ppn %d new ppn %d\n",origPPN, newPage->getPPN());
+            #endif
             // map this physical page into the MMU for this process with the regions permissions
             m_mmu->map( thread->getpid(), vpn, newPage->getPPN(), m_pageSize, region->perms_ );
 
@@ -812,22 +847,30 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
 
         // the fault is in a present region, check to see if the retions permissions satisfy the fault
         if ( ! MMU_Lib::checkPerms( faultPerms, region->perms_ ) ) {
+            #ifdef VANADIS_BUILD_DEBUG
             output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "memory fault instPtr=%#" PRIx64 ", could not be satified for %#" PRIx64 ", no permission wantPerms=%#x havePerms=%#x\n",
                     info->instPtr,virtAddr,faultPerms,region->perms_);
+            #endif
             pageFaultFini( info, false );
             return;
         }
 
         int pageTablePerms =  m_mmu->getPerms( pid, vpn );
+        #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"vpn %d perms %#x\n",vpn,pageTablePerms);
+        #endif
         if ( pageTablePerms > -1 ) {
             if ( ! MMU_Lib::checkPerms( faultPerms, region->perms_ ) ) {
+                #ifdef VANADIS_BUILD_DEBUG
                 output->verbose(CALL_INFO, 1, 0,"core %d, hwThread %d, instPtr %#" PRIx64 " caused page fault at address %#" PRIx64 "\n",
                     info->core,info->hwThread,info->instPtr,info->memVirtAddr);
+                #endif
                 pageFaultFini( info, false );
                 return;
             }
+            #ifdef VANADIS_BUILD_DEBUG
             output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"using existing page vpn=%d\n",vpn);
+            #endif
             pageFaultFini( info );
             return;
         }
@@ -848,7 +891,9 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
                 auto physAddr = region->backing_->dev_->getPhysAddr();
                 auto offset = vpn - ( region->addr_ >> m_pageShift);
                 auto ppn = ( physAddr >> m_pageShift ) + offset;
+                #ifdef VANADIS_BUILD_DEBUG
                 output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "Device physAddr=%#" PRIx64 " ppn=%" PRIu64 "\n",physAddr,ppn);
+                #endif
                 m_mmu->map( thread->getpid(), vpn, ppn, m_pageSize, region->perms_ );
                 pageFaultFini( info );
                 return;
@@ -865,12 +910,15 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
             } catch ( int err ) {
                 output->fatal(CALL_INFO, -1, "Error: ran out of physical memory\n");
             }
+            #ifdef VANADIS_BUILD_DEBUG
             output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"alloced physical page %d\n", page->getPPN() );
-
+            #endif
             thread->mapVirtToPage( vpn, page );
         } else {
             page->incRefCnt();
+            #ifdef VANADIS_BUILD_DEBUG
             output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"using exiting physical page %d\n",page->getPPN());
+            #endif
         }
 
         // map this physical page into the MMU for this process
@@ -881,7 +929,9 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
             if ( nullptr != data ) {
                 updatePageCache( region->backing_->elf_info_, vpn, page );
             } else {
+                #ifdef VANADIS_BUILD_DEBUG
                 output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"fault handled link=%d pid=%d vpn=%d %#" PRIx32 " ppn=%d\n",link,pid,vpn, vpn << m_pageShift,page->getPPN());
+                #endif
                 pageFaultFini( info );
                 return;
             }
@@ -892,17 +942,22 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
         });
 
         if ( nullptr == data ) {
+            #ifdef VANADIS_BUILD_DEBUG
             output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"zero page\n");
+            #endif
             data = new uint8_t[m_pageSize];
             bzero( data, m_pageSize );
         }
+        #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"write page\n");
+        #endif
         writePage( page->getPPN() << m_pageShift, data, m_pageSize, callback );
 
     } else {
-
+        #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"core %d, hwThread %d, instPtr %#" PRIx64 " caused page fault at address %#" PRIx64 "\n",
             info->core, info->hwThread, info->instPtr, info->memVirtAddr );
+        #endif
         pageFaultFini( info, false );
     }
 }

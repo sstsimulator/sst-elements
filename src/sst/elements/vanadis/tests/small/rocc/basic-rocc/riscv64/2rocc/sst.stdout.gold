@@ -1,6 +1,6 @@
 node0.cpu0, Warning: the 'decoder0' subcomponent slot is deprecated. Use index 0 of the 'decoder' subcomponent slot instead
 pid=100 tid=100 has exited
-all process have exited
+all processes have exited
  node0.cpu0:decoder0:branch_unit.branch_cache_hit.1 : Accumulator : Sum.u64 = 5408; SumSQ.u64 = 5408; Count.u64 = 5408; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:decoder0:branch_unit.branch_cache_miss.1 : Accumulator : Sum.u64 = 7379; SumSQ.u64 = 7379; Count.u64 = 7379; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:decoder0:branch_unit.branch_cache_castout.1 : Accumulator : Sum.u64 = 1316; SumSQ.u64 = 1316; Count.u64 = 1316; Min.u64 = 1; Max.u64 = 1; 

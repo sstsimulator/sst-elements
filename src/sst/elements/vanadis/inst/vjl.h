@@ -72,7 +72,9 @@ public:
     {
         const uint64_t link_value = calculateStandardNotTakenAddress();
         uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
+        #ifdef VANADIS_BUILD_DEBUG
         log(output, 16, 65355, link_value, phys_int_regs_out_0, takenAddress);
+        #endif
         instOp(regFile, phys_int_regs_out_0, link_value );
         markExecuted();
     }

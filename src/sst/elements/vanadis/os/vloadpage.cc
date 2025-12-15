@@ -51,15 +51,18 @@ void loadPages( SST::Output* output, SST::Interfaces::StandardMem* mem_if, MMU_L
         std::vector< uint8_t > pageBuffer( buffer.begin() + offset, buffer.begin() + offset + page_size );
 #endif
 
-
+        #ifdef VANADIS_BUILD_DEBUG
         output->verbose( CALL_INFO, 2, 0, "pageVirtAddr=%#" PRIx64 " physPageNum=%d physAddr=%#" PRIx64 "\n", pageVirtAddr, physPageNum, physAddr );
+        #endif
 
 #if 1
         uint64_t offset = 0;
         for ( int num = 0; num < page_size/64; num++ ) {
             std::vector< uint8_t > tmp( buffer.begin() + offset, buffer.begin() + offset + 64  );
             Interfaces::StandardMem::Request* req = new SST::Interfaces::StandardMem::Write( physAddr + offset, tmp.size(), tmp );
+            #ifdef VANADIS_BUILD_DEBUG
             printf("%s() %s\n",__func__,req->getString().c_str());
+            #endif
             offset += 64;
             mem_if->send(req);
         }

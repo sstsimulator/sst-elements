@@ -27,8 +27,9 @@ public:
     VanadisSetRobustListSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallSetRobustListEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "set_robust_list" )
     {
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL, "[syscall-set_robust_list] head %#" PRIx64 ", len=%" PRIu64 "\n", event->getHead(),event->getLen());
-
+        #endif
 //        process->setRobustList( event->getRobustList() );
 
         setReturnSuccess(0);

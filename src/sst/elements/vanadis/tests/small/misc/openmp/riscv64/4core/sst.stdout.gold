@@ -1,22 +1,8 @@
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
 pid=100 tid=101 has exited
 pid=100 tid=102 has exited
 pid=100 tid=103 has exited
 pid=100 tid=100 has exited
-all process have exited
+all processes have exited
  node0.cpu0:decoder:branch_unit.branch_cache_hit.1 : Accumulator : Sum.u64 = 9354; SumSQ.u64 = 9354; Count.u64 = 9354; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:decoder:branch_unit.branch_cache_miss.1 : Accumulator : Sum.u64 = 10816; SumSQ.u64 = 10816; Count.u64 = 10816; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:decoder:branch_unit.branch_cache_castout.1 : Accumulator : Sum.u64 = 2316; SumSQ.u64 = 2316; Count.u64 = 2316; Min.u64 = 1; Max.u64 = 1; 

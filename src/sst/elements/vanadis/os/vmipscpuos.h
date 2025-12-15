@@ -153,7 +153,9 @@ public:
         T1 buf_ptr    = getArgRegister(1);
         T1 size        = getArgRegister(2);
 
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 8, 0, "readLink( %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 ")\n",path,buf_ptr,size);
+        #endif
         return new VanadisSyscallReadLinkEvent(core_id_, hw_thr, BitType, path, buf_ptr, size);
     }
 
@@ -161,8 +163,9 @@ public:
     VanadisSyscallEvent* UNLINK( int hw_thr ) {
         T1 path_addr = getArgRegister( 0 );
 
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 8, 0, "unlink( %" PRId32 " )\n",path_addr);
-
+        #endif
         return new VanadisSyscallUnlinkEvent(core_id_, hw_thr, BitType, path_addr);
     }
 
@@ -171,8 +174,9 @@ public:
         T1 flags      = getArgRegister(1);
         T1 mode       = getArgRegister(2);
 
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 8, 0, "open( %#" PRIx32 ", %" PRIu32 ", %" PRIu32 " )\n", path_ptr, flags, mode);
-
+        #endif
         return new VanadisSyscallOpenEvent(core_id_, hw_thr, BitType, path_ptr, convertFlags(flags), mode);
     }
 
@@ -180,7 +184,9 @@ public:
         T1 path_ptr       = getArgRegister(0);
         T1 access_mode    = getArgRegister(1);
 
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 8, 0, "access( %#" PRIx32 ", %" PRId32 " )\n", path_ptr, access_mode);
+        #endif
         return new VanadisSyscallAccessEvent(core_id_, hw_thr, BitType, path_ptr, access_mode);
     }
 
@@ -193,23 +199,27 @@ public:
 
         assert( stackPtr );
 
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 8, 0,
                 "clone( %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 " )\n",
                 flags, threadStack, ptid, tls, stackPtr );
-
+        #endif
         return new VanadisSyscallCloneEvent(core_id_, hw_thr, VanadisOSBitType::VANADIS_OS_32B, instPtr, threadStack, flags, ptid, tls, 0, stackPtr );
     }
 
     VanadisSyscallEvent* FORK( int hw_thr ) {
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 8, 0, "fork()\n");
+        #endif
         return new VanadisSyscallForkEvent(core_id_, hw_thr, VanadisOSBitType::VANADIS_OS_32B);
     }
 
     VanadisSyscallEvent* SET_THREAD_AREA( int hw_thr ) {
         T1 ptr = getArgRegister(0);
 
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 8, 0, "set_thread_area( %#" PRIx32 ")\n", ptr);
-
+        #endif
         if (tls_address_ != nullptr) {
             (*tls_address_) = ptr;
         } else {
@@ -232,8 +242,10 @@ public:
        }
 #endif
 
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 8, 0, "statx( %" PRId32 ", %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 " )\n",
                         dirfd, pathname, flags, mask, stackPtr );
+        #endif
 
         return new VanadisSyscallStatxEvent(core_id_, hw_thr, VanadisOSBitType::VANADIS_OS_32B, dirfd, pathname, flags, mask, stackPtr);
     }
@@ -245,8 +257,10 @@ public:
         uint32_t timeout_addr   = getArgRegister(3);
         uint32_t stack_ptr      = getSP();
 
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 8, 0, "futex( %#" PRIx32 ", %" PRId32 ", %" PRIu32 ", %" PRIu32 ", sp: %#" PRIx32 " (arg-count is greater than 4))\n",
                             addr, op, val, timeout_addr, stack_ptr);
+        #endif
 
         return new VanadisSyscallFutexEvent(core_id_, hw_thr, VanadisOSBitType::VANADIS_OS_32B, addr, op, val, timeout_addr, stack_ptr );
     }
@@ -258,9 +272,10 @@ public:
         int32_t  flags      = getArgRegister(3);
         uint32_t stack_ptr  = getSP();
 
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 8, 0, "mmap2( %#" PRIx32 ", %" PRIu32 ", %" PRId32 ", %" PRId32 ", sp: %#" PRIx32 " (> 4 arguments) )\n",
                             addr, len, prot, flags, stack_ptr);
-
+        #endif
         if ( flags & MIPS_MAP_FIXED ) {
             output_->verbose(CALL_INFO, 8, 0,"mmap2() we don't support MAP_FIXED return error EEXIST\n");
 
@@ -277,7 +292,9 @@ public:
         int32_t  clk_type   = getArgRegister(0);
         uint32_t time_addr  = getArgRegister(1);
 
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 8, 0, "clock_gettime64( %" PRId32 ", %#" PRIx32 ")\n", clk_type, time_addr);
+        #endif
 
         return new VanadisSyscallGetTime64Event(core_id_, hw_thr, VanadisOSBitType::VANADIS_OS_32B, clk_type, time_addr);
     }
@@ -293,9 +310,11 @@ public:
 #endif
 
     void recvSyscallResp( VanadisSyscallResponse* os_resp ) {
+        #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 8, 0, "syscall return-code: %" PRId64 " (success: %3s)\n",
                             os_resp->getReturnCode(), os_resp->isSuccessful() ? "yes" : "no");
         output_->verbose(CALL_INFO, 8, 0, "-> issuing call-backs to clear syscall ROB stops...\n");
+        #endif
 
         // Set up the return code (according to ABI, this goes in r2)
         const uint16_t rc_reg = isa_table_->getIntPhysReg(2);
@@ -322,18 +341,20 @@ private:
         const uint16_t succ_reg = isa_table_->getIntPhysReg(7);
 
         if (success) {
+            #ifdef VANADIS_BUILD_DEBUG
             output_->verbose(CALL_INFO, 8, 0,
                             "syscall - generating successful (v: 0) result (isa-reg: "
                             "7, phys-reg: %" PRIu16 ")\n",
                             succ_reg);
-
+            #endif
             reg_file_->setIntReg(succ_reg, os_success);
         } else {
+            #ifdef VANADIS_BUILD_DEBUG
             output_->verbose(CALL_INFO, 8, 0,
                             "syscall - generating failed (v: 1) result (isa-reg: 7, "
                             "phys-reg: %" PRIu16 ")\n",
                             succ_reg);
-
+            #endif
             reg_file_->setIntReg(succ_reg, os_failed);
         }
     }
@@ -394,11 +415,16 @@ private:
 class VanadisMIPSOSHandler : public VanadisMIPSOSHandler2< uint32_t, VanadisOSBitType::VANADIS_OS_32B, MIPS_ARG_REG_ZERO, MIPS_OS_CODE_REG, MIPS_LINK_REG > {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(VanadisMIPSOSHandler, "vanadis",
-                                            "VanadisMIPSOSHandler",
-                                            SST_ELI_ELEMENT_VERSION(1, 0, 0),
-                                            "Provides SYSCALL handling for a MIPS-based decoding core",
-                                            SST::Vanadis::VanadisCPUOSHandler)
+    SST_ELI_REGISTER_SUBCOMPONENT(VanadisMIPSOSHandler,
+    #ifdef VANADIS_BUILD_DEBUG
+        "vanadisdbg",
+    #else
+        "vanadis",
+    #endif
+        "VanadisMIPSOSHandler",
+        SST_ELI_ELEMENT_VERSION(1, 0, 0),
+        "Provides SYSCALL handling for a MIPS-based decoding core",
+        SST::Vanadis::VanadisCPUOSHandler)
 
     VanadisMIPSOSHandler(ComponentId_t id, Params& params) :
         VanadisMIPSOSHandler2<uint32_t, VanadisOSBitType::VANADIS_OS_32B, MIPS_ARG_REG_ZERO, MIPS_OS_CODE_REG, MIPS_LINK_REG >(id, params) { }
