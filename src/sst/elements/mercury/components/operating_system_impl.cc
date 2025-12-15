@@ -22,7 +22,7 @@
 #include <mercury/operating_system/launch/app_launcher.h>
 #include <mercury/operating_system/libraries/unblock_event.h>
 #include <mercury/operating_system/process/app.h>
-#include <mercury/operating_system/libraries/event_library.h>
+#include <mercury/operating_system/libraries/library.h>
 #include <mercury/operating_system/libraries/unblock_event.h>
 #include <mercury/operating_system/process/thread_id.h>
 #include <mercury/operating_system/threading/stack_alloc.h>
@@ -385,7 +385,7 @@ OperatingSystemImpl::eraseCondition(int id)
     }
 }
 
-EventLibrary*
+Library*
 OperatingSystemImpl::eventLibrary(const std::string& name) const
 {
   auto it = libs_.find(name);
@@ -397,7 +397,7 @@ OperatingSystemImpl::eventLibrary(const std::string& name) const
 }
 
 void
-OperatingSystemImpl::registerEventLib(EventLibrary* lib)
+OperatingSystemImpl::registerEventLib(Library* lib)
 {
 #if SST_HG_SANITY_CHECK
   if (lib->libName() == "") {
@@ -416,14 +416,14 @@ OperatingSystemImpl::registerEventLib(EventLibrary* lib)
     for (Request *req : reqs) {
       out_->debug(CALL_INFO, 1, 0, "delivering delayed event to lib %s: %s\n",
                     lib->libName().c_str(), toString(req).c_str());
-      os_api_->sendExecutionEventNow(newCallback(lib, &EventLibrary::incomingRequest, req));
+      os_api_->sendExecutionEventNow(newCallback(lib, &Library::incomingRequest, req));
     }
     pending_library_request_.erase(iter);
   }
 }
 
 void
-OperatingSystemImpl::unregisterEventLib(EventLibrary *lib) {
+OperatingSystemImpl::unregisterEventLib(Library *lib) {
   out_->debug(CALL_INFO, 1, 0, "unregistering lib %s\n",
                 lib->libName().c_str());
   int &refcount = lib_refcounts_[lib];
@@ -512,7 +512,7 @@ OperatingSystemImpl::handleEventLibraryRequest(const std::string& name, Request*
   auto it = libs_.find(name);
   bool found = it != libs_.end();
   if (found){
-    EventLibrary* lib = it->second;
+    Library* lib = it->second;
     out_->debug(CALL_INFO, 1, 0, "delivering message to event lib %s:%p: %s\n",
                   name.c_str(), lib, toString(req).c_str());
     lib->incomingRequest(req);
