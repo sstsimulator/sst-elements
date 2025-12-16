@@ -67,8 +67,10 @@ public:
     {
 
         instOp(regFile, phys_int_regs_in[0]);
-        log(output, 16, 65535, phys_int_regs_in[0]);
 
+        #ifdef VANADIS_BUILD_DEBUG
+        log(output, 16, 65535, phys_int_regs_in[0]);
+        #endif
         //        if ((takenAddress & 0x3) != 0) {
         //            flagError();
         //        }

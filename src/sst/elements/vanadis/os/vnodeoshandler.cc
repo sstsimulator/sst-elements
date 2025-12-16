@@ -70,10 +70,12 @@ static const char* SyscallName[] = {
 
 VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* process, VanadisSyscallEvent* sys_ev, SST::Link* coreLink )
 {
+    #ifdef VANADIS_BUILD_DEBUG
     if ( sys_ev->getOperation() < NUM_SYSCALLS  ) {
-       output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL, "from core=%" PRIu32 " thr=%" PRIu32 " syscall=%s\n",
+        output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL, "from core=%" PRIu32 " thr=%" PRIu32 " syscall=%s\n",
                     sys_ev->getCoreID(), sys_ev->getThreadID(),SyscallName[sys_ev->getOperation()]);
     }
+    #endif
 
     VanadisSyscall* syscall=NULL;
 

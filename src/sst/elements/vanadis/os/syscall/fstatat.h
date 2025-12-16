@@ -72,9 +72,10 @@ public:
     VanadisFstatatSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallFstatAtEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "fstatat" ), m_state( READ )
     {
+        #ifdef VANADIS_BUILD_DEBUG
 	    m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL, "[syscall-fstatat] dirfd=%" PRIu64 " pathaname=%#" PRIx64 " statbuf=%#" PRIx64 " flags=%#" PRIx64 "\n",
                 event->getDirfd(), event->getPathname(), event->getStatbuf(), event->getFlags() );
-
+        #endif
         setReturnFail(-LINUX_EINVAL);
 #if 0
         assert( event->getFlags() == VANDAID_AT_EMPTY_PATH );

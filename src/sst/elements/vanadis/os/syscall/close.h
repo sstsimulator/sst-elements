@@ -27,7 +27,9 @@ public:
     VanadisCloseSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallCloseEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "close" )
     {
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-close] -> call is close( %" PRIu32 " )\n", event->getFileDescriptor());
+        #endif
 
         auto retval = process->closeFile( event->getFileDescriptor() );
         if ( retval < 0 ) {

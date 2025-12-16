@@ -30,7 +30,9 @@ public:
     { }
 
     void startIoVecTransfer() {
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 16, 0,"\n");
+        #endif
         m_currentVecOffset = 0;
         readSomeData();
     }
@@ -38,7 +40,9 @@ public:
     void readSomeData() {
         m_dataBuffer.resize( calcBuffSize() );
 
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 16, 0,"%zu\n", m_dataBuffer.size());
+        #endif
 
         ssize_t numRead = read( m_fd, m_dataBuffer.data(), m_dataBuffer.size());
         assert( numRead >= 0 );
@@ -47,11 +51,15 @@ public:
         // if we have not filled the vector and have not hit EOF
         if ( numRead < m_dataBuffer.size() ) {
             m_eof = true;
+            #ifdef VANADIS_BUILD_DEBUG
             m_output->verbose(CALL_INFO, 16, 0,"reached EOF %zu\n",m_totalBytes);
+            #endif
         }
 
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 16, 0,"numRead=%zu totalWritten=%zu currentVecOffset=%zu vecLength=%zu\n",
             numRead,m_totalBytes, m_currentVecOffset, m_ioVecTable->getLength(m_currentVec));
+        #endif
 
         writeMemory( m_ioVecTable->getAddr(m_currentVec) +  m_currentVecOffset, m_dataBuffer );
 
@@ -61,18 +69,26 @@ public:
     void ioVecWork() {
 
         if ( m_eof ) {
+            #ifdef VANADIS_BUILD_DEBUG
             m_output->verbose(CALL_INFO, 16, 0,"return success total written %zu\n",m_totalBytes);
+            #endif
             setReturnSuccess( m_totalBytes );
         } else if ( m_currentVecOffset < m_ioVecTable->getLength(m_currentVec) ) {
+            #ifdef VANADIS_BUILD_DEBUG
             m_output->verbose(CALL_INFO, 16, 0,"read %zu bytes\n",m_dataBuffer.size());
+            #endif
             readSomeData();
         } else {
+            #ifdef VANADIS_BUILD_DEBUG
             m_output->verbose(CALL_INFO, 16, 0,"vector %d is complete \n",m_currentVec);
+            #endif
             ++m_currentVec;
             if ( findNonZeroIoVec() ) {
                 startIoVecTransfer();
             } else {
+                #ifdef VANADIS_BUILD_DEBUG
                 m_output->verbose(CALL_INFO, 16, 0,"return success total written %zu\n",m_totalBytes);
+                #endif
                 setReturnSuccess( m_totalBytes );
             }
         }

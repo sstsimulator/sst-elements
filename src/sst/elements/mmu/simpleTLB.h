@@ -108,7 +108,7 @@ class SimpleTLB : public TLB {
 
   private:
     void callback( Event* ev ) {
-        auto selfEvent = dynamic_cast<SelfEvent*>(ev);
+        auto selfEvent = static_cast<SelfEvent*>(ev);
         m_callback( selfEvent->getReqId(), selfEvent->getAddr() );
         delete ev;
     }
@@ -130,8 +130,10 @@ class SimpleTLB : public TLB {
 
         for ( int i = 0; i<vec.size(); i++ ) {
             if ( vec[i].isValid() ) {
+#ifdef __SST_DEBUG_OUTPUT__
                 m_dbg.debug(CALL_INFO,1,0,"vpn=%zu, tag=%#" PRIx64 " ppn %#lx -> %zu, perms %#x -> %#x \n",
                         vpn, (uint64_t) vec[i].tag(), vec[i].ppn(), ppn, vec[i].perms(), perms  );
+#endif
 
                 if ( tag == vec[i].tag() ) {
                     vec[ i ].init( tag, ppn, perms );
@@ -142,8 +144,10 @@ class SimpleTLB : public TLB {
 
         assert(vpn);
         int slot = pickVictim();
+#ifdef __SST_DEBUG_OUTPUT__
         m_dbg.debug(CALL_INFO,1,0,"hwThread=%d vpn=%zu ppn=%zu tag%#" PRIx64 " index=%#x slot=%d\n",hwThreadId,
             vpn, ppn, (uint64_t) tag, index, slot );
+#endif
         vec[ slot ].init( tag, ppn, perms );
     }
 
@@ -151,15 +155,21 @@ class SimpleTLB : public TLB {
         size_t tag = vpn >> m_tlbIndexShift;
         int index = vpn & ( m_tlbSize - 1 );
 
+#ifdef __SST_DEBUG_OUTPUT__
         m_dbg.debug(CALL_INFO,1,0,"hwThread=%d vpn=%zu tag=%#" PRIx64 " index=%#x\n",
             hwThreadId, vpn, (uint64_t) tag, index );
+#endif
 
         auto& vec = m_tlbData[ hwThreadId ][ index ];
         for ( int i = 0; i < vec.size(); i++ ) {
 
+#ifdef __SST_DEBUG_OUTPUT__
             m_dbg.debug(CALL_INFO,2,0,"check valid=%d wantTag=%#" PRIx64 "\n",vec[i].isValid(), (uint64_t) tag );
+#endif
             if ( vec[i].isValid() && tag == vec[i].tag() ) {
+#ifdef __SST_DEBUG_OUTPUT__
                 m_dbg.debug(CALL_INFO,1,0,"found tag=%#" PRIx64 " index=%#x slot=%d\n",(uint64_t) tag, index, i );
+#endif
                 return& vec[i];
             }
         }
@@ -169,15 +179,18 @@ class SimpleTLB : public TLB {
     void flushThread( int hwThread ) {
 
         auto& slice = m_tlbData[ hwThread ];
+#ifdef __SST_DEBUG_OUTPUT__
         m_dbg.debug(CALL_INFO,1,0,"hwThread=%d size=%zu\n",hwThread,slice.size() );
-
+#endif
         for ( int i = 0; i < slice.size(); i++ ) {
             auto& set = slice[i];
             //m_dbg.debug(CALL_INFO,1,0,"size=%zu\n",set.size() );
             for ( int j = 0; j < set.size(); j++ ) {
                 if ( set[j].isValid() ) {
+#ifdef __SST_DEBUG_OUTPUT__
                     m_dbg.debug(CALL_INFO,1,0,"hwThread=%d index=%d set=%d vpn=%zu\n",
                             hwThread,i,j, (size_t) ( set[j].tag() << m_tlbIndexShift | i ));
+#endif
                     set[j].setInvalid();
                 }
             }

@@ -91,7 +91,9 @@ public:
         uint64_t link_value = 0;
         uint64_t jump_to = 0;
         instOp(regFile, phys_int_regs_out_0, phys_int_regs_in_0, &jump_to, &link_value);
+        #ifdef VANADIS_BUILD_DEBUG
         log(output,16, 65535,phys_int_regs_out_0,phys_int_regs_in_0, jump_to, link_value);
+        #endif
         markExecuted();
     }
 

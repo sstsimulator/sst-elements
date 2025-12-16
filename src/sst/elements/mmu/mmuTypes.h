@@ -20,7 +20,7 @@ namespace SST {
 
 namespace MMU_Lib {
 
-typedef uint64_t RequestID;
+typedef uintptr_t RequestID;
 
 struct PTE {
     PTE() : ppn(0), perms(0) {}

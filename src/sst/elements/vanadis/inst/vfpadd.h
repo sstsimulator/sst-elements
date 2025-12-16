@@ -127,7 +127,9 @@ public:
         uint16_t phys_fp_regs_in_2 = 0;
         uint16_t phys_fp_regs_in_3 = 0;
         uint16_t phys_fp_regs_out_1 = 0;
+        #ifdef VANADIS_BUILD_DEBUG
         log(output, 16, 65535, phys_fp_regs_out_0, phys_fp_regs_in_0, phys_fp_regs_in_1);
+        #endif
         if ( sizeof(fp_format) > regFile->getFPRegWidth() )
         {
             phys_fp_regs_in_2 = getPhysFPRegIn(2);

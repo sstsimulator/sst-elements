@@ -142,6 +142,7 @@ public:
         (*store_addr) = (uint64_t)(reg_tmp + offset);
         (*op_width)   = store_width;
 
+        #ifdef VANADIS_BUILD_DEBUG
         switch ( regType ) {
         case STORE_INT_REGISTER:
         {
@@ -162,6 +163,8 @@ public:
                 (*store_addr));
         } break;
         }
+        #endif
+
     }
 
     uint16_t getStoreWidth() const { return store_width; }

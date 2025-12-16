@@ -58,11 +58,13 @@ public:
 
 	void log(SST::Output* output, int verboselevel, uint16_t sw_thr, uint64_t flags_out, uint16_t phys_int_regs_out_0 )
 	{
+        #ifdef VANADIS_BUILD_DEBUG
 		if(output->getVerboseLevel() >= verboselevel) {
 				output->verbose(CALL_INFO, verboselevel, 0, "hw_thr=%d sw_thr = %d Execute: 0x%" PRI_ADDR " %s out-reg: %" PRIu16 " / out-mask: 0x%" PRI_ADDR " / copy_round: %c / shift_round: %c / copy_fp: %c\n",
 						getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), phys_int_regs_out_0, flags_out,
 						copy_round_mode ? 'y' : 'n', shift_round_mode ? 'y' : 'n', copy_fp_flags ? 'y' : 'n');
 			}
+		#endif
 	}
 
 	void instOp( VanadisRegisterFile* regFile, uint64_t* flags_out, uint16_t phys_int_regs_out_0)
@@ -95,7 +97,9 @@ public:
 		  	uint64_t flags_out = 0;
 			uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
 			instOp(regFile, &flags_out, phys_int_regs_out_0);
+        	#ifdef VANADIS_BUILD_DEBUG
 			log(output, 16, 65535, flags_out, phys_int_regs_out_0);
+			#endif
 			markExecuted();
 		}
     }

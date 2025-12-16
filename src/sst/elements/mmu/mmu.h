@@ -45,8 +45,8 @@ class MMU : public SubComponent {
 
     MMU(SST::ComponentId_t id, SST::Params& params);
     virtual ~MMU() {}
-    virtual void checkpoint( std::string ) = 0;
-    virtual void checkpointLoad( std::string ) = 0;
+    virtual void snapshot( std::string ) = 0;
+    virtual void snapshotLoad( std::string ) = 0;
 
     virtual void init(unsigned int phase);
     void registerPermissionsCallback( Callback& callback ) { m_permissionsCallback = callback; }

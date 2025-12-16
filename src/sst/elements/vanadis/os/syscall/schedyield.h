@@ -31,8 +31,10 @@ public:
     : VanadisSyscall(os, coreLink, process, event, "sched_yield")
     {
         // No arguments to decode
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
             "[syscall-sched_yield] -> sched_yield()\n");
+        #endif
         setReturnSuccess(0);
     }
 };
