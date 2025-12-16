@@ -25,6 +25,7 @@ libhg_la_SOURCES = \
   common/util.cc \
   common/timestamp.cc \
   common/connection.cc \
+  common/skeleton.cc \
   components/compute_library/node_cl.cc \
   components/compute_library/operating_system_cl.cc \
   components/compute_library/operating_system_cl_api.cc \
