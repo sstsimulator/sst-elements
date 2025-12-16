@@ -139,11 +139,11 @@ protected:
 
   bool eraseCondition(int id);
 
-  EventLibrary* eventLibrary(const std::string& name) const;
+  Library* eventLibrary(const std::string& name) const;
 
-  void registerEventLib(EventLibrary* lib);
+  void registerEventLib(Library* lib);
 
-  void unregisterEventLib(EventLibrary* lib);
+  void unregisterEventLib(Library* lib);
 
   void handleRequest(Request* req);
 
@@ -183,8 +183,8 @@ private:
 
   std::map<std::string, Library*> internal_apis_;
   std::list<AppLaunchRequest*> requests_;
-  std::unordered_map<std::string, EventLibrary*> libs_;
-  std::unordered_map<EventLibrary*, int> lib_refcounts_;
+  std::unordered_map<std::string, Library*> libs_;
+  std::unordered_map<Library*, int> lib_refcounts_;
   std::map<std::string, std::list<Request*>> pending_library_request_;
 
   void initThreading(SST::Params& params);

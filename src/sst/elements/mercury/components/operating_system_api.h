@@ -19,7 +19,6 @@
 #include <mercury/components/node_base_fwd.h>
 #include <mercury/operating_system/process/thread_info.h>
 #include <mercury/operating_system/process/mutex.h>
-#include <mercury/operating_system/libraries/event_library_fwd.h>
 #include <mercury/hardware/network/network_message.h>
 
 #include <cstdint>
@@ -114,11 +113,11 @@ public:
 
    virtual condition_t *getCondition(int id) = 0;
 
-   virtual EventLibrary *eventLibrary(const std::string &name) const = 0;
+   virtual Library *eventLibrary(const std::string &name) const = 0;
 
-   virtual void registerEventLib(EventLibrary *lib) = 0;
+   virtual void registerEventLib(Library *lib) = 0;
 
-   virtual void unregisterEventLib(EventLibrary *lib) = 0;
+   virtual void unregisterEventLib(Library *lib) = 0;
 
    virtual void handleRequest(Request *req) = 0;
 };
