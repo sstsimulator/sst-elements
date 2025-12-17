@@ -94,5 +94,30 @@ Library::Library(SST::Params & params, App *parent) :
   api_parent_app_(parent)
 { }
 
+void
+Library::incomingRequest(Request*  /*ev*/)
+{
+  sst_hg_throw_printf(SST::Hg::UnimplementedError,
+    "%s::incomingRequest: this library should only block, never receive incoming",
+     toString().c_str());
+}
+
+void
+Library::incomingEvent(Event*  /*ev*/)
+{
+  sst_hg_throw_printf(SST::Hg::UnimplementedError,
+    "%s::incomingEvent: this library should only block, never receive incoming",
+     toString().c_str());
+}
+
+Library::Library(const std::string& libname, SoftwareId sid, OperatingSystemAPI* os) :
+  os_(os),
+  sid_(sid),
+  addr_(os->addr()),
+  libname_(libname)
+{
+  os_->registerEventLib(this);
+}
+
 } // end namespace Hg
 } // end namespace SST

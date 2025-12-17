@@ -45,7 +45,6 @@ libhg_la_SOURCES = \
   operating_system/launch/app_launch_request.cc \
   operating_system/launch/app_launcher.cc \
   operating_system/libraries/library.cc \
-  operating_system/libraries/event_library.cc \
   operating_system/libraries/unblock_event.cc \
   operating_system/process/app.cc \
   operating_system/process/global.cc \
@@ -168,9 +167,7 @@ nobase_library_include_HEADERS = \
   operating_system/launch/app_launcher.h \
   operating_system/launch/app_launcher_fwd.h \
   operating_system/launch/app_launch_request.h \
-  operating_system/libraries/event_library_fwd.h \
   operating_system/libraries/service_fwd.h \
-  operating_system/libraries/event_library.h \
   operating_system/libraries/service.h \
   operating_system/libraries/library.h \
   operating_system/libraries/library_fwd.h \

@@ -45,7 +45,6 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sst/core/params.h>
 #include <sst/core/factory.h>
 #include <mercury/components/operating_system_fwd.h>
-#include <mercury/operating_system/libraries/event_library.h>
 #include <mercury/operating_system/libraries/library.h>
 #include <mercury/operating_system/process/software_id.h>
 #include <iris/sumi/message_fwd.h>
