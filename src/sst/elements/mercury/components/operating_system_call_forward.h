@@ -114,15 +114,15 @@ bool eraseCondition(int id) override {
   return OperatingSystemImpl::eraseCondition(id);
 }
 
-EventLibrary *eventLibrary(const std::string &name) const override {
+Library *eventLibrary(const std::string &name) const override {
   return OperatingSystemImpl::eventLibrary(name);
 }
 
-void registerEventLib(EventLibrary *lib) override {
+void registerEventLib(Library *lib) override {
   OperatingSystemImpl::registerEventLib(lib);
 }
 
-void unregisterEventLib(EventLibrary *lib) override {
+void unregisterEventLib(Library *lib) override {
   OperatingSystemImpl::unregisterEventLib(lib);
 }
 

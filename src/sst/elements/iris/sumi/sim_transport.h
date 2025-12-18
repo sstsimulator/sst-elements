@@ -187,7 +187,7 @@ class SimTransport : public Transport, public SST::Hg::Library {
 
   int* nidlist() const override;
 
-  void incomingEvent(SST::Event *ev);
+  void incomingEvent(SST::Event *ev) override;
 
   void compute(SST::Hg::TimeDelta t);
 
