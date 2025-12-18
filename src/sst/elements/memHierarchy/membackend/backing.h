@@ -498,10 +498,10 @@ public:
     }
     void addBacking(std::string fname, Addr start, Addr end)
     {
-        BackingMMAP* newBack = new BackingMMAP( fname, fname, end - start, start ); 
+        BackingMMAP* newBack = new BackingMMAP( fname, fname, end - start, start );
         hybridStruct* newStruct = new hybridStruct(start, end, newBack);
         mmapList.push_front(newStruct);
-    }	
+    }
 
     void set( Addr addr, uint8_t value ) override {
         Backing* backing = getBacking(addr);
