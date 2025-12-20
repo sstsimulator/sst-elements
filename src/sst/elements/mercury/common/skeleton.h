@@ -18,10 +18,6 @@
 
 #pragma once
 
-#include <mercury/operating_system/libraries/unblock_event.h>
-#include <mercury/components/operating_system_api.h>
-#include <mercury/components/operating_system_impl.h>
-
 #define SSTPP_QUOTE(name) #name
 #define SSTPP_STR(name) SSTPP_QUOTE(name)
 
@@ -84,35 +80,9 @@ void sst_hg_blocking_call(int condition, double timeout, const char* api);
 
 namespace SST::Hg {
 
-unsigned int
-ssthg_sleep(unsigned int secs) {
-    OperatingSystemAPI* cos = OperatingSystemImpl::currentOs();
-    Thread* t = cos->activeThread();
-    UnblockEvent* ev = new UnblockEvent(cos, t);
-    cos->sendDelayedExecutionEvent(TimeDelta(secs, TimeDelta::one_second), ev);
-    cos->block();
-    return 0;
-}
-
-unsigned int
-ssthg_usleep(unsigned int usecs) {
-    OperatingSystemAPI* cos = OperatingSystemImpl::currentOs();
-    Thread* t = cos->activeThread();
-    UnblockEvent* ev = new UnblockEvent(cos, t);
-    cos->sendDelayedExecutionEvent(TimeDelta(usecs, TimeDelta::one_microsecond), ev);
-    cos->block();
-    return 0;
-}
-
-unsigned int
-ssthg_nanosleep(unsigned int nsecs) {
-    OperatingSystemAPI* cos = OperatingSystemImpl::currentOs();
-    Thread* t = cos->activeThread();
-    UnblockEvent* ev = new UnblockEvent(cos, t);
-    cos->sendDelayedExecutionEvent(TimeDelta(nsecs, TimeDelta::one_nanosecond), ev);
-    cos->block();
-    return 0;
-}
+unsigned int ssthg_sleep(unsigned int secs);
+unsigned int ssthg_usleep(unsigned int usecs);
+unsigned int ssthg_nanosleep(unsigned int nsecs);
 
 } //end namespace SST::Hg
 
