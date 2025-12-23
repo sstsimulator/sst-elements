@@ -478,7 +478,7 @@ private:
             Backing* backing = item->myBacking;
             Addr startAddr = item->startAddr;
             Addr endAddr   = item->endAddr;
-            if ( startAddr < addr && addr < endAddr ) {
+            if ( startAddr <= addr && addr < endAddr ) {
                 return backing;
             }
         }
@@ -505,30 +505,37 @@ public:
 
     void set( Addr addr, uint8_t value ) override {
         Backing* backing = getBacking(addr);
-        if ( backing ) {
-            backing->set(addr, value);
-        }
+        backing->set(addr, value);
     }
 
     void set( Addr addr, size_t size, std::vector<uint8_t> &data ) override {
         Backing* backing = getBacking(addr);
-        if ( backing ) {
-            backing->set(addr, size, data);
-        }
+        backing->set(addr, size, data);
     }
 
     uint8_t get( Addr addr ) override {
         Backing* backing = getBacking(addr);
-        if ( backing ) {
-            return backing->get(addr);
-        }
-        return 0;
+        return backing->get(addr);
     }
     void printToFile(std::string outfile) override
     {
+        for ( hybridStruct* item : mmapList ) {
+            item->myBacking->printToFile(outfile);
+        }
+        backingMalloc->printToFile(outfile);
     }
     void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) override
     {
+        Output out("", 1, 0, Output::STDOUT);
+        for ( hybridStruct* item : mmapList ) {
+            out.output("==================================================================================================\n");
+            out.output("Hybrid backing mmap region\n");
+            out.output("Start address: %#" PRIx64 "\n", item->startAddr);
+            out.output("End address: %#" PRIx64 "\n", item->endAddr);
+            out.output("==================================================================================================\n");
+            item->myBacking->printToScreen(addr_offset, addr_start, addr_interleave_size, addr_interleave_step);
+        }
+        backingMalloc->printToScreen(addr_offset, addr_start, addr_interleave_size, addr_interleave_step);
     }
 };
 
