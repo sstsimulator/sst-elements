@@ -1,7 +1,12 @@
 # This is written by Dante Van Poucke (Dante.VanPoucke@UGent.be)
 # origin:
 from HPC_topos import *
-import numpy as np
+import sys
+try:
+    import numpy as np
+except ImportError:
+    print("library `numpy` is required to run this topology. Please install numpy and try again.")
+    sys.exit(1)
 
 def compute_coeffs(i, primePower, primeFactor):
     coeffs = [0 for j in range(primePower)]
