@@ -31,7 +31,9 @@ public:
     VanadisTgKillSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallTgKillEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "tgkill" )
     {
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 0, 0, "[syscall-tgkill] ---> pid=%d, tgid=%d tid=%d sig=%d\n", process->gettid(), event->getTgid(), event->getTid(), event->getSig() );
+        #endif
 
         if ( event->getSig() == VANADIS_SIGNAL_SIGABRT ) {
             // Lookup tid in thread group and force it to exit
@@ -39,7 +41,9 @@ public:
             auto threads = process->getThreadList(); // map tid -> thread info
 
             if ( process->gettid() == event->getTid() ) { // Terminating main thread
+                #ifdef VANADIS_BUILD_DEBUG
                 m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "[syscall-exit] core %d thread %d process %d\n",event->getCoreID(), event->getThreadID(), process->getpid() );
+                #endif
 
                 m_output->output("WARNING: Vanadis core=%d, thread=%d, pid=%d tid=%d has received a SIGABRT\n", event->getCoreID(), event->getThreadID(), process->getpid(), process->gettid());
 
@@ -81,15 +85,19 @@ private:
 
         auto syscall = m_process->findFutex( m_process->getTidAddress());
         if ( syscall ) {
+            #ifdef VANADIS_BUILD_DEBUG
             m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,
             "[syscall-exit] FUTEX_WAKE tid=%d addr=%#" PRIx64 " found waiter, wakeup tid=%d\n",
                 m_process->gettid(), m_process->getTidAddress(), syscall->getTid());
+            #endif
             dynamic_cast<VanadisFutexSyscall*>( syscall )->wakeup();
             delete syscall;
         }
 
         m_os->removeThread( event->getCoreID(),event->getThreadID(), m_process->gettid() );
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "[syscall-tgkill] %s() called on thr=%d \n",__func__,m_process->gettid() );
+        #endif
 
         setReturnExited();
     }

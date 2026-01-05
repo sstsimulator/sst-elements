@@ -27,7 +27,9 @@ public:
     VanadisOpenatSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallOpenatEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "openat" )
     {
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose( CALL_INFO, 16, 0, "[syscall-openat] -> call is openat( %" PRId64 " )\n", event->getPathPointer());
+        #endif
 
         m_dirFd  = event->getDirectoryFileDescriptor();
         // if the directory fd passed by the syscall is positive it should point to a entry in the file_descriptor table
@@ -41,17 +43,22 @@ public:
                 return;
             }
             // get the FD that SST will use
+            #ifdef VANADIS_BUILD_DEBUG
             m_output->verbose(CALL_INFO, 16, 0, "sst fd=%d pathname=%s\n", m_dirFd, process->getFilePath(m_dirFd).c_str());
+            #endif
         }
 
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose( CALL_INFO, 16, 0, "[syscall-openat] -> call is openat( %" PRId64 ", 0x%0" PRI_ADDR ", %" PRId64 " )\n",
                 event->getDirectoryFileDescriptor(), event->getPathPointer(), event->getFlags());
-
+        #endif
         readString(event->getPathPointer(),m_filename);
     }
 
     void memReqIsDone(bool) {
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-openat] path: \"%s\"\n", m_filename.c_str());
+        #endif
 
         int fd = m_process->openFile( m_filename.c_str(), m_dirFd, getEvent<VanadisSyscallOpenatEvent*>()->getFlags(), getEvent<VanadisSyscallOpenatEvent*>()->getMode() );
 
@@ -68,7 +75,9 @@ public:
 #else
             str = strerror_r(myErrno,buf,100);
 #endif
+            #ifdef VANADIS_BUILD_DEBUG
             m_output->verbose(CALL_INFO, 16, 0, "[syscall-openat] open of %s failed, errno=%d `%s`\n", m_filename.c_str(), myErrno, str );
+            #endif
 
             setReturnFail( -myErrno );
         } else {

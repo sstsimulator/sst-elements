@@ -23,7 +23,9 @@ using namespace SST::Vanadis;
 VanadisForkSyscall::VanadisForkSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallForkEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "fork" )
 {
+    #ifdef VANADIS_BUILD_DEBUG
     m_output->verbose(CALL_INFO, 16, 0, "[syscall-fork]\n");
+    #endif
 
     // get a new hwThread to run the new process on
     m_threadID = m_os->allocHwThread();
@@ -65,7 +67,10 @@ void VanadisForkSyscall::handleEvent( VanadisCoreEvent* ev )
 {
     auto resp = dynamic_cast<VanadisGetThreadStateResp*>( ev );
     assert(resp);
+
+    #ifdef VANADIS_BUILD_DEBUG
     m_output->verbose(CALL_INFO, 16, 0, "[syscall-fork] got thread state response\n");
+    #endif
 
     VanadisStartThreadForkReq* req = new VanadisStartThreadForkReq( m_threadID->hwThread, resp->getInstPtr(), resp->getTlsPtr() );
     req->setIntRegs( resp->intRegs );

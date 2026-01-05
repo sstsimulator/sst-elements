@@ -31,7 +31,9 @@ public:
         uint64_t address = event->getDeallocationAddress();
         uint64_t length = event->getDeallocationLength();
 
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-unmap] addr=%#" PRI_ADDR " length=%" PRIu64 "\n",address, length);
+        #endif
 
         auto threads = process->getThreadList();
         for ( const auto iter : threads) {

@@ -27,8 +27,9 @@ public:
     VanadisUnlinkatSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallUnlinkatEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "unlinkat" )
     {
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose( CALL_INFO, 16, 0, "[syscall-unlinkat] -> call is unlinkat( %" PRId64 " )\n", event->getPathPointer());
-
+        #endif
         m_dirFd  = event->getDirectoryFileDescriptor();
         // if the directory fd passed by the syscall is positive it should point to a entry in the file_descriptor table
         // if the directory fd is negative pass that to to the unlinkat handler ( AT_FDCWD is negative )
@@ -41,18 +42,22 @@ public:
                 return;
             }
             // get the FD that SST will use
+            #ifdef VANADIS_BUILD_DEBUG
             m_output->verbose(CALL_INFO, 16, 0, "sst fd=%d pathname=%s\n", m_dirFd, process->getFilePath(m_dirFd).c_str());
+            #endif
         }
 
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose( CALL_INFO, 16, 0, "[syscall-unlinkat] -> call is unlinkat( %" PRId64 ", 0x%0" PRI_ADDR ", %" PRId64 " )\n",
                 event->getDirectoryFileDescriptor(), event->getPathPointer(), event->getFlags());
-
+        #endif
         readString(event->getPathPointer(),m_filename);
     }
 
     void memReqIsDone(bool) {
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-unlinkat] path: \"%s\"\n", m_filename.c_str());
-
+        #endif
         if ( unlinkat( m_dirFd, m_filename.c_str(), getEvent<VanadisSyscallUnlinkatEvent*>()->getFlags() ) ) {
             auto myErrno = errno;
             char buf[100];
@@ -65,7 +70,9 @@ public:
 #else
             str = strerror_r(errno,buf,100);
 #endif
+            #ifdef VANADIS_BUILD_DEBUG
             m_output->verbose(CALL_INFO, 16, 0, "[syscall-unlinkat] unlink of %s failed, errno=%d `%s`\n", m_filename.c_str(), errno, str );
+            #endif
             setReturnFail( -myErrno );
         } else {
             setReturnSuccess(0);

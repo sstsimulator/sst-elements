@@ -26,7 +26,9 @@ using namespace SST::Vanadis;
 VanadisExitSyscall::VanadisExitSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallExitEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "exit" )
 {
+    #ifdef VANADIS_BUILD_DEBUG
     m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "[syscall-exit] core %d thread %d process %d\n",event->getCoreID(), event->getThreadID(), process->getpid() );
+    #endif
 
     if ( m_os->getNodeNum() >= 0 ) {
         printf("node=%d pid=%d tid=%d has exited\n", m_os->getNodeNum(), process->getpid(), process->gettid());

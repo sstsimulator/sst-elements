@@ -37,10 +37,11 @@ using namespace SST::Vanadis;
 VanadisCloneSyscall::VanadisCloneSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallCloneEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "clone" )
 {
+    #ifdef VANADIS_BUILD_DEBUG
     m_output->debug(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
         "[syscall-clone] threadStackAddr=%#" PRIx64 " flags=%#" PRIx64 " parentTidAddr=%#" PRIx64 " tlsAddr=%#" PRIx64 " ctid=%#" PRIx64 " callStackAddr=%#" PRIx64 "\n",
         event->getThreadStackAddr(), event->getFlags(), event->getParentTidAddr(), event->getTlsAddr(), event->getchildTidAddr(), event->getCallStackAddr() );
-
+    #endif
     // get a new hwThread to run the new process on
     m_threadID = m_os->allocHwThread();
 
@@ -91,9 +92,10 @@ VanadisCloneSyscall::VanadisCloneSyscall( VanadisNodeOSComponent* os, SST::Link*
     m_newThread->setHwThread( *m_threadID );
     m_os->setThread( m_newThread->gettid(), m_newThread );
 
+    #ifdef VANADIS_BUILD_DEBUG
     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-clone] newthread pid=%d tid=%d ppid=%d numThreads=%d\n",
             m_newThread->getpid(), m_newThread->gettid(), m_newThread->getppid(), m_newThread->numThreads() );
-
+    #endif
     m_os->setProcess( m_threadID->core, m_threadID->hwThread, m_newThread );
     m_os->getMMU()->setCoreToPageTable( m_threadID->core, m_threadID->hwThread, m_newThread->getpid() );
 
@@ -105,8 +107,10 @@ VanadisCloneSyscall::VanadisCloneSyscall( VanadisNodeOSComponent* os, SST::Link*
             m_buffer.resize(sizeof(uint64_t));
         }
 
-        m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"read call stack %#" PRIx64 " \n",event->getCallStackAddr()+16);
-
+        #ifdef VANADIS_BUILD_DEBUG
+        m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"read call stack %#" PRIx64 " \n",
+        event->getCallStackAddr()+16);
+        #endif
         readMemory( event->getCallStackAddr()+16, m_buffer );
 
         m_state = ReadCallStack;
@@ -128,8 +132,9 @@ void VanadisCloneSyscall::readThreadStack(VanadisSyscallCloneEvent* event)
             m_buffer.resize( 2 * sizeof(uint64_t));
         }
 
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"read thread stack %#" PRIx64 " \n",event->getThreadStackAddr());
-
+        #endif
         readMemory( event->getThreadStackAddr(), m_buffer );
 
         m_state = ReadThreadStack;
@@ -140,7 +145,9 @@ void VanadisCloneSyscall::readThreadStack(VanadisSyscallCloneEvent* event)
 
 void VanadisCloneSyscall::setTid(VanadisSyscallCloneEvent* event)
 {
+    #ifdef VANADIS_BUILD_DEBUG
     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"setTidAddress %#" PRIx64 " \n",m_childTidAddr);
+    #endif
     m_newThread->setTidAddress( m_childTidAddr );
 
     // because we are lazy don't allow both of these at once, If this can happen we will need to add another state
@@ -161,8 +168,9 @@ void VanadisCloneSyscall::setTid(VanadisSyscallCloneEvent* event)
             *((uint32_t*)m_buffer.data()) = m_newThread->gettid();
         }
 
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"PARENT_SETTID addr %#" PRIx64 " tid=%d\n",event->getParentTidAddr(),  m_newThread->gettid());
-
+        #endif
         writeMemory( event->getParentTidAddr(), m_buffer );
         m_state = ChildSetTid;
 
@@ -178,8 +186,9 @@ void VanadisCloneSyscall::setTid(VanadisSyscallCloneEvent* event)
             *((uint32_t*)m_buffer.data()) = m_newThread->gettid();
         }
 
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"CHILD_SETTID addr %#" PRIx64 " tid=%d\n",m_childTidAddr,  m_newThread->gettid());
-
+        #endif
         writeMemory( m_childTidAddr, m_buffer, m_newThread );
 
         m_state = ChildSetTid;
@@ -190,7 +199,9 @@ void VanadisCloneSyscall::setTid(VanadisSyscallCloneEvent* event)
 
 void VanadisCloneSyscall::finish(VanadisSyscallCloneEvent* event)
 {
+    #ifdef VANADIS_BUILD_DEBUG
     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "\n");
+    #endif
     sendNeedThreadState();
 }
 
@@ -201,7 +212,9 @@ void VanadisCloneSyscall::handleEvent( VanadisCoreEvent* ev )
     auto resp = dynamic_cast<VanadisGetThreadStateResp*>( ev );
     assert(resp);
 
+    #ifdef VANADIS_BUILD_DEBUG
     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-clone] got thread state response\n");
+    #endif
 
     _VanadisStartThreadBaseReq* req;
 
@@ -215,8 +228,10 @@ void VanadisCloneSyscall::handleEvent( VanadisCoreEvent* ev )
     req->setIntRegs( resp->intRegs );
     req->setFpRegs( resp->fpRegs );
 
-     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-clone] core=%d thread=%d tid=%d instPtr=%" PRI_ADDR "\n",
-                 m_threadID->core, m_threadID->hwThread, m_newThread->gettid(), resp->getInstPtr() );
+    #ifdef VANADIS_BUILD_DEBUG
+    m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-clone] core=%d thread=%d tid=%d instPtr=%" PRI_ADDR "\n",
+                m_threadID->core, m_threadID->hwThread, m_newThread->gettid(), resp->getInstPtr() );
+    #endif
 #if 0 //debug
     for ( int i = 0; i < req->getIntRegs().size(); i++ ) {
         printf("int r%d %" PRIx64 "\n",i,req->getIntRegs()[i]);
@@ -239,8 +254,9 @@ void VanadisCloneSyscall::memReqIsDone(bool)
       case ReadCallStack:
 
         m_childTidAddr = *(uint32_t*)m_buffer.data();
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"read childTidAddr=%#" PRIx64 " \n",m_childTidAddr);
-
+        #endif
         readThreadStack(event);
         break;
 
@@ -253,9 +269,10 @@ void VanadisCloneSyscall::memReqIsDone(bool)
             m_threadStartAddr = *(uint64_t*)m_buffer.data();
             m_threadArgAddr = *((uint64_t*)m_buffer.data() + 1);
         }
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
                 "[syscall-clone] threadStartAddr=%#" PRIx64 " threadArgAddr=%#" PRIx64 "\n", m_threadStartAddr,m_threadArgAddr);
-
+        #endif
         setTid( event );
         break;
 

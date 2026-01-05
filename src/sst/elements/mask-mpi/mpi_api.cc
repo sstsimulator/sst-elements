@@ -108,7 +108,7 @@ namespace SST::MASKMPI {
 
 MpiApi* mask_mpi()
 {
-  SST::Hg::Thread* t = SST::Hg::OperatingSystem::currentThread();
+  SST::Hg::Thread* t = SST::Hg::OperatingSystemImpl::currentThread();
   return t->getLibrary<MpiApi>("MpiApi");
 }
 

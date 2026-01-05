@@ -30,10 +30,11 @@ public:
         uint64_t sim_seconds = (uint64_t)(sim_time_ns / 1000000000ULL);
         uint32_t sim_ns = (uint32_t)(sim_time_ns % 1000000000ULL);
 
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 16, 0,
                             "[syscall-gettime64] --> sim-time: %" PRIu64 " ns -> %" PRIu64 " secs + %" PRIu32 " us\n",
                             sim_time_ns, sim_seconds, sim_ns);
-
+        #endif
 
         if ( VanadisOSBitType::VANADIS_OS_64B == event->getOSBitType() ) {
             payload.resize( 16 );

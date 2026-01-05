@@ -13,14 +13,13 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <mercury/components/operating_system_base.h>
+#include <mercury/components/compute_library/operating_system_cl_api.h>
 
 namespace SST {
 namespace Hg {
 
-OperatingSystemBase::OperatingSystemBase(ComponentId_t id, SST::Params &params)
-    : SubComponent(id) {
-    }
+OperatingSystemCLAPI::OperatingSystemCLAPI(ComponentId_t id, SST::Params &params)
+    : OperatingSystemAPI(id,params) {}
 
 } // namespace Hg
 } // namespace SST

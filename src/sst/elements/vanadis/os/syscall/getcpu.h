@@ -27,7 +27,9 @@ public:
     VanadisGetcpuSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallGetxEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "getcpu" )
     {
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-getcpu] cpu=%u hwThread=%u\n",process->getCore(),process->getHwThread());
+        #endif
 
         uint32_t logicalCore = process->getCore() * os->getNumHwThreads() + process->getHwThread();
         setReturnSuccess(logicalCore);

@@ -37,9 +37,11 @@ public:
         uint64_t call_stack = event->getStackPointer();
         uint64_t offset_units = event->getOffsetUnits();
 
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL, "[syscall-mmap] addr=%#" PRIx64 " length=%#" PRIx64 " prot=%#" PRIx64 " flags=%#" PRIx64
                 " fd=%d offset=%" PRIu64 " call_stack=%#" PRIx64 " offset_units=%" PRIu64 "\n",
                     address,length,protect,flags,fd,offset,call_stack,offset_units);
+        #endif
 
         // if that stackAddr is valid  we need to get mmap() arguments that are not in registers
         if ( event->getStackPointer() ) {

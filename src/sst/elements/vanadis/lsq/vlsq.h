@@ -61,8 +61,10 @@ public:
         std::string prefix = "[lsq " + getName() + " !t]: ";
         output = new SST::Output(prefix, verbosity, mask, SST::Output::STDOUT);
 
+        #ifdef VANADIS_BUILD_DEBUG
         setDbgInsAddrs( params.find<std::string>("dbgInsAddrs", "") );
         setDbgAddrs( params.find<std::string>("dbgAddrs", "") );
+        #endif
 
         core_id = coreid;
         hw_threads = hwthreads;
@@ -72,8 +74,10 @@ public:
     virtual ~VanadisLoadStoreQueue() { delete output; }
 
     void setRegisterFiles(std::vector<VanadisRegisterFile*>* reg_f) {
+        #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 8, 0, "Setting register files (%" PRIu32 " register files in set)\n",
                         (uint32_t)reg_f->size());
+        #endif
         assert(reg_f != nullptr);
 
         registerFiles = reg_f;

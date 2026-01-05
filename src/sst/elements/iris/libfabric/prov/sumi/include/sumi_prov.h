@@ -549,7 +549,7 @@ struct RecvQueue {
     }
   };
 
-  RecvQueue(SST::Hg::OperatingSystem* os) :
+  RecvQueue(SST::Hg::OperatingSystemAPI* os) :
     progress(os)
   {
   }

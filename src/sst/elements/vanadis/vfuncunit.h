@@ -107,7 +107,9 @@ public:
     }
 
     void clearByHWThreadID(SST::Output* output, const uint16_t hw_thr) {
+        #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 16, 0, "-> Function Unit, clearing by hardware thread %" PRIu32 "...\n", hw_thr);
+        #endif
 
         for (auto q_itr = pending_execute.begin(); q_itr != pending_execute.end();) {
             // if we get a hardware thread match, remove and carry out

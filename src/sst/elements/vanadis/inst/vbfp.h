@@ -85,7 +85,9 @@ public:
         const uint16_t fp_cond_reg = phys_fp_regs_in[0];
         bool compare_result = false;
         instOp(regFile, fp_cond_reg, &compare_result);
+        #ifdef VANADIS_BUILD_DEBUG
         log(output, 16, 65535,compare_result,fp_cond_reg);
+        #endif
         markExecuted();
     }
 

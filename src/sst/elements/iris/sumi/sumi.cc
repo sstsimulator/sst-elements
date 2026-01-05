@@ -43,7 +43,7 @@ Questions? Contact sst-macro-help@sandia.gov
 */
 
 #include <mercury/operating_system/process/app.h>
-#include <mercury/components/operating_system.h>
+#include <mercury/components/compute_library/operating_system_cl.h>
 #include <mercury/common/util.h>
 #include <mercury/common/loader.h>
 #include <iris/sumi/transport.h>
@@ -176,7 +176,7 @@ Message* comm_poll()
 
 double wall_time()
 {
-  return OperatingSystem::currentOs()->now().sec();
+  return Hg::OperatingSystemCL::currentOs()->now().sec();
 }
 
 }

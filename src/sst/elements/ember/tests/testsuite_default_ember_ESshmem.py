@@ -91,6 +91,9 @@ class testcase_Ember_ESshmem(SSTTestCase):
     def test_Ember_ESshmem(self, testnum, hash_str, modelstr, sdlfile):
         self._checkSkipConditions(testnum)
 
+        # Run only the first 10 tests if we are not in a Nightly test
+        if not testing_check_is_nightly() and testnum > 10:
+            self.skipTest("Complete Ember ESshmem only runs on Nightly builds.")
         log_debug("Running Ember ESshmem #{0} ({1}): model={2} using sdl={3}".format(testnum, hash_str, modelstr, sdlfile))
         self.Ember_ESshmem_test_template(testnum, hash_str, modelstr, sdlfile)
 

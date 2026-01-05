@@ -141,7 +141,7 @@ Thread::runRoutine(void* threadptr)
   }
 }
 
-Thread::Thread(SST::Params& params, SoftwareId sid, OperatingSystem* os) :
+Thread::Thread(SST::Params& params, SoftwareId sid, OperatingSystemAPI* os) :
   state_(PENDING),
   os_(os),
   parent_app_(nullptr),
