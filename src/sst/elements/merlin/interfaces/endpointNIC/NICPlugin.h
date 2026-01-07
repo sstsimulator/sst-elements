@@ -33,6 +33,7 @@ public:
     virtual void plugin_init(unsigned int phase) {}
     virtual void plugin_setup() {}
     virtual void plugin_finish() {}
+    virtual void plugin_complete() {}
 };
 
 } // namespace Merlin

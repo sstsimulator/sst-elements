@@ -103,6 +103,9 @@ void endpointNIC::setup()
 
 void endpointNIC::complete(unsigned int phase)
 {
+    for (auto* plugin : plugin_pipeline) {
+        plugin->plugin_complete();
+    }
     link_control->complete(phase);
 }
 
