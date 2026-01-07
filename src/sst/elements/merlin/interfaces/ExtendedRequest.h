@@ -147,11 +147,11 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
         Request::serialize_order(ser);
-        
+
         // Manually serialize the metadata map since std::variant isn't directly supported
         size_t map_size = metadata.size();
         ser & map_size;
-        
+
         switch(ser.mode()) {
         case SST::Core::Serialization::serializer::SIZER:
         case SST::Core::Serialization::serializer::PACK:
@@ -160,7 +160,7 @@ public:
                 ser & key;
                 size_t type_index = pair.second.index();  // Get variant type index
                 ser & type_index;
-                
+
                 // Serialize based on type
                 if (type_index == 1) {  // SourceRoutingMetadata
                     auto data = std::get<SourceRoutingMetadata>(pair.second);
@@ -178,7 +178,7 @@ public:
                 ser & key;
                 size_t type_index;
                 ser & type_index;
-                
+
                 // Deserialize based on type
                 if (type_index == 1) {  // SourceRoutingMetadata
                     std::deque<int> path;

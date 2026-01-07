@@ -20,6 +20,7 @@
 #include "NICPlugin.h"
 #include "../ExtendedRequest.h"
 #include <sst/core/rng/mersenne.h>
+#include <sst/core/shared/sharedArray.h>
 #include <map>
 #include <vector>
 #include <string>
@@ -68,12 +69,11 @@ public:
 class SourceRoutingPlugin : public NICPlugin
 {
 public:
-    // Static shared data accessible by both SourceRoutingPlugin and topology classes
-    static std::map<int, int> endpoint_to_router_map;  // Shared endpoint-to-router mapping
-
-    // Static accessor methods for external access
-    static std::vector<routing_entries>& getRoutingTable() { return routing_table; }
-    static std::map<int, int>& getEndpointToRouterMap() { return endpoint_to_router_map; }
+    // Shared data accessible by both SourceRoutingPlugin and topology classes
+    // Using SharedArray instead of static variables for proper SubComponent support
+    // Array index = endpoint ID, value = router ID (-1 means uninitialized)
+    Shared::SharedArray<int> endpoint_to_router_shared;
+    Shared::SharedArray<routing_entries> routing_table_shared;
 
 private:
     PathSelectionAlgorithm* path_selector;
@@ -83,7 +83,6 @@ private:
 
     // Store endpoint ID (set during init)
     SST::Interfaces::SimpleNetwork::nid_t endpoint_id;
-    static std::vector<routing_entries> routing_table; // Shared routing table for all routers
 
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
@@ -128,7 +127,7 @@ private:
     void initializePathSelectionAlgorithm(const std::string& algorithm_name);
     std::deque<int> selectPath(int dest_router);
     inline size_t lookupRtrForEndpoint(SST::Interfaces::SimpleNetwork::nid_t endpoint) {
-        return endpoint_to_router_map[endpoint];
+        return endpoint_to_router_shared[endpoint];
     }
 };
 

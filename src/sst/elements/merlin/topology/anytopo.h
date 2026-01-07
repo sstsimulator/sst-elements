@@ -24,6 +24,7 @@
 #include <sst/core/params.h>
 #include <sst/core/rng/rng.h>
 #include <sst/core/output.h>
+#include <sst/core/shared/sharedArray.h>
 #include <unordered_map>
 #include <set>
 #include <map>
@@ -250,7 +251,10 @@ private:
     // void route_adaptive(int port, int vc, internal_router_event* ev, int dest_router);
 
     Output &output;
-    static std::vector<routing_entries> simple_routing_table; // Shared routing table for all routers (declared here, defined in .cc)
+
+    // Shared data accessible across all topology instances (using SharedArray instead of static)
+    Shared::SharedArray<routing_entries> simple_routing_table_shared;
+    Shared::SharedArray<int> endpoint_to_router_shared;
 
 };
 
