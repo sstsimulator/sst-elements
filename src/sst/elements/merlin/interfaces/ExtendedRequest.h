@@ -21,35 +21,43 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <variant>
+#include <deque>
 
 namespace SST {
 namespace Merlin {
 
-// Base class for plugin metadata
-class PluginMetadata {
-public:
-    virtual ~PluginMetadata() {}
-    virtual PluginMetadata* clone() const = 0;
+// Common metadata structures used by plugins
+
+// Source Routing metadata
+struct SourceRoutingMetadata {
+    std::deque<int> path = {};
+
+    SourceRoutingMetadata() {}
+    SourceRoutingMetadata(const std::deque<int>& p) : path(p) {}
 };
 
-// Templated metadata for type-safe storage
-template<typename T>
-class TypedMetadata : public PluginMetadata {
-public:
-    T data;
+// Reorder metadata
+struct ReorderMetadata {
+    uint32_t seq_number;
 
-    TypedMetadata(const T& d) : data(d) {}
-
-    PluginMetadata* clone() const override {
-        return new TypedMetadata<T>(data);
-    }
+    ReorderMetadata() : seq_number(0) {}
+    ReorderMetadata(uint32_t seq) : seq_number(seq) {}
 };
+
+// Variant type for all supported metadata types
+// Add new metadata types here as needed
+using MetadataVariant = std::variant<
+    std::monostate,  // Empty/uninitialized state
+    SourceRoutingMetadata,
+    ReorderMetadata
+>;
 
 // Extended Request that plugins can attach metadata to
 class ExtendedRequest : public SST::Interfaces::SimpleNetwork::Request {
 private:
-    // Map from plugin name/key to metadata
-    std::map<std::string, std::shared_ptr<PluginMetadata>> metadata;
+    // Map from plugin name/key to metadata (variant-based for serialization)
+    std::map<std::string, MetadataVariant> metadata;
 
     ImplementSerializable(SST::Merlin::ExtendedRequest)
 
@@ -72,10 +80,8 @@ public:
         // If req is already an ExtendedRequest, copy its metadata
         ExtendedRequest* ext_req = dynamic_cast<ExtendedRequest*>(req);
         if (ext_req) {
-            // Deep copy metadata
-            for (const auto& pair : ext_req->metadata) {
-                metadata[pair.first] = std::shared_ptr<PluginMetadata>(pair.second->clone());
-            }
+            // Copy metadata (variant handles copying automatically)
+            metadata = ext_req->metadata;
         }
     }
 
@@ -84,7 +90,7 @@ public:
     // Set plugin-specific metadata
     template<typename T>
     void setMetadata(const std::string& key, const T& data) {
-        metadata[key] = std::make_shared<TypedMetadata<T>>(data);
+        metadata[key] = data;
     }
 
     // Get plugin-specific metadata
@@ -94,24 +100,34 @@ public:
         auto it = metadata.find(key);
         if (it == metadata.end()) return false;
 
-        TypedMetadata<T>* typed = dynamic_cast<TypedMetadata<T>*>(it->second.get());
-        if (!typed) return false;
-
-        data = typed->data;
-        return true;
+        // Try to get the value from the variant
+        if (auto* val = std::get_if<T>(&it->second)) {
+            data = *val;
+            return true;
+        }
+        return false;
     }
 
     // Get a const pointer to plugin-specific metadata without copying
     // Returns nullptr if metadata doesn't exist or type mismatch
     template<typename T>
-    T* getMetadataPtr(const std::string& key) const {
+    const T* getMetadataPtr(const std::string& key) const {
         auto it = metadata.find(key);
         if (it == metadata.end()) return nullptr;
 
-        TypedMetadata<T>* typed = dynamic_cast<TypedMetadata<T>*>(it->second.get());
-        if (!typed) return nullptr;
+        // Return pointer to value in variant
+        return std::get_if<T>(&it->second);
+    }
 
-        return &(typed->data);
+    // Get a mutable pointer to plugin-specific metadata without copying
+    // Returns nullptr if metadata doesn't exist or type mismatch
+    template<typename T>
+    T* getMetadataPtr(const std::string& key) {
+        auto it = metadata.find(key);
+        if (it == metadata.end()) return nullptr;
+
+        // Return pointer to value in variant
+        return std::get_if<T>(&it->second);
     }
 
     // Check if metadata exists for a given key
@@ -131,28 +147,52 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
         Request::serialize_order(ser);
-        // Note: Metadata serialization would need to be implemented if
-        // ExtendedRequest needs to be sent across MPI ranks
-        // For now, metadata is assumed to be used only within a single rank
+        
+        // Manually serialize the metadata map since std::variant isn't directly supported
+        size_t map_size = metadata.size();
+        ser & map_size;
+        
+        switch(ser.mode()) {
+        case SST::Core::Serialization::serializer::SIZER:
+        case SST::Core::Serialization::serializer::PACK:
+            for (auto& pair : metadata) {
+                std::string key = pair.first;  // Copy to avoid const issues
+                ser & key;
+                size_t type_index = pair.second.index();  // Get variant type index
+                ser & type_index;
+                
+                // Serialize based on type
+                if (type_index == 1) {  // SourceRoutingMetadata
+                    auto data = std::get<SourceRoutingMetadata>(pair.second);
+                    ser & data.path;
+                } else if (type_index == 2) {  // ReorderMetadata
+                    auto data = std::get<ReorderMetadata>(pair.second);
+                    ser & data.seq_number;
+                }
+            }
+            break;
+        case SST::Core::Serialization::serializer::UNPACK:
+            metadata.clear();
+            for (size_t i = 0; i < map_size; ++i) {
+                std::string key;
+                ser & key;
+                size_t type_index;
+                ser & type_index;
+                
+                // Deserialize based on type
+                if (type_index == 1) {  // SourceRoutingMetadata
+                    std::deque<int> path;
+                    ser & path;
+                    metadata[key] = SourceRoutingMetadata(path);
+                } else if (type_index == 2) {  // ReorderMetadata
+                    uint32_t seq_number;
+                    ser & seq_number;
+                    metadata[key] = ReorderMetadata(seq_number);
+                }
+            }
+            break;
+        }
     }
-};
-
-// Common metadata structures used by plugins
-
-// Source Routing metadata
-struct SourceRoutingMetadata {
-    std::deque<int> path = {};
-
-    SourceRoutingMetadata() {}
-    SourceRoutingMetadata(const std::deque<int>& p) : path(p) {}
-};
-
-// Reorder metadata
-struct ReorderMetadata {
-    uint32_t seq_number;
-
-    ReorderMetadata() : seq_number(0) {}
-    ReorderMetadata(uint32_t seq) : seq_number(seq) {}
 };
 
 } // namespace Merlin
