@@ -134,15 +134,15 @@ private:
     };
 
     struct PageFault {
-        PageFault(MMU_Lib::RequestID reqId, unsigned link, unsigned core,unsigned hwThread, unsigned pid,  uint32_t vpn,
+        PageFault(MMU_Lib::RequestID reqId, uint32_t link, uint32_t core, uint32_t hwThread, uint32_t pid,  uint32_t vpn,
                             uint32_t faultPerms, uint64_t instPtr, uint64_t memVirtAddr, VanadisSyscall* syscall )
             : reqId(reqId), link(link), core(core), hwThread(hwThread), pid(pid), vpn(vpn), faultPerms(faultPerms),
                 instPtr(instPtr), memVirtAddr(memVirtAddr), syscall(syscall) {}
         MMU_Lib::RequestID reqId;
-        unsigned link;
-        unsigned core;
-        unsigned hwThread;
-        unsigned pid;
+        uint32_t link;
+        uint32_t core;
+        uint32_t hwThread;
+        uint32_t pid;
         uint32_t vpn;
         uint32_t faultPerms;
         uint64_t instPtr;
@@ -166,19 +166,19 @@ private:
 
     void processOsPageFault( VanadisSyscall*, uint64_t virtAddr, bool isWrite );
 
-    void pageFaultHandler( MMU_Lib::RequestID reqId, unsigned link, unsigned core, unsigned hwThread, unsigned pid,
+    void pageFaultHandler( MMU_Lib::RequestID reqId, uint32_t link, uint32_t core, uint32_t hwThread, uint32_t pid,
         uint32_t vpn, uint32_t perms, uint64_t instPtr, uint64_t memVirtAddr )
     {
         pageFaultHandler2( reqId, link, core, hwThread, pid, vpn, perms, instPtr, memVirtAddr );
     }
 
-    void pageFaultHandler2( MMU_Lib::RequestID, unsigned link, unsigned core, unsigned hwThread,  unsigned pid,
+    void pageFaultHandler2( MMU_Lib::RequestID, uint32_t link, uint32_t core, uint32_t hwThread,  uint32_t pid,
         uint32_t vpn, uint32_t perms, uint64_t instPtr, uint64_t memVirtAddr, VanadisSyscall* syscall = nullptr );
 
     void pageFault( PageFault* );
     void pageFaultFini( PageFault*, bool success = true );
     void startProcess( OS::HwThreadID&, OS::ProcessInfo* process );
-    void copyPage(uint64_t physFrom, uint64_t physTo, unsigned pageSize, Callback* );
+    void copyPage(uint64_t physFrom, uint64_t physTo, uint32_t pageSize, Callback* );
 
     void sendMemoryEvent(VanadisSyscall* syscall, StandardMem::Request* ev ) {
         m_memRespMap.insert(std::pair<StandardMem::Request::id_t, VanadisSyscall*>(ev->getID(), syscall));
@@ -187,14 +187,14 @@ private:
 
     uint64_t getNanoSeconds() { return getCurrentSimTimeNano() + m_osStartTimeNano;  }
 
-    void writePage( uint64_t physAddr, uint8_t* data, unsigned page_size, Callback* callback )
+    void writePage( uint64_t phys_addr, uint8_t* data, uint32_t page_size, Callback* callback )
     {
-        queueBlockMemoryReq( new PageMemWriteReq( mem_if, physAddr, page_size, data, callback ) );
+        queueBlockMemoryReq( new PageMemWriteReq( mem_if, phys_addr, page_size, data, callback ) );
     }
 
-    void readPage( uint64_t physAddr, uint8_t* data, unsigned page_size, Callback* callback )
+    void readPage( uint64_t phys_addr, uint8_t* data, uint32_t page_size, Callback* callback )
     {
-        queueBlockMemoryReq( new PageMemReadReq( mem_if, physAddr, page_size, data, callback ) );
+        queueBlockMemoryReq( new PageMemReadReq( mem_if, phys_addr, page_size, data, callback ) );
     }
 
     void queueBlockMemoryReq( PageMemReq* req ) {
@@ -206,9 +206,9 @@ private:
 
     void startBlockXfer( PageMemReq* req ) {
         // this specfies how many requests should be initially sent before waiting for a response
-        // this value was choose because hight does not increase performance, for the configuration used to test
+        // this value was choose because higher does not increase performance, for the configuration used to test
         unsigned startWithNum = 6;
-        for ( int i = 0; i < startWithNum; i++ ) {
+        for ( unsigned i = 0; i < startWithNum; i++ ) {
             req->sendReq();
         }
     }
@@ -235,11 +235,11 @@ private:
         return nullptr;
     }
 
-    void updatePageCache( VanadisELFInfo* elf_info , int vpn, OS::Page* page ) {
+    void updatePageCache( VanadisELFInfo* elf_info , uint32_t vpn, OS::Page* page ) {
         m_elfPageCache[elf_info][vpn] = page;
     }
 
-    void writeMem( OS::ProcessInfo*, uint64_t virtAddr, std::vector<uint8_t>* data, int perms, unsigned pageSize, Callback* callback );
+    void writeMem( OS::ProcessInfo*, uint64_t virtAddr, std::vector<uint8_t>* data, uint32_t perms, uint32_t pageSize, Callback* callback );
 
     template<typename T>
     T convertEvent( std::string name, VanadisSyscallEvent* sys_ev ) {
@@ -277,18 +277,18 @@ private:
 
     class CoreInfo {
       public:
-        CoreInfo( unsigned numHwThreads ) : m_hwThreadMap(numHwThreads) {}
-        void setSyscall( unsigned hwThread,  VanadisSyscall* syscall ) { m_hwThreadMap[hwThread].setSyscall( syscall ); }
-        void clearSyscall( unsigned hwThread ) { m_hwThreadMap[hwThread].clearSyscall(); }
-        void setProcess( unsigned hwThread,  OS::ProcessInfo* process ) { m_hwThreadMap[hwThread].setProcess( process ); }
+        CoreInfo( uint32_t num_hw_threads ) : m_hwThreadMap(num_hw_threads) {}
+        void setSyscall( uint32_t hw_thread,  VanadisSyscall* syscall ) { m_hwThreadMap[hw_thread].setSyscall( syscall ); }
+        void clearSyscall( uint32_t hw_thread ) { m_hwThreadMap[hw_thread].clearSyscall(); }
+        void setProcess( uint32_t hw_thread,  OS::ProcessInfo* process ) { m_hwThreadMap[hw_thread].setProcess( process ); }
 
-        OS::ProcessInfo* getProcess( unsigned hwThread ) { return m_hwThreadMap.at(hwThread).getProcess(); }
-        VanadisSyscall* getSyscall( unsigned hwThread ) { return m_hwThreadMap.at(hwThread).getSyscall(); }
+        OS::ProcessInfo* getProcess( uint32_t hw_thread ) { return m_hwThreadMap.at(hw_thread).getProcess(); }
+        VanadisSyscall* getSyscall( uint32_t hw_thread ) { return m_hwThreadMap.at(hw_thread).getSyscall(); }
 
         void checkpoint( FILE* fp ) {
             fprintf(fp, "m_hwThreadMap.size(): %zu\n",m_hwThreadMap.size());
             for ( auto i = 0; i < m_hwThreadMap.size(); i++ ) {
-                fprintf(fp, "hwThread: %d\n",i);
+                fprintf(fp, "hwThread: %" PRIu32 "\n",i);
                 m_hwThreadMap[i].checkpoint( fp );
             }
         }
@@ -298,33 +298,33 @@ private:
         std::vector< HardwareThreadInfo > m_hwThreadMap;
     };
 
-    VanadisSyscall* getSyscall( int core, int hwThread ) {
-        return m_coreInfoMap[core].getSyscall( hwThread );
+    VanadisSyscall* getSyscall( uint32_t core, uint32_t hw_thread ) {
+        return m_coreInfoMap[core].getSyscall( hw_thread );
     }
 
 public:
 
-    void sendEvent( int core, SST::Event* ev ) {
+    void sendEvent( uint32_t core, SST::Event* ev ) {
         core_links.at(core)->send( ev );
     }
 
-    void setProcess( int core, int hwThread,  OS::ProcessInfo* process ) {
-        m_coreInfoMap.at(core).setProcess( hwThread, process );
+    void setProcess( uint32_t core, uint32_t hw_thread,  OS::ProcessInfo* process ) {
+        m_coreInfoMap.at(core).setProcess( hw_thread, process );
     }
 
     Output* getOutput() { return output; }
 
-    void setSyscall( int core, int hwThread, VanadisSyscall* syscall) {
+    void setSyscall( uint32_t core, uint32_t hw_thread, VanadisSyscall* syscall) {
         #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"core=%d hwThread=%d\n",core,hwThread);
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"core=%" PRIu32 " hwThread=%" PRIu32 "\n", core, hw_thread);
         #endif
-        m_coreInfoMap[core].setSyscall( hwThread, syscall );
+        m_coreInfoMap[core].setSyscall( hw_thread, syscall );
     }
-    void clearSyscall( int core, int hwThread ) {
+    void clearSyscall( uint32_t core, uint32_t hw_thread ) {
         #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"core=%d hwThread=%d\n",core, hwThread );
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"core=%" PRIu32 " hwThread=%" PRIu32 "\n", core, hw_thread );
         #endif
-        m_coreInfoMap[core].clearSyscall( hwThread );
+        m_coreInfoMap[core].clearSyscall( hw_thread );
     }
 
     OS::HwThreadID* allocHwThread() {

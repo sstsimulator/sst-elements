@@ -35,6 +35,12 @@ namespace MMU_Lib {
         }
         return true;
     }
+
+    // Helper to check if a number is a power of 2
+    // Copied from memHierarchy
+    inline bool isPowerOfTwo(unsigned int x) {
+        return !(x & (x-1));
+    }
 }
 }
 

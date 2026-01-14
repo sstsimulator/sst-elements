@@ -49,7 +49,7 @@ class ProcessInfo {
 
         char buffer[100];
         snprintf(buffer,100,"@t::ProcessInfo::@p():@l ");
-        m_dbg.init( buffer, debug_level, 0,Output::STDOUT );
+        dbg_.init( buffer, debug_level, 0,Output::STDOUT );
 
         m_mmu = obj.m_mmu;
         m_physMemMgr = obj.m_physMemMgr;
@@ -82,7 +82,7 @@ class ProcessInfo {
         uint64_t initial_brk = 0;
         char buffer[100];
         snprintf(buffer,100,"@t::ProcessInfo::@p():@l ");
-        m_dbg.init( buffer, debug_level, 0,Output::STDOUT );
+        dbg_.init( buffer, debug_level, 0,Output::STDOUT );
 
         m_pageShift = log2(m_pageSize);
 
@@ -106,7 +106,7 @@ class ProcessInfo {
                 uint64_t virtAddrPage = roundDown( virtAddr, m_pageSize );
                 uint64_t virtAddrEnd = roundUp(virtAddr + memLen, m_pageSize );
 
-                m_dbg.verbose( CALL_INFO, 2, 0,"virtAddr %#" PRIx64 ", page aligned virtual address region: %#" PRIx64 " - %#" PRIx64 " flags=%#" PRIx64 "\n",
+                dbg_.verbose( CALL_INFO, 2, 0,"virtAddr %#" PRIx64 ", page aligned virtual address region: %#" PRIx64 " - %#" PRIx64 " flags=%#" PRIx64 "\n",
                         virtAddr, virtAddrPage, virtAddrEnd, hdr->getSegmentFlags() );
                 std::string name;
                 if ( m_elfInfo->getEntryPoint() >= virtAddrPage && m_elfInfo->getEntryPoint() < virtAddrEnd ) {
@@ -249,15 +249,15 @@ class ProcessInfo {
 
         auto fp = fopen(filename.str().c_str(),"w+");
         assert(fp);
-        fprintf(fp,"m_pageSize: %d\n",m_pageSize);
-        fprintf(fp,"m_pid: %d\n",m_pid);
-        fprintf(fp,"m_tid: %d\n",m_tid);
-        fprintf(fp,"m_ppid: %d\n", m_ppid);
-        fprintf(fp,"m_pgid: %d\n", m_pgid);
-        fprintf(fp,"m_uid: %d\n",m_uid);
-        fprintf(fp,"m_gid: %d\n",m_gid);
-        fprintf(fp,"m_core: %d\n",m_core);
-        fprintf(fp,"m_hwThread: %d\n",m_hwThread);
+        fprintf(fp,"m_pageSize: %" PRIu32 "\n",m_pageSize);
+        fprintf(fp,"m_pid: %" PRIu32 "\n",m_pid);
+        fprintf(fp,"m_tid: %" PRIu32 "\n",m_tid);
+        fprintf(fp,"m_ppid: %" PRIu32 "\n", m_ppid);
+        fprintf(fp,"m_pgid: %" PRIu32 "\n", m_pgid);
+        fprintf(fp,"m_uid: %" PRIu32 "\n",m_uid);
+        fprintf(fp,"m_gid: %" PRIu32 "\n",m_gid);
+        fprintf(fp,"m_core: %" PRIu32 "\n",m_core);
+        fprintf(fp,"m_hwThread: %" PRIu32 "\n",m_hwThread);
         fprintf(fp,"m_tidAddress: %#" PRIx64 "\n",m_tidAddress);
 
         m_virtMemMap->snapshot(fp);
@@ -331,22 +331,22 @@ class ProcessInfo {
 
 
     void addFutexWait( uint64_t addr, VanadisSyscall* syscall ) {
-        m_dbg.verbose(CALL_INFO,1,0,"addr=%#" PRIx64 "\n",addr);
+        dbg_.verbose(CALL_INFO,1,0,"addr=%#" PRIx64 "\n",addr);
         m_futex->addWait( addr, syscall );
     }
 
     VanadisSyscall* findFutex( uint64_t addr ) {
-        m_dbg.verbose(CALL_INFO,1,0,"addr=%#" PRIx64 "\n",addr);
+        dbg_.verbose(CALL_INFO,1,0,"addr=%#" PRIx64 "\n",addr);
         return m_futex->findWait( addr );
     }
 
     int futexGetNumWaiters( uint64_t addr ) {
-        m_dbg.verbose(CALL_INFO,1,0,"addr=%#" PRIx64 "\n",addr);
+        dbg_.verbose(CALL_INFO,1,0,"addr=%#" PRIx64 "\n",addr);
         return m_futex->getNumWaiters( addr );
     }
 
-    void mapVirtToPage( unsigned vpn, OS::Page* page ) {
-        m_dbg.verbose(CALL_INFO,1,VANADIS_OS_DBG_VIRT2PHYS,"vpn=%d ppn=%d virtAddr=%#" PRIx64 "\n", vpn, page->getPPN(), (uint64_t) vpn << m_pageShift );
+    void mapVirtToPage( uint32_t vpn, OS::Page* page ) {
+        dbg_.verbose(CALL_INFO,1,VANADIS_OS_DBG_VIRT2PHYS,"vpn=%" PRIu32 " ppn=%u virtAddr=%#" PRIx64 "\n", vpn, page->getPPN(), (uint64_t) vpn << m_pageShift );
         auto region = findMemRegion( vpn << m_pageShift );
         assert( region );
         region->mapVirtToPhys( vpn, page );
@@ -359,7 +359,7 @@ class ProcessInfo {
         auto region = findMemRegion(virtAddr);
 
         if ( nullptr == region ) {
-            m_dbg.fatal(CALL_INFO, -1, "Error: can't find memory region for addr %#" PRIx64 "\n", virtAddr);
+            dbg_.fatal(CALL_INFO, -1, "Error: can't find memory region for addr %#" PRIx64 "\n", virtAddr);
         }
 
         uint32_t ppn = m_mmu->virtToPhys( getpid(), vpn );
@@ -369,7 +369,7 @@ class ProcessInfo {
             return -1;
         }
         uint64_t physAddr = ppn << m_pageShift | virtAddr & ( (1<<m_pageShift) - 1 );
-        m_dbg.verbose(CALL_INFO,1,VANADIS_OS_DBG_VIRT2PHYS,"pid=%d virtAddr=%#" PRIx64 " -> %#" PRIx64 "\n",getpid(),virtAddr,physAddr);
+        dbg_.verbose(CALL_INFO,1,VANADIS_OS_DBG_VIRT2PHYS,"pid=%d virtAddr=%#" PRIx64 " -> %#" PRIx64 "\n",getpid(),virtAddr,physAddr);
         return physAddr;
     }
 
@@ -396,7 +396,7 @@ class ProcessInfo {
     }
 
     uint64_t mmap( uint64_t addr, size_t length, int prot, int flags, Device* dev, size_t offset ) {
-        m_dbg.verbose(CALL_INFO,1,0,"addr=%#" PRIx64 " length=%zu prot=%#x flags=%#x offset=%zu\n",addr, length, prot, flags, offset );
+        dbg_.verbose(CALL_INFO,1,0,"addr=%#" PRIx64 " length=%zu prot=%#x flags=%#x offset=%zu\n",addr, length, prot, flags, offset );
 
         length = roundUp( length, m_pageSize );
 
@@ -410,7 +410,7 @@ class ProcessInfo {
             return ret;
         }
 
-        m_dbg.verbose(CALL_INFO,0,0,"didn't find enough memory\n");
+        dbg_.verbose(CALL_INFO,0,0,"didn't find enough memory\n");
         assert(0);
         return 0;
     }
@@ -424,21 +424,21 @@ class ProcessInfo {
 
     void setHwThread( OS::HwThreadID& id ) {
         m_core = id.core;
-        m_hwThread = id.hwThread;
+        m_hwThread = id.hw_thread;
     }
 
-    void settid( unsigned id ) { m_tid = id; }
-    void setppid( unsigned id ) { m_ppid = id; }
-    void setpgid( unsigned id ) { m_pgid = id; }
+    void settid( uint32_t id ) { m_tid = id; }
+    void setppid( uint32_t id ) { m_ppid = id; }
+    void setpgid( uint32_t id ) { m_pgid = id; }
 
-    unsigned getCore() { return m_core; }
-    unsigned getHwThread() { return m_hwThread; }
-    unsigned getpid() { return m_pid; }
-    unsigned gettid() { return m_tid; }
-    unsigned getppid() { return m_ppid; }
-    unsigned getpgid() { return m_pgid; }
-    unsigned getuid() { return m_uid; }
-    unsigned getgid() { return m_gid; }
+    uint32_t getCore() { return m_core; }
+    uint32_t getHwThread() { return m_hwThread; }
+    uint32_t getpid() { return m_pid; }
+    uint32_t gettid() { return m_tid; }
+    uint32_t getppid() { return m_ppid; }
+    uint32_t getpgid() { return m_pgid; }
+    uint32_t getuid() { return m_uid; }
+    uint32_t getgid() { return m_gid; }
 
     int closeFile( int fd ) {
         return m_fileTable->close( fd );
@@ -463,11 +463,11 @@ class ProcessInfo {
     void setAffinity(const std::vector<uint8_t>& mask) { m_cpusMask = mask; }
     std::vector<uint8_t> getAffinity() const { return m_cpusMask; }
 
-    void setLogicalCoreAffinity(unsigned core) {
+    void setLogicalCoreAffinity(uint32_t core) {
         m_cpusMask[(core / 8)] |= (1 << (core % 8));
     }
 
-    bool getLogicalCoreAffinity(unsigned core) {
+    bool getLogicalCoreAffinity(uint32_t core) {
         return (m_cpusMask[core / 8] & (1 << (core % 8))) != 0;
     }
 
@@ -494,18 +494,18 @@ class ProcessInfo {
         }
     }
 
-    Output m_dbg;
+    Output dbg_;
     SST::Params m_params;
-    unsigned m_pageShift;
-    unsigned m_pageSize;
-    unsigned m_pid;
-    unsigned m_tid;
-    unsigned m_ppid;
-    unsigned m_pgid;
-    unsigned m_uid;
-    unsigned m_gid;
-    unsigned m_core;
-    unsigned m_hwThread;
+    uint32_t m_pageShift;
+    uint32_t m_pageSize;
+    uint32_t m_pid;
+    uint32_t m_tid;
+    uint32_t m_ppid;
+    uint32_t m_pgid;
+    uint32_t m_uid;
+    uint32_t m_gid;
+    uint32_t m_core;
+    uint32_t m_hwThread;
     uint64_t m_tidAddress;
 
     std::vector<uint8_t> m_cpusMask;

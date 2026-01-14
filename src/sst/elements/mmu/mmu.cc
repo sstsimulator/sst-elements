@@ -18,31 +18,41 @@
 #include <math.h>
 #include "mmu.h"
 #include "mmuEvents.h"
+#include "utils.h"
 
 using namespace SST;
 using namespace SST::MMU_Lib;
 
-MMU::MMU(SST::ComponentId_t id, SST::Params& params) : SubComponent(id), m_nicTlbLink(nullptr)
+MMU::MMU(SST::ComponentId_t id, SST::Params& params) : SubComponent(id), nic_tlb_link_(nullptr)
 {
-    m_numCores = params.find<int>("num_cores", 0);
-    if ( 0 == m_numCores ) {
-        m_dbg.fatal(CALL_INFO, -1, "Error: %s, num_cores is zero\n",getName().c_str());
+    num_cores_ = params.find<uint32_t>("num_cores", 1);
+    if ( 0 == num_cores_ ) {
+        dbg_.fatal(CALL_INFO, -1, "Error: %s, num_cores is zero\n",getName().c_str());
     }
 
-    m_numHwThreads = params.find<int>("num_threads", 0);
-    if ( 0 == m_numHwThreads ) {
-        m_dbg.fatal(CALL_INFO, -1, "Error: %s, num_threads is zero\n",getName().c_str());
+    num_hw_threads_ = params.find<uint32_t>("num_threads", 1);
+    if ( 0 == num_hw_threads_ ) {
+        dbg_.fatal(CALL_INFO, -1, "Error: %s, num_threads is zero\n",getName().c_str());
     }
 
-    int pageSize = params.find<int>("page_size", 0);
-    if ( 0 == pageSize ) {
-        m_dbg.fatal(CALL_INFO, -1, "Error: %s, page_size is zero\n",getName().c_str());
+    uint32_t page_size = params.find<uint32_t>("page_size", 4096);
+    if ( 0 == page_size ) {
+        dbg_.fatal(CALL_INFO, -1, "Error: %s, page_size is zero\n",getName().c_str());
+    } else if ( !isPowerOfTwo( page_size) ) {
+        dbg_.fatal(CALL_INFO, -1, "Error: %s, page_size must be a power of two. Got '%" PRIu32 "'\n", getName().c_str(), page_size);
     }
-    m_pageShift = log2( pageSize );
+    page_shift_ = log2( page_size );
 
-    auto useNicTlb = params.find<bool>("useNicTlb",false);
+    bool found;
+    auto use_nic_tlb = params.find<bool>("use_nic_tlb",false, found);
+    if (!found) {
+        use_nic_tlb = params.find<bool>("useNicTlb",false, found);
+        if (found) {
+            dbg_.output("Warning: %s, The parameter 'useNicTlb' has been renamed to 'use_nic_tlb' and the old parameter name is deprecated. Update your input file.\n", getName().c_str());
+        }
+    }
 
-    for ( int i = 0; i < m_numCores; i++ ) {
+    for ( int i = 0; i < num_cores_; i++ ) {
         std::string name;
         std::ostringstream core;
         core << i;
@@ -50,37 +60,36 @@ MMU::MMU(SST::ComponentId_t id, SST::Params& params) : SubComponent(id), m_nicTl
         name = "core" + core.str() + ".dtlb";
         Link* dtlb = configureLink( name, new Event::Handler2<MMU,&MMU::handleTlbEvent,int>(this, i * 2 + 0 ) );
         if ( nullptr == dtlb ) {
-            m_dbg.fatal(CALL_INFO, -1, "Error: %s was unable to configure dtlb link `%s`\n",getName().c_str(),name.c_str());
+            dbg_.fatal(CALL_INFO, -1, "Error: %s was unable to configure dtlb link `%s`\n",getName().c_str(),name.c_str());
         }
 
         name = "core" + core.str() + ".itlb";
         Link* itlb = configureLink( name, new Event::Handler2<MMU,&MMU::handleTlbEvent,int>(this, i * 2 + 1 ) );
         if ( nullptr == itlb ) {
-            m_dbg.fatal(CALL_INFO, -1, "Error: %s was unable to configure itlb link `%s`\n",getName().c_str(),name.c_str());
+            dbg_.fatal(CALL_INFO, -1, "Error: %s was unable to configure itlb link `%s`\n",getName().c_str(),name.c_str());
         }
-        m_coreLinks.push_back( new CoreTlbLinks( dtlb, itlb ));
+        core_links_.push_back( new CoreTlbLinks( dtlb, itlb ));
     }
 
-    if ( useNicTlb ) {
+    if ( use_nic_tlb ) {
         std::string name = "nicTlb";
-        m_nicTlbLink = configureLink( name, new Event::Handler2<MMU,&MMU::handleNicTlbEvent>(this) );
-        if ( nullptr == m_nicTlbLink ) {
-            m_dbg.fatal(CALL_INFO, -1, "Error: %s was unable to configure itlb link `%s`\n",getName().c_str(),name.c_str());
+        nic_tlb_link_ = configureLink( name, new Event::Handler2<MMU,&MMU::handleNicTlbEvent>(this) );
+        if ( nullptr == nic_tlb_link_ ) {
+            dbg_.fatal(CALL_INFO, -1, "Error: %s was unable to configure itlb link `%s`\n",getName().c_str(),name.c_str());
         }
     }
 }
 
 void MMU::init( unsigned int phase )
 {
-    m_dbg.debug(CALL_INFO_LONG,2,0,"phase=%d\n",phase);
     if ( 0 == phase ) {
-        for ( int i=0; i < m_coreLinks.size(); i++ ) {
-            m_dbg.debug(CALL_INFO_LONG,1,0,"send Init event to %d, pageShift=%d\n",i, m_pageShift);
-            m_coreLinks[i]->dtlb->sendUntimedData( new TlbInitEvent( m_pageShift ) );
-            m_coreLinks[i]->itlb->sendUntimedData( new TlbInitEvent( m_pageShift ) );
+        for ( int i=0; i < core_links_.size(); i++ ) {
+            dbg_.debug(CALL_INFO_LONG,1,0,"send Init event to %d, page_shift=%" PRIu32 "\n",i, page_shift_);
+            core_links_[i]->dtlb->sendUntimedData( new TlbInitEvent( page_shift_ ) );
+            core_links_[i]->itlb->sendUntimedData( new TlbInitEvent( page_shift_ ) );
         }
-        if ( m_nicTlbLink ) {
-            m_nicTlbLink->sendUntimedData( new TlbInitEvent( m_pageShift ) );
+        if ( nic_tlb_link_ ) {
+            nic_tlb_link_->sendUntimedData( new TlbInitEvent( page_shift_ ) );
         }
     }
 }
