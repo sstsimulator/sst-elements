@@ -74,11 +74,11 @@ public:
     }
 
 private:
-    uint32_t size{};
-    Addr targAddr{};
-    Addr physAddr{};
-    Addr virtAddr{};
-    Addr instPtr{};
+    uint32_t size;
+    Addr targAddr;
+    Addr physAddr;
+    Addr virtAddr;
+    Addr instPtr;
     NotifyAccessType access;
     NotifyResultType result;
     MemEventBase::id_type eventId;
