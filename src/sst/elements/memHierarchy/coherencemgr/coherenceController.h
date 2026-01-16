@@ -213,7 +213,7 @@ protected:
 
     /* Listener callbacks */
     virtual void notifyListenerOfAccess(MemEvent * event, NotifyAccessType access_type, NotifyResultType result_type);
-    virtual void notifyListenerOfEvict(Addr addr, uint32_t size, uint64_t ip);
+    virtual void notifyListenerOfEvict(Addr addr, uint32_t size, Addr ip, MemEventBase::id_type evId = MemEventBase::id_type(0,0));
 
     /* Forward a message to a lower memory level (towards memory) */
     uint64_t forwardMessage(MemEvent * event, unsigned int request_size, uint64_t base_time, vector<uint8_t>* data, Command forward_command = Command::LAST_CMD);

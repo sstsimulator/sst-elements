@@ -2835,7 +2835,7 @@ bool MESISharNoninclusive::handleNULLCMD(MemEvent* event, bool in_mshr) {
         }
 
         if (evicted) {
-            notifyListenerOfEvict(tag->getAddr(), line_size_, event->getInstructionPointer());
+            notifyListenerOfEvict(tag->getAddr(), line_size_, event->getInstructionPointer(), event->getID());
             retry_buffer_.push_back(mshr_->getFrontEvent(newAddr));
             mshr_->addPendingRetry(newAddr);
             if (mshr_->removeEvictPointer(oldAddr, newAddr))
@@ -3055,7 +3055,7 @@ MemEventStatus MESISharNoninclusive::processDataMiss(MemEvent * event, Directory
 DirectoryLine* MESISharNoninclusive::allocateDirLine(MemEvent * event, DirectoryLine * tag) {
     bool evicted = handleDirEviction(event->getBaseAddr(), tag);
     if (evicted) {
-        notifyListenerOfEvict(tag->getAddr(), line_size_, event->getInstructionPointer());
+        notifyListenerOfEvict(tag->getAddr(), line_size_, event->getInstructionPointer(), event->getID());
         dir_array_->replace(event->getBaseAddr(), tag);
         if (mem_h_is_debug_event(event))
             printDebugAlloc(true, event->getBaseAddr(), "Dir");
