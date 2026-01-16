@@ -141,7 +141,8 @@ void Sieve::processEvent(SST::Event* ev, int link) {
                                              event->getInstructionPointer(),
                                              event->getSize(),
                                              isRead ? READ : WRITE,
-                                             MISS);
+                                             MISS,
+                                             event->getID());
             listener_->notifyAccess(notify);
         }
 
