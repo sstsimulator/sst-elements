@@ -1893,12 +1893,19 @@ bool DirectoryController::handleForceInv(MemEvent * event, bool inMSHR) {
     if (!inMSHR)
         stat_cacheHits->addData(1);
 
+    // If race with a writeback, remove writeback. We will not receive an Ack
     switch (state) {
         case I:
+            if (mshr->pendingWriteback(addr)) {
+                mshr->removeFront(addr);
+            }
             sendAckInv(event);
             cleanUpAfterRequest(event, inMSHR);
             break;
         case S:
+            if (mshr->pendingWriteback(addr)) {
+                mshr->removeFront(addr);
+            }
             if (!inMSHR)
                 status = allocateMSHR(event, true, 0);
             if (status == MemEventStatus::OK) {
@@ -1907,6 +1914,9 @@ bool DirectoryController::handleForceInv(MemEvent * event, bool inMSHR) {
             }
             break;
         case M:
+            if (mshr->pendingWriteback(addr)) {
+                mshr->removeFront(addr);
+            }
             if (!inMSHR)
                 status = allocateMSHR(event, true, 0);
             if (status == MemEventStatus::OK) {
