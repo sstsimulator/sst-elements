@@ -681,7 +681,7 @@ void Cache::createListeners(Params &params) {
     /* Configure listener(s) */
     lists = getSubComponentSlotInfo("listener");
     if (lists) {
-        for (int i = 0; i < lists->getMaxPopulatedSlotNumber(); i++) {
+        for (int i = 0; i <= lists->getMaxPopulatedSlotNumber(); i++) {
             if (lists->isPopulated(i))
                 listeners_.push_back(lists->create<CacheListener>(i, ComponentInfo::SHARE_NONE));
         }
