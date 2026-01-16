@@ -106,6 +106,9 @@ public:
     int tot_num_vcs=0;
     RNG::Random* rng;
 
+    // Adaptive threshold for UGAL routing (matches dragonfly's adaptive_threshold)
+    double adaptive_threshold;
+
     // I suppose that the purpose of virtual networks (vns) is to separate different types of traffic,
     // for example seperating requests and responses for avoiding protocol-level deadlock.
     // Thus the default number of vns is set to 2.
@@ -142,22 +145,32 @@ public:
     // key is destination router id, value is a list of next-hop router ids.
     std::map<int, std::vector<int>> Dest_Tag_Routing_Table;
 
+    // Source routing algorithms (for source_routing mode)
+    // The path is pre-computed and stored in packet metadata
+    enum Source_Routing_Algo{
+        // Weighted random selection based on routing table weights
+        SR_WEIGHTED,
+        // UGAL: adaptive routing using weight calculation (path_length * queue_length)
+        // Chooses path with minimum weight without threshold bias
+        SR_UGAL,
+        // UGAL_THRESHOLD: adaptive routing with threshold-based comparison
+        // Matches dragonfly's logic: use valiant if minimal_queue > valiant_queue * threshold
+        SR_UGAL_THRESHOLD
+    };
 
-    // Note that this need to be specified for every vn
-    // If destination-tag routing is used, there are many possible routing algorithms. And these algorithms are independent on the routing table.
-    // However, only "nonadaptive" is implemented for now, as the main objective of this project was source routing.
-    // You can try to implement other routing algorithms yourself (could be a bachelor/master project...),
-    // however, you can also just use that defined in the existing network topology classes.
+    // Destination tag routing algorithms (for dest_tag_routing mode)
+    // Each router makes per-hop decisions based on destination
     enum Dest_Tag_Routing_Algo{
-        none,
-        // the routing decision does not adapt to the traffic
-        nonadaptive,
-        // the routing decision adapts to the traffic, NOT YET implemented
-        adaptive,
-        // Classical ECMP routing, NOT YET implemented
-        ECMP,
-        // UGAL routing, NOT YET implemented
-        UGAL
+        // No algorithm specified
+        DT_NONE,
+        // Non-adaptive routing (e.g., single shortest path)
+        DT_NONADAPTIVE,
+        // Adaptive routing (NOT YET IMPLEMENTED)
+        DT_ADAPTIVE,
+        // ECMP routing (NOT YET IMPLEMENTED)
+        DT_ECMP,
+        // UGAL routing for dest tag mode (NOT YET IMPLEMENTED)
+        DT_UGAL
     };
 
     void Parse_routing_info(SST::Params &params);
@@ -165,6 +178,8 @@ public:
     void route_untimed_packet(int input_port, int vc, internal_router_event* ev);
     void route_simple(topo_any_event* ev);
     void route_packet_SR(topo_any_event* ev);
+    void route_packet_SR_UGAL(int input_port, int vc, topo_any_event* ev);
+    void route_packet_SR_UGAL_THRESHOLD(int input_port, int vc, topo_any_event* ev);
     void route_packet_dest_tag(int input_port, int vc, topo_any_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
     virtual void routeUntimedData(int input_port, internal_router_event* ev, std::vector<int> &outPorts);
@@ -222,11 +237,13 @@ private:
         int start_vc;
         // number of vcs in this vn
         int num_vcs;
-        // used for adaptive routing, NOT YET implemented
-        int ugal_bias;
+        // Number of valiant paths to consider for UGAL (default: 3)
+        int ugal_num_valiant;
         Routing_mode routing_mode;
-        // only used if routing_mode == dest_tag_routing
-        Dest_Tag_Routing_Algo vn_dest_tag_routing_algo;
+        // Source routing algorithm (only used if routing_mode == source_routing)
+        Source_Routing_Algo src_routing_algo;
+        // Destination tag routing algorithm (only used if routing_mode == dest_tag_routing)
+        Dest_Tag_Routing_Algo dest_tag_routing_algo;
     };
 
     vn_info* vns;

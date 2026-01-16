@@ -38,6 +38,8 @@ if __name__ == "__main__":
     ### Setup the topology
     topo = topoAny()
     topo.routing_mode = "source_routing"
+    topo.source_routing_algo = "UGAL_THRESHOLD"  # Use UGAL_THRESHOLD adaptive routing
+    topo.vn_ugal_num_valiant = 3  # Number of valiant paths to consider (default: 3)
     topo.topo_name = "slimfly"
     topo.import_graph(G)
 
@@ -52,6 +54,7 @@ if __name__ == "__main__":
     router.output_buf_size = "32kB"
     router.num_vns = 2
     router.xbar_arb = "merlin.xbar_arb_rr"
+    router.oql_track_port = True
 
     topo.router = router
     topo.link_latency = "20ns"
@@ -92,8 +95,9 @@ if __name__ == "__main__":
     # sst.setStatisticLoadLevel(10)
     # sst.setStatisticOutput("sst.statOutputCSV");
     # sst.setStatisticOutputOptions({
-    #     "filepath" : "anytopo_slimfly_test_stats.csv",
+    #     "filepath" : "anytopo_slimfly_UGAL_test_stats.csv",
     #     "separator" : ", "
     # })
     # sst.enableAllStatisticsForComponentType("merlin.linkcontrol", {"type":"sst.AccumulatorStatistic","rate":"0ns"})
     # # sst.enableAllStatisticsForAllComponents({"type":"sst.AccumulatorStatistic","rate":"0us"})
+

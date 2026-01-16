@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <stdlib.h>
 #include <set>
+#include <limits>
 #include "sst/core/rng/xorshift.h"
 #include "sst/core/output.h"
 #include "../interfaces/ExtendedRequest.h"
@@ -32,32 +33,47 @@ topo_any::topo_any(ComponentId_t cid, Params& params, int num_ports, int rtr_id,
     // Read parameters for vn_info
     std::vector<std::string> vn_routing_mode = read_array_param<std::string>(params, "routing_mode", num_vns, "source_routing");
     std::vector<int> vcs_per_vn = read_array_param<int>(params, "vcs_per_vn", num_vns, default_vcs_per_vn);
-    std::vector<int> vn_ugal_bias = read_array_param<int>(params, "vn_ugal_bias", num_vns, 50);
+    std::vector<int> vn_ugal_num_valiant = read_array_param<int>(params, "vn_ugal_num_valiant", num_vns, 3);
     std::vector<std::string> vn_dest_tag_algo = read_array_param<std::string>(params, "dest_tag_routing_algo", num_vns, "none");
+    std::vector<std::string> vn_sr_algo = read_array_param<std::string>(params, "source_routing_algo", num_vns, "weighted");
 
     // Set up VN info
     int start_vc = 0;
     for (int i = 0; i < num_vns; ++i) {
         vns[i].routing_mode = (vn_routing_mode[i] == "source_routing") ? source_routing : dest_tag_routing;
-        vns[i].vn_dest_tag_routing_algo = none;
+        vns[i].src_routing_algo = SR_WEIGHTED;
+        vns[i].dest_tag_routing_algo = DT_NONE;
         vns[i].start_vc = start_vc;
         vns[i].num_vcs = vcs_per_vn[i];
         tot_num_vcs += vcs_per_vn[i];
-        vns[i].ugal_bias = vn_ugal_bias[i];
+        vns[i].ugal_num_valiant = vn_ugal_num_valiant[i];
         start_vc += vcs_per_vn[i];
 
-        // If destination tag routing , set the algorithm
-        if (vns[i].routing_mode == dest_tag_routing) {
-            if (vn_dest_tag_algo[i] == "nonadaptive") vns[i].vn_dest_tag_routing_algo = nonadaptive;
-            else if (vn_dest_tag_algo[i] == "adaptive") vns[i].vn_dest_tag_routing_algo = adaptive;
-            else if (vn_dest_tag_algo[i] == "ECMP") vns[i].vn_dest_tag_routing_algo = ECMP;
-            else if (vn_dest_tag_algo[i] == "UGAL") vns[i].vn_dest_tag_routing_algo = UGAL;
+        // Set routing algorithm based on mode
+        if (vns[i].routing_mode == source_routing) {
+            if (vn_sr_algo[i] == "weighted") {
+                vns[i].src_routing_algo = SR_WEIGHTED;
+            } else if (vn_sr_algo[i] == "UGAL") {
+                vns[i].src_routing_algo = SR_UGAL;
+            } else if (vn_sr_algo[i] == "UGAL_THRESHOLD") {
+                vns[i].src_routing_algo = SR_UGAL_THRESHOLD;
+            } else {
+                fatal(CALL_INFO, -1, "ERROR: Invalid source routing algorithm: %s\n", vn_sr_algo[i].c_str());
+            }
+        } else if (vns[i].routing_mode == dest_tag_routing) {
+            if (vn_dest_tag_algo[i] == "nonadaptive") vns[i].dest_tag_routing_algo = DT_NONADAPTIVE;
+            else if (vn_dest_tag_algo[i] == "adaptive") vns[i].dest_tag_routing_algo = DT_ADAPTIVE;
+            else if (vn_dest_tag_algo[i] == "ECMP") vns[i].dest_tag_routing_algo = DT_ECMP;
+            else if (vn_dest_tag_algo[i] == "UGAL") vns[i].dest_tag_routing_algo = DT_UGAL;
             else fatal(CALL_INFO, -1, "ERROR: Invalid destination tag routing algorithm: %s\n", vn_dest_tag_algo[i].c_str());
         }
     }
 
     // Initialize RNG
     rng = new RNG::XORShiftRNG(rtr_id+1);
+
+    // Read adaptive threshold parameter for UGAL routing (default 2.0 matches dragonfly)
+    adaptive_threshold = params.find<double>("adaptive_threshold", 2.0);
 
     // Parse endpoint mappings first (needed to determine SharedArray size)
     params.find_map<int, int>("endpoint_to_port_map", endpoint_to_port_map);
@@ -288,8 +304,15 @@ internal_router_event* topo_any::process_input(RtrEvent* ev) {
 }
 
 void topo_any::route_packet(int input_port, int vc, internal_router_event* ev) {
-    if (vns[ev->getVN()].routing_mode == source_routing) {
-        route_packet_SR(static_cast<topo_any_event*>(ev));
+    int vn = ev->getVN();
+    if (vns[vn].routing_mode == source_routing) {
+        if (vns[vn].src_routing_algo == SR_UGAL) {
+            route_packet_SR_UGAL(input_port, vc, static_cast<topo_any_event*>(ev));
+        } else if (vns[vn].src_routing_algo == SR_UGAL_THRESHOLD) {
+            route_packet_SR_UGAL_THRESHOLD(input_port, vc, static_cast<topo_any_event*>(ev));
+        } else {
+            route_packet_SR(static_cast<topo_any_event*>(ev));
+        }
     } else {
         route_packet_dest_tag(input_port, vc, static_cast<topo_any_event*>(ev));
     }
@@ -339,7 +362,8 @@ void topo_any::route_simple(topo_any_event* ev) {
         // Intermediate hop - determine the next router and forward to the corresponding port
         // assert that there is a front element
         assert(!sr_path.empty());
-        ev->next_router_id = sr_path.front(); // update next router id and increment the hop count
+        ev->next_router_id = sr_path.front(); // update next router id
+        ev->num_hops++;
         ev->setVC(ev->num_hops);
         fwd_port = getPortToRouter(ev->next_router_id);
     }
@@ -398,8 +422,9 @@ void topo_any::route_packet_SR(topo_any_event* ev) {
             // Intermediate hop - determine the next router and forward to the corresponding port
             // assert that there is a front element
             assert(!sr_path->empty());
-            ev->next_router_id = sr_path->front(); // update next router id and increment the hop count
+            ev->next_router_id = sr_path->front(); // update next router id
             sr_path->pop_front(); // remove the current router from the path
+            ev->num_hops++;
             ev->setVC(ev->num_hops);
             fwd_port = getPortToRouter(ev->next_router_id);
 
@@ -415,6 +440,277 @@ void topo_any::route_packet_SR(topo_any_event* ev) {
         fatal(CALL_INFO, -1, "timed packet should always have source routing metadata");
     }
 
+}
+
+void topo_any::route_packet_SR_UGAL(int input_port, int vc, topo_any_event* ev) {
+    // UGAL: Weight-based routing matching dragonfly logic
+    // Compares path_length * queue_length for both minimal and valiant routes
+    // Chooses the route with minimum weight (no threshold bias)
+
+    int dest_EP_id = ev->getDest();
+    int dest_router = get_router_id(dest_EP_id);
+    int vn = ev->getVN();
+
+    if (dest_router == router_id) {
+        // Destination is local
+        ev->setNextPort(get_dest_local_port(dest_EP_id));
+        return;
+    }
+
+    // Try to get the encapsulated request to check/store path
+    auto req = ev->inspectRequest();
+    if (req == nullptr) {
+        fatal(CALL_INFO, -1, "ERROR: UGAL routing event missing encapsulated request\n");
+    }
+
+    ExtendedRequest* ext_req = dynamic_cast<ExtendedRequest*>(req);
+    if (!ext_req) {
+        fatal(CALL_INFO, -1, "ERROR: UGAL routing requires ExtendedRequest\n");
+    }
+
+    if (ev->num_hops == 0) {
+        // First hop: make UGAL decision with weight calculation
+        std::map<std::vector<int>, int> possible_paths; // path -> weight
+
+        // Get routing table for this router
+        const routing_entries& routing_table = simple_routing_table_shared[router_id];
+
+        // Generate valiant paths
+        int num_valiant = vns[vn].ugal_num_valiant;
+        int attempts = 0;
+        int max_attempts = num_valiant * 10;
+
+        while (possible_paths.size() < static_cast<size_t>(num_valiant) && attempts < max_attempts) {
+            attempts++;
+            int intermediate_router = rng->generateNextUInt64() % num_routers;
+            if (intermediate_router == router_id || intermediate_router == dest_router) continue;
+
+            if (intermediate_router >= static_cast<int>(routing_table.size()) ||
+                routing_table[intermediate_router].empty()) continue;
+
+            size_t path_idx = rng->generateNextUInt32() % routing_table[intermediate_router].size();
+            std::deque<int> first_segment = routing_table[intermediate_router][path_idx].second;
+
+            const routing_entries& intermediate_table = simple_routing_table_shared[intermediate_router];
+            if (dest_router >= static_cast<int>(intermediate_table.size()) ||
+                intermediate_table[dest_router].empty()) continue;
+
+            size_t dest_path_idx = rng->generateNextUInt32() % intermediate_table[dest_router].size();
+            std::deque<int> second_segment = intermediate_table[dest_router][dest_path_idx].second;
+
+            // Compose complete valiant path
+            std::vector<int> complete_path(first_segment.begin(), first_segment.end());
+            complete_path.insert(complete_path.end(), second_segment.begin(), second_segment.end());
+
+            if (possible_paths.count(complete_path)) continue;
+
+            // Calculate weight for first hop
+            if (first_segment.empty()) continue;
+            int next_router = first_segment.front();
+            std::set<int>& ports = getPortsToRouter(next_router);
+            if (ports.empty()) continue;
+
+            int next_port = *ports.begin();
+            int queue_length = output_queue_lengths[next_port * tot_num_vcs + vns[vn].start_vc];
+
+            // Weight: path_length * queue_length (no bias - pure weight comparison)
+            possible_paths[complete_path] = complete_path.size() * queue_length;
+        }
+
+        // Add minimal paths to destination
+        if (dest_router < static_cast<int>(routing_table.size()) && !routing_table[dest_router].empty()) {
+            for (const auto& weighted_path : routing_table[dest_router]) {
+                const std::deque<int>& path = weighted_path.second;
+                if (path.empty()) continue;
+
+                int next_router = path.front();
+                std::set<int>& ports = getPortsToRouter(next_router);
+                if (ports.empty()) continue;
+
+                int next_port = *ports.begin();
+                int queue_length = output_queue_lengths[next_port * tot_num_vcs + vns[vn].start_vc];
+
+                // Weight: path_length * queue_length
+                std::vector<int> path_vec(path.begin(), path.end());
+                possible_paths[path_vec] = path.size() * queue_length;
+            }
+        }
+
+        if (possible_paths.empty()) {
+            fatal(CALL_INFO, -1, "ERROR: No valid paths found for UGAL routing from router %d to router %d\n",
+                  router_id, dest_router);
+        }
+
+        // Choose path with minimum weight
+        int min_weight = std::numeric_limits<int>::max();
+        std::vector<std::vector<int>> min_routes;
+
+        for (const auto& p : possible_paths) {
+            int weight = p.second;
+            const std::vector<int>& path = p.first;
+
+            if (weight == min_weight) {
+                min_routes.push_back(path);
+            } else if (weight < min_weight) {
+                min_weight = weight;
+                min_routes.clear();
+                min_routes.push_back(path);
+            }
+        }
+
+        const std::vector<int>& chosen_path = min_routes[rng->generateNextUInt32() % min_routes.size()];
+
+        // Store the chosen path in SourceRoutingMetadata
+        SourceRoutingMetadata sr_meta;
+        sr_meta.path = std::deque<int>(chosen_path.begin(), chosen_path.end());
+        ext_req->setMetadata("SourceRouting", sr_meta);
+
+        // Now route using the standard source routing logic
+        route_packet_SR(ev);
+
+    } else {
+        // Not first hop: use standard source routing
+        route_packet_SR(ev);
+    }
+}
+
+void topo_any::route_packet_SR_UGAL_THRESHOLD(int input_port, int vc, topo_any_event* ev) {
+    // UGAL_THRESHOLD: Matches dragonfly's adaptive threshold logic
+    // Uses valiant route if: minimal_queue_length > valiant_queue_length * adaptive_threshold
+    // This mirrors dragonfly's credit-based comparison (inverted for queue lengths)
+
+    int dest_EP_id = ev->getDest();
+    int dest_router = get_router_id(dest_EP_id);
+    int vn = ev->getVN();
+
+    if (dest_router == router_id) {
+        // Destination is local
+        ev->setNextPort(get_dest_local_port(dest_EP_id));
+        return;
+    }
+
+    // Try to get the encapsulated request to check/store path
+    auto req = ev->inspectRequest();
+    if (req == nullptr) {
+        fatal(CALL_INFO, -1, "ERROR: UGAL_THRESHOLD routing event missing encapsulated request\n");
+    }
+
+    ExtendedRequest* ext_req = dynamic_cast<ExtendedRequest*>(req);
+    if (!ext_req) {
+        fatal(CALL_INFO, -1, "ERROR: UGAL_THRESHOLD routing requires ExtendedRequest\n");
+    }
+
+    if (ev->num_hops == 0) {
+        // First hop: make UGAL decision using threshold-based comparison
+        // Get routing table for this router
+        const routing_entries& routing_table = simple_routing_table_shared[router_id];
+
+        // Find best minimal path (lowest queue length)
+        int best_minimal_queue = std::numeric_limits<int>::max();
+        std::vector<int> best_minimal_path;
+
+        if (dest_router < static_cast<int>(routing_table.size()) && !routing_table[dest_router].empty()) {
+            for (const auto& weighted_path : routing_table[dest_router]) {
+                const std::deque<int>& path = weighted_path.second;
+                if (path.empty()) continue;
+
+                int next_router = path.front();
+                std::set<int>& ports = getPortsToRouter(next_router);
+                if (ports.empty()) continue;
+
+                int next_port = *ports.begin();
+                int queue_length = output_queue_lengths[next_port * tot_num_vcs + vns[vn].start_vc];
+
+                if (queue_length < best_minimal_queue) {
+                    best_minimal_queue = queue_length;
+                    best_minimal_path = std::vector<int>(path.begin(), path.end());
+                }
+            }
+        }
+
+        // Generate and evaluate valiant paths
+        int best_valiant_queue = std::numeric_limits<int>::max();
+        std::vector<int> best_valiant_path;
+
+        int num_valiant = vns[vn].ugal_num_valiant;
+        int attempts = 0;
+        int max_attempts = num_valiant * 10;
+        int valiant_paths_found = 0;
+
+        while (valiant_paths_found < num_valiant && attempts < max_attempts) {
+            attempts++;
+            int intermediate_router = rng->generateNextUInt64() % num_routers;
+            if (intermediate_router == router_id || intermediate_router == dest_router) continue;
+
+            if (intermediate_router >= static_cast<int>(routing_table.size()) ||
+                routing_table[intermediate_router].empty()) continue;
+
+            size_t path_idx = rng->generateNextUInt32() % routing_table[intermediate_router].size();
+            std::deque<int> first_segment = routing_table[intermediate_router][path_idx].second;
+
+            const routing_entries& intermediate_table = simple_routing_table_shared[intermediate_router];
+            if (dest_router >= static_cast<int>(intermediate_table.size()) ||
+                intermediate_table[dest_router].empty()) continue;
+
+            size_t dest_path_idx = rng->generateNextUInt32() % intermediate_table[dest_router].size();
+            std::deque<int> second_segment = intermediate_table[dest_router][dest_path_idx].second;
+
+            // Compose complete valiant path
+            std::vector<int> complete_path(first_segment.begin(), first_segment.end());
+            complete_path.insert(complete_path.end(), second_segment.begin(), second_segment.end());
+
+            // Calculate queue length for first hop
+            if (first_segment.empty()) continue;
+            int next_router = first_segment.front();
+            std::set<int>& ports = getPortsToRouter(next_router);
+            if (ports.empty()) continue;
+
+            int next_port = *ports.begin();
+            int queue_length = output_queue_lengths[next_port * tot_num_vcs + vns[vn].start_vc];
+
+            valiant_paths_found++;
+            if (queue_length < best_valiant_queue) {
+                best_valiant_queue = queue_length;
+                best_valiant_path = complete_path;
+            }
+        }
+
+        // Make routing decision based on threshold comparison
+        // In dragonfly: valiant_credits > direct_credits * threshold means use valiant
+        // With queue lengths (inverse): direct_queue > valiant_queue * threshold means use valiant
+        std::vector<int> chosen_path;
+
+        if (best_minimal_path.empty() && best_valiant_path.empty()) {
+            fatal(CALL_INFO, -1, "ERROR: No valid paths found for UGAL_THRESHOLD routing from router %d to router %d\n",
+                  router_id, dest_router);
+        } else if (best_minimal_path.empty()) {
+            // Only valiant path available
+            chosen_path = best_valiant_path;
+        } else if (best_valiant_path.empty()) {
+            // Only minimal path available
+            chosen_path = best_minimal_path;
+        } else {
+            // Both paths available - apply threshold comparison
+            // Use valiant if minimal queue is significantly worse (more congested)
+            if (best_minimal_queue > (int)((double)best_valiant_queue * adaptive_threshold)) {
+                chosen_path = best_valiant_path;
+            } else {
+                chosen_path = best_minimal_path;
+            }
+        }
+
+        // Store the chosen path in SourceRoutingMetadata
+        SourceRoutingMetadata sr_meta;
+        sr_meta.path = std::deque<int>(chosen_path.begin(), chosen_path.end());
+        ext_req->setMetadata("SourceRouting", sr_meta);
+
+        // Now route using the standard source routing logic
+        route_packet_SR(ev);
+
+    } else {
+        // Not first hop: use standard source routing
+        route_packet_SR(ev);
+    }
 }
 
 void topo_any::route_packet_dest_tag(int input_port, int vc, topo_any_event* ev) {
