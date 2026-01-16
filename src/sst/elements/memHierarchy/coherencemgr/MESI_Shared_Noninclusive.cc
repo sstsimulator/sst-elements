@@ -3227,7 +3227,7 @@ bool MESISharNoninclusive::handleDataEviction(Addr addr, DataLine *&data) {
                     if (recv_writeback_ack_)
                         mshr_->insertWriteback(tag->getAddr(), false);
                     recordPrefetchResult(tag, stat_prefetch_evict_);
-                    notifyListenerOfEvict(data->getAddr(), line_size_, 0);
+                    notifyListenerOfEvict(data->getAddr(), line_size_, 0, MemEventBase::id_type(0,0));
                     tag->setState(I);
                     dir_array_->deallocate(tag);
                 } else if (mem_h_is_debug_addr(data->getAddr())) {
@@ -3248,7 +3248,7 @@ bool MESISharNoninclusive::handleDataEviction(Addr addr, DataLine *&data) {
                     if (recv_writeback_ack_)
                         mshr_->insertWriteback(tag->getAddr(), false);
                     recordPrefetchResult(tag, stat_prefetch_evict_);
-                    notifyListenerOfEvict(data->getAddr(), line_size_, 0);
+                    notifyListenerOfEvict(data->getAddr(), line_size_, 0, MemEventBase::id_type(0,0));
                     tag->setState(I);
                     dir_array_->deallocate(tag);
                 } else if (mem_h_is_debug_addr(data->getAddr())) {
@@ -3270,7 +3270,7 @@ bool MESISharNoninclusive::handleDataEviction(Addr addr, DataLine *&data) {
                     if (recv_writeback_ack_)
                         mshr_->insertWriteback(tag->getAddr(), false);
                     recordPrefetchResult(tag, stat_prefetch_evict_);
-                    notifyListenerOfEvict(data->getAddr(), line_size_, 0);
+                    notifyListenerOfEvict(data->getAddr(), line_size_, 0, MemEventBase::id_type(0,0));
                     tag->setState(I);
                     dir_array_->deallocate(tag);
                 } else if (mem_h_is_debug_addr(data->getAddr())) {
