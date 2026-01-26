@@ -441,7 +441,7 @@ void topo_any::route_packet_SR(topo_any_event* ev) {
         if (fwd_port == -1) {
             fatal(CALL_INFO, -1, "ERROR: No port found to forward to router %d\n", ev->next_router_id);
         }
-        
+
         // // Print path information
         // std::string path_str = "[";
         // for (size_t i = 0; i < sr_path->size(); ++i) {
@@ -449,10 +449,10 @@ void topo_any::route_packet_SR(topo_any_event* ev) {
         //     path_str += std::to_string((*sr_path)[i]);
         // }
         // path_str += "]";
-        
-        // output.verbose(CALL_INFO, 3, 0, "Router %d forwarding packet (src EP %d, dst EP %d) to port %d, remaining path: %s\n", 
+
+        // output.verbose(CALL_INFO, 3, 0, "Router %d forwarding packet (src EP %d, dst EP %d) to port %d, remaining path: %s\n",
         //               router_id, ev->getSrc(), ev->getDest(), fwd_port, path_str.c_str());
-        output.verbose(CALL_INFO, 3, 0, "Router %d forwarding packet (src EP %d, dst EP %d) to port %d", 
+        output.verbose(CALL_INFO, 3, 0, "Router %d forwarding packet (src EP %d, dst EP %d) to port %d",
                       router_id, ev->getSrc(), ev->getDest(), fwd_port);
 
         ev->setNextPort(fwd_port);
