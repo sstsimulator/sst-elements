@@ -364,6 +364,9 @@ void topo_any::route_simple(topo_any_event* ev) {
         assert(!sr_path.empty());
         ev->next_router_id = sr_path.front(); // update next router id
         ev->num_hops++;
+        if (ev->num_hops > tot_num_vcs) {
+            fatal(CALL_INFO, -1, "ERROR: Number of hops exceeded the total number of VCs %d \n", tot_num_vcs);
+        }
         ev->setVC(ev->num_hops);
         fwd_port = getPortToRouter(ev->next_router_id);
     }
@@ -425,6 +428,9 @@ void topo_any::route_packet_SR(topo_any_event* ev) {
             ev->next_router_id = sr_path->front(); // update next router id
             sr_path->pop_front(); // remove the current router from the path
             ev->num_hops++;
+            if (ev->num_hops > tot_num_vcs) {
+                fatal(CALL_INFO, -1, "ERROR: Number of hops exceeded the total number of VCs %d \n", tot_num_vcs);
+            }
             ev->setVC(ev->num_hops);
             fwd_port = getPortToRouter(ev->next_router_id);
 
@@ -435,6 +441,20 @@ void topo_any::route_packet_SR(topo_any_event* ev) {
         if (fwd_port == -1) {
             fatal(CALL_INFO, -1, "ERROR: No port found to forward to router %d\n", ev->next_router_id);
         }
+        
+        // // Print path information
+        // std::string path_str = "[";
+        // for (size_t i = 0; i < sr_path->size(); ++i) {
+        //     if (i > 0) path_str += ", ";
+        //     path_str += std::to_string((*sr_path)[i]);
+        // }
+        // path_str += "]";
+        
+        // output.verbose(CALL_INFO, 3, 0, "Router %d forwarding packet (src EP %d, dst EP %d) to port %d, remaining path: %s\n", 
+        //               router_id, ev->getSrc(), ev->getDest(), fwd_port, path_str.c_str());
+        output.verbose(CALL_INFO, 3, 0, "Router %d forwarding packet (src EP %d, dst EP %d) to port %d", 
+                      router_id, ev->getSrc(), ev->getDest(), fwd_port);
+
         ev->setNextPort(fwd_port);
     } else {
         fatal(CALL_INFO, -1, "timed packet should always have source routing metadata");
@@ -730,6 +750,9 @@ void topo_any::route_packet_dest_tag(int input_port, int vc, topo_any_event* ev)
             int fwd_port = getPortToRouter(ev->next_router_id);
             ev->setNextPort(fwd_port);
             ev->num_hops++;
+            if (ev->num_hops > tot_num_vcs) {
+                fatal(CALL_INFO, -1, "ERROR: Number of hops exceeded the total number of VCs %d \n", tot_num_vcs);
+            }
             ev->setVC(ev->num_hops); // The setting of VC could be off-loaded into topology-specific routing algorithm
         }else{
             fatal(CALL_INFO, -1, "ERROR: No routing entry found for destination router %d\n", dest_router);
