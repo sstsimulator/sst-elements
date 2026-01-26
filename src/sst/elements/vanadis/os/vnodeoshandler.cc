@@ -68,11 +68,11 @@ static const char* SyscallName[] = {
     FOREACH_FUNCTION(GENERATE_STRING)
 };
 
-VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* process, VanadisSyscallEvent* sys_ev, SST::Link* coreLink )
+VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* process, VanadisSyscallEvent* sys_ev, SST::Link* core_link )
 {
     #ifdef VANADIS_BUILD_DEBUG
     if ( sys_ev->getOperation() < NUM_SYSCALLS  ) {
-        output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL, "from core=%" PRIu32 " thr=%" PRIu32 " syscall=%s\n",
+        output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL, "from core=%" PRIu32 " thr=%" PRIu32 " syscall=%s\n",
                     sys_ev->getCoreID(), sys_ev->getThreadID(),SyscallName[sys_ev->getOperation()]);
     }
     #endif
@@ -86,141 +86,141 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
     // ***********************************
     switch (sys_ev->getOperation()) {
         case SYSCALL_OP_CHECKPOINT: {
-            assert ( CHECKPOINT_SAVE == m_checkpoint );
-            syscall = new VanadisCheckpointSyscall( this, coreLink, process, convertEvent<VanadisSyscallCheckpointEvent*>( "checkpoint", sys_ev ) );
+            assert ( CHECKPOINT_SAVE == enable_checkpoint_ );
+            syscall = new VanadisCheckpointSyscall( this, core_link, process, convertEvent<VanadisSyscallCheckpointEvent*>( "checkpoint", sys_ev ) );
         } break;
         case SYSCALL_OP_SET_ROBUST_LIST: {
-            syscall = new VanadisSetRobustListSyscall( this, coreLink, process, convertEvent<VanadisSyscallSetRobustListEvent*>( "set_robust_list", sys_ev ) );
+            syscall = new VanadisSetRobustListSyscall( this, core_link, process, convertEvent<VanadisSyscallSetRobustListEvent*>( "set_robust_list", sys_ev ) );
         } break;
         case SYSCALL_OP_PRLIMIT: {
-            syscall = new VanadisPrlimitSyscall( this, coreLink, process, convertEvent<VanadisSyscallPrlimitEvent*>( "prlimit", sys_ev ) );
+            syscall = new VanadisPrlimitSyscall( this, core_link, process, convertEvent<VanadisSyscallPrlimitEvent*>( "prlimit", sys_ev ) );
         } break;
         case SYSCALL_OP_SET_TID_ADDRESS: {
-            syscall = new VanadisSetTidAddressSyscall( this, coreLink, process, convertEvent<VanadisSyscallSetTidAddressEvent*>( "set_tid_address", sys_ev ) );
+            syscall = new VanadisSetTidAddressSyscall( this, core_link, process, convertEvent<VanadisSyscallSetTidAddressEvent*>( "set_tid_address", sys_ev ) );
         } break;
         case SYSCALL_OP_MPROTECT: {
-            syscall = new VanadisMprotectSyscall( this, coreLink, process, convertEvent<VanadisSyscallMprotectEvent*>( "mprotect", sys_ev ) );
+            syscall = new VanadisMprotectSyscall( this, core_link, process, convertEvent<VanadisSyscallMprotectEvent*>( "mprotect", sys_ev ) );
         } break;
         case SYSCALL_OP_SCHED_GETAFFINITY: {
-            syscall = new VanadisGetaffinitySyscall( this, coreLink, process, convertEvent<VanadisSyscallGetaffinityEvent*>( "getaffinity", sys_ev ) );
+            syscall = new VanadisGetaffinitySyscall( this, core_link, process, convertEvent<VanadisSyscallGetaffinityEvent*>( "getaffinity", sys_ev ) );
         } break;
         case SYSCALL_OP_SCHED_SETAFFINITY: {
-            syscall = new VanadisSetaffinitySyscall( this, coreLink, process, convertEvent<VanadisSyscallSetaffinityEvent*>( "setaffinity", sys_ev) );
+            syscall = new VanadisSetaffinitySyscall( this, core_link, process, convertEvent<VanadisSyscallSetaffinityEvent*>( "setaffinity", sys_ev) );
         } break;
         case SYSCALL_OP_SCHED_YIELD: {
-            syscall = new VanadisSchedYieldSyscall( this, coreLink, process, convertEvent<VanadisSyscallSchedYieldEvent*>( "sched_yield", sys_ev) );
+            syscall = new VanadisSchedYieldSyscall( this, core_link, process, convertEvent<VanadisSyscallSchedYieldEvent*>( "sched_yield", sys_ev) );
         } break;
         case SYSCALL_OP_FORK: {
-            syscall = new VanadisForkSyscall( this, coreLink, process, convertEvent<VanadisSyscallForkEvent*>( "fork", sys_ev ) );
+            syscall = new VanadisForkSyscall( this, core_link, process, convertEvent<VanadisSyscallForkEvent*>( "fork", sys_ev ) );
         } break;
         case SYSCALL_OP_CLONE: {
-            syscall = new VanadisCloneSyscall( this, coreLink, process, convertEvent<VanadisSyscallCloneEvent*>( "clone", sys_ev ) );
+            syscall = new VanadisCloneSyscall( this, core_link, process, convertEvent<VanadisSyscallCloneEvent*>( "clone", sys_ev ) );
         } break;
         case SYSCALL_OP_CLONE3: {
-            syscall = new VanadisClone3Syscall( this, coreLink, process, convertEvent<VanadisSyscallClone3Event*>( "clone3", sys_ev ) );
+            syscall = new VanadisClone3Syscall( this, core_link, process, convertEvent<VanadisSyscallClone3Event*>( "clone3", sys_ev ) );
         } break;
         case SYSCALL_OP_FUTEX: {
-            syscall = new VanadisFutexSyscall( this, coreLink, process, convertEvent<VanadisSyscallFutexEvent*>( "futex", sys_ev ) );
+            syscall = new VanadisFutexSyscall( this, core_link, process, convertEvent<VanadisSyscallFutexEvent*>( "futex", sys_ev ) );
         } break;
         case SYSCALL_OP_KILL: {
-            syscall = new VanadisKillSyscall( this, coreLink, process, convertEvent<VanadisSyscallKillEvent*>( "kill", sys_ev ) );
+            syscall = new VanadisKillSyscall( this, core_link, process, convertEvent<VanadisSyscallKillEvent*>( "kill", sys_ev ) );
         } break;
         case SYSCALL_OP_TGKILL: {
-            syscall = new VanadisTgKillSyscall( this, coreLink, process, convertEvent<VanadisSyscallTgKillEvent*>( "tgkill", sys_ev ) );
+            syscall = new VanadisTgKillSyscall( this, core_link, process, convertEvent<VanadisSyscallTgKillEvent*>( "tgkill", sys_ev ) );
         } break;
         case SYSCALL_OP_EXIT: {
-            syscall = new VanadisExitSyscall( this, coreLink, process, convertEvent<VanadisSyscallExitEvent*>( "exit", sys_ev ) );
+            syscall = new VanadisExitSyscall( this, core_link, process, convertEvent<VanadisSyscallExitEvent*>( "exit", sys_ev ) );
         } break;
         case SYSCALL_OP_EXIT_GROUP: {
-            syscall = new VanadisExitGroupSyscall( this, coreLink, process, convertEvent<VanadisSyscallExitGroupEvent*>( "exitgroup", sys_ev ) );
+            syscall = new VanadisExitGroupSyscall( this, core_link, process, convertEvent<VanadisSyscallExitGroupEvent*>( "exitgroup", sys_ev ) );
         } break;
         case SYSCALL_OP_GETCPU: {
-            syscall = new VanadisGetcpuSyscall( this, coreLink, process, convertEvent<VanadisSyscallGetxEvent*>( "getcpu", sys_ev ) );
+            syscall = new VanadisGetcpuSyscall( this, core_link, process, convertEvent<VanadisSyscallGetxEvent*>( "getcpu", sys_ev ) );
         } break;
         case SYSCALL_OP_GETPID: {
-            syscall = new VanadisGetpidSyscall( this, coreLink, process, convertEvent<VanadisSyscallGetxEvent*>( "getpid", sys_ev ) );
+            syscall = new VanadisGetpidSyscall( this, core_link, process, convertEvent<VanadisSyscallGetxEvent*>( "getpid", sys_ev ) );
         } break;
         case SYSCALL_OP_GETTID: {
-            syscall = new VanadisGettidSyscall( this, coreLink, process, convertEvent<VanadisSyscallGetxEvent*>( "gettid", sys_ev ) );
+            syscall = new VanadisGettidSyscall( this, core_link, process, convertEvent<VanadisSyscallGetxEvent*>( "gettid", sys_ev ) );
         } break;
         case SYSCALL_OP_GETPPID: {
-            syscall = new VanadisGetppidSyscall( this, coreLink, process, convertEvent<VanadisSyscallGetxEvent*>( "getppid", sys_ev ) );
+            syscall = new VanadisGetppidSyscall( this, core_link, process, convertEvent<VanadisSyscallGetxEvent*>( "getppid", sys_ev ) );
         } break;
         case SYSCALL_OP_GETPGID: {
-            syscall = new VanadisGetpgidSyscall( this, coreLink, process, convertEvent<VanadisSyscallGetxEvent*>( "getpgid", sys_ev ) );
+            syscall = new VanadisGetpgidSyscall( this, core_link, process, convertEvent<VanadisSyscallGetxEvent*>( "getpgid", sys_ev ) );
         } break;
         case SYSCALL_OP_UNAME: {
-            syscall = new VanadisUnameSyscall( this, coreLink, process, convertEvent<VanadisSyscallUnameEvent*>( "uname", sys_ev ) );
+            syscall = new VanadisUnameSyscall( this, core_link, process, convertEvent<VanadisSyscallUnameEvent*>( "uname", sys_ev ) );
         } break;
         case SYSCALL_OP_UNLINK: {
-            syscall = new VanadisUnlinkSyscall( this, coreLink, process, convertEvent<VanadisSyscallUnlinkEvent*>( "unlink", sys_ev ) );
+            syscall = new VanadisUnlinkSyscall( this, core_link, process, convertEvent<VanadisSyscallUnlinkEvent*>( "unlink", sys_ev ) );
         } break;
         case SYSCALL_OP_UNLINKAT: {
-            syscall = new VanadisUnlinkatSyscall( this, coreLink, process, convertEvent<VanadisSyscallUnlinkatEvent*>( "unlinkat", sys_ev ) );
+            syscall = new VanadisUnlinkatSyscall( this, core_link, process, convertEvent<VanadisSyscallUnlinkatEvent*>( "unlinkat", sys_ev ) );
         } break;
         case SYSCALL_OP_OPEN: {
-            syscall = new VanadisOpenSyscall( this, coreLink, process, convertEvent<VanadisSyscallOpenEvent*>( "open", sys_ev ) );
+            syscall = new VanadisOpenSyscall( this, core_link, process, convertEvent<VanadisSyscallOpenEvent*>( "open", sys_ev ) );
         } break;
         case SYSCALL_OP_OPENAT: {
-            syscall = new VanadisOpenatSyscall( this, coreLink, process, convertEvent<VanadisSyscallOpenatEvent*>( "openat", sys_ev ) );
+            syscall = new VanadisOpenatSyscall( this, core_link, process, convertEvent<VanadisSyscallOpenatEvent*>( "openat", sys_ev ) );
         } break;
         case SYSCALL_OP_CLOSE: {
-            syscall = new VanadisCloseSyscall( this, coreLink, process, convertEvent<VanadisSyscallCloseEvent*>( "close", sys_ev ) );
+            syscall = new VanadisCloseSyscall( this, core_link, process, convertEvent<VanadisSyscallCloseEvent*>( "close", sys_ev ) );
         } break;
         case SYSCALL_OP_LSEEK: {
-            syscall = new VanadisLseekSyscall( this, coreLink, process, convertEvent<VanadisSyscallLseekEvent*>( "lseek", sys_ev ) );
+            syscall = new VanadisLseekSyscall( this, core_link, process, convertEvent<VanadisSyscallLseekEvent*>( "lseek", sys_ev ) );
         } break;
         case SYSCALL_OP_BRK: {
-            syscall = new VanadisBrkSyscall( this, coreLink, process, convertEvent<VanadisSyscallBRKEvent*>( "brk", sys_ev ) );
+            syscall = new VanadisBrkSyscall( this, core_link, process, convertEvent<VanadisSyscallBRKEvent*>( "brk", sys_ev ) );
         } break;
         case SYSCALL_OP_MMAP: {
-            syscall = new VanadisMmapSyscall( this, coreLink, process, convertEvent<VanadisSyscallMemoryMapEvent*>( "mmap", sys_ev ) );
+            syscall = new VanadisMmapSyscall( this, core_link, process, convertEvent<VanadisSyscallMemoryMapEvent*>( "mmap", sys_ev ) );
         } break;
         case SYSCALL_OP_UNMAP: {
-            syscall = new VanadisUnmapSyscall( this, coreLink, process, m_physMemMgr, convertEvent<VanadisSyscallMemoryUnMapEvent*>( "unmap", sys_ev ) );
+            syscall = new VanadisUnmapSyscall( this, core_link, process, phys_mem_mgr_, convertEvent<VanadisSyscallMemoryUnMapEvent*>( "unmap", sys_ev ) );
         } break;
         case SYSCALL_OP_GETTIME64: {
-            syscall = new VanadisGettime64Syscall( this, coreLink, process, getNanoSeconds(), convertEvent<VanadisSyscallGetTime64Event*>( "gettime64", sys_ev ) );
+            syscall = new VanadisGettime64Syscall( this, core_link, process, getNanoSeconds(), convertEvent<VanadisSyscallGetTime64Event*>( "gettime64", sys_ev ) );
         } break;
         case SYSCALL_OP_GETRANDOM: {
-            syscall = new VanadisGetrandomSyscall( this, coreLink, process, convertEvent<VanadisSyscallGetrandomEvent*>( "getrandom", sys_ev ) );
+            syscall = new VanadisGetrandomSyscall( this, core_link, process, convertEvent<VanadisSyscallGetrandomEvent*>( "getrandom", sys_ev ) );
         } break;
         case SYSCALL_OP_ACCESS: {
-            syscall = new VanadisAccessSyscall( this, coreLink, process, convertEvent<VanadisSyscallAccessEvent*>( "access", sys_ev ) );
+            syscall = new VanadisAccessSyscall( this, core_link, process, convertEvent<VanadisSyscallAccessEvent*>( "access", sys_ev ) );
         } break;
         case SYSCALL_OP_READLINK: {
-            syscall = new VanadisReadlinkSyscall( this, coreLink, process, convertEvent<VanadisSyscallReadLinkEvent*>( "readlink", sys_ev ) );
+            syscall = new VanadisReadlinkSyscall( this, core_link, process, convertEvent<VanadisSyscallReadLinkEvent*>( "readlink", sys_ev ) );
         } break;
         case SYSCALL_OP_READLINKAT: {
-            syscall = new VanadisReadlinkatSyscall( this, coreLink, process, convertEvent<VanadisSyscallReadLinkAtEvent*>( "readlinkat", sys_ev ) );
+            syscall = new VanadisReadlinkatSyscall( this, core_link, process, convertEvent<VanadisSyscallReadLinkAtEvent*>( "readlinkat", sys_ev ) );
         } break;
         case SYSCALL_OP_READ: {
-            syscall = new VanadisReadSyscall( this, coreLink, process, convertEvent<VanadisSyscallReadEvent*>( "read", sys_ev ) );
+            syscall = new VanadisReadSyscall( this, core_link, process, convertEvent<VanadisSyscallReadEvent*>( "read", sys_ev ) );
         } break;
         case SYSCALL_OP_READV: {
-            syscall = new VanadisReadvSyscall( this, coreLink, process, convertEvent<VanadisSyscallReadvEvent*>( "readv", sys_ev ) );
+            syscall = new VanadisReadvSyscall( this, core_link, process, convertEvent<VanadisSyscallReadvEvent*>( "readv", sys_ev ) );
         } break;
         case SYSCALL_OP_WRITE: {
-            syscall = new VanadisWriteSyscall( this, coreLink, process, convertEvent<VanadisSyscallWriteEvent*>( "write", sys_ev ) );
+            syscall = new VanadisWriteSyscall( this, core_link, process, convertEvent<VanadisSyscallWriteEvent*>( "write", sys_ev ) );
         } break;
         case SYSCALL_OP_WRITEV: {
-            syscall = new VanadisWritevSyscall( this, coreLink, process, convertEvent<VanadisSyscallWritevEvent*>( "writev", sys_ev ) );
+            syscall = new VanadisWritevSyscall( this, core_link, process, convertEvent<VanadisSyscallWritevEvent*>( "writev", sys_ev ) );
         } break;
         case SYSCALL_OP_IOCTL: {
-            syscall = new VanadisIoctlSyscall( this, coreLink, process, convertEvent<VanadisSyscallIoctlEvent*>( "ioctl", sys_ev ) );
+            syscall = new VanadisIoctlSyscall( this, core_link, process, convertEvent<VanadisSyscallIoctlEvent*>( "ioctl", sys_ev ) );
         } break;
         case SYSCALL_OP_FSTAT: {
-            syscall = new VanadisFstatSyscall( this, coreLink, process, convertEvent<VanadisSyscallFstatEvent*>( "fstat", sys_ev ) );
+            syscall = new VanadisFstatSyscall( this, core_link, process, convertEvent<VanadisSyscallFstatEvent*>( "fstat", sys_ev ) );
         } break;
         case SYSCALL_OP_FSTATAT: {
-            syscall = new VanadisFstatatSyscall( this, coreLink, process, convertEvent<VanadisSyscallFstatAtEvent*>( "fstatat", sys_ev ) );
+            syscall = new VanadisFstatatSyscall( this, core_link, process, convertEvent<VanadisSyscallFstatAtEvent*>( "fstatat", sys_ev ) );
         } break;
         case SYSCALL_OP_STATX: {
-            syscall = new VanadisStatxSyscall( this, coreLink, process, convertEvent<VanadisSyscallStatxEvent*>( "statx", sys_ev ) );
+            syscall = new VanadisStatxSyscall( this, core_link, process, convertEvent<VanadisSyscallStatxEvent*>( "statx", sys_ev ) );
         } break;
 
         default: {
-            output->fatal(CALL_INFO, -1,"Error - unknown operating system call, op %s, instPtr=%#" PRIx64 "\n",
+            output_->fatal(CALL_INFO, -1,"Error - unknown operating system call, op %s, instPtr=%#" PRIx64 "\n",
                             SyscallName[sys_ev->getOperation()], sys_ev->getInstPtr() );
         } break;
     }

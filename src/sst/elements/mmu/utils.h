@@ -20,17 +20,17 @@ namespace SST {
 
 namespace MMU_Lib {
 
-    static bool checkPerms( uint32_t wantPerms, uint32_t havePerms ) {
+    static bool checkPerms( uint32_t want_perms, uint32_t have_perms ) {
         // want executable
-        if ( wantPerms & 1 && ! ( havePerms & 1 ) ) {
+        if ( want_perms & 1 && ! ( have_perms & 1 ) ) {
             return false;
         }
         // want write
-        if ( wantPerms & (1<<1) && ! ( havePerms & (1<<1) ) ) {
+        if ( want_perms & (1<<1) && ! ( have_perms & (1<<1) ) ) {
             return false;
         }
         // want read
-        if ( wantPerms & (1<<2) && ! ( havePerms & (1<<2) ) ) {
+        if ( want_perms & (1<<2) && ! ( have_perms & (1<<2) ) ) {
             return false;
         }
         return true;
