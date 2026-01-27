@@ -86,14 +86,14 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
     stack_top_ = 0x7ffffff0;
 
     bool found;
-    UnitAlgebra physical_memory_size = UnitAlgebra(params.find<std::string>("physical_memory_size", "0B", found));
+    UnitAlgebra physical_memory_size = UnitAlgebra(params.find<std::string>("physMemSize", "0B", found));
 
     if ( ! found ) {
-        output_->fatal(CALL_INFO, -1, "physical_memory_size was not specified\n");
+        output_->fatal(CALL_INFO, -1, "physMemSize was not specified\n");
     }
 
     if( 0 == physical_memory_size.getRoundedValue() ) {
-        output_->fatal(CALL_INFO, -1, "physical_memory_size was to 0\n");
+        output_->fatal(CALL_INFO, -1, "physMemSize was set to 0B\n");
     }
 
     page_size_ = params.find<uint32_t>("page_size", 4096);
