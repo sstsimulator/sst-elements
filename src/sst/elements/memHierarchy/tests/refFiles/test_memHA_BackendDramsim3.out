@@ -139,11 +139,11 @@
  l3cache.mesi.inclus.eventSent_CustomResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.mesi.inclus.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.mesi.inclus.latency_GetS_hit : Accumulator : Sum.u64 = 2680913; SumSQ.u64 = 122401737477; Count.u64 = 448; Min.u64 = 31; Max.u64 = 107537; 
- l3cache.mesi.inclus.latency_GetS_miss : Accumulator : Sum.u64 = 794676036; SumSQ.u64 = 39306780325934; Count.u64 = 22498; Min.u64 = 852; Max.u64 = 180246; 
- l3cache.mesi.inclus.latency_GetS_inv : Accumulator : Sum.u64 = 1528800; SumSQ.u64 = 57966279872; Count.u64 = 891; Min.u64 = 52; Max.u64 = 80068; 
+ l3cache.mesi.inclus.latency_GetS_miss : Accumulator : Sum.u64 = 794676039; SumSQ.u64 = 39306780570839; Count.u64 = 22498; Min.u64 = 852; Max.u64 = 180246; 
+ l3cache.mesi.inclus.latency_GetS_inv : Accumulator : Sum.u64 = 1528801; SumSQ.u64 = 57966280013; Count.u64 = 891; Min.u64 = 52; Max.u64 = 80068; 
  l3cache.mesi.inclus.latency_GetX_hit : Accumulator : Sum.u64 = 62; SumSQ.u64 = 1922; Count.u64 = 2; Min.u64 = 31; Max.u64 = 31; 
- l3cache.mesi.inclus.latency_GetX_miss : Accumulator : Sum.u64 = 525976097; SumSQ.u64 = 26083646151677; Count.u64 = 14853; Min.u64 = 1139; Max.u64 = 201709; 
- l3cache.mesi.inclus.latency_GetX_inv : Accumulator : Sum.u64 = 2397938; SumSQ.u64 = 113652093834; Count.u64 = 934; Min.u64 = 52; Max.u64 = 100081; 
+ l3cache.mesi.inclus.latency_GetX_miss : Accumulator : Sum.u64 = 525976099; SumSQ.u64 = 26083646283897; Count.u64 = 14853; Min.u64 = 1139; Max.u64 = 201709; 
+ l3cache.mesi.inclus.latency_GetX_inv : Accumulator : Sum.u64 = 2397939; SumSQ.u64 = 113652093939; Count.u64 = 934; Min.u64 = 52; Max.u64 = 100081; 
  l3cache.mesi.inclus.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.mesi.inclus.latency_GetSX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.mesi.inclus.latency_GetSX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -245,7 +245,7 @@
  l3cache.mesi.inclus.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.mesi.inclus.AckInv_recv : Accumulator : Sum.u64 = 17506; SumSQ.u64 = 17506; Count.u64 = 17506; Min.u64 = 1; Max.u64 = 1; 
  l3cache.mesi.inclus.AckPut_recv : Accumulator : Sum.u64 = 36327; SumSQ.u64 = 36327; Count.u64 = 36327; Min.u64 = 1; Max.u64 = 1; 
- l3cache.mesi.inclus.MSHR_occupancy : Accumulator : Sum.u64 = 1327091350; SumSQ.u64 = 166459211130; Count.u64 = 10611093; Min.u64 = 0; Max.u64 = 128; 
+ l3cache.mesi.inclus.MSHR_occupancy : Accumulator : Sum.u64 = 1327091357; SumSQ.u64 = 166459212857; Count.u64 = 10611093; Min.u64 = 0; Max.u64 = 128; 
  l3cache.mesi.inclus.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  core0.pendCycle : Accumulator : Sum.u64 = 254865069; SumSQ.u64 = 4077448585; Count.u64 = 15932573; Min.u64 = 0; Max.u64 = 16; 
  core0.reads : Accumulator : Sum.u64 = 3037; SumSQ.u64 = 3037; Count.u64 = 3037; Min.u64 = 1; Max.u64 = 1; 
@@ -342,9 +342,9 @@
  l1cache0.mesi.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache0.mesi.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache0.mesi.latency_GetS_hit : Accumulator : Sum.u64 = 23354; SumSQ.u64 = 544242366; Count.u64 = 6; Min.u64 = 5; Max.u64 = 23329; 
- l1cache0.mesi.latency_GetS_miss : Accumulator : Sum.u64 = 102191673; SumSQ.u64 = 5158079763043; Count.u64 = 3031; Min.u64 = 22; Max.u64 = 167038; 
+ l1cache0.mesi.latency_GetS_miss : Accumulator : Sum.u64 = 102191674; SumSQ.u64 = 5158079731656; Count.u64 = 3031; Min.u64 = 22; Max.u64 = 167038; 
  l1cache0.mesi.latency_GetX_hit : Accumulator : Sum.u64 = 10; SumSQ.u64 = 50; Count.u64 = 2; Min.u64 = 5; Max.u64 = 5; 
- l1cache0.mesi.latency_GetX_miss : Accumulator : Sum.u64 = 67518434; SumSQ.u64 = 3452293558184; Count.u64 = 1961; Min.u64 = 22; Max.u64 = 172798; 
+ l1cache0.mesi.latency_GetX_miss : Accumulator : Sum.u64 = 67518433; SumSQ.u64 = 3452293444313; Count.u64 = 1961; Min.u64 = 22; Max.u64 = 172798; 
  l1cache0.mesi.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache0.mesi.latency_GetSX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache0.mesi.latency_GetSX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -553,10 +553,10 @@
  l2cache0.mesi.eventSent_CustomResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache0.mesi.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache0.mesi.latency_GetS_hit : Accumulator : Sum.u64 = 280; SumSQ.u64 = 2800; Count.u64 = 28; Min.u64 = 10; Max.u64 = 10; 
- l2cache0.mesi.latency_GetS_miss : Accumulator : Sum.u64 = 100462909; SumSQ.u64 = 5006758213863; Count.u64 = 3003; Min.u64 = 50; Max.u64 = 167026; 
+ l2cache0.mesi.latency_GetS_miss : Accumulator : Sum.u64 = 100462910; SumSQ.u64 = 5006758182452; Count.u64 = 3003; Min.u64 = 50; Max.u64 = 167026; 
  l2cache0.mesi.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache0.mesi.latency_GetX_hit : Accumulator : Sum.u64 = 40; SumSQ.u64 = 400; Count.u64 = 4; Min.u64 = 10; Max.u64 = 10; 
- l2cache0.mesi.latency_GetX_miss : Accumulator : Sum.u64 = 66586860; SumSQ.u64 = 3355141163786; Count.u64 = 1948; Min.u64 = 71; Max.u64 = 172786; 
+ l2cache0.mesi.latency_GetX_miss : Accumulator : Sum.u64 = 66586859; SumSQ.u64 = 3355141049939; Count.u64 = 1948; Min.u64 = 71; Max.u64 = 172786; 
  l2cache0.mesi.latency_GetX_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache0.mesi.latency_GetX_upgrade : Accumulator : Sum.u64 = 662; SumSQ.u64 = 48966; Count.u64 = 9; Min.u64 = 71; Max.u64 = 89; 
  l2cache0.mesi.latency_GetSX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1073,7 +1073,7 @@
  l2cache1.mesi.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache1.mesi.AckInv_recv : Accumulator : Sum.u64 = 2027; SumSQ.u64 = 2027; Count.u64 = 2027; Min.u64 = 1; Max.u64 = 1; 
  l2cache1.mesi.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache1.mesi.MSHR_occupancy : Accumulator : Sum.u64 = 166265828; SumSQ.u64 = 2617587792; Count.u64 = 10611093; Min.u64 = 0; Max.u64 = 17; 
+ l2cache1.mesi.MSHR_occupancy : Accumulator : Sum.u64 = 166265828; SumSQ.u64 = 2617587794; Count.u64 = 10611093; Min.u64 = 0; Max.u64 = 17; 
  l2cache1.mesi.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  core2.pendCycle : Accumulator : Sum.u64 = 254583214; SumSQ.u64 = 4072220526; Count.u64 = 15927167; Min.u64 = 0; Max.u64 = 16; 
  core2.reads : Accumulator : Sum.u64 = 3002; SumSQ.u64 = 3002; Count.u64 = 3002; Min.u64 = 1; Max.u64 = 1; 
@@ -1170,7 +1170,7 @@
  l1cache2.mesi.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache2.mesi.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache2.mesi.latency_GetS_hit : Accumulator : Sum.u64 = 14131; SumSQ.u64 = 129660655; Count.u64 = 7; Min.u64 = 5; Max.u64 = 10937; 
- l1cache2.mesi.latency_GetS_miss : Accumulator : Sum.u64 = 100689559; SumSQ.u64 = 5073288187813; Count.u64 = 2995; Min.u64 = 22; Max.u64 = 155949; 
+ l1cache2.mesi.latency_GetS_miss : Accumulator : Sum.u64 = 100689559; SumSQ.u64 = 5073288107701; Count.u64 = 2995; Min.u64 = 22; Max.u64 = 155949; 
  l1cache2.mesi.latency_GetX_hit : Accumulator : Sum.u64 = 39623; SumSQ.u64 = 1568001729; Count.u64 = 6; Min.u64 = 5; Max.u64 = 39598; 
  l1cache2.mesi.latency_GetX_miss : Accumulator : Sum.u64 = 68803119; SumSQ.u64 = 3523953543935; Count.u64 = 1992; Min.u64 = 22; Max.u64 = 176542; 
  l1cache2.mesi.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1381,7 +1381,7 @@
  l2cache2.mesi.eventSent_CustomResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache2.mesi.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache2.mesi.latency_GetS_hit : Accumulator : Sum.u64 = 340; SumSQ.u64 = 3400; Count.u64 = 34; Min.u64 = 10; Max.u64 = 10; 
- l2cache2.mesi.latency_GetS_miss : Accumulator : Sum.u64 = 98965048; SumSQ.u64 = 4909456849944; Count.u64 = 2961; Min.u64 = 50; Max.u64 = 155937; 
+ l2cache2.mesi.latency_GetS_miss : Accumulator : Sum.u64 = 98965048; SumSQ.u64 = 4909456769832; Count.u64 = 2961; Min.u64 = 50; Max.u64 = 155937; 
  l2cache2.mesi.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache2.mesi.latency_GetX_hit : Accumulator : Sum.u64 = 50; SumSQ.u64 = 500; Count.u64 = 5; Min.u64 = 10; Max.u64 = 10; 
  l2cache2.mesi.latency_GetX_miss : Accumulator : Sum.u64 = 67264334; SumSQ.u64 = 3359845369846; Count.u64 = 1974; Min.u64 = 71; Max.u64 = 163863; 
@@ -1584,9 +1584,9 @@
  l1cache3.mesi.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache3.mesi.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache3.mesi.latency_GetS_hit : Accumulator : Sum.u64 = 78358; SumSQ.u64 = 2717511084; Count.u64 = 9; Min.u64 = 5; Max.u64 = 44062; 
- l1cache3.mesi.latency_GetS_miss : Accumulator : Sum.u64 = 101767483; SumSQ.u64 = 5085208476865; Count.u64 = 3005; Min.u64 = 22; Max.u64 = 153502; 
+ l1cache3.mesi.latency_GetS_miss : Accumulator : Sum.u64 = 101767484; SumSQ.u64 = 5085208547996; Count.u64 = 3005; Min.u64 = 22; Max.u64 = 153502; 
  l1cache3.mesi.latency_GetX_hit : Accumulator : Sum.u64 = 20; SumSQ.u64 = 100; Count.u64 = 4; Min.u64 = 5; Max.u64 = 5; 
- l1cache3.mesi.latency_GetX_miss : Accumulator : Sum.u64 = 66647168; SumSQ.u64 = 3280501484694; Count.u64 = 1980; Min.u64 = 22; Max.u64 = 150766; 
+ l1cache3.mesi.latency_GetX_miss : Accumulator : Sum.u64 = 66647167; SumSQ.u64 = 3280501453019; Count.u64 = 1980; Min.u64 = 22; Max.u64 = 150766; 
  l1cache3.mesi.latency_GetX_upgrade : Accumulator : Sum.u64 = 92242; SumSQ.u64 = 8492919874; Count.u64 = 2; Min.u64 = 85; Max.u64 = 92157; 
  l1cache3.mesi.latency_GetSX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache3.mesi.latency_GetSX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1795,10 +1795,10 @@
  l2cache3.mesi.eventSent_CustomResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache3.mesi.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache3.mesi.latency_GetS_hit : Accumulator : Sum.u64 = 320; SumSQ.u64 = 3200; Count.u64 = 32; Min.u64 = 10; Max.u64 = 10; 
- l2cache3.mesi.latency_GetS_miss : Accumulator : Sum.u64 = 100511421; SumSQ.u64 = 4967688786231; Count.u64 = 2973; Min.u64 = 50; Max.u64 = 153490; 
+ l2cache3.mesi.latency_GetS_miss : Accumulator : Sum.u64 = 100511422; SumSQ.u64 = 4967688847558; Count.u64 = 2973; Min.u64 = 50; Max.u64 = 153490; 
  l2cache3.mesi.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache3.mesi.latency_GetX_hit : Accumulator : Sum.u64 = 30; SumSQ.u64 = 300; Count.u64 = 3; Min.u64 = 10; Max.u64 = 10; 
- l2cache3.mesi.latency_GetX_miss : Accumulator : Sum.u64 = 65804458; SumSQ.u64 = 3212225983598; Count.u64 = 1969; Min.u64 = 71; Max.u64 = 150754; 
+ l2cache3.mesi.latency_GetX_miss : Accumulator : Sum.u64 = 65804457; SumSQ.u64 = 3212225951947; Count.u64 = 1969; Min.u64 = 71; Max.u64 = 150754; 
  l2cache3.mesi.latency_GetX_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache3.mesi.latency_GetX_upgrade : Accumulator : Sum.u64 = 91065; SumSQ.u64 = 8176545433; Count.u64 = 10; Min.u64 = 71; Max.u64 = 90424; 
  l2cache3.mesi.latency_GetSX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2828,7 +2828,7 @@
  l1cache6.mesi.latency_GetS_hit : Accumulator : Sum.u64 = 148857; SumSQ.u64 = 5679264891; Count.u64 = 15; Min.u64 = 5; Max.u64 = 46368; 
  l1cache6.mesi.latency_GetS_miss : Accumulator : Sum.u64 = 103179864; SumSQ.u64 = 5192500611162; Count.u64 = 3022; Min.u64 = 22; Max.u64 = 160122; 
  l1cache6.mesi.latency_GetX_hit : Accumulator : Sum.u64 = 39618; SumSQ.u64 = 1568001704; Count.u64 = 5; Min.u64 = 5; Max.u64 = 39598; 
- l1cache6.mesi.latency_GetX_miss : Accumulator : Sum.u64 = 65731127; SumSQ.u64 = 3263513474673; Count.u64 = 1955; Min.u64 = 22; Max.u64 = 160990; 
+ l1cache6.mesi.latency_GetX_miss : Accumulator : Sum.u64 = 65731128; SumSQ.u64 = 3263513612622; Count.u64 = 1955; Min.u64 = 22; Max.u64 = 160990; 
  l1cache6.mesi.latency_GetX_upgrade : Accumulator : Sum.u64 = 307576; SumSQ.u64 = 31901331480; Count.u64 = 3; Min.u64 = 88700; Max.u64 = 115774; 
  l1cache6.mesi.latency_GetSX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache6.mesi.latency_GetSX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2898,7 +2898,7 @@
  l1cache6.mesi.UnblockFlush_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache6.mesi.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache6.mesi.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache6.mesi.MSHR_occupancy : Accumulator : Sum.u64 = 169382033; SumSQ.u64 = 2708551691; Count.u64 = 10611093; Min.u64 = 0; Max.u64 = 16; 
+ l1cache6.mesi.MSHR_occupancy : Accumulator : Sum.u64 = 169382034; SumSQ.u64 = 2708551722; Count.u64 = 10611093; Min.u64 = 0; Max.u64 = 16; 
  l1cache6.mesi.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache6.mesi.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache6.mesi.evict_I : Accumulator : Sum.u64 = 4854; SumSQ.u64 = 4854; Count.u64 = 4854; Min.u64 = 1; Max.u64 = 1; 
@@ -3040,7 +3040,7 @@
  l2cache6.mesi.latency_GetS_miss : Accumulator : Sum.u64 = 101345089; SumSQ.u64 = 5028455472053; Count.u64 = 2991; Min.u64 = 50; Max.u64 = 160110; 
  l2cache6.mesi.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache6.mesi.latency_GetX_hit : Accumulator : Sum.u64 = 40; SumSQ.u64 = 400; Count.u64 = 4; Min.u64 = 10; Max.u64 = 10; 
- l2cache6.mesi.latency_GetX_miss : Accumulator : Sum.u64 = 64405170; SumSQ.u64 = 3135861200564; Count.u64 = 1940; Min.u64 = 71; Max.u64 = 160978; 
+ l2cache6.mesi.latency_GetX_miss : Accumulator : Sum.u64 = 64405171; SumSQ.u64 = 3135861338489; Count.u64 = 1940; Min.u64 = 71; Max.u64 = 160978; 
  l2cache6.mesi.latency_GetX_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache6.mesi.latency_GetX_upgrade : Accumulator : Sum.u64 = 237499; SumSQ.u64 = 18739290295; Count.u64 = 14; Min.u64 = 71; Max.u64 = 85240; 
  l2cache6.mesi.latency_GetSX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -3143,7 +3143,7 @@
  l2cache6.mesi.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache6.mesi.AckInv_recv : Accumulator : Sum.u64 = 2055; SumSQ.u64 = 2055; Count.u64 = 2055; Min.u64 = 1; Max.u64 = 1; 
  l2cache6.mesi.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache6.mesi.MSHR_occupancy : Accumulator : Sum.u64 = 166035977; SumSQ.u64 = 2607405721; Count.u64 = 10611093; Min.u64 = 0; Max.u64 = 17; 
+ l2cache6.mesi.MSHR_occupancy : Accumulator : Sum.u64 = 166035978; SumSQ.u64 = 2607405752; Count.u64 = 10611093; Min.u64 = 0; Max.u64 = 17; 
  l2cache6.mesi.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  core7.pendCycle : Accumulator : Sum.u64 = 253642366; SumSQ.u64 = 4055950002; Count.u64 = 15902086; Min.u64 = 0; Max.u64 = 16; 
  core7.reads : Accumulator : Sum.u64 = 3050; SumSQ.u64 = 3050; Count.u64 = 3050; Min.u64 = 1; Max.u64 = 1; 
