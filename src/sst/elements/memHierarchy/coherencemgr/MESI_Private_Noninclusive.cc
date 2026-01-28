@@ -2182,7 +2182,7 @@ bool MESIPrivNoninclusive::handleNULLCMD(MemEvent* event, bool in_mshr) {
         event_debuginfo_.verbose_line = line->getString();
     }
     if (evicted) {
-        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer());
+        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer(), event->getID());
         if (oldAddr != newAddr) {
             if (mshr_->exists(newAddr) && mshr_->getStalledForEvict(newAddr)) {
                 debug_->debug(_L5_, "%s, Retry for 0x%" PRIx64 "\n", cachename_.c_str(), newAddr);
@@ -2308,7 +2308,7 @@ MemEventStatus MESIPrivNoninclusive::allocateLine(MemEvent * event, PrivateCache
     }
 
     if (evicted) {
-        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer());
+        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer(), event->getID());
         cache_array_->replace(event->getBaseAddr(), line);
         if (mem_h_is_debug_addr(event->getBaseAddr()))
             printDebugAlloc(true, event->getBaseAddr(), "");

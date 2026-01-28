@@ -43,9 +43,10 @@ public:
     CacheListenerNotification(const Addr tAddr, const Addr pAddr, const Addr vAddr,
                               const Addr iPtr, const uint32_t reqSize,
                               NotifyAccessType accessT,
-                              NotifyResultType resultT) :
+                              NotifyResultType resultT,
+                              const MemEventBase::id_type evId) :
         size(reqSize), targAddr(tAddr), physAddr(pAddr), virtAddr(vAddr), instPtr(iPtr),
-        access(accessT), result(resultT) {}
+        access(accessT), result(resultT), eventId(evId) {}
 
     /** the target address is the underlying address from the
         LOAD/STORE, not the baseAddr (which is usually the cache line
@@ -57,6 +58,7 @@ public:
     NotifyAccessType getAccessType() const { return access; }
     NotifyResultType getResultType() const { return result; }
     uint32_t getSize() const { return size; }
+    MemEventBase::id_type getEventID() const { return eventId; }
 
     CacheListenerNotification() = default; // For serialization
 
@@ -68,6 +70,7 @@ public:
         SST_SER(instPtr);
         SST_SER(access);
         SST_SER(result);
+        SST_SER(eventId);
     }
 
 private:
@@ -78,6 +81,7 @@ private:
     Addr instPtr;
     NotifyAccessType access;
     NotifyResultType result;
+    MemEventBase::id_type eventId;
 };
 
 class CacheListener : public SubComponent {

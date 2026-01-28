@@ -1468,7 +1468,7 @@ bool MESIL1::handleNULLCMD(MemEvent * event, bool in_mshr) {
     }
 
     if (evicted) {
-        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer());
+        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer(), event->getID());
         cache_array_->deallocate(line);
 
         if (oldAddr != newAddr) { /* Reallocating a line to a new address */
@@ -1587,7 +1587,7 @@ L1CacheLine* MESIL1::allocateLine(MemEvent* event, L1CacheLine* line) {
     bool evicted = handleEviction(event->getBaseAddr(), line, false);
 
     if (evicted) {
-        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer());
+        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer(), event->getID());
         cache_array_->replace(event->getBaseAddr(), line);
         if (mem_h_is_debug_addr(event->getBaseAddr()))
             printDebugAlloc(true, event->getBaseAddr(), "");

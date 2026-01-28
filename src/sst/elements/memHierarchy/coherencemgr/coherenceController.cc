@@ -600,15 +600,15 @@ void CoherenceController::notifyListenerOfAccess(MemEvent * event, NotifyAccessT
         access_type = NotifyAccessType::PREFETCH;
 
     CacheListenerNotification notify(event->getAddr(), event->getBaseAddr(), event->getVirtualAddress(),
-            event->getInstructionPointer(), event->getSize(), access_type, result_type);
+            event->getInstructionPointer(), event->getSize(), access_type, result_type, event->getID());
 
     for (int i = 0; i < listeners_.size(); i++)
         listeners_[i]->notifyAccess(notify);
 }
 
 
-void CoherenceController::notifyListenerOfEvict(Addr addr, uint32_t size, Addr ip) {
-    CacheListenerNotification notify(addr, addr, 0, ip, size, EVICT, NA);
+void CoherenceController::notifyListenerOfEvict(Addr addr, uint32_t size, Addr ip, MemEventBase::id_type evId) {
+    CacheListenerNotification notify(addr, addr, 0, ip, size, EVICT, NA, evId);
 
     for (int i = 0; i < listeners_.size(); i++) {
         listeners_[i]->notifyAccess(notify);
