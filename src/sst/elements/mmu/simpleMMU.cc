@@ -25,15 +25,15 @@ SimpleMMU::SimpleMMU(SST::ComponentId_t id, SST::Params& params) : MMU(id,params
 {
     char buffer[100];
     snprintf(buffer,100,"@t:SimpleMMU::@p():@l ");
-    m_dbg.init( buffer,
+    dbg_.init( buffer,
         params.find<int>("debug_level", 0),
         0, // Mask
         Output::STDOUT );
 
-    m_dbg.debug(CALL_INFO_LONG,1,0,"num_cores=%d num_hw_threads=%d\n",m_numCores,m_numHwThreads);
-    m_coreToPid.resize( m_numCores );
-    for ( unsigned i = 0; i < m_coreToPid.size(); i++ ) {
-        m_coreToPid[i].resize( m_numHwThreads, -1 );
+    dbg_.debug(CALL_INFO_LONG,1,0,"num_cores=%" PRIu32 " num_hw_threads=%" PRIu32 "\n",num_cores_,num_hw_threads_);
+    core_to_pid_.resize( num_cores_ );
+    for ( size_t i = 0; i < core_to_pid_.size(); i++ ) {
+        core_to_pid_[i].resize( num_hw_threads_, std::numeric_limits<uint32_t>::max() );
     }
 }
 
@@ -47,24 +47,24 @@ void SimpleMMU::handleNicTlbEvent( Event* ev )
 
     auto req = dynamic_cast<TlbMissEvent*>(ev);
     assert(req);
-    auto link = -1;
+    auto link = std::numeric_limits<uint32_t>::max();
     auto core = 0;
-    auto hwThread = 0;
-    unsigned pid = getPid( 0, 0 );
+    auto hw_thread = 0;
+    uint32_t pid = getPid( 0, 0 );
 
 #ifdef __SST_DEBUG_OUTPUT__
-    m_dbg.debug(CALL_INFO_LONG,1,0,"event on link=%d name=%s core=%d pid=%d vpn=%zu perms=%#x\n",
+    dbg_.debug(CALL_INFO_LONG,1,0,"event on link=%" PRIu32 " name=%s core=%" PRIu32 " pid=%" PRIu32 " vpn=%" PRIu32 " perms=%#" PRIx32 "\n",
         link,"nicTlb",core,pid,req->getVPN(),req->getPerms());
 
-    m_dbg.debug(CALL_INFO_LONG,1,0,"reqId=%" PRIu64 " hwTHread=%d vpn=%zu %#" PRIx64 "\n", req->getReqId(), req->getHardwareThread(), req->getVPN(), (uint64_t) req->getVPN() << 12  );
+    dbg_.debug(CALL_INFO_LONG,1,0,"reqId=%" PRIu64 " hw_thread=%" PRIu32 " vpn=%" PRIu32 " %#" PRIx64 "\n", req->getReqId(), req->getHardwareThread(), req->getVPN(), (uint64_t) req->getVPN() << 12  );
 #endif
-    m_permissionsCallback( req->getReqId(), link, core, hwThread, pid, req->getVPN(), req->getPerms(), req->getInstPtr(), req->getMemAddr() );
+    permissions_callback_( req->getReqId(), link, core, hw_thread, pid, req->getVPN(), req->getPerms(), req->getInstPtr(), req->getMemAddr() );
     delete ev;
 }
 
 void SimpleMMU::handleTlbEvent( Event* ev, int link )
 {
-    int core = getTlbCore( link );
+    uint32_t core = getTlbCore( link );
 
     if( dynamic_cast<TlbFlushRespEvent*>(ev) ) {
         // we currently don't do anything with the response because there are no race conditions?
@@ -75,107 +75,93 @@ void SimpleMMU::handleTlbEvent( Event* ev, int link )
     auto req = dynamic_cast<TlbMissEvent*>(ev);
     assert( req );
 
-    unsigned hwThread = req->getHardwareThread();
+    uint32_t hw_thread = req->getHardwareThread();
 
-    unsigned pid = getPid( core, hwThread );
+    uint32_t pid = getPid( core, hw_thread );
 
 #ifdef __SST_DEBUG_OUTPUT__
-    m_dbg.debug(CALL_INFO_LONG,1,0,"event on link=%d name=%s core=%d hwThread=%d pid=%d vpn=%zu perms=%#x\n",
-        link,getTlbName(link).c_str(),core,hwThread,pid,req->getVPN(),req->getPerms());
+    dbg_.debug(CALL_INFO_LONG,1,0,"event on link=%" PRIu32 " name=%s core=%" PRIu32 " hw_thread=%" PRIu32 " pid=%" PRIu32 " vpn=%" PRIu32 " perms=%#" PRIx32 "\n",
+        link,getTlbName(link).c_str(),core,hw_thread,pid,req->getVPN(),req->getPerms());
 
-    m_dbg.debug(CALL_INFO_LONG,1,0,"reqId=%" PRIu64 " hwTHread=%d vpn=%zu %#" PRIx64 "\n", req->getReqId(), req->getHardwareThread(), req->getVPN(), (uint64_t) req->getVPN() << 12  );
+    dbg_.debug(CALL_INFO_LONG,1,0,"reqId=%" PRIu64 " hw_thread=%" PRIu32 " vpn=%" PRIu32 " %#" PRIx64 "\n", req->getReqId(), req->getHardwareThread(), req->getVPN(), (uint64_t) req->getVPN() << 12  );
 #endif
-    m_permissionsCallback( req->getReqId(), link, core, hwThread, pid, req->getVPN(), req->getPerms(), req->getInstPtr(), req->getMemAddr() );
+    permissions_callback_( req->getReqId(), link, core, hw_thread, pid, req->getVPN(), req->getPerms(), req->getInstPtr(), req->getMemAddr() );
     delete ev;
 }
 
-void SimpleMMU::map( unsigned pid, uint32_t vpn, uint32_t ppn, int pageSize, uint64_t flags )
+void SimpleMMU::map( uint32_t pid, uint32_t vpn, uint32_t ppn, uint32_t page_size, uint64_t flags )
 {
 #ifdef __SST_DEBUG_OUTPUT__
-    m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d vpn=%d ppn=%d pageSize=%d flags=%#" PRIx64 "\n", pid, vpn, ppn, pageSize, flags );
+    dbg_.debug(CALL_INFO_LONG,1,0,"pid=%" PRIu32 " vpn=%" PRIu32 " ppn=%" PRIu32 " page_size=%" PRIu32 " flags=%#" PRIx64 "\n", pid, vpn, ppn, page_size, flags );
 #endif
-    auto pageTable = getPageTable(pid);
-    assert( pageTable );
+    auto page_table = getPageTable(pid);
+    assert( page_table );
 
-    pageTable->add( vpn, PTE( ppn, flags ) );
+    page_table->add( vpn, PTE( ppn, flags ) );
 }
 
-void SimpleMMU::map( unsigned pid, uint32_t vpn, std::vector<uint32_t>& ppns, int pageSize, uint64_t flags ) {
+void SimpleMMU::map( uint32_t pid, uint32_t vpn, std::vector<uint32_t>& ppns, uint32_t page_size, uint64_t flags ) {
 
-    m_dbg.fatal(CALL_INFO_LONG,-1,"pid=%d vpn=%d numPages=%zu pageSize=%d flags=%#" PRIx64 "\n", pid, vpn, ppns.size(), pageSize, flags );
+    dbg_.fatal(CALL_INFO_LONG,-1,"pid=%" PRIu32 " vpn=%" PRIu32 " num_pages=%zu page_size=%" PRIu32 " flags=%#" PRIx64 "\n", pid, vpn, ppns.size(), page_size, flags );
 }
 
-void SimpleMMU::unmap( unsigned pid, uint32_t vpn, size_t numPages ) {
+void SimpleMMU::unmap( uint32_t pid, uint32_t vpn, size_t num_pages ) {
 #ifdef __SST_DEBUG_OUTPUT__
-    m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d vpn=%d numPages=%zu\n", pid, vpn, numPages );
+    dbg_.debug(CALL_INFO_LONG,1,0,"pid=%" PRIu32 " vpn=%" PRIu32 " num_pages=%zu\n", pid, vpn, num_pages );
 #endif
-    auto pageTable = getPageTable(pid);
-    assert( pageTable );
-    for ( auto i = 0; i < numPages; i++ ) {
-        pageTable->remove( vpn + i );
+    auto page_table = getPageTable(pid);
+    assert( page_table );
+    for ( auto i = 0; i < num_pages; i++ ) {
+        page_table->remove( vpn + i );
     }
 }
 
-void SimpleMMU::removeWrite( unsigned pid ) {
+void SimpleMMU::removeWrite( uint32_t pid ) {
 #ifdef __SST_DEBUG_OUTPUT__
-    m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d\n",pid);
+    dbg_.debug(CALL_INFO_LONG,1,0,"pid=%" PRIu32 "\n",pid);
 #endif
     auto table = getPageTable(pid);
     assert( table );
     table->removeWrite();
 }
 
-void SimpleMMU::dup( unsigned fromPid, unsigned toPid ) {
+void SimpleMMU::dup( uint32_t from_pid, uint32_t to_pid ) {
 #ifdef __SST_DEBUG_OUTPUT__
-    m_dbg.debug(CALL_INFO_LONG,1,0,"fromPid=%d toPid=%d\n",fromPid,toPid);
+    dbg_.debug(CALL_INFO_LONG,1,0,"from_pid=%" PRIu32 " to_pid=%" PRIu32 "\n",from_pid,to_pid);
 #endif
-    auto fromTable = getPageTable(fromPid);
-    //fromTable->print("from");
-    //printf("%s() %p\n",__func__,fromTable);
-    assert( fromTable );
+    auto from_table = getPageTable(from_pid);
+    assert( from_table );
 
-    auto newTable = new PageTable( *fromTable );
-    //newTable->print("new");
-    initPageTable( toPid, newTable );
+    auto new_table = new PageTable( *from_table );
+    initPageTable( to_pid, new_table );
 }
 
-void SimpleMMU::flushTlb( unsigned core, unsigned hwThread ) {
+void SimpleMMU::flushTlb( uint32_t core, uint32_t hw_thread ) {
 #ifdef __SST_DEBUG_OUTPUT__
-    m_dbg.debug(CALL_INFO_LONG,1,0,"core=%d hwThread=%d\n",core,hwThread);
-//    sendEvent( getLink(core,"itlb"), new TlbFlushEvent( hwThread ) );
+    dbg_.debug(CALL_INFO_LONG,1,0,"core=%" PRIu32 " hw_thread=%" PRIu32 "\n",core,hw_thread);
 #endif
-    sendEvent( getLink(core,"dtlb"), new TlbFlushReqEvent( hwThread ) );
-    if ( m_nicTlbLink ) {
-        m_nicTlbLink->send(0,new TlbFlushReqEvent( hwThread ) );
+    sendEvent( getLink(core,"dtlb"), new TlbFlushReqEvent( hw_thread ) );
+    if ( nic_tlb_link_ ) {
+        nic_tlb_link_->send(new TlbFlushReqEvent( hw_thread ) );
     }
 }
 
-void SimpleMMU::faultHandled( RequestID requestId, unsigned link, unsigned pid, unsigned vpn, bool success ) {
+void SimpleMMU::faultHandled( RequestID request_id, uint32_t link, uint32_t pid, uint32_t vpn, bool success ) {
 
     if ( success ) {
-        auto pageTable = getPageTable(pid);
-        assert( pageTable );
+        auto page_table = getPageTable(pid);
+        assert( page_table );
 #ifdef __SST_DEBUG_OUTPUT__
-        m_dbg.debug(CALL_INFO_LONG,1,0,"link=%d vpn=%#x virtAddr=%#" PRIx64 " ppn=%#x\n",
-            link, vpn, (uint64_t) vpn<<12, pageTable->find( vpn )->ppn );
+        dbg_.debug(CALL_INFO_LONG,1,0,"link=%" PRIu32 " vpn=%#" PRIu32 " virtAddr=%#" PRIx64 " ppn=%#" PRIx32 "\n",
+            link, vpn, (uint64_t) vpn<<12, page_table->find( vpn )->ppn );
 #endif
-        sendEvent( link, new TlbFillEvent( requestId, *pageTable->find( vpn ) ) );
+        sendEvent( link, new TlbFillEvent( request_id, *page_table->find( vpn ) ) );
     } else {
 #ifdef __SST_DEBUG_OUTPUT__
-        m_dbg.debug(CALL_INFO_LONG,1,0,"link=%d vpn=%#x failed\n",link,vpn);
+        dbg_.debug(CALL_INFO_LONG,1,0,"link=%" PRIu32 " vpn=%#" PRIx32 " failed\n",link,vpn);
 #endif
-        sendEvent( link, new TlbFillEvent( requestId ) );
+        sendEvent( link, new TlbFillEvent( request_id ) );
     }
-}
-
-int SimpleMMU::getPerms( unsigned pid, uint32_t vpn ) {
-    auto pageTable = getPageTable(pid);
-    assert( pageTable );
-    PTE* pte = pageTable->find( vpn );
-    if ( nullptr == pte ) {
-        return -1;
-    }
-    return  pte->perms;
 }
 
 void SimpleMMU::snapshot( std::string dir ) {
@@ -184,21 +170,21 @@ void SimpleMMU::snapshot( std::string dir ) {
     filename << dir << "/" << getName();
     auto fp = fopen(filename.str().c_str(),"w+");
 
-    m_dbg.debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"Snapshot component `%s` %s\n",getName().c_str(), filename.str().c_str());
+    dbg_.debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"Snapshot component `%s` %s\n",getName().c_str(), filename.str().c_str());
 
-    fprintf(fp,"m_pageTableMap.size() %zu\n",m_pageTableMap.size());
-    for ( auto & x : m_pageTableMap ) {
-        auto pageTable = x.second;
-        fprintf(fp,"pid: %i\n",x.first);
-        pageTable->snapshot( fp );
+    fprintf(fp,"page_table_map_.size() %zu\n",page_table_map_.size());
+    for ( auto & x : page_table_map_ ) {
+        auto page_table = x.second;
+        fprintf(fp,"pid: %" PRIu32 "\n",x.first);
+        page_table->snapshot( fp );
     }
 
-    fprintf(fp,"m_coreToPid.size() %zu\n", m_coreToPid.size());
-    for ( auto core = 0; core < m_coreToPid.size(); core++ ) {
-        auto& x = m_coreToPid[core];
-        fprintf(fp,"core: %d, numPids: %zu\n",core,x.size());
+    fprintf(fp,"core_to_pid_.size() %zu\n", core_to_pid_.size());
+    for ( auto core = 0; core < core_to_pid_.size(); core++ ) {
+        auto& x = core_to_pid_[core];
+        fprintf(fp,"core: %" PRIu32 ", numPids: %zu\n",core,x.size());
         for ( auto j = 0; j < x.size(); j++ ) {
-            fprintf(fp,"%d ",x[j]);
+            fprintf(fp,"%" PRIu32 " ",x[j]);
         }
         fprintf(fp,"\n");
     }
@@ -210,33 +196,34 @@ void SimpleMMU::snapshotLoad( std::string dir ) {
     auto fp = fopen(filename.str().c_str(),"r");
     assert(fp);
 
-    m_dbg.debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"Snapshot load component `%s` %s\n",getName().c_str(), filename.str().c_str());
+    dbg_.debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"Snapshot load component `%s` %s\n",getName().c_str(), filename.str().c_str());
 
-    int size;
-    assert( 1 == fscanf( fp, "m_pageTableMap.size() %d\n",&size) );
-    m_dbg.debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"m_pageTableMap.size() %d\n",size);
+    size_t size;
+    assert( 1 == fscanf( fp, "page_table_map_.size() %zu\n",&size) );
+    dbg_.debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"page_table_map_.size() %zu\n",size);
     for ( auto i = 0; i < size; i++ ) {
-        int pid;
-        assert( 1 == fscanf( fp, "pid: %d\n",&pid) );
-        m_dbg.debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"pid: %d\n",pid);
-        m_pageTableMap[pid] = new PageTable( &m_dbg, fp );
+        uint32_t pid;
+        assert( 1 == fscanf( fp, "pid: %" PRIu32 "\n",&pid) );
+        dbg_.debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"pid: %" PRIu32 "\n",pid);
+        page_table_map_[pid] = new PageTable( &dbg_, fp );
     }
 
-    assert( 1 == fscanf( fp, "m_coreToPid.size() %d\n", &size) );
-    m_dbg.debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"m_coreToPid.size() %d\n",size );
+    assert( 1 == fscanf( fp, "core_to_pid_.size() %zu\n", &size) );
+    dbg_.debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"core_to_pid_.size() %zu\n",size );
 
-    m_coreToPid.resize( size );
-    for ( auto core = 0; core < m_coreToPid.size(); core++ ) {
-        int x, numPids;
-        assert( 2 == fscanf( fp, "core: %d, numPids: %d\n", &x, &numPids) );
-        m_dbg.debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT, "core: %d, numPids: %d\n", x, numPids);
-        m_coreToPid[core].resize( numPids );
+    core_to_pid_.resize( size );
+    for ( auto core = 0; core < core_to_pid_.size(); core++ ) {
+        uint32_t x;
+        size_t numPids;
+        assert( 2 == fscanf( fp, "core: %" PRIu32 ", numPids: %zu\n", &x, &numPids) );
+        dbg_.debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT, "core: %" PRIu32 ", numPids: %zu\n", x, numPids);
+        core_to_pid_[core].resize( numPids );
         for ( auto i = 0; i < numPids; i++ ) {
-            int pid;
-            assert( 1 == fscanf(fp,"%d ",&pid) );
-            m_dbg.debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"%d ",pid);
-            m_coreToPid[core][i] =  pid;
+            uint32_t pid;
+            assert( 1 == fscanf(fp,"%" PRIu32 " ",&pid) );
+            dbg_.debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"%" PRIu32 " ",pid);
+            core_to_pid_[core][i] =  pid;
         }
-        m_dbg.debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"\n");
+        dbg_.debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"\n");
     }
 }

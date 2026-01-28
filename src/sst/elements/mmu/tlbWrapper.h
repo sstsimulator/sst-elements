@@ -57,8 +57,8 @@ class TLB_Wrapper : public SST::Component {
     TLB_Wrapper(SST::ComponentId_t id, SST::Params& params);
     ~TLB_Wrapper() {}
 
-    void init(unsigned int phase);
-    void setup();
+    void init(unsigned int phase) override;
+    void setup() override;
 
   private:
 
@@ -82,7 +82,7 @@ class TLB_Wrapper : public SST::Component {
         return perms;
     }
 
-    void tlbCallback( RequestID reqId, uint64_t physAddr );
+    void tlbCallback( RequestID req_id, uint64_t phys_addr );
 
     void handleCpuEvent( Event* );
     void handleCacheEvent( Event* );

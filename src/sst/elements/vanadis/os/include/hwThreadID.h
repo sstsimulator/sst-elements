@@ -25,9 +25,9 @@ namespace Vanadis {
 namespace OS {
 
 struct HwThreadID {
-    HwThreadID( int core, int hwThread ) : core(core), hwThread(hwThread) {}
-    int core;
-    int hwThread;
+    HwThreadID( int core, int hw_thread ) : core(core), hw_thread(hw_thread) {}
+    uint32_t core;
+    uint32_t hw_thread;
 };
 
 }

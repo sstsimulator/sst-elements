@@ -302,7 +302,7 @@ class Builder():
         # Balar TLB
         balarTlbParams = {
             "debug_level": 0,
-            "hitLatency": 10,
+            "hit_latency": 10,
             "num_hardware_threads": 1,
             "num_tlb_entries_per_thread": 64,
             "tlb_set_size": 4,

@@ -27,6 +27,18 @@ struct PTE {
     PTE( uint32_t ppn, uint32_t perms ) : ppn(ppn), perms(perms) {}
     uint32_t perms : 3;
     uint32_t ppn: 29;
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) {
+        // Init local (non-bit field) version to vars (serializing) or 0 (deserializing)
+        uint32_t perms_loc = perms;
+        uint32_t ppn_loc = ppn;
+        // Serialize/deserialize
+        SST_SER_NAME(perms_loc, "perms");
+        SST_SER_NAME(ppn_loc, "ppn");
+        // If de-serializing, update vars. Otherwise, a no-op.
+        perms = perms_loc;
+        ppn = ppn_loc;
+    }
 };
 
 } //namespace MMU_Lib
