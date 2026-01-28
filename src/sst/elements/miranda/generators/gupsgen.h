@@ -31,13 +31,6 @@ namespace Miranda {
 class GUPSGenerator : public RequestGenerator {
 
 public:
-	GUPSGenerator( ComponentId_t id, Params& params );
-        void build(Params &params);
-	~GUPSGenerator();
-	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
-	bool isFinished();
-	void completed();
-
 	SST_ELI_REGISTER_SUBCOMPONENT(
         GUPSGenerator,
         "miranda",
@@ -58,9 +51,32 @@ public:
         { "issue_op_fences",  "Issue operation fences, \"yes\" or \"no\", default is yes", "yes" }
     )
 
+	GUPSGenerator( ComponentId_t id, Params& params );
+	GUPSGenerator() = default;
+	~GUPSGenerator();
+	void build(Params &params);
+	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
+	bool isFinished();
+	void completed();
+
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::Miranda::RequestGenerator::serialize_order(ser);
+		SST_SER(reqLength);
+		SST_SER(memLength);
+		SST_SER(memStart);
+		SST_SER(issueCount);
+		SST_SER(iterations);
+		SST_SER(seed_a);
+		SST_SER(seed_b);
+		SST_SER(rng);
+		SST_SER(out);
+		SST_SER(issueOpFences);
+    }
+
+    ImplementSerializable(SST::Miranda::GUPSGenerator)
+
 private:
 	uint64_t reqLength;
-
 	uint64_t memLength;
 	uint64_t memStart;
 	uint64_t issueCount;
@@ -70,7 +86,6 @@ private:
 	Random* rng;
 	Output*  out;
 	bool issueOpFences;
-
 };
 
 }

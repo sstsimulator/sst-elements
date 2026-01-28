@@ -35,6 +35,7 @@ class CPURequest {
 public:
     CPURequest(const uint64_t origID) :
         originalID(origID), issueTime(0), outstandingParts(0) {}
+    CPURequest() = default;
     void incPartCount() { outstandingParts++; }
     void decPartCount() { outstandingParts--; }
     bool completed() const { return 0 == outstandingParts; }
@@ -42,6 +43,13 @@ public:
     uint64_t getIssueTime() const { return issueTime; }
     uint64_t getOriginalReqID() const { return originalID; }
     uint32_t countParts() const { return outstandingParts; }
+
+	void serialize_order(SST::Core::Serialization::serializer& ser) {
+        SST_SER(originalID);
+        SST_SER(issueTime);
+        SST_SER(outstandingParts);
+	}
+
 protected:
     uint64_t originalID;
     uint64_t issueTime;
@@ -60,10 +68,18 @@ public:
     public:
         friend class RequestGenCPU;
         StdMemHandler(RequestGenCPU* cpuInst, SST::Output* out) : SST::Interfaces::StandardMem::RequestHandler(out), cpu(cpuInst) {}
+        StdMemHandler() = default;
         virtual ~StdMemHandler() {}
         virtual void handle(SST::Interfaces::StandardMem::ReadResp* rsp) override;
         virtual void handle(SST::Interfaces::StandardMem::WriteResp* rsp) override;
         virtual void handle(SST::Interfaces::StandardMem::CustomResp* rsp) override;
+
+        virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+            SST::Interfaces::StandardMem::RequestHandler::serialize_order(ser);
+            SST_SER(cpu);
+        }
+
+        ImplementSerializable(SST::Miranda::RequestGenCPU::StdMemHandler)
 
         RequestGenCPU* cpu;
     };
@@ -122,8 +138,47 @@ public:
         { "memory",     "The memory interface to use (e.g., interface to caches)", "SST::Interfaces::StandardMem" }
     )
 
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::Component::serialize_order(ser);
+        SST_SER(out);
+
+        SST_SER(timeConverter);
+        SST_SER(clockHandler);
+        SST_SER(reqGen);
+        SST_SER(requestsInFlight);
+        SST_SER(cache_link);
+        SST_SER(srcLink);
+        SST_SER(srcReqEvent);
+        SST_SER(stdMemHandlers);
+
+        SST_SER(pendingRequests);
+        SST_SER(memMgr);
+
+        SST_SER(maxRequestsPending);
+        SST_SER(requestsPending);
+        SST_SER(reqMaxPerCycle);
+        SST_SER(cacheLine);
+        SST_SER(maxOpLookup);
+
+        SST_SER(statReqs);
+        SST_SER(statSplitReqs);
+        SST_SER(statCyclesWithIssue);
+        SST_SER(statMaxIssuePerCycle);
+        SST_SER(statCyclesWithoutIssue);
+        SST_SER(statBytes);
+        SST_SER(statReqLatency);
+        SST_SER(statTime);
+        SST_SER(statCyclesHitFence);
+        SST_SER(statCyclesHitReorderLimit);
+        SST_SER(statCycles);
+
+    }
+
+    ImplementSerializable(SST::Miranda::RequestGenCPU)
+
+
 private:
-    RequestGenCPU();  // for serialization only
+    RequestGenCPU() = default;  // for serialization only
     RequestGenCPU(const RequestGenCPU&); // do not implement
     void operator=(const RequestGenCPU&); // do not implement
     ~RequestGenCPU();
@@ -156,12 +211,12 @@ private:
 	uint64_t cacheLine;
 	uint32_t maxOpLookup;
 
-    Statistic<uint64_t>* statReqs[OPCOUNT];
-	Statistic<uint64_t>* statSplitReqs[OPCOUNT];
+    Statistic<uint64_t>* statReqs[OPCOUNT] = {nullptr, nullptr, nullptr, nullptr};
+	Statistic<uint64_t>* statSplitReqs[OPCOUNT] = {nullptr, nullptr, nullptr, nullptr};
 	Statistic<uint64_t>* statCyclesWithIssue;
 	Statistic<uint64_t>* statMaxIssuePerCycle;
 	Statistic<uint64_t>* statCyclesWithoutIssue;
-	Statistic<uint64_t>* statBytes[OPCOUNT];
+	Statistic<uint64_t>* statBytes[OPCOUNT] = {nullptr, nullptr, nullptr, nullptr};
 	Statistic<uint64_t>* statReqLatency;
 	Statistic<uint64_t>* statTime;
 	Statistic<uint64_t>* statCyclesHitFence;
