@@ -17,6 +17,7 @@
 #include <sst_config.h>
 
 #include "reorderLinkControl.h"
+#include "ExtendedRequest.h"
 
 #include "merlin.h"
 
@@ -121,27 +122,29 @@ void ReorderLinkControl::finish(void)
 bool ReorderLinkControl::send(SimpleNetwork::Request* req, int vn) {
     if ( vn >= vns ) return false;
     if ( !link_control->spaceToSend(vn, req->size_in_bits) ) return false;
-    ReorderRequest* my_req = new ReorderRequest(req);
-    delete req;
 
-    // Need to put in the sequence number
-
-    // See if we already have reorder_info for this dest
-    if ( reorder_info.find(my_req->dest) == reorder_info.end() ) {
-        ReorderInfo* info = new ReorderInfo();
-        reorder_info[my_req->dest] = info;
+    // Convert to ExtendedRequest if not already
+    Merlin::ExtendedRequest* ext_req = dynamic_cast<Merlin::ExtendedRequest*>(req);
+    if (!ext_req) {
+        ext_req = new Merlin::ExtendedRequest(req);
+        delete req;
     }
-    ReorderInfo* info = reorder_info[my_req->dest];
-    my_req->seq = info->send++;
 
-    // // To test, just going to switch order
-    // uint32_t my_seq = info->send % 2 == 0 ? info->send + 1 : info->send - 1;
-    // my_req->seq = my_seq;
-    // info->send++;
+    // Get or create reorder info for this destination
+    if ( reorder_info.find(ext_req->dest) == reorder_info.end() ) {
+        ReorderInfo* info = new ReorderInfo();
+        reorder_info[ext_req->dest] = info;
+    }
+    ReorderInfo* info = reorder_info[ext_req->dest];
 
-    // std::cout << id << ": sending packet with sequence number " << my_req->seq << std::endl;
+    // Set sequence number as metadata (preserves all other metadata!)
+    uint32_t seq = info->send++;
+    Merlin::ReorderMetadata reorder_meta(seq);
+    ext_req->setMetadata("Reorder", reorder_meta);
 
-    return link_control->send(my_req, vn);
+    // std::cout << id << ": sending packet with sequence number " << seq << std::endl;
+
+    return link_control->send(ext_req, vn);
 }
 
 
@@ -203,45 +206,59 @@ const UnitAlgebra& ReorderLinkControl::getLinkBW() const {
 }
 
 bool ReorderLinkControl::handle_event(int vn) {
-    ReorderRequest* my_req = static_cast<ReorderRequest*>(link_control->recv(vn));
+    SimpleNetwork::Request* req = link_control->recv(vn);
 
-    // std::cout << id << ": recieved packet with sequence number " << my_req->seq << std::endl;
+    // Extract sequence number from metadata
+    Merlin::ExtendedRequest* ext_req = dynamic_cast<Merlin::ExtendedRequest*>(req);
+    Merlin::ReorderMetadata reorder_meta;
+    uint32_t seq = 0;
 
-    if ( reorder_info.find(my_req->src) == reorder_info.end() ) {
-        ReorderInfo* info = new ReorderInfo();
-        reorder_info[my_req->src] = info;
+    if (ext_req && ext_req->getMetadata("Reorder", reorder_meta)) {
+        seq = reorder_meta.seq_number;
+    } else {
+        // No reorder metadata - shouldn't happen in normal operation
+        // Just deliver immediately
+        input_buf[vn].push(req);
+        if ( receiveFunctor != NULL ) {
+            bool keep = (*receiveFunctor)(vn);
+            if (!keep) receiveFunctor = NULL;
+        }
+        return true;
     }
 
-    ReorderInfo* info = reorder_info[my_req->src];
+    // std::cout << id << ": recieved packet with sequence number " << seq << std::endl;
+
+    if ( reorder_info.find(req->src) == reorder_info.end() ) {
+        ReorderInfo* info = new ReorderInfo();
+        reorder_info[req->src] = info;
+    }
+
+    ReorderInfo* info = reorder_info[req->src];
 
     // See if this is the expected sequence number, if not, put it
     // into the ReorderInfo.queue.
-    if ( my_req->seq == info->recv ) {
-        input_buf[vn].push(my_req);
+    if ( seq == info->recv ) {
+        input_buf[vn].push(req);
         info->recv++;
         // Need to also see if we have any other fragments which are
         // now ready to be delivered
-        my_req = info->queue.top();
-        while ( my_req->seq == info->recv ) {
-            input_buf[vn].push(my_req);
+        const ReorderInfo::QueueEntry& top_entry = info->queue.top();
+        while ( top_entry.seq == info->recv ) {
+            input_buf[vn].push(top_entry.req);
             info->queue.pop();
-            my_req = info->queue.top();
+            const ReorderInfo::QueueEntry& next_entry = info->queue.top();
             info->recv++;
+            if (next_entry.req == nullptr) break; // Hit dummy entry
         }
 
         // If there is a recv functor, need to notify parent
         if ( receiveFunctor != NULL ) {
             bool keep = (*receiveFunctor)(vn);
             if (!keep) receiveFunctor = NULL;
-            // while ( keep && input_buf[vn].size() != 0 ) {
-            //     keep = (*receiveFunctor)(vn);
-            //     if (!keep) receiveFunctor = NULL;
-            // }
         }
-
     }
     else {
-        info->queue.push(my_req);
+        info->queue.push(ReorderInfo::QueueEntry(seq, req));
     }
 
     return true;
