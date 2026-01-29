@@ -498,8 +498,7 @@ memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams( memCtrlParams )
 # SHOULD FAIL TO INITIALIZE
 memctrl.addPortModule("highlink", "carcosa.StuckAtFaultInjector", {
-    "intallDirection": "Receive",
-    "injectionProbability": 1.0,
+    "install_direction": "Receive",
     "masks": ["4D88, 3, 11111111, 11111111"],
     "debug" : 1,
     "debug_level": 2

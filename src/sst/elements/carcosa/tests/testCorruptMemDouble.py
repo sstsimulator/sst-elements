@@ -497,8 +497,7 @@ dirNIC.addParams(dirNicParams)
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams( memCtrlParams )
 memctrl.addPortModule("highlink", "carcosa.CorruptMemFaultInjector", {
-    "intallDirection": "Receive",
-    "injectionProbability": 1.0,
+    "install_direction": "Receive",
     "regions": ["4D88, 4D90", "4DA0, 4DA8"],
     "debug" : 1,
     "debug_level": 2

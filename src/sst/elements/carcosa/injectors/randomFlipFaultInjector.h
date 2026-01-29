@@ -27,6 +27,7 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
+        {"injection_probability", "Probability for fault injection to trigger. Default = 0.0"}
     )
 
     RandomFlipFaultInjector(Params& params);
@@ -34,10 +35,17 @@ public:
     RandomFlipFaultInjector() = default;
     ~RandomFlipFaultInjector() {}
 protected:
+    double injection_probability_;
+
+
+    bool doInjection() override;
+    void executeFaults(Event*& ev) override;
+
     void serialize_order(SST::Core::Serialization::serializer& ser) override
     {
         SST::PortModule::serialize_order(ser);
         // serialize parameters like `SST_SER(<param_member>)`
+        SST_SER(injection_probability_);
     }
     ImplementVirtualSerializable(SST::Carcosa::RandomFlipFaultInjector)
 }; // class RandomFlipFaultInjector

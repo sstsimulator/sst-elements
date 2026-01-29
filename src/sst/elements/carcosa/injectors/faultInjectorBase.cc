@@ -9,7 +9,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include "sst/elements/carcosa/faultInjectorBase.h"
+#include "sst/elements/carcosa/injectors/faultInjectorBase.h"
 #include "sst/core/params.h"
 
 using namespace SST::Carcosa;
@@ -26,14 +26,6 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
 
 #ifdef __SST_DEBUG_OUTPUT__
     dbg_->debug(CALL_INFO_LONG, 1, 0, "Initializing FaultInjector:\n");
-#endif
-
-    injectionProbability_ = params.find<double>("injectionProbability", "0.5");
-    if ( injectionProbability_ < 0.0 || injectionProbability_ > 1.0 ) {
-        out_->fatal(CALL_INFO_LONG, -1, "\tInjection probability outside of bounds. Must be in the following range: [0.0,1.0].\n");
-    }
-#ifdef __SST_DEBUG_OUTPUT__
-    dbg_->debug(CALL_INFO_LONG, 1, 0, "\tInjection Probability: %f\n", injectionProbability_);
 #endif
     seed_ = params.find<uint64_t>("seed", 0);
     if (seed_ != 0) {
@@ -124,8 +116,7 @@ double FaultInjectorBase::randFloat(double start, double end) {
 }
 
 bool FaultInjectorBase::doInjection() {
-    double rand_val = base_rng_.nextUniform();
-    return rand_val <= getInjectionProb();
+    return true;
 }
 
 installDirection FaultInjectorBase::setInstallDirection(std::string param) {
@@ -147,10 +138,10 @@ installDirection FaultInjectorBase::setInstallDirection(std::string param) {
 
 void FaultInjectorBase::setValidInstallation(Params& params, std::array<bool,2> valid_install) {
     valid_installation_ = valid_install;
-    std::string install_dir = params.find<std::string>("installDirection", "Receive");
-    installDirection_ = setInstallDirection(install_dir);
+    std::string install_dir = params.find<std::string>("install_direction", "Receive");
+    install_direction_ = setInstallDirection(install_dir);
 
-    if (installDirection_ == installDirection::Invalid) {
+    if (install_direction_ == installDirection::Invalid) {
         out_->fatal(CALL_INFO_LONG, -1, "Install Direction should never be set to Invalid! Did you forget to set which directions are valid?\n");
     }
 

@@ -12,7 +12,7 @@
 #ifndef SST_ELEMENTS_CARCOSA_FAULTBASE_H
 #define SST_ELEMENTS_CARCOSA_FAULTBASE_H
 
-#include "sst/elements/carcosa/faultInjectorBase.h"
+#include "sst/elements/carcosa/injectors/faultInjectorBase.h"
 #include "sst/core/serialization/serializable.h"
 #include <random>
 #include <vector>

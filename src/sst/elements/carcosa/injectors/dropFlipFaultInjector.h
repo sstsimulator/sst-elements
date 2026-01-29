@@ -17,37 +17,41 @@
 
 namespace SST::Carcosa {
 
-class DoubleFaultInjector : public FaultInjectorBase {
+class DropFlipFaultInjector : public FaultInjectorBase {
 public:
     SST_ELI_REGISTER_PORTMODULE(
-        DoubleFaultInjector,
+        DropFlipFaultInjector,
         "carcosa",
-        "DoubleFaultInjector",
+        "DropFlipFaultInjector",
         SST_ELI_ELEMENT_VERSION(0, 1, 0),
-        "PortModule class used to simulate a data transfer lost at random OR a random bit flip in transit"
+        "PortModule class used to simulate a data transfer lost at random and a random bit flip in transit"
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {"flipVsDropProb", "The probability that a flip will be chosen over a drop when a fault is injected"}
+        {"drop_probability", "The probability that a drop will be injected. Default = 0.0"},
+        {"flip_probability", "The probability that a flip will be injected. Default = 0.0"}
     )
 
-    DoubleFaultInjector(Params& params);
+    DropFlipFaultInjector(Params& params);
 
-    DoubleFaultInjector() = default;
-    ~DoubleFaultInjector() {}
+    DropFlipFaultInjector() = default;
+    ~DropFlipFaultInjector() {}
 protected:
-    double flipVsDropProb_;
+    double drop_probability_;
+    double flip_probability_;
+    // Byte array representing triggered fault. First is drop, second is flip.
+    std::array<bool, 2> triggered_injection_;
 
+    bool doInjection() override;
     void executeFaults(Event*& ev) override;
-
-    SST::RNG::MersenneRNG rng_;
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override
     {
         SST::PortModule::serialize_order(ser);
         // serialize parameters like `SST_SER(<param_member>)`
-        SST_SER(flipVsDropProb_);
-        SST_SER(rng_);
+        SST_SER(drop_probability_);
+        SST_SER(flip_probability_);
+        SST_SER(triggered_injection_);
     }
     ImplementVirtualSerializable(SST::Carcosa::DoubleFaultInjector)
 }; // class DoubleFaultInjector

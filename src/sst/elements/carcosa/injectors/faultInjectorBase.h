@@ -43,7 +43,13 @@ enum installDirection {
 
 /**
  * Base class containing required functions and basic data for
- * creating fault injection on component ports
+ * creating fault injection on component ports.
+ *
+ * Injectors are used to execute the logic that tests for
+ * whether or not an injection should occur. Upon triggering
+ * an injection, a fault object which inherits from the
+ * FaultBase class but be used to execute the fault logic
+ * on the triggering message.
  */
 class FaultInjectorBase : public SST::PortModule
 {
@@ -58,18 +64,11 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {"installDirection", "Flag which direction the injector should read from on a port. Valid optins are \'Send\', \'Receive\', and \'Both\'. Default is \'Receive\'."},
-        {"injectionProbability", "The probability with which an injection should occur. Valid inputs range from 0 to 1. Default = 0.5."},
+        {"install_direction", "Flag which direction the injector should read from on a port. Valid optins are \'Send\', \'Receive\', and \'Both\'. Default is \'Receive\'."},
         {"seed", "Optional integer seed to give to the random number generator. Default = 0 (0 seed will be assumed to mean NO seed)."},
         {"debug", "Integer determining if debug should be active. 0 disables, 1 sends output to STDOUT, 2 to STDERR. Default = 0"},
         {"debug_level", "Integer determining verbosity of debug output. 1 enables basic text output, 2 enables signficant activity output."}
     )
-
-    // SST_ELI_DOCUMENT_STATISTICS(
-    //     // Trigger Statistics
-    //     {"EventsArrived",           "Number of events that passed through the fault injector", "count", 1},
-    //     {"FaultsTriggered",         "Number of events that triggered a fault", "count", 1}
-    // )
 
     FaultInjectorBase(Params& params);
 
@@ -81,7 +80,7 @@ public:
 
     bool installOnReceive() override
     {
-        switch (installDirection_) {
+        switch (install_direction_) {
             case Send:
                 return false;
             case Receive:
@@ -91,17 +90,13 @@ public:
     }
     bool installOnSend() override
     {
-        switch (installDirection_) {
+        switch (install_direction_) {
             case Send:
                 return true;
             case Receive:
             default:
                 return false;
         }
-    }
-
-    double getInjectionProb() {
-        return injectionProbability_;
     }
 
     void cancelDelivery() {
@@ -111,7 +106,7 @@ public:
     installDirection setInstallDirection(std::string param);
 
     installDirection getInstallDirection() {
-        return installDirection_;
+        return install_direction_;
     }
 
     enum memEventType {
@@ -142,8 +137,7 @@ protected:
     SST::Output* dbg_;
     std::vector<FaultBase*> fault;
     bool* cancel_;
-    installDirection installDirection_ = installDirection::Receive;
-    double injectionProbability_ = 0.5;
+    installDirection install_direction_ = installDirection::Receive;
     SST::RNG::MersenneRNG base_rng_;
     uint64_t seed_ = 0;
 private:
@@ -151,7 +145,7 @@ private:
     bool valid_installs_set = false;
 protected:
 
-    bool doInjection();
+    virtual bool doInjection();
     virtual void executeFaults(Event*& ev);
 
     /**
@@ -170,18 +164,13 @@ protected:
         SST_SER(dbg_);
         SST_SER(fault);
         SST_SER(cancel_);
-        SST_SER(installDirection_);
-        SST_SER(injectionProbability_);
+        SST_SER(install_direction_);
         SST_SER(base_rng_);
         SST_SER(seed_);
         SST_SER(valid_installation_);
         SST_SER(valid_installs_set);
     }
     ImplementVirtualSerializable(SST::Carcosa::FaultInjectorBase)
-
-    // Statistics
-    // Statistic<uint64_t> stat_eventsArrived;
-    // Statistic<uint64_t> stat_faultsTriggered;
 };
 
 } // namespace SST::FaultInjectorBase

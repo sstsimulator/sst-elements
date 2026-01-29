@@ -15,40 +15,85 @@
 
 using namespace SST::Carcosa;
 
-DoubleFaultInjector::DoubleFaultInjector(Params& params) : FaultInjectorBase(params) {
+DropFlipFaultInjector::DropFlipFaultInjector(Params& params) : FaultInjectorBase(params) {
     // create fault
     fault.resize(2);
     fault[0] = new RandomDropFault(params, this);
     fault[1] = new RandomFlipFault(params, this);
 
-    // read flipvsdrop param
-    flipVsDropProb_ = params.find<double>("flipVsDropProb", 0.5);
+    // read probability params
+    drop_probability_ = params.find<double>("drop_probability", 0.0);
+#ifdef __SST_DEBUG_OUTPUT__
+    if (drop_probability_ > 0.0){
+        dbg_->debug(CALL_INFO_LONG, 1, 0, "Drop probability set to %lf.\n", drop_probability_);
+    }
+#endif
+
+    flip_probability_ = params.find<double>("flip_probability", 0.0);
+#ifdef __SST_DEBUG_OUTPUT__
+    if (flip_probability_ > 0.0){
+        dbg_->debug(CALL_INFO_LONG, 1, 0, "Flip probability set to %lf.\n", flip_probability_);
+    }
+#endif
 
     setValidInstallation(params, SEND_RECEIVE_VALID);
+}
+
+bool DropFlipFaultInjector::doInjection() {
+    if (this->randFloat(0.0, 1.0) <= this->drop_probability_) {
+#ifdef __SST_DEBUG_OUTPUT__
+        dbg_->debug(CALL_INFO_LONG, 1, 0, "Drop triggered.\n");
+#endif
+        this->triggered_injection_[0] = true;
+    } else {
+#ifdef __SST_DEBUG_OUTPUT__
+        dbg_->debug(CALL_INFO_LONG, 1, 0, "Drop skipped.\n");
+#endif
+        this->triggered_injection_[0] = false;
+    }
+
+    if (this->randFloat(0.0, 1.0) <= this->flip_probability_) {
+#ifdef __SST_DEBUG_OUTPUT__
+        dbg_->debug(CALL_INFO_LONG, 1, 0, "Flip triggered.\n");
+#endif
+        this->triggered_injection_[1] = true;
+    }
+    else {
+#ifdef __SST_DEBUG_OUTPUT__ 
+        dbg_->debug(CALL_INFO_LONG, 1, 0, "Flip skipped.\n");
+#endif
+        this->triggered_injection_[1] = false;
+    }
+
+    return this->triggered_injection_[0] || this->triggered_injection_[1];
 }
 
 /**
  * Overridden execution function to cause faults to be chosen at random
  * from the vector once a fault has been triggered
  */
-void DoubleFaultInjector::executeFaults(Event*& ev) {
-    FaultBase* triggered_fault = nullptr;
-    if (rng_.nextUniform() <= flipVsDropProb_) {
-        // do flip
-#ifdef __SST_DEBUG_OUTPUT__
-        dbg_->debug(CALL_INFO_LONG, 1, 0, "Flip triggered.\n");
-#endif
-        triggered_fault = fault[1];
-    } else {
+void DropFlipFaultInjector::executeFaults(Event*& ev) {
+    if (this->triggered_injection_[0]) {
         // do drop
+        if (fault[0]) {
+            fault[0]->faultLogic(ev);
 #ifdef __SST_DEBUG_OUTPUT__
-        dbg_->debug(CALL_INFO_LONG, 1, 0, "Drop triggered.\n");
+            dbg_->debug(CALL_INFO_LONG, 1, 0, "Drop triggered.\n");
 #endif
-        triggered_fault = fault[0];
+        } else {
+            out_->fatal(CALL_INFO_LONG, -1, "No valid drop fault object.\n");
+        }
+        return;
     }
-    if (triggered_fault) {
-        triggered_fault->faultLogic(ev);
-    } else {
-        out_->fatal(CALL_INFO_LONG, -1, "No valid fault object.\n");
+    if (this->triggered_injection_[1]) {
+        // do flip
+        if (fault[1]) {
+            fault[1]->faultLogic(ev);
+#ifdef __SST_DEBUG_OUTPUT__
+            dbg_->debug(CALL_INFO_LONG, 1, 0, "Flip triggered.\n");
+#endif
+        } else {
+            out_->fatal(CALL_INFO_LONG, -1, "No valid flip fault object.\n");
+        }
     }
 }

@@ -22,11 +22,12 @@ public:
         RandomDropFaultInjector,
         "carcosa",
         "RandomDropFaultInjector",
-        SST_ELI_ELEMENT_VERSION(0, 1, 0),
+        SST_ELI_ELEMENT_VERSION(0, 2, 0),
         "PortModule class used to simulate a data transfer lost at random"
     )
 
     SST_ELI_DOCUMENT_PARAMS(
+        {"injection_probability", "Probability for injection to randomly occur. Default = 0.0"}
     )
 
     RandomDropFaultInjector(Params& params);
@@ -34,11 +35,15 @@ public:
     RandomDropFaultInjector() = default;
     ~RandomDropFaultInjector() {}
 protected:
+
+    double injection_probability_;
+    bool doInjection() override;
     void executeFaults(Event*& ev) override;
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override
     {
         SST::PortModule::serialize_order(ser);
+        SST_SER(injection_probability_);
         // serialize parameters like `SST_SER(<param_member>)`
     }
     ImplementVirtualSerializable(SST::Carcosa::RandomDropFaultInjector)

@@ -498,8 +498,7 @@ memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams( memCtrlParams )
 #TODO: fix bug here :)
 memctrl.addPortModule("highlink", "carcosa.CorruptMemFaultInjector", {
-    "intallDirection": "Receive",
-    "injectionProbability": 1.0,
+    "install_direction": "Receive",
     "regions": ["4D88, 4DA0", "4D90, 4DA8"],
     "debug" : 1,
     "debug_level": 2

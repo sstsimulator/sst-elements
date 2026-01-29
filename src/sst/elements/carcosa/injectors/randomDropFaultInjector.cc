@@ -15,9 +15,25 @@
 using namespace SST::Carcosa;
 
 RandomDropFaultInjector::RandomDropFaultInjector(Params& params) : FaultInjectorBase(params) {
+    // read injection probability
+    injection_probability_ = params.find<double>("injection_probability", 0.0);
     // create fault
     fault.push_back(new RandomDropFault(params, this));
     setValidInstallation(params, RECEIVE_VALID);
+}
+
+bool RandomDropFaultInjector::doInjection() {
+    if (this->randFloat(0.0, 1.0) <= this->injection_probability_) {
+#ifdef __SST_DEBUG_OUTPUT__
+        dbg_->debug(CALL_INFO_LONG, 1, 0, "Injection triggered.\n");
+#endif
+        return true;
+    } else {
+#ifdef __SST_DEBUG_OUTPUT__
+        dbg_->debug(CALL_INFO_LONG, 1, 0, "Injection skipped.\n");
+#endif
+        return false;
+    }
 }
 
 /**
@@ -30,11 +46,13 @@ RandomDropFaultInjector::RandomDropFaultInjector(Params& params) : FaultInjector
  * if the installation direction of this PortModule was set to 'Receive'.
  */
 void RandomDropFaultInjector::executeFaults(Event*& ev) {
-    bool success = false;
     if (fault[0]) {
-        success = fault[0]->faultLogic(ev);
-    }
-    if (!success) {
-        out_->fatal(CALL_INFO_LONG, -1, "No valid fault object, or no fault successfully executed.\n");
+        if (this->doInjection()) {
+            if (!fault[0]->faultLogic(ev)) {
+                out_->fatal(CALL_INFO_LONG, -1, "Fault execution failed.\n");
+            }
+        }
+    } else {
+        out_->fatal(CALL_INFO_LONG, -1, "No valid fault object.\n");
     }
 }

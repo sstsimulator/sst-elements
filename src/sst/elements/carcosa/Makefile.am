@@ -9,8 +9,8 @@ AM_CPPFLAGS += \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libcarcosa.la
 libcarcosa_la_SOURCES =                     \
-    faultInjectorBase.cc                    \
-    faultInjectorBase.h                     \
+    injectors/faultInjectorBase.cc          \
+    injectors/faultInjectorBase.h           \
     injectors/stuckAtFaultInjector.cc       \
     injectors/stuckAtFaultInjector.h        \
     injectors/corruptMemFaultInjector.cc    \
@@ -19,8 +19,8 @@ libcarcosa_la_SOURCES =                     \
     injectors/randomDropFaultInjector.h     \
     injectors/randomFlipFaultInjector.cc    \
     injectors/randomFlipFaultInjector.h     \
-    injectors/doubleFaultInjector.cc        \
-    injectors/doubleFaultInjector.h         \
+    injectors/dropFlipFaultInjector.cc        \
+    injectors/dropFlipFaultInjector.h         \
     faultlogic/faultBase.cc                 \
     faultlogic/faultBase.h                  \
     faultlogic/stuckAtFault.cc              \
@@ -45,12 +45,12 @@ EXTRA_DIST = \
 
 sstdir = $(includedir)/sst/elements/carcosa
 nobase_sst_HEADERS =                        \
-    faultInjectorBase.h                     \
+    injectors/faultInjectorBase.h           \
     injectors/stuckAtFaultInjector.h        \
     injectors/corruptMemFaultInjector.h     \
     injectors/randomDropFaultInjector.h     \
     injectors/randomFlipFaultInjector.h     \
-    injectors/doubleFaultInjector.h         \
+    injectors/dropFlipFaultInjector.h       \
     faultlogic/faultBase.h                  \
     faultlogic/stuckAtFault.h               \
     faultlogic/corruptMemFault.h            \
