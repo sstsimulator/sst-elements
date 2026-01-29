@@ -12,7 +12,7 @@
 #ifndef SST_ELEMENTS_CARCOSA_STUCKATFAULTINJECTOR_H
 #define SST_ELEMENTS_CARCOSA_STUCKATFAULTINJECTOR_H
 
-#include "sst/elements/carcosa/faultInjectorBase.h"
+#include "sst/elements/carcosa/injectors/faultInjectorBase.h"
 #include <string>
 
 namespace SST::Carcosa {
