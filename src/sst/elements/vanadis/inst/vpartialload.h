@@ -84,8 +84,8 @@ public:
 
     void computeLoadAddress(SST::Output* output, VanadisRegisterFile* regFile, uint64_t* out_addr, uint16_t* width) override
     {
-        const uint64_t mem_addr_reg_val = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
         #ifdef VANADIS_BUILD_DEBUG
+        const uint64_t mem_addr_reg_val = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
         if(output->getVerboseLevel() >= 16) {
             output->verbose(
                 CALL_INFO, 16, 0, "[execute-partload]: reg[%5" PRIu16 "]: %" PRIu64 " / 0x%" PRI_ADDR "\n", phys_int_regs_in[0],

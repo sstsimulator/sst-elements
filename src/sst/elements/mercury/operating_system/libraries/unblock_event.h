@@ -17,7 +17,7 @@
 
 #include <mercury/common/events.h>
 #include <mercury/common/thread_safe_new.h>
-#include <mercury/components/operating_system_fwd.h>
+#include <mercury/components/operating_system_impl.h>
 #include <mercury/operating_system/process/thread_fwd.h>
 
 namespace SST {
@@ -29,12 +29,12 @@ class UnblockEvent :
 {
 
  public:
-  UnblockEvent(OperatingSystem* os, Thread* thr);
+  UnblockEvent(OperatingSystemAPI* os, Thread* thr);
 
   void execute() override;
 
  protected:
-  OperatingSystem* os_;
+  OperatingSystemAPI* os_;
   Thread* thr_;
 
 };
@@ -43,12 +43,12 @@ class TimeoutEvent : public ExecutionEvent
 {
 
  public:
-  TimeoutEvent(OperatingSystem* os, Thread* thr);
+  TimeoutEvent(OperatingSystemAPI* os, Thread* thr);
 
   void execute() override;
 
  protected:
-  OperatingSystem* os_;
+  OperatingSystemAPI* os_;
   Thread* thr_;
   uint64_t counter_;
 

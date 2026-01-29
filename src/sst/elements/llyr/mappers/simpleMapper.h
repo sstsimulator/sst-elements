@@ -56,8 +56,10 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNod
                             LlyrConfig* llyr_config)
 {
     //setup up i/o for messages
-    char prefix[256];
-    sprintf(prefix, "[t=@t][simpleMapper]: ");
+#define PRINTF_BUFSIZ 256
+    char prefix[PRINTF_BUFSIZ];
+    snprintf(prefix, PRINTF_BUFSIZ, "[t=@t][simpleMapper]: ");
+#undef PRINTF_BUFSIZ
     SST::Output* output_ = new SST::Output(prefix, llyr_config->verbosity_, 0, Output::STDOUT);
 
     std::queue< uint32_t > nodeQueue;

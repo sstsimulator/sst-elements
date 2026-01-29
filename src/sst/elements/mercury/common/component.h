@@ -82,7 +82,6 @@ HgBase(uint32_t id) :
  }
 
  void handleExecutionEvent(Event* ev){
-   std::cerr << "event address: " << ev << std::endl;
    ExecutionEvent* sev = dynamic_cast<ExecutionEvent*>(ev);
    sev->execute();
    delete sev;

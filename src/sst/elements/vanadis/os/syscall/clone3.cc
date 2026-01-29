@@ -39,10 +39,11 @@ using namespace SST::Vanadis;
 VanadisClone3Syscall::VanadisClone3Syscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallClone3Event* event )
         : VanadisSyscall( os, coreLink, process, event, "clone3" )
 {
+    #ifdef VANADIS_BUILD_DEBUG
     m_output->debug(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
         "[syscall-clone3] cloneArgsAddr=%#" PRIx64 " size=%" PRIu64 "\n",
         event->getCloneArgsAddr(), event->getCloneArgsSize());
-
+    #endif
     if ( event->getOSBitType() == VanadisOSBitType::VANADIS_OS_32B ) {
         m_output->fatal(CALL_INFO, -1, "Error: clone3 is not support for 32b systems\n");
     }
@@ -67,21 +68,24 @@ void VanadisClone3Syscall::handleEvent( VanadisCoreEvent* ev )
     auto resp = dynamic_cast<VanadisGetThreadStateResp*>( ev );
     assert(resp);
 
+    #ifdef VANADIS_BUILD_DEBUG
     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-clone3] got thread state response\n");
-
+    #endif
     _VanadisStartThreadBaseReq* req;
 
     if ( exit_signal_ == VANADIS_LINUX_SIGCHLD ) {
-        req = new VanadisStartThreadForkReq( hw_thread_id_->hwThread, resp->getInstPtr(), resp->getTlsPtr() );
+        req = new VanadisStartThreadForkReq( hw_thread_id_->hw_thread, resp->getInstPtr(), resp->getTlsPtr() );
     } else {
-        req = new VanadisStartThreadClone3Req( hw_thread_id_->hwThread, resp->getInstPtr(), stack_, tls_);
+        req = new VanadisStartThreadClone3Req( hw_thread_id_->hw_thread, resp->getInstPtr(), stack_, tls_);
     }
 
     req->setIntRegs( resp->intRegs );
     req->setFpRegs( resp->fpRegs );
 
-     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-clone3] core=%d thread=%d tid=%d instPtr=%" PRI_ADDR "\n",
-                 hw_thread_id_->core, hw_thread_id_->hwThread, new_thread_->gettid(), resp->getInstPtr() );
+    #ifdef VANADIS_BUILD_DEBUG
+    m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-clone3] core=%d thread=%d tid=%d instPtr=%" PRI_ADDR "\n",
+                hw_thread_id_->core, hw_thread_id_->hw_thread, new_thread_->gettid(), resp->getInstPtr() );
+    #endif
 
     m_os->sendEvent( hw_thread_id_->core, req );
 
@@ -164,11 +168,13 @@ void VanadisClone3Syscall::parseCloneArgs(VanadisSyscallClone3Event* event)
     new_thread_->setHwThread( *hw_thread_id_ );
     m_os->setThread( new_thread_->gettid(), new_thread_ );
 
+    #ifdef VANADIS_BUILD_DEBUG
     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-clone3] newthread pid=%d tid=%d ppid=%d numThreads=%d\n",
             new_thread_->getpid(), new_thread_->gettid(), new_thread_->getppid(), new_thread_->numThreads() );
+    #endif
 
-    m_os->setProcess( hw_thread_id_->core, hw_thread_id_->hwThread, new_thread_ );
-    m_os->getMMU()->setCoreToPageTable( hw_thread_id_->core, hw_thread_id_->hwThread, new_thread_->getpid() );
+    m_os->setProcess( hw_thread_id_->core, hw_thread_id_->hw_thread, new_thread_ );
+    m_os->getMMU()->setCoreToPageTable( hw_thread_id_->core, hw_thread_id_->hw_thread, new_thread_->getpid() );
 
     setTidAtParent(event);
 }
@@ -176,7 +182,9 @@ void VanadisClone3Syscall::parseCloneArgs(VanadisSyscallClone3Event* event)
 // State 2: Handle the VANADIS_LINUX_CLONE_PARENT_SETTID flag
 void VanadisClone3Syscall::setTidAtParent(VanadisSyscallClone3Event* event)
 {
+    #ifdef VANADIS_BUILD_DEBUG
     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"setTidAddress %#" PRIx64 " \n", child_tid_);
+    #endif
     new_thread_->setTidAddress( child_tid_ );
 
     // this code could be collapsed
@@ -186,8 +194,10 @@ void VanadisClone3Syscall::setTidAtParent(VanadisSyscallClone3Event* event)
     buffer_.resize(sizeof(uint32_t));
     *((uint32_t*)buffer_.data()) = new_thread_->gettid();
 
+    #ifdef VANADIS_BUILD_DEBUG
     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"PARENT_SETTID addr %#" PRIx64 " tid=%d\n",
         parent_tid_,  new_thread_->gettid());
+    #endif
 
     writeMemory( parent_tid_, buffer_ );
     state_ = State::ChildSetTid;
@@ -196,6 +206,8 @@ void VanadisClone3Syscall::setTidAtParent(VanadisSyscallClone3Event* event)
 // State 3: Finish up and return
 void VanadisClone3Syscall::finish(VanadisSyscallClone3Event* event)
 {
+    #ifdef VANADIS_BUILD_DEBUG
     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "\n");
+    #endif
     sendNeedThreadState();
 }

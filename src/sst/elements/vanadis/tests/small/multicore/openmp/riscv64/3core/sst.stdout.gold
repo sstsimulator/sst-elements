@@ -1,18 +1,7 @@
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
 pid=100 tid=101 has exited
 pid=100 tid=102 has exited
 pid=100 tid=100 has exited
-all process have exited
+all processes have exited
  node0.cpu0:decoder:branch_unit.branch_cache_hit.1 : Accumulator : Sum.u64 = 69721; SumSQ.u64 = 69721; Count.u64 = 69721; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:decoder:branch_unit.branch_cache_miss.1 : Accumulator : Sum.u64 = 10641; SumSQ.u64 = 10641; Count.u64 = 10641; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:decoder:branch_unit.branch_cache_castout.1 : Accumulator : Sum.u64 = 2603; SumSQ.u64 = 2603; Count.u64 = 2603; Min.u64 = 1; Max.u64 = 1; 
@@ -46,7 +35,7 @@ all process have exited
  node0.cpu0.rob_slots_in_use.1 : Accumulator : Sum.u64 = 116059459; SumSQ.u64 = 7211788901; Count.u64 = 2799425; Min.u64 = 0; Max.u64 = 63; 
  node0.cpu0.rob_cleared_entries.1 : Accumulator : Sum.u64 = 190556; SumSQ.u64 = 10354126; Count.u64 = 4056; Min.u64 = 0; Max.u64 = 62; 
  node0.cpu0.syscall-cycles.1 : Accumulator : Sum.u64 = 127422; SumSQ.u64 = 127422; Count.u64 = 127422; Min.u64 = 1; Max.u64 = 1; 
- node0.cpu0.phys_int_reg_in_use.1 : Accumulator : Sum.u64 = 110360874; SumSQ.u64 = 4393345022; Count.u64 = 2799425; Min.u64 = 35; Max.u64 = 54; 
+ node0.cpu0.phys_int_reg_in_use.1 : Accumulator : Sum.u64 = 110360873; SumSQ.u64 = 4393344943; Count.u64 = 2799425; Min.u64 = 35; Max.u64 = 54; 
  node0.cpu0.phys_fp_reg_in_use.1 : Accumulator : Sum.u64 = 89581600; SumSQ.u64 = 2866611200; Count.u64 = 2799425; Min.u64 = 32; Max.u64 = 32; 
  node0.cpu1:decoder:branch_unit.branch_cache_hit.1 : Accumulator : Sum.u64 = 15818; SumSQ.u64 = 15818; Count.u64 = 15818; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu1:decoder:branch_unit.branch_cache_miss.1 : Accumulator : Sum.u64 = 1513; SumSQ.u64 = 1513; Count.u64 = 1513; Min.u64 = 1; Max.u64 = 1; 

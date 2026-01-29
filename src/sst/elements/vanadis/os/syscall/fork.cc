@@ -23,7 +23,9 @@ using namespace SST::Vanadis;
 VanadisForkSyscall::VanadisForkSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallForkEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "fork" )
 {
+    #ifdef VANADIS_BUILD_DEBUG
     m_output->verbose(CALL_INFO, 16, 0, "[syscall-fork]\n");
+    #endif
 
     // get a new hwThread to run the new process on
     m_threadID = m_os->allocHwThread();
@@ -52,9 +54,9 @@ VanadisForkSyscall::VanadisForkSyscall( VanadisNodeOSComponent* os, SST::Link* c
     // create a page table for the child that is a copy of the parents
     m_os->getMMU()->dup( process->getpid(), m_child->getpid() );
 
-    m_os->getMMU()->setCoreToPageTable( m_threadID->core, m_threadID->hwThread, m_child->getpid() );
+    m_os->getMMU()->setCoreToPageTable( m_threadID->core, m_threadID->hw_thread, m_child->getpid() );
 
-    m_os->setProcess( m_threadID->core, m_threadID->hwThread, m_child );
+    m_os->setProcess( m_threadID->core, m_threadID->hw_thread, m_child );
 
     m_child->printRegions("child");
 
@@ -65,9 +67,12 @@ void VanadisForkSyscall::handleEvent( VanadisCoreEvent* ev )
 {
     auto resp = dynamic_cast<VanadisGetThreadStateResp*>( ev );
     assert(resp);
-    m_output->verbose(CALL_INFO, 16, 0, "[syscall-fork] got thread state response\n");
 
-    VanadisStartThreadForkReq* req = new VanadisStartThreadForkReq( m_threadID->hwThread, resp->getInstPtr(), resp->getTlsPtr() );
+    #ifdef VANADIS_BUILD_DEBUG
+    m_output->verbose(CALL_INFO, 16, 0, "[syscall-fork] got thread state response\n");
+    #endif
+
+    VanadisStartThreadForkReq* req = new VanadisStartThreadForkReq( m_threadID->hw_thread, resp->getInstPtr(), resp->getTlsPtr() );
     req->setIntRegs( resp->intRegs );
     req->setFpRegs( resp->fpRegs );
 

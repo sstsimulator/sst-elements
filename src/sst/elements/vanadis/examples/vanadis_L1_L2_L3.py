@@ -299,7 +299,7 @@ memParams = {
 # CPU related params
 tlbParams = {
     "debug_level": 0,
-    "hitLatency": 1,
+    "hit_latency": 1,
     "num_hardware_threads": numThreads,
     "num_tlb_entries_per_thread": 64,
     "tlb_set_size": 4,

@@ -227,7 +227,9 @@ public:
         const bool compare_result = performCompare(output, regFile,phys_fp_regs_in_0, phys_fp_regs_in_1, phys_fp_regs_in_2,
                                                     phys_fp_regs_in_3);
         regFile->setIntReg<uint64_t>(phys_int_regs_out_0, compare_result ? 1 : 0);
+        #ifdef VANADIS_BUILD_DEBUG
         log(output, 16,65535, phys_int_regs_out_0, phys_fp_regs_in_0, phys_fp_regs_in_1, compare_result);
+        #endif
         markExecuted();
     }
 };

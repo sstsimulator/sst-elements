@@ -61,9 +61,9 @@ int main( int argc, char* argv[] ) {
     fflush(stdout);
 
     // Prepare device data
-    cudaMalloc(&d_a, n * sizeof(int));
-    cudaMalloc(&d_b, n * sizeof(int));
-    cudaMalloc(&d_result, n * sizeof(int));
+    cudaMalloc((void**)&d_a, n * sizeof(int));
+    cudaMalloc((void**)&d_b, n * sizeof(int));
+    cudaMalloc((void**)&d_result, n * sizeof(int));
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("d_a: %p\n", d_a);
@@ -72,8 +72,8 @@ int main( int argc, char* argv[] ) {
     }
 
     // Looks like the 32 bit pointer get signed extended, use AND to force unsigned extend
-    cudaMemcpy((uint64_t)d_a & 0xFFFFFFFF, (uint64_t)h_a, n * sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy((uint64_t)d_b & 0xFFFFFFFF, (uint64_t)h_b, n * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy((void*)((uint64_t)d_a & 0xFFFFFFFF), (uint64_t)h_a, n * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy((void*)((uint64_t)d_b & 0xFFFFFFFF), (uint64_t)h_b, n * sizeof(int), cudaMemcpyHostToDevice);
 
     // DEBUG: Check if copy is correct
     if (g_debug_level >= LOG_LEVEL_DEBUG) {

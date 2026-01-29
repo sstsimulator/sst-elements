@@ -27,11 +27,18 @@ namespace Vanadis {
 class VanadisBasicBranchUnit : public VanadisBranchUnit {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(VanadisBasicBranchUnit, "vanadis", "VanadisBasicBranchUnit",
-                                          SST_ELI_ELEMENT_VERSION(1, 0, 0),
-                                          "Implements basic branch prediction capability that stores the last "
-                                          "branch direction in a cache",
-                                          SST::Vanadis::VanadisBranchUnit)
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        VanadisBasicBranchUnit,
+    #ifdef VANADIS_BUILD_DEBUG
+        "vanadisdbg",
+    #else
+        "vanadis",
+    #endif
+        "VanadisBasicBranchUnit",
+        SST_ELI_ELEMENT_VERSION(1, 0, 0),
+        "Implements basic branch prediction capability that stores the last "
+        "branch direction in a cache",
+        SST::Vanadis::VanadisBranchUnit)
 
     SST_ELI_DOCUMENT_PARAMS({ "branch_entries", "Sets the number of entries in the underlying cache "
                                                 "of branch directions", "64" })

@@ -13,7 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <mercury/components/node_CL.h>
+#include <mercury/components/compute_library/node_cl.h>
+#include <mercury/components/compute_library/operating_system_cl_api.h>
 
 namespace SST {
 namespace Hg {
@@ -24,18 +25,20 @@ extern template SST::TimeConverter HgBase<SST::Component>::time_converter_;
 NodeCL::NodeCL(ComponentId_t id, Params &params)
     : NodeBase(id,params) {
   out_->debug(CALL_INFO, 1, 0, "loading hg.OperatingSystemCL\n");
-  osCL_ = loadUserSubComponent<OperatingSystemCL>(
-      "os_slot", SST::ComponentInfo::SHARE_NONE, this);
+  osCL_ = loadUserSubComponent<OperatingSystemCLAPI>(
+      "os_slot", SST::ComponentInfo::SHARE_NONE);
+  osCL_->setParentNode(this);
   assert(osCL_);
-  os_ = dynamic_cast<OperatingSystem*>(osCL_);
+  os_ = dynamic_cast<OperatingSystemAPI*>(osCL_);
   assert(os_);
 
   link_control_ = loadUserSubComponent<SST::Interfaces::SimpleNetwork>(
       "link_control_slot", SST::ComponentInfo::SHARE_NONE, 1);
   if (link_control_) {
     out_->debug(CALL_INFO, 1, 0, "loading hg.NIC\n");
-    nic_ = loadUserSubComponent<NIC>("nic_slot", SST::ComponentInfo::SHARE_NONE, this);
+    nic_ = loadUserSubComponent<NicAPI>("nic_slot", SST::ComponentInfo::SHARE_NONE);
     assert(nic_);
+    nic_->set_parent(this);
     nic_->set_link_control(link_control_);
   }
   else {

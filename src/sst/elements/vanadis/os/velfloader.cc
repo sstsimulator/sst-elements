@@ -45,14 +45,18 @@ void loadElfFile( Output* output, Interfaces::StandardMem* mem_if, MMU_Lib::MMU*
     uint64_t initial_brk = 0;
 
     auto path = elf_info->getBinaryPath();
+    #ifdef VANADIS_BUILD_DEBUG
     output->verbose( CALL_INFO, 2, 0, "-> Loading %s, to locate program secs ...\n", path);
+    #endif
     FILE* exec_file = fopen(path, "rb");
 
     if ( nullptr == exec_file ) {
         output->fatal(CALL_INFO, -1, "Error: unable to open %s\n", path );
     }
 
+    #ifdef VANADIS_BUILD_DEBUG
     output->verbose(CALL_INFO, 2, 0, "-> populating memory contents with info from the executable...\n");
+    #endif
 
     for ( size_t i = 0; i < elf_info->countProgramHeaders(); ++i ) {
 
@@ -70,8 +74,10 @@ void loadElfFile( Output* output, Interfaces::StandardMem* mem_if, MMU_Lib::MMU*
             size_t numBytes = page_size - (virtAddr - virtAddrPage);
             size_t imageOffset = 0;
 
+            #ifdef VANADIS_BUILD_DEBUG
             output->verbose( CALL_INFO, 2, 0,"ELF virtAddrStart=%#" PRIx64 " memLen=%zu imageLen=%zu flags=%#" PRIx64 "\n",virtAddr, memLen, imageLen, flags );
             output->verbose( CALL_INFO, 2, 0,"page aligned virtual address region: %#" PRIx64 " - %#" PRIx64 "\n", virtAddrPage, virtAddrEnd );
+            #endif
             std::string name;
             if ( elf_info->getEntryPoint() >= virtAddrPage && elf_info->getEntryPoint() < virtAddrEnd ) {
                 name = "text";
@@ -90,8 +96,10 @@ void loadElfFile( Output* output, Interfaces::StandardMem* mem_if, MMU_Lib::MMU*
                     size_t pageOffset = (virtAddr + imageOffset) - virtAddrPage;
                     (void) !fread( buffer.data() + pageOffset, numBytes, 1, exec_file);
                     imageOffset += numBytes;
+                    #ifdef VANADIS_BUILD_DEBUG
                     output->verbose( CALL_INFO, 2, 0,"write page, pageVirtAddr=%#" PRIx64 " imageOffset=%zu pageOffset=%zu numBytes=%zu\n",
                         virtAddrPage,imageOffset,pageOffset,numBytes);
+                    #endif
                 }
 
                 loadPages( output, mem_if, mmu, memMgr, processInfo->getpid(), virtAddrPage, buffer, flags, page_size );
@@ -107,18 +115,22 @@ void loadElfFile( Output* output, Interfaces::StandardMem* mem_if, MMU_Lib::MMU*
 
     fclose(exec_file);
 
+    #ifdef VANADIS_BUILD_DEBUG
     output->verbose( CALL_INFO, 2, 0,
                     ">> Setting initial break point to image size in "
                     "memory ( brk: 0x%" PRI_ADDR " )\n",
                     initial_brk);
+    #endif
     processInfo->initBrk( initial_brk );
 }
 
 uint8_t* readElfPage( Output* output, VanadisELFInfo* elf_info, int vpn, int page_size ) {
     uint64_t virtAddr = vpn<<12;
     auto path = elf_info->getBinaryPath();
+    #ifdef VANADIS_BUILD_DEBUG
     output->verbose( CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "-> Loading %s, to locate program sections ...\n", path);
     output->verbose( CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF,"%s vpn=%d addr=%#" PRIx64 " page_size=%d\n",path,vpn,virtAddr,page_size);
+    #endif
     FILE* exec_file = fopen(elf_info->getBinaryPath(), "rb");
     if ( nullptr == exec_file ) {
         output->fatal(CALL_INFO, -1, "Error: unable to open %s\n", path);
@@ -135,9 +147,10 @@ uint8_t* readElfPage( Output* output, VanadisELFInfo* elf_info, int vpn, int pag
     uint64_t secAlignment = secHdr->getAlignment();
     uint64_t secFlags = secHdr->getSegmentFlags();
 
+    #ifdef VANADIS_BUILD_DEBUG
     output->verbose( CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF," section: virtAddr=%#" PRIx64 " imageOffset=%zu memLen=%zu imageLen=%zu flags=%#" PRIx64 " align=%#" PRIx64 "\n",
             secAddr,secImageOffset,secMemLen,secImageLen,secFlags,secAlignment);
-
+    #endif
     // if the requested address is less than the section virtual address then this is the first page and it's not aligned
     // we read the file from the start of the section
     size_t imageOffset = virtAddr < secAddr ? 0 : virtAddr - secAddr;
@@ -157,7 +170,9 @@ uint8_t* readElfPage( Output* output, VanadisELFInfo* elf_info, int vpn, int pag
         // if there is not enough data to read a full pagge
         numBytes = secImageLen - imageOffset < numBytes ? secImageLen - imageOffset : numBytes;
 
+        #ifdef VANADIS_BUILD_DEBUG
         output->verbose( CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF,"imageOffset=%zu dataOffset=%zu numBytes=%zu toEnd=%zu\n", imageOffset, dataOffset, numBytes, secImageLen - imageOffset );
+        #endif
         fseek(exec_file, secImageOffset + imageOffset, SEEK_SET);
 
         (void) !fread( data + dataOffset, numBytes, 1, exec_file);

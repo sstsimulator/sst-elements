@@ -98,11 +98,13 @@ public:
                 ? combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3])
                 : regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
 
+        #ifdef VANADIS_BUILD_DEBUG
         if ( output->getVerboseLevel() >= 16 ) {
             std::ostringstream ss;
             ss << "---> fp-values: left: " << left_value << " / right: " << right_value;
             output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
         }
+        #endif
 
         switch ( compare_type ) {
         case REG_COMPARE_EQ:

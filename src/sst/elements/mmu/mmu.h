@@ -29,62 +29,68 @@ class MMU : public SubComponent {
 
   public:
 
-    typedef std::function<void(RequestID,/*link*/unsigned,/*core*/ unsigned ,/*hwThread*/ unsigned ,
-                 /*pid*/unsigned,/*vpn*/uint32_t,/*perms*/uint32_t,/*instPtr*/uint64_t,/*memAddr*/ uint64_t )> Callback;
+    typedef std::function<void(RequestID, /*link*/uint32_t, /*core*/uint32_t, /*hw_thread*/uint32_t,
+                 /*pid*/uint32_t,/*vpn*/uint32_t,/*perms*/uint32_t,/*inst_ptr*/uint64_t,/*mem_addr*/ uint64_t )> Callback;
 
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MMU_Lib::MMU)
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS()
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+        { "num_cores", "Number of cores managed by this MMU", "1" },
+        { "num_threads", "Number of hardware threads per core", "1" },
+        { "page_size", "Memory page size in bytes", "4096" },
+        { "use_nic_tlb" , "Whether to use the NIC TLB", "false" },
+        { "useNicTlb", "DEPRECATED. Use 'use_nic_tlb' instead", "false" }
+    )
     SST_ELI_DOCUMENT_PORTS(
-        { "core%(cores)d.dtlb", "", {} },
-        { "core%(cores)d.itlb", "", {} },
+        { "core%(cores)d.dtlb", "Link to each core's data TLB", {} },
+        { "core%(cores)d.itlb", "Link to each core's instruction TLB", {} },
         { "nicTlb", "", {} },
-        { "ostlb", "", {} },
+        { "ostlb", "Link to the OS's TLB", {} },
+
     )
     SST_ELI_DOCUMENT_STATISTICS()
 
     MMU(SST::ComponentId_t id, SST::Params& params);
     virtual ~MMU() {}
-    virtual void checkpoint( std::string ) = 0;
-    virtual void checkpointLoad( std::string ) = 0;
+    virtual void snapshot( std::string ) = 0;
+    virtual void snapshotLoad( std::string ) = 0;
 
-    virtual void init(unsigned int phase);
-    void registerPermissionsCallback( Callback& callback ) { m_permissionsCallback = callback; }
+    virtual void init(unsigned int phase) override;
+    void registerPermissionsCallback( Callback& callback ) { permissions_callback_ = callback; }
 
-    virtual void dup( unsigned fromPid, unsigned toPid ) = 0;
-    virtual void removeWrite( unsigned pid ) = 0;
-    virtual void flushTlb( unsigned core, unsigned hwThread ) = 0;
-    virtual void unmap( unsigned pid, uint32_t vpn, size_t numPages ) = 0;
-    virtual void map( unsigned pid, uint32_t vpn, std::vector<uint32_t>& ppns, int pageSize, uint64_t flags ) = 0;
-    virtual void map( unsigned pid, uint32_t vpn, uint32_t ppn, int pageSize, uint64_t flags ) = 0;
-    virtual int getPerms( unsigned pid, uint32_t vpn ) = 0;
-    virtual void faultHandled( RequestID, unsigned link, unsigned pid, unsigned vpn, bool success = false ) = 0;
-    virtual void initPageTable( unsigned pid ) = 0;
-    virtual void setCoreToPageTable( unsigned core, unsigned hwThread, unsigned pid ) = 0;
-    virtual uint32_t virtToPhys( unsigned pid, uint64_t vpn ) = 0;
-    virtual uint32_t getPerms( unsigned pid, uint64_t vpn ) = 0;
+    virtual void dup( uint32_t from_pid, uint32_t to_pid ) = 0;
+    virtual void removeWrite( uint32_t pid ) = 0;
+    virtual void flushTlb( uint32_t core, uint32_t hw_thread ) = 0;
+    virtual void unmap( uint32_t pid, uint32_t vpn, size_t num_pages ) = 0;
+    virtual void map( uint32_t pid, uint32_t vpn, std::vector<uint32_t>& ppns, uint32_t page_size, uint64_t flags ) = 0;
+    virtual void map( uint32_t pid, uint32_t vpn, uint32_t ppn, uint32_t page_size, uint64_t flags ) = 0;
+    virtual void faultHandled( RequestID, uint32_t link, uint32_t pid, uint32_t vpn, bool success = false ) = 0;
+    virtual void initPageTable( uint32_t pid ) = 0;
+    virtual void setCoreToPageTable( uint32_t core, uint32_t hw_thread, uint32_t pid ) = 0;
+    virtual uint32_t virtToPhys( uint32_t pid, uint32_t vpn ) = 0;
+    virtual uint32_t getPerms( uint32_t pid, uint32_t vpn ) = 0;
 
   protected:
 
-    void sendEvent( int link, Event* ev ) {
-        if ( -1 == link ) {
-            assert( m_nicTlbLink );
-            m_nicTlbLink->send(0,ev);
+    void sendEvent( uint32_t link, Event* ev ) {
+        if ( std::numeric_limits<uint32_t>::max() == link ) {
+            assert( nic_tlb_link_ );
+            nic_tlb_link_->send(ev);
         } else if ( 0 == link % 2 ) {
-            m_coreLinks[link/2]->dtlb->send(0,ev);
+            core_links_[link/2]->dtlb->send(ev);
         } else if ( 1 == link % 2 ) {
-            m_coreLinks[link/2]->itlb->send(0,ev);
+            core_links_[link/2]->itlb->send(ev);
         } else {
             assert(0);
         }
     }
 
-    int getTlbCore( int link ) {
+    uint32_t getTlbCore( uint32_t link ) {
         return link/2;
     }
 
-    int getLink( int core, const std::string type ) {
-        int link = core * 2;
+    uint32_t getLink( uint32_t core, const std::string type ) {
+        uint32_t link = core * 2;
         if ( 0 == type.compare("dtlb") ) {
         } else if ( 0 == type.compare("itlb") ) {
             ++link;
@@ -95,8 +101,8 @@ class MMU : public SubComponent {
     }
 
 
-    std::string getTlbName( int link ) {
-        int core = getTlbCore( link );
+    std::string getTlbName( uint32_t link ) {
+        uint32_t core = getTlbCore( link );
         if ( 0 == link % 2 ) {
             return "core" + std::to_string(core) + ".dtlb";
         } else if ( 1 == link % 2 ) {
@@ -107,21 +113,21 @@ class MMU : public SubComponent {
 
     virtual void handleTlbEvent( Event*, int link ) = 0;
     virtual void handleNicTlbEvent( Event* ){ assert(0); };
-    Output m_dbg;
+    Output dbg_;
 
-    unsigned m_numCores;
-    unsigned m_numHwThreads;
+    uint32_t num_cores_;
+    uint32_t num_hw_threads_;
 
-    int m_pageShift;
+    uint32_t page_shift_;
 
     struct CoreTlbLinks {
         CoreTlbLinks( Link* data, Link* inst ) : dtlb(data), itlb(inst) {}
         Link*  dtlb;
         Link*  itlb;
     };
-    std::vector<CoreTlbLinks*> m_coreLinks;
-    Link*   m_nicTlbLink;
-    Callback m_permissionsCallback;
+    std::vector<CoreTlbLinks*> core_links_;
+    Link*   nic_tlb_link_;
+    Callback permissions_callback_;
 };
 
 } //namespace MMU_Lib

@@ -119,17 +119,17 @@ private:
     uint64_t clock_ticks_;
     uint64_t init_count_;
     std::queue<Interfaces::StandardMem::Addr> init_addr_;
-    Statistic<uint64_t>* stat_requests_pending_per_cycle_;
-    Statistic<uint64_t>* stat_num_reads_issued_;
-    Statistic<uint64_t>* stat_num_writes_issued_;
-    Statistic<uint64_t>* stat_num_flushes_issued_;
-    Statistic<uint64_t>* stat_num_flushcache_issued_;
-    Statistic<uint64_t>* stat_num_flushinvs_issued_;
-    Statistic<uint64_t>* stat_num_custom_issued_;
-    Statistic<uint64_t>* stat_num_llsc_issued_;
-    Statistic<uint64_t>* stat_num_llsc_success_;
-    Statistic<uint64_t>* stat_noncacheable_reads_;
-    Statistic<uint64_t>* stat_noncacheable_writes_;
+    Statistic<uint64_t>* stat_requests_pending_per_cycle_ = nullptr;
+    Statistic<uint64_t>* stat_num_reads_issued_ = nullptr;
+    Statistic<uint64_t>* stat_num_writes_issued_ = nullptr;
+    Statistic<uint64_t>* stat_num_flushes_issued_ = nullptr;
+    Statistic<uint64_t>* stat_num_flushcache_issued_ = nullptr;
+    Statistic<uint64_t>* stat_num_flushinvs_issued_ = nullptr;
+    Statistic<uint64_t>* stat_num_custom_issued_ = nullptr;
+    Statistic<uint64_t>* stat_num_llsc_issued_ = nullptr;
+    Statistic<uint64_t>* stat_num_llsc_success_ = nullptr;
+    Statistic<uint64_t>* stat_noncacheable_reads_ = nullptr;
+    Statistic<uint64_t>* stat_noncacheable_writes_ = nullptr;
 
     bool ll_issued_;
     Interfaces::StandardMem::Addr ll_addr_;

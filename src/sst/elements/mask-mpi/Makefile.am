@@ -2,9 +2,8 @@
 #
 #
 
-comp_LTLIBRARIES = libmask_mpi.la libsendrecv.la libreduce.la liballtoall.la liballgather.la libhalo3d26.la
-
-compdir = $(pkglibdir)
+ext_LTLIBRARIES = libmask_mpi.la libsendrecv.la libreduce.la liballtoall.la liballgather.la libhalo3d26.la
+extdir = $(pkglibdir)/ext
 
 AM_CPPFLAGS += -I$(top_srcdir)/src/sst/elements
 

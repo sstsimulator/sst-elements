@@ -74,7 +74,9 @@ public:
     {
         uint16_t phys_int_regs_out_0 = phys_int_regs_out[0];
         uint16_t phys_int_regs_in_0 = phys_int_regs_in[0];
+        #ifdef VANADIS_BUILD_DEBUG
         log(output, 16, 65535, phys_int_regs_out_0,phys_int_regs_in_0);
+        #endif
         instOp(regFile, phys_int_regs_out_0,phys_int_regs_in_0);
         markExecuted();
     }

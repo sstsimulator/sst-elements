@@ -1,22 +1,8 @@
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
 pid=100 tid=101 has exited
 pid=100 tid=102 has exited
 pid=100 tid=103 has exited
 pid=100 tid=100 has exited
-all process have exited
+all processes have exited
  node0.cpu0:decoder:branch_unit.branch_cache_hit.1 : Accumulator : Sum.u64 = 29358; SumSQ.u64 = 29358; Count.u64 = 29358; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:decoder:branch_unit.branch_cache_miss.1 : Accumulator : Sum.u64 = 7847; SumSQ.u64 = 7847; Count.u64 = 7847; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:decoder:branch_unit.branch_cache_castout.1 : Accumulator : Sum.u64 = 2044; SumSQ.u64 = 2044; Count.u64 = 2044; Min.u64 = 1; Max.u64 = 1; 

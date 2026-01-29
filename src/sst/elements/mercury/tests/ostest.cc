@@ -14,9 +14,10 @@
 // distribution.
 
 #define ssthg_app_name ostest
-#include <libraries/system/replacements/unistd.h>
 #include <iostream>
 #include <mercury/common/skeleton.h>
+using namespace SST::Hg;
+
 int main(int argc, char** argv) {
   for (int i = 0; i < argc; i++) {
     std::cout << argv[i] << "\n";
@@ -24,7 +25,7 @@ int main(int argc, char** argv) {
 
   std::cout << "Hello from Mercury!\n";
   std::cout << "Now I will sleep\n";
-  sleep(5);
+  ssthg_sleep(5);
   std::cout << "I'm back!\n";
   std::cout << "Bye!\n";
   return 0;

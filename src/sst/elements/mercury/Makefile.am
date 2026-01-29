@@ -9,8 +9,11 @@ AM_CPPFLAGS += \
 # unpleasant hack to make vintage automake (e.g. 1.13.4) work
 AM_LIBTOOLFLAGS = --tag=CXX
 
-comp_LTLIBRARIES = libhg.la libsystemlibrary.la libcomputelibrary.la libostest.la
+comp_LTLIBRARIES = libhg.la
 compdir = $(pkglibdir)
+
+ext_LTLIBRARIES = libcomputelibrary.la libostest.la libostest-nano.la
+extdir = $(pkglibdir)/ext
 
 libhg_la_SOURCES = \
   common/event_link.cc \
@@ -22,13 +25,17 @@ libhg_la_SOURCES = \
   common/util.cc \
   common/timestamp.cc \
   common/connection.cc \
+  common/skeleton.cc \
+  components/compute_library/node_cl.cc \
+  components/compute_library/operating_system_cl.cc \
+  components/compute_library/operating_system_cl_api.cc \
   components/nic.cc \
+  components/nic_api.cc \
   components/node.cc \
   components/node_base.cc \
-  components/node_CL.cc \
   components/operating_system.cc \
-  components/operating_system_base.cc \
-  components/operating_system_CL.cc \
+  components/operating_system_api.cc \
+  components/operating_system_impl.cc \
   hardware/common/packet.cc \
   hardware/common/recv_cq.cc \
   hardware/network/network_message.cc \
@@ -38,7 +45,6 @@ libhg_la_SOURCES = \
   operating_system/launch/app_launch_request.cc \
   operating_system/launch/app_launcher.cc \
   operating_system/libraries/library.cc \
-  operating_system/libraries/event_library.cc \
   operating_system/libraries/unblock_event.cc \
   operating_system/process/app.cc \
   operating_system/process/global.cc \
@@ -83,17 +89,14 @@ if SST_HG_A64
 endif
 endif
 
-libsystemlibrary_la_SOURCES = \
-  libraries/system/system_library.cc
-
 libcomputelibrary_la_SOURCES = \
   libraries/compute/compute_library.cc
-#  libraries/compute/compute_scheduler.cc \
-#  libraries/compute/instruction_processor.cc \
-#  libraries/compute/memory_model.cc
 
 libostest_la_SOURCES = \
   tests/ostest.cc
+
+libostest_nano_la_SOURCES = \
+  tests/ostest-nano.cc
 
 library_includedir=$(includedir)/sst/elements/mercury
 
@@ -127,19 +130,24 @@ nobase_library_include_HEADERS = \
   common/sim_thread_lock.h \
   common/timestamp.h \
   common/unusedvariablemacro.h \
+  components/compute_library/node_cl.h \
+  components/compute_library/node_cl_fwd.h \
+  components/compute_library/operating_system_cl.h \
+  components/compute_library/operating_system_cl_api.h \
+  components/compute_library/operating_system_cl_fwd.h \
   components/nic.h \
+  components/nic_api.h \
   components/nic_fwd.h \
   components/node.h \
   components/node_fwd.h \
   components/node_base.h \
   components/node_base_fwd.h \
-  components/node_CL.h \
-  components/node_CL_fwd.h \
-  components/operating_system_base.h \
   components/operating_system.h \
+  components/operating_system_api.h \
+  components/operating_system_api_fwd.h \
+  components/operating_system_call_forward.h \
   components/operating_system_fwd.h \
-  components/operating_system_CL.h \
-  components/operating_system_CL_fwd.h \
+  components/operating_system_impl.h \
   external/json.hpp \
   hardware/network/network_id.h \
   hardware/network/network_message.h \
@@ -149,9 +157,6 @@ nobase_library_include_HEADERS = \
   hardware/common/packet.h \
   hardware/common/flow.h \
   hardware/common/packet_fwd.h \
-  libraries/system/system_api.h \
-  libraries/system/system_library.h \
-  libraries/system/replacements/unistd.h \
   libraries/compute/compute_api.h \
   libraries/compute/compute_event.h \
   libraries/compute/compute_library.h \
@@ -162,9 +167,7 @@ nobase_library_include_HEADERS = \
   operating_system/launch/app_launcher.h \
   operating_system/launch/app_launcher_fwd.h \
   operating_system/launch/app_launch_request.h \
-  operating_system/libraries/event_library_fwd.h \
   operating_system/libraries/service_fwd.h \
-  operating_system/libraries/event_library.h \
   operating_system/libraries/service.h \
   operating_system/libraries/library.h \
   operating_system/libraries/library_fwd.h \
@@ -200,7 +203,9 @@ endif
 EXTRA_DIST = \
     tests/testsuite_default_hg.py \
     tests/ostest.py \
-    tests/refFiles/ostest.out
+    tests/ostest-nano.py \
+    tests/refFiles/ostest.out \
+    tests/refFiles/ostest-nano.out
 
 deprecated_EXTRA_DIST =
 
@@ -208,9 +213,7 @@ if !SST_ENABLE_PREVIEW_BUILD
 EXTRA_DIST += $(deprecated_EXTRA_DIST)
 endif
 
-
 libhg_la_LDFLAGS = -module -avoid-version -shared
-libsystemlibrary_la_LDFLAGS = -module -avoid-version -shared
 libcomputelibrary_la_LDFLAGS = -module -avoid-version -shared
 libostest_la_LDFLAGS = -module -avoid-version
 

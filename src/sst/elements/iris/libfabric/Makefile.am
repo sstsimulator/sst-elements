@@ -15,6 +15,9 @@ AM_CPPFLAGS += \
 
 AM_CPPFLAGS += -D_GNU_SOURCE
 
+ext_LTLIBRARIES = libfabric.la
+extdir = $(pkglibdir)/ext
+
 sumi_sources = \
   prov/sumi/src/sumi_av.cc \
   prov/sumi/src/sumi_cm.cc \
@@ -180,8 +183,6 @@ else
     include/unix/osd.h
 endif
 
-compdir = $(pkglibdir)
-comp_LTLIBRARIES = libfabric.la
 libfabric_la_SOURCES = \
   $(sumi_sources) \
   $(sumi_headers) \

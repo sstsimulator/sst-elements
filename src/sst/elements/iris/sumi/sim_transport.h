@@ -187,7 +187,7 @@ class SimTransport : public Transport, public SST::Hg::Library {
 
   int* nidlist() const override;
 
-  void incomingEvent(SST::Event *ev);
+  void incomingEvent(SST::Event *ev) override;
 
   void compute(SST::Hg::TimeDelta t);
 
@@ -322,7 +322,7 @@ class SimTransport : public Transport, public SST::Hg::Library {
 
   double pragma_timeout_;
 
-  SST::Hg::OperatingSystem* os_;
+  SST::Hg::OperatingSystemAPI* os_;
 
   void drop(Message*){}
 

@@ -56,10 +56,12 @@ public:
 
     void log(SST::Output* output, int verboselevel, uint16_t sw_thr)
     {
+        #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= verboselevel) {
 				output->verbose(CALL_INFO, verboselevel, 0, "hw_thr=%d sw_thr = %d Execute: 0x%" PRI_ADDR " %s FPFLAGS <- mask = %" PRIu64 " (0x%" PRI_ADDR ")\n",
 					getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), imm_value, imm_value);
 			}
+        #endif
     }
 
 
@@ -73,10 +75,11 @@ public:
     void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 		if(checkFrontOfROB()) {
+            #ifdef VANADIS_BUILD_DEBUG
 			log(output, 16, 65535);
+            #endif
 
 			instOp();
-
 			markExecuted();
 		}
     }

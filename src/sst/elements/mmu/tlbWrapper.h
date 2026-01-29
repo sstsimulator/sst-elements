@@ -57,7 +57,8 @@ class TLB_Wrapper : public SST::Component {
     TLB_Wrapper(SST::ComponentId_t id, SST::Params& params);
     ~TLB_Wrapper() {}
 
-    void init(unsigned int phase);
+    void init(unsigned int phase) override;
+    void setup() override;
 
   private:
 
@@ -66,7 +67,7 @@ class TLB_Wrapper : public SST::Component {
     }
 
     uint32_t getPerms( MemHierarchy::MemEvent* ev ) {
-        uint32_t perms = m_exe;
+        uint32_t perms = exe_;
         switch( ev->getCmd() ) {
           case MemHierarchy::Command::GetS:
           case MemHierarchy::Command::GetSX:
@@ -81,21 +82,22 @@ class TLB_Wrapper : public SST::Component {
         return perms;
     }
 
-    void tlbCallback( RequestID reqId, uint64_t physAddr );
+    void tlbCallback( RequestID req_id, uint64_t phys_addr );
 
     void handleCpuEvent( Event* );
     void handleCacheEvent( Event* );
 
-    Link* m_cpu_if;
-    Link* m_cache_if;
-    TLB* m_tlb;
-    uint32_t m_exe;
+    Link* cpu_if_ = nullptr;
+    Link* cache_if_ = nullptr;
+    TLB* tlb_ = nullptr;
+    uint32_t exe_ = 0;
+    uint32_t line_size_ = 0;
 
-    SST::Output m_dbg;
-    int m_pending;
+    SST::Output dbg_;
+    int pending_ = 0;
 
     /* Record noncacheable regions (e.g., MMIO device addresses) */
-    std::multimap<MemHierarchy::Addr, MemHierarchy::MemRegion> noncacheableRegions;
+    std::multimap<MemHierarchy::Addr, MemHierarchy::MemRegion> noncacheable_regions_;
 
 };
 

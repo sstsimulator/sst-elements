@@ -22,7 +22,7 @@
 
 namespace SST {
 
-#define MMU_DBG_CHECKPOINT (1<<0)
+#define MMU_DBG_SNAPSHOT (1<<0)
 namespace MMU_Lib {
 
 class SimpleMMU : public MMU {
@@ -38,64 +38,68 @@ class SimpleMMU : public MMU {
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-#if 0
-        {"hitLatency", "latency of MMU hit in ns","0"},
-#endif
+        {"debug_level", "Debug verbosity level (0-10) where 0 is no output. Output is only available if sst-core was compiled with `--enable-debug`.", "0"},
     )
 
     SimpleMMU(SST::ComponentId_t id, SST::Params& params);
-    void checkpoint( std::string );
-    void checkpointLoad( std::string );
+    void snapshot( std::string ) override;
+    void snapshotLoad( std::string ) override;
 
-    virtual void removeWrite( unsigned pid );
-    virtual void map( unsigned pid, uint32_t vpn, std::vector<uint32_t>& ppns, int pageSize, uint64_t flags );
-    virtual void map( unsigned pid, uint32_t vpn, uint32_t ppn, int pageSize, uint64_t flags );
-    virtual void unmap( unsigned pid, uint32_t vpn, size_t numPages );
-    virtual void dup( unsigned fromPid, unsigned toPid );
+    virtual void removeWrite( uint32_t pid ) override;
+    virtual void map( uint32_t pid, uint32_t vpn, std::vector<uint32_t>& ppns, uint32_t page_size, uint64_t flags ) override;
+    virtual void map( uint32_t pid, uint32_t vpn, uint32_t ppn, uint32_t page_size, uint64_t flags ) override;
+    virtual void unmap( uint32_t pid, uint32_t vpn, size_t num_pages ) override;
+    virtual void dup( uint32_t from_pid, uint32_t to_pid ) override;
+    virtual void flushTlb( uint32_t core, uint32_t hw_thread ) override;
+    virtual void faultHandled( RequestID, uint32_t link, uint32_t pid, uint32_t vpn, bool success ) override;
 
-    virtual void flushTlb( unsigned core, unsigned hwThread );
-
-    virtual int getPerms( unsigned pid, uint32_t vpn );
-    virtual void faultHandled( RequestID, unsigned link, unsigned pid, unsigned vpn, bool success );
-
-    void init( unsigned int phase )
+    void init( unsigned int phase ) override
     {
-        m_dbg.debug(CALL_INFO_LONG,1,0,"phase=%d\n",phase);
         MMU::init( phase );
     }
 
-    void initPageTable( unsigned pid ) {
+    void initPageTable( uint32_t pid ) override {
         initPageTable( pid, nullptr );
     }
 
-    void setCoreToPageTable( unsigned core, unsigned hwThread, unsigned pid ) {
-        m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d core=%d hwTread=%d\n",pid,core,hwThread);
-        m_coreToPid[core][hwThread] = pid;
+    void setCoreToPageTable( uint32_t core, uint32_t hw_thread, uint32_t pid ) override {
+#ifdef __SST_DEBUG_OUTPUT__
+        dbg_.debug(CALL_INFO_LONG,1,0,"pid=%" PRIu32 " core=%" PRIu32 " hw_thread=%" PRIu32 "\n",pid,core,hw_thread);
+#endif
+        core_to_pid_[core][hw_thread] = pid;
     }
 
-    virtual uint32_t getPerms( unsigned pid, uint64_t vpn ) {
-        auto pageTable = m_pageTableMap[pid];
-        assert( pageTable );
-        uint32_t perms = -1;
+    virtual uint32_t getPerms( uint32_t pid, uint32_t vpn ) override {
+        auto page_table = page_table_map_[pid];
+        assert( page_table );
+        uint32_t perms = std::numeric_limits<uint32_t>::max();
         PTE* pte = nullptr;
-        if ( ( pte = pageTable->find( vpn ) ) ) {
-            m_dbg.debug(CALL_INFO_LONG,1,0,"found PTE ppn %d, perms %#x\n",pte->ppn,pte->perms);
+        if ( ( pte = page_table->find( vpn ) ) ) {
+#ifdef __SST_DEBUG_OUTPUT__
+            dbg_.debug(CALL_INFO_LONG,1,0,"found PTE ppn %" PRIu32 ", perms %#" PRIx32 "\n",pte->ppn,pte->perms);
+#endif
             perms = pte->perms;
         }
-        m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d vpn=%" PRIu64 " -> perms=%d\n",pid,vpn,perms);
+#ifdef __SST_DEBUG_OUTPUT__
+        dbg_.debug(CALL_INFO_LONG,1,0,"pid=%" PRIu32 ", vpn=%" PRIu64 " -> perms=%#" PRIx32 "\n",pid,vpn,perms);
+#endif
         return perms;
     }
 
-    virtual uint32_t virtToPhys( unsigned pid, uint64_t vpn ) {
-        auto pageTable = m_pageTableMap[pid];
-        assert( pageTable );
-        uint32_t ppn= -1;
+    virtual uint32_t virtToPhys( uint32_t pid, uint32_t vpn ) override {
+        auto page_table = page_table_map_[pid];
+        assert( page_table );
+        uint32_t ppn= std::numeric_limits<uint32_t>::max();
         PTE* pte = nullptr;
-        if ( ( pte = pageTable->find( vpn ) ) ) {
-            m_dbg.debug(CALL_INFO_LONG,1,0,"found PTE ppn %d, perms %#x\n",pte->ppn,pte->perms);
+        if ( ( pte = page_table->find( vpn ) ) ) {
+#ifdef __SST_DEBUG_OUTPUT__
+            dbg_.debug(CALL_INFO_LONG,1,0,"found PTE ppn %" PRIu32 ", perms %#" PRIx32 "\n",pte->ppn,pte->perms);
+#endif
             ppn = pte->ppn;
         }
-        m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d vpn=%" PRIu64 " -> ppn=%d\n",pid,vpn,ppn);
+#ifdef __SST_DEBUG_OUTPUT__
+        dbg_.debug(CALL_INFO_LONG,1,0,"pid=%" PRIu32 " vpn=%" PRIu32 " -> ppn=%" PRIu32 "\n",pid,vpn,ppn);
+#endif
         return ppn;
     }
 
@@ -105,16 +109,16 @@ class SimpleMMU : public MMU {
       public:
         PageTable() {}
         PageTable( SST::Output* output, FILE* fp ) {
-            int size;
+            size_t size;
 
-            assert( 1 == fscanf( fp, "pteMap.size() %d\n", &size ) );
-            output->debug(CALL_INFO_LONG,1,MMU_DBG_CHECKPOINT,"pteMap.size() %d\n",size);
+            assert( 1 == fscanf( fp, "pteMap.size() zu\n", &size ) );
+            output->debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"pteMap.size() %zu\n",size);
             for ( auto i = 0; i < size; i++ ) {
                 uint32_t vpn;
                 uint32_t ppn;
                 uint32_t perms;
-                assert( 3 == fscanf( fp, "vpn: %d, ppn: %d, perms: %x\n", &vpn, &ppn, &perms ) );
-                output->debug(CALL_INFO_LONG,1,MMU_DBG_CHECKPOINT,"vpn: %d, ppn: %d, perms: %x\n", vpn, ppn, perms );
+                assert( 3 == fscanf( fp, "vpn: %" PRIu32 ", ppn: %" PRIu32 ", perms: %" PRIx32 "\n", &vpn, &ppn, &perms ) );
+                output->debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"vpn: %" PRIu32 ", ppn: %" PRIu32 ", perms: %" PRIx32 "\n", vpn, ppn, perms );
                 pteMap[vpn] = PTE( ppn, perms );
             }
         }
@@ -139,28 +143,30 @@ class SimpleMMU : public MMU {
         }
         void print( const std::string str) {
             for ( auto& kv : pteMap ) {
-                printf("PageTabl::%s() %s vpn=%d ppn=%d perm=%#x\n",__func__,str.c_str(),kv.first,kv.second.ppn,kv.second.perms);
+                printf("PageTabl::%s() %s vpn=%" PRIu32 " ppn=%" PRIu32 " perm=%#" PRIx32 "\n",__func__,str.c_str(),kv.first,kv.second.ppn,kv.second.perms);
             }
         }
-        void checkpoint( FILE* fp ) {
+        void snapshot( FILE* fp ) {
             fprintf(fp,"pteMap.size() %zu\n",pteMap.size());
             for ( auto & x : pteMap ) {
-                fprintf(fp,"vpn: %d, ppn: %d, perms: %d \n", x.first,x.second.ppn,x.second.perms );
+                fprintf(fp,"vpn: %" PRIu32 ", ppn: %" PRIu32 ", perms: %#" PRIx32 " \n", x.first,x.second.ppn,x.second.perms );
             }
         }
       private:
         std::map<uint32_t,PTE> pteMap;
     };
 
-    void initPageTable( unsigned pid, PageTable* table = nullptr ) {
-        m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d\n",pid);
-        auto iter = m_pageTableMap.find(pid);
-        if ( iter == m_pageTableMap.end() ) {
+    void initPageTable( uint32_t pid, PageTable* table = nullptr ) {
+#ifdef __SST_DEBUG_OUTPUT__
+        dbg_.debug(CALL_INFO_LONG,1,0,"pid=%" PRIu32 "\n",pid);
+#endif
+        auto iter = page_table_map_.find(pid);
+        if ( iter == page_table_map_.end() ) {
             if ( nullptr == table ) {
                 table = new PageTable;
             }
 
-            m_pageTableMap[pid] = table;
+            page_table_map_[pid] = table;
         } else {
             assert(0);
         }
@@ -170,28 +176,32 @@ class SimpleMMU : public MMU {
     void handleNicTlbEvent( Event* ev );
 
 
-    unsigned getPid( unsigned core, unsigned hwThread ) {
-        m_dbg.debug(CALL_INFO_LONG,1,0,"core=%d hwThread=%d -> pid=%d\n",core,hwThread,m_coreToPid[core][hwThread]);
-        return m_coreToPid[core][hwThread];
+    uint32_t getPid( uint32_t core, uint32_t hw_thread ) {
+#ifdef __SST_DEBUG_OUTPUT__
+        dbg_.debug(CALL_INFO_LONG,1,0,"core=%" PRIu32 " hw_thread=%" PRIu32 " -> pid=%" PRIu32 "\n",core,hw_thread,core_to_pid_[core][hw_thread]);
+#endif
+        return core_to_pid_[core][hw_thread];
     }
 
-    PageTable* getPageTable( unsigned core, unsigned hwThread ) {
-        m_dbg.debug(CALL_INFO_LONG,1,0,"core=%d hwThread=%d\n",core,hwThread);
-        int pid = m_coreToPid[core][hwThread];
+    PageTable* getPageTable( uint32_t core, uint32_t hw_thread ) {
+#ifdef __SST_DEBUG_OUTPUT__
+        dbg_.debug(CALL_INFO_LONG,1,0,"core=%" PRIu32 " hw_thread=%" PRIu32 "\n",core,hw_thread);
+#endif
+        uint32_t pid = core_to_pid_[core][hw_thread];
         return getPageTable( pid );
     }
 
-    PageTable* getPageTable( unsigned pid) {
-        auto iter = m_pageTableMap.find( pid );
-        if ( iter == m_pageTableMap.end() ) {
+    PageTable* getPageTable( uint32_t pid) {
+        auto iter = page_table_map_.find( pid );
+        if ( iter == page_table_map_.end() ) {
             return nullptr;
         }
         return iter->second;
     }
 
-    std::map< unsigned, PageTable* > m_pageTableMap;
+    std::map< uint32_t, PageTable* > page_table_map_;      /* Maps pid to PageTable for that process */
 
-    std::vector< std::vector< unsigned > > m_coreToPid;
+    std::vector< std::vector< uint32_t > > core_to_pid_;    /* Maps [core_id][hw_thread] = [pid]*/
 };
 
 } //namespace MMU_Lib

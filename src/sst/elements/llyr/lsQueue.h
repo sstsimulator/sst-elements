@@ -70,8 +70,10 @@ public:
     LSQueue()
     {
         //setup up i/o for messages
-        char prefix[256];
-        sprintf(prefix, "[t=@t][LSQueue]: ");
+#define PRINTF_BUFSIZ 256
+        char prefix[PRINTF_BUFSIZ];
+        snprintf(prefix, PRINTF_BUFSIZ, "[t=@t][LSQueue]: ");
+#undef PRINTF_BUFSIZ
         output_ = new SST::Output(prefix, 0, 0, Output::STDOUT);
     }
 

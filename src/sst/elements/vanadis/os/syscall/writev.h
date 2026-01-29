@@ -34,9 +34,10 @@ public:
         m_currentVecOffset = 0;
 
         m_dataBuffer.resize( calcBuffSize() );
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
             "[syscall-writev] pos=%i length=%zu buffer length=%zu\n", m_currentVec, m_ioVecTable->getLength(m_currentVec)  ,m_dataBuffer.size());
-
+        #endif
         readMemory( m_ioVecTable->getAddr(m_currentVec), m_dataBuffer );
     }
 
@@ -46,21 +47,28 @@ public:
         m_totalBytes += numWritten;
         m_currentVecOffset += m_dataBuffer.size();
 
+        #ifdef VANADIS_BUILD_DEBUG
         m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
             "[syscall-writev] numWriten=%zu totalWritten=%zu currentVecOffset=%zu vecLength=%zu\n",
             numWritten,m_totalBytes, m_currentVecOffset, m_ioVecTable->getLength(m_currentVec));
-
+        #endif
         if ( m_currentVecOffset < m_ioVecTable->getLength(m_currentVec)  ) {
             m_dataBuffer.resize( calcBuffSize() );
+            #ifdef VANADIS_BUILD_DEBUG
             m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"[syscall-writev] read %zu bytes\n", m_dataBuffer.size());
+            #endif
             readMemory( m_ioVecTable->getAddr(m_currentVec) + m_currentVecOffset, m_dataBuffer );
         } else {
+            #ifdef VANADIS_BUILD_DEBUG
             m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"[syscall-writev] vector %d is complete \n",m_currentVec);
+            #endif
             ++m_currentVec;
             if ( findNonZeroIoVec() ) {
                 startIoVecTransfer();
             } else {
+                #ifdef VANADIS_BUILD_DEBUG
                 m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"[syscall-writev] return success total written %zu\n",m_totalBytes);
+                #endif
                 setReturnSuccess( m_totalBytes );
             }
         }

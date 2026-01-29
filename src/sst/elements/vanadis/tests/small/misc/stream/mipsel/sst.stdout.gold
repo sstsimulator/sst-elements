@@ -1,5 +1,5 @@
 pid=100 tid=100 has exited
-all process have exited
+all processes have exited
  node0.cpu0:decoder:branch_unit.branch_cache_hit.1 : Accumulator : Sum.u64 = 204241; SumSQ.u64 = 204241; Count.u64 = 204241; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:decoder:branch_unit.branch_cache_miss.1 : Accumulator : Sum.u64 = 31486; SumSQ.u64 = 31486; Count.u64 = 31486; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:decoder:branch_unit.branch_cache_castout.1 : Accumulator : Sum.u64 = 7854; SumSQ.u64 = 7854; Count.u64 = 7854; Min.u64 = 1; Max.u64 = 1; 
@@ -103,7 +103,7 @@ all process have exited
  node0.cpu0:lsq.bytes_read.1 : Accumulator : Sum.u64 = 1891359; SumSQ.u64 = 7556909; Count.u64 = 474971; Min.u64 = 1; Max.u64 = 4; 
  node0.cpu0:lsq.bytes_stored.1 : Accumulator : Sum.u64 = 1313733; SumSQ.u64 = 5251449; Count.u64 = 329304; Min.u64 = 1; Max.u64 = 4; 
  node0.cpu0:lsq.store_buffer_entries.1 : Accumulator : Sum.u64 = 843767; SumSQ.u64 = 2918175; Count.u64 = 8538866; Min.u64 = 0; Max.u64 = 8; 
- node0.cpu0:lsq.stores_in_flight.1 : Accumulator : Sum.u64 = 52227408423; SumSQ.u64 = 1908579272132555; Count.u64 = 8538866; Min.u64 = 0; Max.u64 = 55182; 
+ node0.cpu0:lsq.stores_in_flight.1 : Accumulator : Sum.u64 = 52227408439; SumSQ.u64 = 1908579273311745; Count.u64 = 8538866; Min.u64 = 0; Max.u64 = 55182; 
  node0.cpu0:lsq.loads_in_flight.1 : Accumulator : Sum.u64 = 8775042; SumSQ.u64 = 27800594; Count.u64 = 8538866; Min.u64 = 0; Max.u64 = 16; 
  node0.cpu0:lsq.operations_pending : Accumulator : Sum.u64 = 4554663; SumSQ.u64 = 9420613; Count.u64 = 8538866; Min.u64 = 0; Max.u64 = 13; 
  node0.cpu0.instructions_retired.1 : Accumulator : Sum.u64 = 1774174; SumSQ.u64 = 3749088; Count.u64 = 8538866; Min.u64 = 0; Max.u64 = 7; 

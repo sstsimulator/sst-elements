@@ -61,7 +61,7 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
     TimeConverter* tc = getTimeConverter(clockfreq);
 
     // Bind tick function
-    registerClock(tc, new Clock::Handler2<BalarMMIO,&BalarMMIO::clockTic>(this));
+    registerClock(*tc, new Clock::Handler2<BalarMMIO,&BalarMMIO::clockTic>(this));
 
     // Link names
     char* link_buffer = (char*) malloc(sizeof(char) * 256);

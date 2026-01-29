@@ -43,8 +43,8 @@ NodeBase::NodeBase(ComponentId_t id, Params &params)
 void
 NodeBase::init(unsigned int phase)
 {
-  os_->set_nranks(nranks_);
-  os_->set_npernode(npernode_);
+  os_->setNumRanks(nranks_);
+  os_->setRanksPerNode(npernode_);
   os_->init(phase);
   if (nic_) nic_->init(phase);
 }

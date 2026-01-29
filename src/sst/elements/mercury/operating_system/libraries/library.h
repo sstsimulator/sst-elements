@@ -30,6 +30,12 @@
 namespace SST {
 namespace Hg {
 
+class Request;
+class OperatingSystemAPI;
+
+void apiLock();
+void apiUnlock();
+
 class Library
 {
  public:
@@ -75,14 +81,30 @@ class Library
    */
   void endLibraryCall();
 
+  const std::string& libName() const {
+    return libname_;
+  }
+
+  std::string toString() const {
+    return libname_;
+  }
+
+  virtual void incomingRequest(Request* req);
+  virtual void incomingEvent(Event* ev);
+
+  Library(const std::string& libname, SoftwareId sid, OperatingSystemAPI* os);
+
  protected:
+  OperatingSystemAPI* os_;
+  SoftwareId sid_;
+  NodeId addr_;
+
   Library(SST::Params& params, App* parent);
   App* api_parent_app_;
 
+ private:
+  std::string libname_;
 };
-
-void apiLock();
-void apiUnlock();
 
 } // end namespace Hg
 } // end namespace SST

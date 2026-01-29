@@ -31,49 +31,49 @@ class SimpleTLB : public TLB {
 
     class TlbEntry {
       public:
-        TlbEntry() : m_valid(false) {}
+        TlbEntry() : valid_(false) {}
         ~TlbEntry() {}
-        void setInvalid() { m_valid = false; }
-        bool isValid() { return m_valid; }
-        bool isDirty() { return m_dirty; }
-        uint32_t perms() { return m_perms; }
-        size_t tag() { return m_tag; }
-        size_t ppn() { return m_ppn; }
-        void init( size_t tag, size_t ppn, uint32_t perms ) {
-            m_tag = tag;
-            m_ppn = ppn;
-            m_perms = perms;
-            m_dirty = false;
-            m_valid = true;
+        void setInvalid() { valid_ = false; }
+        bool isValid() { return valid_; }
+        bool isDirty() { return dirty_; }
+        uint32_t perms() { return perms_; }
+        uint32_t tag() { return tag_; }
+        uint32_t ppn() { return ppn_; }
+        void init( uint32_t tag, uint32_t ppn, uint32_t perms ) {
+            tag_ = tag;
+            ppn_ = ppn;
+            perms_ = perms;
+            dirty_ = false;
+            valid_ = true;
         }
       private:
-        int m_valid : 1;
-        int m_dirty : 1;
-        uint32_t m_perms: 3;
-        size_t m_tag : 52;
-        size_t m_ppn : 52;
+        int valid_ : 1;
+        int dirty_ : 1;
+        uint32_t perms_: 3;
+        uint32_t tag_;
+        uint32_t ppn_;
     };
 
     class TlbRecord {
       public:
-        TlbRecord( RequestID reqId, int hwThreadId, uint64_t virtAddr, uint32_t perms, uint64_t instPtr )
-            : reqId(reqId), hwThreadId(hwThreadId), virtAddr(virtAddr),perms(perms), instPtr(instPtr) {}
-        RequestID reqId;
-        int hwThreadId;
-        uint64_t virtAddr;
+        TlbRecord( RequestID req_id, uint32_t hw_thread_id, uint64_t virt_addr, uint32_t perms, uint64_t inst_ptr )
+            : req_id(req_id), hw_thread_id(hw_thread_id), virt_addr(virt_addr),perms(perms), inst_ptr(inst_ptr) {}
+        RequestID req_id;
+        uint32_t hw_thread_id;
+        uint64_t virt_addr;
         uint32_t perms;
-        uint64_t instPtr;
+        uint64_t inst_ptr;
     };
 
     class SelfEvent  : public SST::Event {
       public:
 
-        SelfEvent( RequestID reqId, uint64_t addr ) : Event(), reqId( reqId ), addr( addr ) { }
-        RequestID getReqId() { return reqId; }
-        uint64_t getAddr() { return addr; }
+        SelfEvent( RequestID req_id, uint64_t addr ) : Event(), req_id_( req_id ), addr_( addr ) { }
+        RequestID getReqId() { return req_id_; }
+        uint64_t getAddr() { return addr_; }
       private:
-        RequestID reqId;
-        uint64_t addr;
+        RequestID req_id_;
+        uint64_t addr_;
 
         NotSerializable(SelfEvent)
     };
@@ -89,7 +89,17 @@ class SimpleTLB : public TLB {
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {"hitLatency", "latency of TLB hit in ns","0"},
+        {"hit_latency", "Total latency of TLB hit in cycles", "1"},
+        {"clock", "Clock period (or cycle time). Determines TLB access latency. Units of 'Hz' or 's' required, SI prefixes OK.", "1GHz"},
+        {"debug_level", "Debug verbose level", "0"},
+        {"num_hardware_threads", "Number of hardware threads using this TLB", "1"},
+        {"num_tlb_entries_per_thread", "Number of TLB sets for each thread. Total entries per thread will be 'num_tlb_entries_per_thread*tlb_set_size'. Must be a power of 2.", "32"},
+        {"tlb_set_size", "Number of entries in each TLB set", "4"},
+        {"min_virt_addr", "Minimum virtual address to be handled", "4096"},
+        {"max_virt_addr", "Maximum virtual address to be handled", "0x80000000"},
+        {"minVirtAddr", "DEPRECATED. Use 'min_virt_addr' instead.", "4096"},
+        {"maxVirtAddr", "DEPRECATED. Use 'max_virt_addr' instead.", "0x80000000"},
+        {"hitLatency", "DEPRECATED. Use 'hit_latency' instead. To update parameter without modifying timing, add one cycle to the value for 'hit_latency'. Clock used to default to 1ns but is now parameterizable and 'hitLatency' was treated as an additional latency beyond a minimum 1ns.", "0"},
     )
 
     SST_ELI_DOCUMENT_PORTS(
@@ -98,40 +108,42 @@ class SimpleTLB : public TLB {
 
     SimpleTLB(SST::ComponentId_t id, SST::Params& params);
 
-    virtual void init(unsigned int phase);
+    virtual void init(unsigned int phase) override;
 
-    void registerCallback( Callback& callback  ) {
-        m_callback = callback;
+    void registerCallback( Callback& callback  ) override {
+        callback_ = callback;
     }
 
-    void getVirtToPhys( RequestID reqId, int hwThreadId, uint64_t virtAddr, uint32_t perms, uint64_t instPtr );
+    void getVirtToPhys( RequestID req_id, uint32_t hw_thread_id, uint64_t virt_addr, uint32_t perms, uint64_t inst_ptr ) override;
 
   private:
     void callback( Event* ev ) {
-        auto selfEvent = dynamic_cast<SelfEvent*>(ev);
-        m_callback( selfEvent->getReqId(), selfEvent->getAddr() );
+        auto self_event = static_cast<SelfEvent*>(ev);
+        callback_( self_event->getReqId(), self_event->getAddr() );
         delete ev;
     }
 
     void handleMMUEvent( Event * );
 
     uint64_t blockOffset( uint64_t addr ) {
-        return addr & ( m_pageSize - 1 );
+        return addr & ( page_size_ - 1 );
     }
 
-    int pickVictim() {
-        return rng.generateNextUInt32() % m_tlbSetSize;
+    uint32_t pickVictim() {
+        return rng_.generateNextUInt32() % tlb_set_size_;
     }
 
-    void fillTlbEntry( int hwThreadId, size_t vpn, size_t ppn, uint32_t perms ) {
-        size_t tag = vpn >> m_tlbIndexShift;
-        int index = vpn & ( m_tlbSize - 1 );
-        auto& vec = m_tlbData[ hwThreadId ][ index ];
+    void fillTlbEntry( uint32_t hw_thread_id, uint32_t vpn, uint32_t ppn, uint32_t perms ) {
+        uint32_t tag = vpn >> tlb_index_shift_;
+        uint32_t index = vpn & ( tlb_size_ - 1 );
+        auto& vec = tlb_data_[ hw_thread_id ][ index ];
 
         for ( int i = 0; i<vec.size(); i++ ) {
             if ( vec[i].isValid() ) {
-                m_dbg.debug(CALL_INFO,1,0,"vpn=%zu, tag=%#" PRIx64 " ppn %#lx -> %zu, perms %#x -> %#x \n",
+#ifdef __SST_DEBUG_OUTPUT__
+                dbg_.debug(CALL_INFO,1,0,"vpn=%" PRIu32 ", tag=%#" PRIx64 " ppn %#lx -> %" PRIu32 ", perms %#" PRIx32 " -> %#" PRIx32 " \n",
                         vpn, (uint64_t) vec[i].tag(), vec[i].ppn(), ppn, vec[i].perms(), perms  );
+#endif
 
                 if ( tag == vec[i].tag() ) {
                     vec[ i ].init( tag, ppn, perms );
@@ -142,64 +154,74 @@ class SimpleTLB : public TLB {
 
         assert(vpn);
         int slot = pickVictim();
-        m_dbg.debug(CALL_INFO,1,0,"hwThread=%d vpn=%zu ppn=%zu tag%#" PRIx64 " index=%#x slot=%d\n",hwThreadId,
+#ifdef __SST_DEBUG_OUTPUT__
+        dbg_.debug(CALL_INFO,1,0,"hw_thread=%" PRIu32 " vpn=%" PRIu32 " ppn=%" PRIu32 " tag%#" PRIx64 " index=%#x slot=%" PRIu32 "\n",hw_thread_id,
             vpn, ppn, (uint64_t) tag, index, slot );
+#endif
         vec[ slot ].init( tag, ppn, perms );
     }
 
-    TlbEntry* findTlbEntry( int hwThreadId, size_t vpn ) {
-        size_t tag = vpn >> m_tlbIndexShift;
-        int index = vpn & ( m_tlbSize - 1 );
+    TlbEntry* findTlbEntry( uint32_t hw_thread_id, uint32_t vpn ) {
+        uint32_t tag = vpn >> tlb_index_shift_;
+        uint32_t index = vpn & ( tlb_size_ - 1 );
 
-        m_dbg.debug(CALL_INFO,1,0,"hwThread=%d vpn=%zu tag=%#" PRIx64 " index=%#x\n",
-            hwThreadId, vpn, (uint64_t) tag, index );
+#ifdef __SST_DEBUG_OUTPUT__
+        dbg_.debug(CALL_INFO,1,0,"hw_thread=%" PRIu32 " vpn=%" PRIu32" tag=%#" PRIx64 " index=%#" PRIx32 "\n",
+            hw_thread_id, vpn, (uint64_t) tag, index );
+#endif
 
-        auto& vec = m_tlbData[ hwThreadId ][ index ];
+        auto& vec = tlb_data_[ hw_thread_id ][ index ];
         for ( int i = 0; i < vec.size(); i++ ) {
 
-            m_dbg.debug(CALL_INFO,2,0,"check valid=%d wantTag=%#" PRIx64 "\n",vec[i].isValid(), (uint64_t) tag );
+#ifdef __SST_DEBUG_OUTPUT__
+            dbg_.debug(CALL_INFO,2,0,"check valid=%d\n",vec[i].isValid());
+#endif
             if ( vec[i].isValid() && tag == vec[i].tag() ) {
-                m_dbg.debug(CALL_INFO,1,0,"found tag=%#" PRIx64 " index=%#x slot=%d\n",(uint64_t) tag, index, i );
+#ifdef __SST_DEBUG_OUTPUT__
+                dbg_.debug(CALL_INFO,1,0,"found tag=%#" PRIx32 " index=%#" PRIx32 " slot=%d\n", tag, index, i );
+#endif
                 return& vec[i];
             }
         }
         return nullptr;
     }
 
-    void flushThread( int hwThread ) {
+    void flushThread( uint32_t hw_thread ) {
 
-        auto& slice = m_tlbData[ hwThread ];
-        m_dbg.debug(CALL_INFO,1,0,"hwThread=%d size=%zu\n",hwThread,slice.size() );
-
+        auto& slice = tlb_data_[ hw_thread ];
+#ifdef __SST_DEBUG_OUTPUT__
+        dbg_.debug(CALL_INFO,1,0,"hw_thread=%" PRIu32 " size=%zu\n",hw_thread, slice.size() );
+#endif
         for ( int i = 0; i < slice.size(); i++ ) {
             auto& set = slice[i];
-            //m_dbg.debug(CALL_INFO,1,0,"size=%zu\n",set.size() );
             for ( int j = 0; j < set.size(); j++ ) {
                 if ( set[j].isValid() ) {
-                    m_dbg.debug(CALL_INFO,1,0,"hwThread=%d index=%d set=%d vpn=%zu\n",
-                            hwThread,i,j, (size_t) ( set[j].tag() << m_tlbIndexShift | i ));
+#ifdef __SST_DEBUG_OUTPUT__
+                    dbg_.debug(CALL_INFO,1,0,"hw_thread=%" PRIu32 " index=%d set=%d  vpn=%" PRIu32 "\n",
+                            hw_thread,i,j, (uint32_t) ( set[j].tag() << tlb_index_shift_ | i ));
+#endif
                     set[j].setInvalid();
                 }
             }
         }
     }
 
-    Link* m_selfLink;
-    Link* m_mmuLink;
-    uint64_t m_hitLatency;
-    size_t m_tlbSize;
+    Link* self_link_;
+    Link* mmu_link_;
+    uint32_t hit_latency_;
+    uint32_t tlb_size_;     // Use as bitmask, must be power of 2
 
-    int m_tlbSetSize;
-    int m_pageSize;
-    int m_pageShift;
-    int m_tlbIndexShift;
-    std::vector< std::vector< std::vector< TlbEntry > > > m_tlbData;
-    RNG::XORShiftRNG rng;
+    uint32_t tlb_set_size_;
+    uint32_t page_size_;
+    uint32_t page_shift_;
+    uint32_t tlb_index_shift_;
+    std::vector< std::vector< std::vector< TlbEntry > > > tlb_data_;
+    RNG::XORShiftRNG rng_;
 
-    uint64_t m_minVirtAddr;
-    uint64_t m_maxVirtAddr;
+    uint64_t min_virt_addr_;
+    uint64_t max_virt_addr_;
 
-    std::vector< std::map<size_t,std::queue<RequestID> > > m_waitingMiss;
+    std::vector< std::map<uint32_t,std::queue<RequestID> > > waiting_miss_; /* List of pending (vpn, request_queue) for each hw thread*/
 };
 
 } //namespace MMU_Lib

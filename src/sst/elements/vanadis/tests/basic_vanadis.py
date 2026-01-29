@@ -22,6 +22,7 @@ isa="riscv64"
 
 loader_mode = os.getenv("VANADIS_LOADER_MODE", "0")
 
+lib="vanadis"
 testDir="basic-io"
 exe = "hello-world"
 #exe = "hello-world-cpp"
@@ -94,7 +95,7 @@ cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
 numCpus = int(os.getenv("VANADIS_NUM_CORES", 1))
 numThreads = int(os.getenv("VANADIS_NUM_HW_THREADS", 1))
 
-vanadis_cpu_type = "vanadis."
+vanadis_cpu_type = lib + "."
 vanadis_cpu_type += os.getenv("VANADIS_CPU_ELEMENT_NAME","dbg_VanadisCPU")
 
 if (verbosity > 0):
@@ -124,8 +125,8 @@ else:
     if (verbosity > 0):
         print("No application arguments found, continuing with argc=1")
 
-vanadis_decoder = "vanadis.Vanadis" + vanadis_isa + "Decoder"
-vanadis_os_hdlr = "vanadis.Vanadis" + vanadis_isa + "OSHandler"
+vanadis_decoder = lib + ".Vanadis" + vanadis_isa + "Decoder"
+vanadis_os_hdlr = lib + ".Vanadis" + vanadis_isa + "OSHandler"
 
 
 protocol="MESI"
@@ -221,7 +222,7 @@ memParams = {
 # CPU related params
 tlbParams = {
     "debug_level": 0,
-    "hitLatency": 1,
+    "hit_latency": 1,
     "num_hardware_threads": numThreads,
     "num_tlb_entries_per_thread": 64,
     "tlb_set_size": 4,
@@ -353,12 +354,12 @@ class CPU_Builder:
             os_hdlr.addParams( osHdlrParams )
 
             # CPU.decocer.branch_pred
-            branch_pred = decode.setSubComponent( "branch_unit", "vanadis.VanadisBasicBranchUnit" )
+            branch_pred = decode.setSubComponent( "branch_unit", lib + ".VanadisBasicBranchUnit" )
             branch_pred.addParams( branchPredParams )
             branch_pred.enableAllStatistics()
 
         # CPU.lsq
-        cpu_lsq = cpu.setSubComponent( "lsq", "vanadis.VanadisBasicLoadStoreQueue" )
+        cpu_lsq = cpu.setSubComponent( "lsq", lib + ".VanadisBasicLoadStoreQueue" )
         cpu_lsq.addParams(lsqParams)
         cpu_lsq.enableAllStatistics()
 
@@ -452,7 +453,7 @@ def addParamsPrefix(prefix,params):
     return ret
 
 # node OS
-node_os = sst.Component("os", "vanadis.VanadisNodeOS")
+node_os = sst.Component("os", lib + ".VanadisNodeOS")
 node_os.addParams(osParams)
 
 num=0

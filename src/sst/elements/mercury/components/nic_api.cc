@@ -13,13 +13,11 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#pragma once
+#include <mercury/components/nic_api.h>
 
-namespace SST {
-namespace Hg {
+namespace SST::Hg {
 
-class EventLibrary;
-class library_builder;
+NicAPI::NicAPI(uint32_t id, SST::Params& params) :
+  SST::Hg::SubComponent(id) { }
 
-} // end namespace Hg
-} // end namespace SST
+}
