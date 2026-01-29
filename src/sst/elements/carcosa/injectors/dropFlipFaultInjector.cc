@@ -9,7 +9,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include "sst/elements/carcosa/injectors/doubleFaultInjector.h"
+#include "sst/elements/carcosa/injectors/dropFlipFaultInjector.h"
 #include "sst/elements/carcosa/faultlogic/randomFlipFault.h"
 #include "sst/elements/carcosa/faultlogic/randomDropFault.h"
 
