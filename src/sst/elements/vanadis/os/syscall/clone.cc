@@ -96,8 +96,8 @@ VanadisCloneSyscall::VanadisCloneSyscall( VanadisNodeOSComponent* os, SST::Link*
     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-clone] newthread pid=%d tid=%d ppid=%d numThreads=%d\n",
             m_newThread->getpid(), m_newThread->gettid(), m_newThread->getppid(), m_newThread->numThreads() );
     #endif
-    m_os->setProcess( m_threadID->core, m_threadID->hwThread, m_newThread );
-    m_os->getMMU()->setCoreToPageTable( m_threadID->core, m_threadID->hwThread, m_newThread->getpid() );
+    m_os->setProcess( m_threadID->core, m_threadID->hw_thread, m_newThread );
+    m_os->getMMU()->setCoreToPageTable( m_threadID->core, m_threadID->hw_thread, m_newThread->getpid() );
 
     // if that stackAddr is valid  we need to get clone() arguments that are not in registers, for clone we have one argument on the clone call stack
     if ( event->getCallStackAddr() ) {
@@ -219,9 +219,9 @@ void VanadisCloneSyscall::handleEvent( VanadisCoreEvent* ev )
     _VanadisStartThreadBaseReq* req;
 
     if ( (event->getFlags() & VANADIS_LINUX_CSIGNAL) == VANADIS_LINUX_SIGCHLD ) {
-        req = new VanadisStartThreadForkReq( m_threadID->hwThread, resp->getInstPtr(), resp->getTlsPtr() );
+        req = new VanadisStartThreadForkReq( m_threadID->hw_thread, resp->getInstPtr(), resp->getTlsPtr() );
     } else {
-        req = new VanadisStartThreadCloneReq( m_threadID->hwThread, m_threadStartAddr, event->getThreadStackAddr(),
+        req = new VanadisStartThreadCloneReq( m_threadID->hw_thread, m_threadStartAddr, event->getThreadStackAddr(),
                                     event->getTlsAddr(), m_threadArgAddr );
     }
 
@@ -230,7 +230,7 @@ void VanadisCloneSyscall::handleEvent( VanadisCoreEvent* ev )
 
     #ifdef VANADIS_BUILD_DEBUG
     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-clone] core=%d thread=%d tid=%d instPtr=%" PRI_ADDR "\n",
-                m_threadID->core, m_threadID->hwThread, m_newThread->gettid(), resp->getInstPtr() );
+                m_threadID->core, m_threadID->hw_thread, m_newThread->gettid(), resp->getInstPtr() );
     #endif
 #if 0 //debug
     for ( int i = 0; i < req->getIntRegs().size(); i++ ) {

@@ -1,11 +1,7 @@
 l2_0: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
 l2_1: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-memory0, Notice: memory controller's region is larger than the backend's mem_size, controller is limiting accessible memory to mem_size
-Region: start=0, end=18446744073709551615, interleaveStep=256, interleaveSize=128. MemSize: 536870912B
-memory1, Notice: memory controller's region is larger than the backend's mem_size, controller is limiting accessible memory to mem_size
-Region: start=128, end=18446744073709551615, interleaveStep=256, interleaveSize=128. MemSize: 536870912B
-ScratchCPU core0 Finished after 1000 issued memory events, 1000 returned, 3773 cycles
 ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 cycles
+ScratchCPU core0 Finished after 1000 issued memory events, 1000 returned, 3773 cycles
  l1_0.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.stateEvent_GetS_I : Accumulator : Sum.u64 = 163; SumSQ.u64 = 163; Count.u64 = 163; Min.u64 = 1; Max.u64 = 1; 
  l1_0.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -100,7 +96,7 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  l1_0.latency_GetS_hit : Accumulator : Sum.u64 = 10; SumSQ.u64 = 20; Count.u64 = 5; Min.u64 = 2; Max.u64 = 2; 
  l1_0.latency_GetS_miss : Accumulator : Sum.u64 = 5395; SumSQ.u64 = 186117; Count.u64 = 163; Min.u64 = 10; Max.u64 = 37; 
  l1_0.latency_GetX_hit : Accumulator : Sum.u64 = 8; SumSQ.u64 = 24; Count.u64 = 3; Min.u64 = 2; Max.u64 = 4; 
- l1_0.latency_GetX_miss : Accumulator : Sum.u64 = 5676; SumSQ.u64 = 194836; Count.u64 = 174; Min.u64 = 10; Max.u64 = 41; 
+ l1_0.latency_GetX_miss : Accumulator : Sum.u64 = 5675; SumSQ.u64 = 194765; Count.u64 = 174; Min.u64 = 10; Max.u64 = 41; 
  l1_0.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.latency_GetSX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.latency_GetSX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -170,7 +166,7 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  l1_0.UnblockFlush_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.AckPut_recv : Accumulator : Sum.u64 = 260; SumSQ.u64 = 260; Count.u64 = 260; Min.u64 = 1; Max.u64 = 1; 
- l1_0.MSHR_occupancy : Accumulator : Sum.u64 = 10399; SumSQ.u64 = 37627; Count.u64 = 3963; Min.u64 = 0; Max.u64 = 8; 
+ l1_0.MSHR_occupancy : Accumulator : Sum.u64 = 10398; SumSQ.u64 = 37618; Count.u64 = 3963; Min.u64 = 0; Max.u64 = 8; 
  l1_0.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.evict_I : Accumulator : Sum.u64 = 224; SumSQ.u64 = 224; Count.u64 = 224; Min.u64 = 1; Max.u64 = 1; 
@@ -292,7 +288,7 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  l2_0.latency_GetS_miss : Accumulator : Sum.u64 = 4665; SumSQ.u64 = 145097; Count.u64 = 150; Min.u64 = 31; Max.u64 = 33; 
  l2_0.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.latency_GetX_hit : Accumulator : Sum.u64 = 102; SumSQ.u64 = 612; Count.u64 = 17; Min.u64 = 6; Max.u64 = 6; 
- l2_0.latency_GetX_miss : Accumulator : Sum.u64 = 4878; SumSQ.u64 = 151600; Count.u64 = 157; Min.u64 = 31; Max.u64 = 37; 
+ l2_0.latency_GetX_miss : Accumulator : Sum.u64 = 4877; SumSQ.u64 = 151537; Count.u64 = 157; Min.u64 = 31; Max.u64 = 37; 
  l2_0.latency_GetX_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.latency_GetSX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -389,7 +385,7 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  l2_0.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.AckInv_recv : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; Min.u64 = 1; Max.u64 = 1; 
  l2_0.AckPut_recv : Accumulator : Sum.u64 = 15; SumSQ.u64 = 15; Count.u64 = 15; Min.u64 = 1; Max.u64 = 1; 
- l2_0.MSHR_occupancy : Accumulator : Sum.u64 = 8727; SumSQ.u64 = 28077; Count.u64 = 3963; Min.u64 = 0; Max.u64 = 7; 
+ l2_0.MSHR_occupancy : Accumulator : Sum.u64 = 8726; SumSQ.u64 = 28070; Count.u64 = 3963; Min.u64 = 0; Max.u64 = 7; 
  l2_0.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  scratch0:backendConvertor.cycles_with_issue : Accumulator : Sum.u64 = 667; SumSQ.u64 = 667; Count.u64 = 667; Min.u64 = 1; Max.u64 = 1; 
  scratch0:backendConvertor.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -398,10 +394,10 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  scratch0:backendConvertor.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  scratch0:backendConvertor.requests_received_GetX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  scratch0:backendConvertor.requests_received_PutM : Accumulator : Sum.u64 = 194; SumSQ.u64 = 194; Count.u64 = 194; Min.u64 = 1; Max.u64 = 1; 
- scratch0:backendConvertor.latency_GetS : Accumulator : Sum.u64 = 10000; SumSQ.u64 = 211488; Count.u64 = 473; Min.u64 = 21; Max.u64 = 23; 
+ scratch0:backendConvertor.latency_GetS : Accumulator : Sum.u64 = 9999; SumSQ.u64 = 211445; Count.u64 = 473; Min.u64 = 21; Max.u64 = 23; 
  scratch0:backendConvertor.latency_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  scratch0:backendConvertor.latency_GetX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- scratch0:backendConvertor.latency_PutM : Accumulator : Sum.u64 = 4115; SumSQ.u64 = 87331; Count.u64 = 194; Min.u64 = 21; Max.u64 = 24; 
+ scratch0:backendConvertor.latency_PutM : Accumulator : Sum.u64 = 4116; SumSQ.u64 = 87374; Count.u64 = 194; Min.u64 = 21; Max.u64 = 24; 
  scratch0.request_received_scratch_read : Accumulator : Sum.u64 = 307; SumSQ.u64 = 307; Count.u64 = 307; Min.u64 = 1; Max.u64 = 1; 
  scratch0.request_received_scratch_write : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  scratch0.request_received_remote_read : Accumulator : Sum.u64 = 150; SumSQ.u64 = 150; Count.u64 = 150; Min.u64 = 1; Max.u64 = 1; 
@@ -410,10 +406,10 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  scratch0.request_received_scratch_put : Accumulator : Sum.u64 = 161; SumSQ.u64 = 161; Count.u64 = 161; Min.u64 = 1; Max.u64 = 1; 
  scratch0.request_issued_scratch_read : Accumulator : Sum.u64 = 473; SumSQ.u64 = 473; Count.u64 = 473; Min.u64 = 1; Max.u64 = 1; 
  scratch0.request_issued_scratch_write : Accumulator : Sum.u64 = 194; SumSQ.u64 = 194; Count.u64 = 194; Min.u64 = 1; Max.u64 = 1; 
- scratch0:lowlink.packet_latency : Accumulator : Sum.u64 = 737; SumSQ.u64 = 2053; Count.u64 = 309; Min.u64 = 0; Max.u64 = 8; 
+ scratch0:lowlink.packet_latency : Accumulator : Sum.u64 = 738; SumSQ.u64 = 2058; Count.u64 = 309; Min.u64 = 0; Max.u64 = 8; 
  scratch0:lowlink.send_bit_count : Accumulator : Sum.u64 = 123296; SumSQ.u64 = 64100608; Count.u64 = 655; Min.u64 = 64; Max.u64 = 1088; 
  scratch0:lowlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- scratch0:lowlink.idle_time : Accumulator : Sum.u64 = 607420; SumSQ.u64 = 2261936400; Count.u64 = 237; Min.u64 = 80; Max.u64 = 12000; 
+ scratch0:lowlink.idle_time : Accumulator : Sum.u64 = 607420; SumSQ.u64 = 2253653200; Count.u64 = 238; Min.u64 = 80; Max.u64 = 12000; 
  l1_1.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.stateEvent_GetS_I : Accumulator : Sum.u64 = 163; SumSQ.u64 = 163; Count.u64 = 163; Min.u64 = 1; Max.u64 = 1; 
  l1_1.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -578,7 +574,7 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  l1_1.UnblockFlush_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.AckPut_recv : Accumulator : Sum.u64 = 260; SumSQ.u64 = 260; Count.u64 = 260; Min.u64 = 1; Max.u64 = 1; 
- l1_1.MSHR_occupancy : Accumulator : Sum.u64 = 11842; SumSQ.u64 = 46766; Count.u64 = 3963; Min.u64 = 0; Max.u64 = 8; 
+ l1_1.MSHR_occupancy : Accumulator : Sum.u64 = 11842; SumSQ.u64 = 46762; Count.u64 = 3963; Min.u64 = 0; Max.u64 = 8; 
  l1_1.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_1.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_1.evict_I : Accumulator : Sum.u64 = 220; SumSQ.u64 = 220; Count.u64 = 220; Min.u64 = 1; Max.u64 = 1; 
@@ -818,16 +814,16 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  scratch1.request_received_scratch_put : Accumulator : Sum.u64 = 171; SumSQ.u64 = 171; Count.u64 = 171; Min.u64 = 1; Max.u64 = 1; 
  scratch1.request_issued_scratch_read : Accumulator : Sum.u64 = 480; SumSQ.u64 = 480; Count.u64 = 480; Min.u64 = 1; Max.u64 = 1; 
  scratch1.request_issued_scratch_write : Accumulator : Sum.u64 = 196; SumSQ.u64 = 196; Count.u64 = 196; Min.u64 = 1; Max.u64 = 1; 
- scratch1:lowlink.packet_latency : Accumulator : Sum.u64 = 740; SumSQ.u64 = 2058; Count.u64 = 310; Min.u64 = 0; Max.u64 = 6; 
+ scratch1:lowlink.packet_latency : Accumulator : Sum.u64 = 743; SumSQ.u64 = 2071; Count.u64 = 310; Min.u64 = 0; Max.u64 = 6; 
  scratch1:lowlink.send_bit_count : Accumulator : Sum.u64 = 123672; SumSQ.u64 = 70887872; Count.u64 = 638; Min.u64 = 64; Max.u64 = 1088; 
  scratch1:lowlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- scratch1:lowlink.idle_time : Accumulator : Sum.u64 = 663060; SumSQ.u64 = 3110570800; Count.u64 = 228; Min.u64 = 80; Max.u64 = 16400; 
+ scratch1:lowlink.idle_time : Accumulator : Sum.u64 = 661280; SumSQ.u64 = 3092756800; Count.u64 = 228; Min.u64 = 80; Max.u64 = 16400; 
  memory0.requests_received_GetS : Accumulator : Sum.u64 = 309; SumSQ.u64 = 309; Count.u64 = 309; Min.u64 = 1; Max.u64 = 1; 
  memory0.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory0.requests_received_GetX : Accumulator : Sum.u64 = 189; SumSQ.u64 = 189; Count.u64 = 189; Min.u64 = 1; Max.u64 = 1; 
  memory0.requests_received_Write : Accumulator : Sum.u64 = 164; SumSQ.u64 = 164; Count.u64 = 164; Min.u64 = 1; Max.u64 = 1; 
  memory0.requests_received_PutM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory0.outstanding_requests : Accumulator : Sum.u64 = 33863; SumSQ.u64 = 627519; Count.u64 = 1981; Min.u64 = 0; Max.u64 = 29; 
+ memory0.outstanding_requests : Accumulator : Sum.u64 = 33863; SumSQ.u64 = 627513; Count.u64 = 1981; Min.u64 = 0; Max.u64 = 29; 
  memory0.latency_GetS : Accumulator : Sum.u64 = 15807; SumSQ.u64 = 808655; Count.u64 = 309; Min.u64 = 51; Max.u64 = 53; 
  memory0.latency_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory0.latency_GetX : Accumulator : Sum.u64 = 9672; SumSQ.u64 = 494990; Count.u64 = 189; Min.u64 = 51; Max.u64 = 53; 
@@ -836,17 +832,17 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  memory0.cycles_with_issue : Accumulator : Sum.u64 = 743; SumSQ.u64 = 743; Count.u64 = 743; Min.u64 = 1; Max.u64 = 1; 
  memory0.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory0.total_cycles : Accumulator : Sum.u64 = 1981; SumSQ.u64 = 3924361; Count.u64 = 1; Min.u64 = 1981; Max.u64 = 1981; 
- memory0:highlink.packet_latency : Accumulator : Sum.u64 = 2195; SumSQ.u64 = 10131; Count.u64 = 662; Min.u64 = 0; Max.u64 = 14; 
+ memory0:highlink.packet_latency : Accumulator : Sum.u64 = 2198; SumSQ.u64 = 10144; Count.u64 = 662; Min.u64 = 0; Max.u64 = 14; 
  memory0:highlink.send_bit_count : Accumulator : Sum.u64 = 100176; SumSQ.u64 = 67532928; Count.u64 = 309; Min.u64 = 72; Max.u64 = 1088; 
  memory0:highlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory0:highlink.idle_time : Accumulator : Sum.u64 = 503800; SumSQ.u64 = 2759550400; Count.u64 = 214; Min.u64 = 20; Max.u64 = 24120; 
+ memory0:highlink.idle_time : Accumulator : Sum.u64 = 511000; SumSQ.u64 = 2847596800; Count.u64 = 214; Min.u64 = 20; Max.u64 = 24120; 
  memory1.requests_received_GetS : Accumulator : Sum.u64 = 310; SumSQ.u64 = 310; Count.u64 = 310; Min.u64 = 1; Max.u64 = 1; 
  memory1.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory1.requests_received_GetX : Accumulator : Sum.u64 = 143; SumSQ.u64 = 143; Count.u64 = 143; Min.u64 = 1; Max.u64 = 1; 
  memory1.requests_received_Write : Accumulator : Sum.u64 = 178; SumSQ.u64 = 178; Count.u64 = 178; Min.u64 = 1; Max.u64 = 1; 
  memory1.requests_received_PutM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory1.outstanding_requests : Accumulator : Sum.u64 = 32275; SumSQ.u64 = 567427; Count.u64 = 1981; Min.u64 = 0; Max.u64 = 28; 
- memory1.latency_GetS : Accumulator : Sum.u64 = 15858; SumSQ.u64 = 811256; Count.u64 = 310; Min.u64 = 51; Max.u64 = 53; 
+ memory1.outstanding_requests : Accumulator : Sum.u64 = 32274; SumSQ.u64 = 567260; Count.u64 = 1981; Min.u64 = 0; Max.u64 = 28; 
+ memory1.latency_GetS : Accumulator : Sum.u64 = 15857; SumSQ.u64 = 811151; Count.u64 = 310; Min.u64 = 51; Max.u64 = 52; 
  memory1.latency_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory1.latency_GetX : Accumulator : Sum.u64 = 7319; SumSQ.u64 = 374621; Count.u64 = 143; Min.u64 = 51; Max.u64 = 52; 
  memory1.latency_Write : Accumulator : Sum.u64 = 9098; SumSQ.u64 = 465038; Count.u64 = 178; Min.u64 = 51; Max.u64 = 52; 
@@ -854,8 +850,8 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  memory1.cycles_with_issue : Accumulator : Sum.u64 = 708; SumSQ.u64 = 708; Count.u64 = 708; Min.u64 = 1; Max.u64 = 1; 
  memory1.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory1.total_cycles : Accumulator : Sum.u64 = 1981; SumSQ.u64 = 3924361; Count.u64 = 1; Min.u64 = 1981; Max.u64 = 1981; 
- memory1:highlink.packet_latency : Accumulator : Sum.u64 = 2113; SumSQ.u64 = 10193; Count.u64 = 631; Min.u64 = 0; Max.u64 = 14; 
+ memory1:highlink.packet_latency : Accumulator : Sum.u64 = 2121; SumSQ.u64 = 10235; Count.u64 = 631; Min.u64 = 0; Max.u64 = 14; 
  memory1:highlink.send_bit_count : Accumulator : Sum.u64 = 106296; SumSQ.u64 = 72365760; Count.u64 = 310; Min.u64 = 72; Max.u64 = 1088; 
  memory1:highlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory1:highlink.idle_time : Accumulator : Sum.u64 = 525920; SumSQ.u64 = 3265421600; Count.u64 = 219; Min.u64 = 20; Max.u64 = 36120; 
+ memory1:highlink.idle_time : Accumulator : Sum.u64 = 526040; SumSQ.u64 = 3247024800; Count.u64 = 220; Min.u64 = 20; Max.u64 = 36120; 
 Simulation is complete, simulated time: 1.9815 us
