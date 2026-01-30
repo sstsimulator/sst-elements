@@ -59,7 +59,7 @@ bool DropFlipFaultInjector::doInjection() {
         this->triggered_injection_[1] = true;
     }
     else {
-#ifdef __SST_DEBUG_OUTPUT__ 
+#ifdef __SST_DEBUG_OUTPUT__
         dbg_->debug(CALL_INFO_LONG, 1, 0, "Flip skipped.\n");
 #endif
         this->triggered_injection_[1] = false;

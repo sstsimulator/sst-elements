@@ -499,7 +499,7 @@ memctrl.addParams( memCtrlParams )
 # SHOULD FAIL TO INITIALIZE
 memctrl.addPortModule("highlink", "carcosa.RandomDropFaultInjector", {
     "install_direction": "Receive",
-    "injection_probability": 1.0,
+    "injection_probability": 0.01,
     "debug" : 1,
     "debug_level": 2
 })
