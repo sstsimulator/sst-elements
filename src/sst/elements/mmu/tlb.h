@@ -40,12 +40,12 @@ class TLB : public SubComponent {
 
     virtual void init(unsigned int phase) {};
 
-    virtual void registerCallback( Callback& callback  ) = 0;
-    virtual void getVirtToPhys( RequestID reqId, int hwThreadId, uint64_t virtAddr, uint32_t perms, uint64_t instPtr ) = 0;
+    virtual void registerCallback( Callback& callback ) = 0;
+    virtual void getVirtToPhys( RequestID req_id, uint32_t hw_thread_id, uint64_t virt_addr, uint32_t perms, uint64_t inst_ptr ) = 0;
 
   protected:
-    Callback m_callback;
-    Output m_dbg;
+    Callback callback_;
+    Output dbg_;
 };
 
 class PassThroughTLB : public TLB {
@@ -55,18 +55,18 @@ class PassThroughTLB : public TLB {
         "mmu",
         "passThroughTLB",
         SST_ELI_ELEMENT_VERSION(1, 0, 0),
-        "Pass-through TLB, allways hits and returns virtAddr as physAddr",
+        "Pass-through TLB, allways hits and returns virtual address as physical address",
         SST::MMU_Lib::PassThroughTLB
     )
 
     PassThroughTLB(SST::ComponentId_t id, SST::Params& params) : TLB(id,params) {}
 
-    void registerCallback( Callback& callback ) {
-        m_callback = callback;
+    void registerCallback( Callback& callback ) override {
+        callback_ = callback;
     }
 
-    void getVirtToPhys( RequestID reqId, int hwThreadId, uint64_t virtAddr, uint32_t perms, uint64_t instPtr  ) {
-        m_callback( reqId, virtAddr );
+    void getVirtToPhys( RequestID req_id, uint32_t hw_thread_id, uint64_t virt_addr, uint32_t perms, uint64_t inst_ptr  ) override {
+        callback_( req_id, virt_addr );
     }
 };
 
