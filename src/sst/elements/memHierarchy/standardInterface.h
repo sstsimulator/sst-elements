@@ -29,6 +29,7 @@
 #include <sst/core/output.h>
 
 #include "sst/elements/memHierarchy/memLinkBase.h"
+#include "sst/elements/mmu/tlb.h"
 
 namespace SST {
 
@@ -80,7 +81,8 @@ public:
         {"debug",       "(uint) Where to send debug output. Options: 0[none], 1[stdout], 2[stderr], 3[file]", "0"},
         {"debug_level", "(uint) Debugging level: 0 to 10. Must configure sst-core with '--enable-debug'. 1=info, 2-10=debug output", "0"},
         {"port",        "(string) port name to use for interfacing to the memory system. This must be provided if this subcomponent is being loaded anonymously. Otherwise this should not be specified and either the 'lowlink' port should be connected or the 'lowlink' subcomponent slot should be filled"},
-        {"noncacheable_regions", "(string) vector of (start, end) address pairs for noncacheable address ranges. Vector format should be [start0, end0, start1, end1, ...].", "[]"}
+        {"noncacheable_regions", "(string) vector of (start, end) address pairs for noncacheable address ranges. Vector format should be [start0, end0, start1, end1, ...].", "[]"},
+        {"tlb_exe_permission", "Parameter is ignored unless 'tlb' slot is used. Determines whether pages should have write/exe  permissions by default. Generally, set to True/1 for an Instruction TLB and False/0 for a Data or unified TLB", "0"},
     )
 
     SST_ELI_DOCUMENT_PORTS(
@@ -90,6 +92,7 @@ public:
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         {"lowlink", "Port manager for link to memory system. This slot must be used if the StandardInterface links to a network (do not connect the StandardInterface's 'port' in this case). Otherwise, either this slot or the StandardInterface's 'port' port may be used to connect to the memory system.", "SST::MemHierarchy::MemLinkBase"},
+        {"tlb", "An optional TLB to use if this interface also needs to translate virtual to physical addresses. If not filled, no translation will be performed.", "SST::MMU_Lib::TLB"},
         {"memlink", "DEPRECATED: Renamed to 'lowlink'. Port manager, optional - if not filled this subcomponent's port should be connected", "SST::MemHierarchy::MemLinkBase"})
 
 /* Begin class definition */
@@ -142,6 +145,9 @@ protected:
     MemRegion region_;   // For MMIO
     Endpoint endpoint_type_;    // Endpoint type -> CPU or MMIO
 
+    SST::MMU_Lib::TLB* tlb_ = nullptr;
+    uint32_t default_permissions_ = 0;
+
     class MemEventConverter : public Interfaces::StandardMem::RequestConverter {
     public:
         MemEventConverter(StandardInterface* iface) : iface(iface) {}
@@ -175,6 +181,48 @@ protected:
             SST_SER(iface);
         }
         ImplementSerializable(SST::MemHierarchy::StandardInterface::MemEventConverter);
+    };
+
+    class MemEventTLBRequestConverter : public MemEventConverter {
+    public:
+        MemEventTLBRequestConverter(StandardInterface* iface) : MemEventConverter(iface) {}
+        virtual ~MemEventTLBRequestConverter() {}
+        virtual SST::Event* convert(StandardMem::Read* req) override;
+        virtual SST::Event* convert(StandardMem::Write* req) override;
+        virtual SST::Event* convert(StandardMem::FlushAddr* req) override;
+        virtual SST::Event* convert(StandardMem::ReadLock* req) override;
+        virtual SST::Event* convert(StandardMem::WriteUnlock* req) override;
+        virtual SST::Event* convert(StandardMem::LoadLink* req) override;
+        virtual SST::Event* convert(StandardMem::StoreConditional* req) override;
+        virtual SST::Event* convert(StandardMem::MoveData* req) override;
+
+        MemEventTLBRequestConverter() {}
+        void serialize_order(SST::Core::Serialization::serializer& ser) override {
+            MemEventConverter::serialize_order(ser);
+        }
+        ImplementSerializable(SST::MemHierarchy::StandardInterface::MemEventTLBRequestConverter);
+    };
+
+    class MemEventTLBResponseConverter : public MemEventConverter {
+    public:
+        MemEventTLBResponseConverter(StandardInterface* iface) : MemEventConverter(iface) {}
+        virtual ~MemEventTLBResponseConverter() {}
+        virtual SST::Event* convert(StandardMem::Read* req) override;
+        virtual SST::Event* convert(StandardMem::Write* req) override;
+        virtual SST::Event* convert(StandardMem::FlushAddr* req) override;
+        virtual SST::Event* convert(StandardMem::ReadLock* req) override;
+        virtual SST::Event* convert(StandardMem::WriteUnlock* req) override;
+        virtual SST::Event* convert(StandardMem::LoadLink* req) override;
+        virtual SST::Event* convert(StandardMem::StoreConditional* req) override;
+        virtual SST::Event* convert(StandardMem::MoveData* req) override;
+
+        Addr translated_address_ = 0;
+
+        MemEventTLBResponseConverter() {}
+        void serialize_order(SST::Core::Serialization::serializer& ser) override {
+            MemEventConverter::serialize_order(ser);
+        }
+        ImplementSerializable(SST::MemHierarchy::StandardInterface::MemEventTLBResponseConverter);
     };
 
     class UntimedMemEventConverter : public Interfaces::StandardMem::RequestConverter {
@@ -215,6 +263,12 @@ private:
      * Parses event and calls the parent's handler */
     void receive(SST::Event *ev);
 
+    /** Callback handler for the TLB if present
+     *  Finishes sending an event after translation has occurred
+     */
+    void handleTLBResponse(uintptr_t req, Addr phys_address);
+
+
     /** Conversion functions to convert internal memHierarchy events to StandardMem::Requests
      * Called by receive() on incoming requests
      */
@@ -246,11 +300,11 @@ private:
     void handleNACK(MemEventBase* meb);
 
     /* Record noncacheable regions (e.g., MMIO device addresses) */
-    std::multimap<Addr, MemRegion> noncacheable_regions_;
-
-    HandlerBase*              recv_handler_;
-    MemEventConverter*        converter_;
-    UntimedMemEventConverter* untimed_converter_;
+    std::multimap<Addr, MemRegion>  noncacheable_regions_;
+    HandlerBase*                    recv_handler_;
+    MemEventConverter*              converter_;
+    MemEventTLBResponseConverter*   tlb_converter_ = nullptr;
+    UntimedMemEventConverter*       untimed_converter_;
 };
 
 }

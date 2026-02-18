@@ -46,12 +46,22 @@ class SimpleTLB : public TLB {
             dirty_ = false;
             valid_ = true;
         }
+        void serialize_order(SST::Core::Serialization::serializer &ser) {
+            int valid_int = valid_;
+            int dirty_int = dirty_;
+            uint32_t perms_uint = perms_;
+            SST_SER(valid_int);
+            SST_SER(dirty_int);
+            SST_SER(perms_uint);
+            SST_SER(tag_);
+            SST_SER(ppn_);
+        }
       private:
         int valid_ : 1;
         int dirty_ : 1;
         uint32_t perms_: 3;
-        uint32_t tag_;
-        uint32_t ppn_;
+        uint32_t tag_ = 0;
+        uint32_t ppn_ = std::numeric_limits<uint32_t>::max();
     };
 
     class TlbRecord {
@@ -63,6 +73,15 @@ class SimpleTLB : public TLB {
         uint64_t virt_addr;
         uint32_t perms;
         uint64_t inst_ptr;
+
+        TlbRecord () {}
+        void serialize_order(SST::Core::Serialization::serializer &ser) {
+            SST_SER(req_id);
+            SST_SER(hw_thread_id);
+            SST_SER(virt_addr);
+            SST_SER(perms);
+            SST_SER(inst_ptr);
+        }
     };
 
     class SelfEvent  : public SST::Event {
@@ -71,11 +90,17 @@ class SimpleTLB : public TLB {
         SelfEvent( RequestID req_id, uint64_t addr ) : Event(), req_id_( req_id ), addr_( addr ) { }
         RequestID getReqId() { return req_id_; }
         uint64_t getAddr() { return addr_; }
+
+        SelfEvent() {}
+        void serialize_order(SST::Core::Serialization::serializer &ser) override {
+            Event::serialize_order(ser);
+            SST_SER(req_id_);
+            SST_SER(addr_);
+        }
+        ImplementSerializable(SST::MMU_Lib::SimpleTLB::SelfEvent);
       private:
         RequestID req_id_;
         uint64_t addr_;
-
-        NotSerializable(SelfEvent)
     };
 
   public:
@@ -116,6 +141,10 @@ class SimpleTLB : public TLB {
 
     void getVirtToPhys( RequestID req_id, uint32_t hw_thread_id, uint64_t virt_addr, uint32_t perms, uint64_t inst_ptr ) override;
 
+
+    SimpleTLB() = default;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::MMU_Lib::SimpleTLB);
   private:
     void callback( Event* ev ) {
         auto self_event = static_cast<SelfEvent*>(ev);
@@ -153,7 +182,7 @@ class SimpleTLB : public TLB {
         }
 
         assert(vpn);
-        int slot = pickVictim();
+        uint32_t slot = pickVictim();
 #ifdef __SST_DEBUG_OUTPUT__
         dbg_.debug(CALL_INFO,1,0,"hw_thread=%" PRIu32 " vpn=%" PRIu32 " ppn=%" PRIu32 " tag%#" PRIx64 " index=%#x slot=%" PRIu32 "\n",hw_thread_id,
             vpn, ppn, (uint64_t) tag, index, slot );

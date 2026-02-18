@@ -215,3 +215,21 @@ void SimpleTLB::getVirtToPhys( RequestID req_id, uint32_t hw_thread_id, uint64_t
         waiting[vpn].push( id );
     }
 }
+
+void SimpleTLB::serialize_order(SST::Core::Serialization::serializer& ser) {
+    TLB::serialize_order(ser);
+
+    SST_SER(self_link_);
+    SST_SER(mmu_link_);
+    SST_SER(hit_latency_);
+    SST_SER(tlb_size_);
+    SST_SER(tlb_set_size_);
+    SST_SER(page_size_);
+    SST_SER(page_shift_);
+    SST_SER(tlb_index_shift_);
+    SST_SER(tlb_data_);
+    SST_SER(rng_);
+    SST_SER(min_virt_addr_);
+    SST_SER(max_virt_addr_);
+    SST_SER(waiting_miss_);
+}

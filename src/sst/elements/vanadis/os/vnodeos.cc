@@ -711,7 +711,7 @@ void VanadisNodeOSComponent::processOsPageFault( VanadisSyscall* syscall, uint64
     #endif
 
     uint32_t vpn = virt_addr >> page_shift_;
-    uint32_t fault_perms = is_write ? 1 << 1:  1<< 2;
+    uint32_t fault_perms = is_write ? MMU_Lib::page_perms::write : MMU_Lib::page_perms::read;
     uint32_t uninit = std::numeric_limits<uint32_t>::max();
     pageFaultHandler2( uninit, uninit, uninit, uninit, syscall->getPid(), vpn, fault_perms, 0, virt_addr, syscall );
 }
@@ -720,7 +720,7 @@ void VanadisNodeOSComponent::pageFaultHandler2( MMU_Lib::RequestID req_id, uint3
                 uint32_t pid,  uint32_t vpn, uint32_t fault_perms, uint64_t inst_ptr, uint64_t mem_virt_addr, VanadisSyscall* syscall )
 {
     #ifdef VANADIS_BUILD_DEBUG
-    output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "RequestID=%#" PRIx64 " link=%d pid=%d vpn=%d perms=%#x inst_ptr=%#" PRIx64 " syscall=%p\n",
+    output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "RequestID=%#" PRIx64 " link=%" PRIu32 " pid=%" PRIu32 " vpn=%" PRIu32 " perms=%#" PRIu32 " inst_ptr=%#" PRIx64 " syscall=%p\n",
             req_id, link, pid, vpn, fault_perms, inst_ptr, syscall );
     #endif
 
@@ -779,16 +779,16 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
     #ifdef VANADIS_BUILD_DEBUG
     output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"link=%" PRIu32 " pid=%" PRIu32 " virt_addr=%#" PRIx64 " %c%c%c inst_ptr=%#" PRIx64 " virtMemAddr=%#" PRIx64 "\n",
             link,pid,virt_addr,
-            fault_perms & 0x4 ? 'R' : '-',
-            fault_perms & 0x2 ? 'W' : '-',
-            fault_perms & 0x1 ? 'X' : '-',
+            fault_perms & MMU_Lib::page_perms::read ? 'R' : '-',
+            fault_perms & MMU_Lib::page_perms::write ? 'W' : '-',
+            fault_perms & MMU_Lib::page_perms::exe  ? 'X' : '-',
             info->inst_ptr,
             info->mem_virt_addr);
     #endif
     auto region = thread->findMemRegion( virt_addr + 1 );
 
     if ( region ) {
-        // std::numeric_limits::max indicates the vpn is not mapped to a physical page
+        // MMU_Lib::page_perms::unset indicates the vpn is not mapped to a physical page
         uint32_t page_perms = mmu_->getPerms( pid, vpn);
 
         // We got here because a TLB has to have an address resolved.
@@ -799,17 +799,17 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
         #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"found region %#" PRIx64 "-%#" PRIx64 "\n",region->addr_,region->addr_ + region->length_);
 
-        output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"virt_addr=%#010" PRIx64 ": fault-perms %c%c%c, VM-perms %c%c%c page_perms=%#x\n",virt_addr,
-            fault_perms & 0x4 ? 'R' : '-',
-            fault_perms & 0x2 ? 'W' : '-',
-            fault_perms & 0x1 ? 'X' : '-',
-            region->perms_ & 0x4 ? 'R' : '-',
-            region->perms_ & 0x2 ? 'W' : '-',
-            region->perms_ & 0x1 ? 'X' : '-',
+        output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"virt_addr=%#010" PRIx64 ": fault-perms %c%c%c, VM-perms %c%c%c page_perms=%#" PRIx32"\n",virt_addr,
+            fault_perms & MMU_Lib::page_perms::read ? 'R' : '-',
+            fault_perms & MMU_Lib::page_perms::write ? 'W' : '-',
+            fault_perms & MMU_Lib::page_perms::exe ? 'X' : '-',
+            region->perms_ & MMU_Lib::page_perms::read ? 'R' : '-',
+            region->perms_ & MMU_Lib::page_perms::write ? 'W' : '-',
+            region->perms_ & MMU_Lib::page_perms::exe ? 'X' : '-',
             page_perms);
         #endif
         // if the page is present the fault wants to write but the page doesn't have write, could be COW
-        if( (page_perms != std::numeric_limits<uint32_t>::max()) && (fault_perms & 0x2 &&  0 == (page_perms & 0x2 ) ) ) {
+        if( (page_perms != MMU_Lib::page_perms::unset) && (fault_perms & MMU_Lib::page_perms::write &&  0 == (page_perms & MMU_Lib::page_perms::write ) ) ) {
             OS::Page* new_page;
             uint32_t orig_ppn = mmu_->virtToPhys(pid,vpn);
             #ifdef VANADIS_BUILD_DEBUG
@@ -860,7 +860,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
         #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"vpn %" PRIu32 " perms %#x\n",vpn,page_table_perms);
         #endif
-        if ( page_table_perms != std::numeric_limits<uint32_t>::max() ) {
+        if ( page_table_perms != MMU_Lib::page_perms::unset ) {
             if ( ! MMU_Lib::checkPerms( fault_perms, region->perms_ ) ) {
                 #ifdef VANADIS_BUILD_DEBUG
                 output_->verbose(CALL_INFO, 1, 0,"core %" PRIu32 ", hw_thread %" PRIu32 ", inst_ptr %#" PRIx64 " caused page fault at address %#" PRIx64 "\n",

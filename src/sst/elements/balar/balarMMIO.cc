@@ -164,7 +164,7 @@ void BalarMMIO::send_read_request_SST(unsigned core_id, uint64_t address, uint64
     numPendingCacheTransPerCore[core_id]++;
     gpu_to_cache_links[core_id]->send(req);
 
-    out.verbose(CALL_INFO, 1, 0, "Sent a read request with id (%ld) to addr %lx\n", req->getID(), req->pAddr);
+    out.verbose(CALL_INFO, 1, 0, "Sent a read request with id (%ld) to addr %lx\n", req->getID(), req->vAddr);
 }
 
 /**
@@ -185,7 +185,7 @@ void BalarMMIO::send_write_request_SST(unsigned core_id, uint64_t address, uint6
     gpuCachePendingTransactions->insert(std::pair<StandardMem::Request::id_t, cache_req_params>(req->getID(), cache_req_params(core_id, mem_req, req)));
     numPendingCacheTransPerCore[core_id]++;
     gpu_to_cache_links[core_id]->send(req);
-    out.verbose(CALL_INFO, 1, 0, "Sent a write request with id (%ld) to addr: %lx\n", req->getID(), req->pAddr);
+    out.verbose(CALL_INFO, 1, 0, "Sent a write request with id (%ld) to addr: %lx\n", req->getID(), req->vAddr);
 }
 
 /**

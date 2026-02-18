@@ -29,16 +29,29 @@ TLB_Wrapper::TLB_Wrapper(SST::ComponentId_t id, SST::Params& params): Component(
         0, // Mask
         Output::STDOUT );
 
-    exe_ = params.find<bool>("exe", 0 );
-
-    cpu_if_ = configureLink("cpu_if", new Event::Handler2<TLB_Wrapper,&TLB_Wrapper::handleCpuEvent>(this));
-    if ( nullptr == cpu_if_ ) {
-        dbg_.fatal(CALL_INFO, -1, "Error: was unable to configure link `cpu_if`\n");
+    exe_ = 0;
+    if ( params.find<bool>("exe", false ) ) {
+        exe_ = page_perms::exe;
     }
 
-    cache_if_ = configureLink("cache_if", new Event::Handler2<TLB_Wrapper,&TLB_Wrapper::handleCacheEvent>(this));
+    cpu_if_ = configureLink("highlink", new Event::Handler2<TLB_Wrapper,&TLB_Wrapper::handleCpuEvent>(this));
+    if ( nullptr == cpu_if_ ) {
+        cpu_if_ = configureLink("cpu_if", new Event::Handler2<TLB_Wrapper,&TLB_Wrapper::handleCpuEvent>(this));
+        if ( nullptr == cpu_if_ ) {
+            dbg_.fatal(CALL_INFO, -1, "Error: was unable to configure link `highlink` (previously `cpu_if`)\n");
+        } else {
+            dbg_.output("Warning: %s, The port 'cpu_if' has been renamed to 'highlink' to match other memory system components. Update your input file to eliminate this warning.\n", getName().c_str() );
+        }
+    }
+
+    cache_if_ = configureLink("lowlink", new Event::Handler2<TLB_Wrapper,&TLB_Wrapper::handleCacheEvent>(this));
     if ( nullptr == cache_if_ ) {
-        dbg_.fatal(CALL_INFO, -1, "Error: was unable to configure link `cache_if`\n");
+        cache_if_ = configureLink("cache_if", new Event::Handler2<TLB_Wrapper,&TLB_Wrapper::handleCacheEvent>(this));
+        if ( nullptr == cache_if_ ) {
+            dbg_.fatal(CALL_INFO, -1, "Error: was unable to configure link `lowlink` (previously `cache_if`)\n");
+        } else {
+            dbg_.output("Warning: %s, The port 'cache_if' has been renamed to 'lowlink' to match other memory system components. Update your input file to eliminate this warning.\n", getName().c_str() );
+        }
     }
 
     tlb_ = loadUserSubComponent<SST::MMU_Lib::TLB>("tlb");
