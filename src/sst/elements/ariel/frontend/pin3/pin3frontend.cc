@@ -64,6 +64,7 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores,
     setForkArguments();
     // If mpi, use mpi launcher. Otherwise launch pin
     //app_name = (mpimode == 1) ? mpilauncher : applauncher;
+    app_name = applauncher;
 
     // Remember that the list of arguments must be NULL terminated for execution
     //execute_args[(pin_arg_count - 1) + appargcount] = NULL;
@@ -317,20 +318,25 @@ int Pin3Frontend::forkChildProcess(const char* app, char** args,
 
         if(0 == app_env.size()) {
 #if defined(SST_COMPILE_MACOSX)
-        char *dyldpath = getenv("DYLD_LIBRARY_PATH");
 
-        if(dyldpath) {
-            setenv("PIN_APP_DYLD_LIBRARY_PATH", dyldpath, 1);
-            setenv("PIN_DYLD_RESTORE_REQUIRED", "t", 1);
-            unsetenv("DYLD_LIBRARY_PATH");
-        }
+            char *dyldpath = getenv("DYLD_LIBRARY_PATH");
+
+            if(dyldpath) {
+                setenv("PIN_APP_DYLD_LIBRARY_PATH", dyldpath, 1);
+                setenv("PIN_DYLD_RESTORE_REQUIRED", "t", 1);
+                unsetenv("DYLD_LIBRARY_PATH");
+            }
+
 #else
 #if defined(HAVE_SET_PTRACER)
-        prctl(PR_SET_PTRACER, getppid(), 0, 0 ,0);
+
+            prctl(PR_SET_PTRACER, getppid(), 0, 0 ,0);
+
 #endif // End of HAVE_SET_PTRACER
 #endif // End SST_COMPILE_MACOSX (else branch)
+
             int ret_code = execvp(app, args);
-            perror("execve");
+            perror("execvp");
 
             output->verbose(CALL_INFO, 1, 0,
                 "Call to execvp returned: %d\n", ret_code);
@@ -338,6 +344,7 @@ int Pin3Frontend::forkChildProcess(const char* app, char** args,
             output->fatal(CALL_INFO, -1,
                 "Error executing: %s under a PIN fork\n",
                 app);
+
         } else {
             char** execute_env_cp = (char**) malloc(sizeof(char*) * (app_env.size() + 1));
             uint32_t next_env_cp_index = 0;
@@ -359,7 +366,7 @@ int Pin3Frontend::forkChildProcess(const char* app, char** args,
             execute_env_cp[app_env.size()] = NULL;
 
             int ret_code = execve(app, args, execute_env_cp);
-            perror("execvep");
+            perror("execve");
 
             output->verbose(CALL_INFO, 1, 0, "Call to execvpe returned %d\n", ret_code);
             output->fatal(CALL_INFO, -1, "Error executing %s under a PIN fork\n", app);

@@ -36,18 +36,7 @@
 #define HAVE_MPI_H
 #endif
 
-
-// TODO add check for PinCRT compatible libz and try to pick that up
-/*#ifdef HAVE_PINCRT_LIBZ
-
-#include "zlib.h"
-#define BT_PRINTF(fmt, args...) gzprintf(btfiles[thr], fmt, ##args);
-
-#else
-*/
 #define BT_PRINTF(fmt, args...) fprintf(btfiles[thr], fmt, ##args);
-
-//#endif
 
 //This must be defined before inclusion of intttypes.h
 #ifndef __STDC_FORMAT_MACROS
@@ -180,8 +169,6 @@ class StackRecord {
 
 std::vector<std::vector<StackRecord> > arielStack; // Per-thread stacks
 
-
-
 // Returns true iff "libmpi.so" or "libmpi_cray.so" is found
 // in the call stack, indicating that the calling thread is
 // currently inside an MPI library. We use this information
@@ -211,7 +198,6 @@ bool is_mpi_thread(CONTEXT* ctxt) {
     }
     return false;
 }
-
 
 // Would be more efficient to implement as a TLS_KEY,
 // but it is rarely written so false sharing should not
@@ -1504,8 +1490,6 @@ int main(int argc, char *argv[])
 {
     if (PIN_Init(argc, argv)) return Usage();
 
-
-
     // Load the symbols ready for us to mangle functions.
     //PIN_InitSymbolsAlt(IFUNC_SYMBOLS);
     PIN_InitSymbols();
@@ -1541,21 +1525,16 @@ int main(int argc, char *argv[])
 
     if(PerformWriteTrace.Value() > 0) {
         writeTrace = true;
-    }
-
-    if( writeTrace ) {
-        if( SSTVerbosity.Value() > 0 ) {
+        if(SSTVerbosity.Value() > 0) {
             printf("SSTARIEL: Performing write tracing (this is an expensive operation.)\n");
         }
     }
 
     core_count = MaxCoreCount.Value();
-
     init_remapping_data(core_count);
-
     instrument_instructions = InstrumentInstructions.Value();
 
-// Pin version specific tunnel attach
+    // Pin version specific tunnel attach
     tunnelmgr = new SST::Core::Interprocess::MMAPChild_Pin3<ArielTunnel>(SSTNamedPipe.Value());
     tunnel = tunnelmgr->getTunnel();
     lastMallocSize = (UINT64*) malloc(sizeof(UINT64) * core_count);
