@@ -22,6 +22,9 @@
 #include "atomic.hpp"
 #include <time.h>
 #include <inttypes.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+#include <unordered_map>
 
 #include <string>
 #include <map>
@@ -142,9 +145,6 @@ struct timespec offset_tp_mono;
 struct timespec offset_tp_real;
 #endif
 
-// MPI
-int api_mpi_init_used = 0;
-
 /****************************************************************/
 /********************** SHADOW STACK ****************************/
 /* Used by 'sieve' to associate mallocs to the code they        */
@@ -179,6 +179,91 @@ class StackRecord {
 
 
 std::vector<std::vector<StackRecord> > arielStack; // Per-thread stacks
+
+
+
+// Returns true iff "libmpi.so" or "libmpi_cray.so" is found
+// in the call stack, indicating that the calling thread is
+// currently inside an MPI library. We use this information
+// to remap the mpi thread ids to come after the app threads.
+static const UINT32 MAX_FRAMES = 64;
+bool is_mpi_thread(CONTEXT* ctxt) {
+    void *buf[2048];
+
+    // PIN_Backtrace fills the trace array with return addresses.
+    // numFrames holds the number of captured frames.
+    UINT32 numFrames = PIN_Backtrace(ctxt, buf, sizeof(buf) / sizeof(buf[0]));
+
+    for (UINT32 i = 0; i < numFrames; i++) {
+        // Get the image (module) that contains the current address.
+        IMG img = IMG_FindByAddress((ADDRINT)buf[i]);
+
+        if (IMG_Valid(img)) {
+            std::string imgName = IMG_Name(img);
+
+            // Check if "libmpi.so" appears in the module name.
+            // Also check for libmpi_cray.so, just in case
+            if ((imgName.find("libmpi.so")      != std::string::npos) ||
+                (imgName.find("libmpi_cray.so") != std::string::npos)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+// Would be more efficient to implement as a TLS_KEY,
+// but it is rarely written so false sharing should not
+// be an issue
+std::unordered_map<THREADID, THREADID> remap_id;
+
+UINT32 next_app_thread;
+UINT32 next_mpi_thread;
+UINT32 num_threads;
+
+// Initialize data used for remapping thread IDs
+VOID init_remapping_data(UINT32 core_count) {
+   remap_id[0] = 0;
+   next_app_thread = 1;
+   next_mpi_thread = core_count;
+   num_threads = 1;
+}
+
+VOID SyscallEntry(THREADID tid, CONTEXT *ctxt, SYSCALL_STANDARD std, VOID *v)
+{
+   PIN_LockClient();
+   ADDRINT scNo = PIN_GetSyscallNumber(ctxt, std);
+
+   if (scNo == SYS_clone || scNo == __NR_clone) {
+
+      PIN_GetLock(&mainLock, tid);
+      // Get the next thread id
+      UINT32 next_thread = num_threads++;
+
+      bool is_mpi = is_mpi_thread(ctxt);
+
+      // App threads will be numbered 0..num_cores-1
+      // MPI library threads will be numbered num_cores..
+      if (is_mpi) {
+         remap_id[next_thread] = next_mpi_thread++;
+      } else {
+         remap_id[next_thread] = next_app_thread++;
+      }
+      PIN_ReleaseLock(&mainLock);
+
+//#ifdef ARIEL_DEBUG
+      fprintf(stderr, "Caught clone syscall. Launching thread %d (MPI?: %d). Current thread map is:\n", next_thread, is_mpi);
+      for (const auto& pair : remap_id) {
+
+         std::cout << "[ " << pair.first << " -> " << pair.second << " ]\n";
+      }
+//#endif
+   }
+
+
+   PIN_UnlockClient();
+}
 
 /* Instrumentation function to be called on function calls */
 VOID ariel_stack_call(THREADID thr, ADDRINT stackPtr, ADDRINT target, ADDRINT ip)
@@ -346,7 +431,7 @@ VOID WriteFlushInstructionMarker(UINT32 thr, ADDRINT ip, ADDRINT vaddr)
     ac.instPtr = (uint64_t) ip;
     ac.flushline.vaddr = (uint32_t) vaddr;
 
-    tunnel->writeMessage(thr, ac);
+    tunnel->writeMessage(remap_id[thr], ac);
 }
 
 VOID WriteFenceInstructionMarker(UINT32 thr, ADDRINT ip)
@@ -355,7 +440,7 @@ VOID WriteFenceInstructionMarker(UINT32 thr, ADDRINT ip)
     ac.command = ARIEL_FENCE_INSTRUCTION;
     ac.instPtr = (uint64_t) ip;
 
-    tunnel->writeMessage(thr, ac);
+    tunnel->writeMessage(remap_id[thr], ac);
 }
 
 VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize, THREADID thr, ADDRINT ip,
@@ -373,7 +458,7 @@ VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize, THREADID thr, ADDRI
     ac.inst.instClass = instClass;
     ac.inst.simdElemCount = simdOpWidth;
 
-    tunnel->writeMessage(thr, ac);
+    tunnel->writeMessage(remap_id[thr], ac);
 }
 
 VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr, ADDRINT ip,
@@ -405,7 +490,7 @@ VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr, ADD
     }
     printf("\n");
 */
-    tunnel->writeMessage(thr, ac);
+    tunnel->writeMessage(remap_id[thr], ac);
 }
 
 VOID WriteStartInstructionMarker(UINT32 thr, ADDRINT ip, UINT32 instClass, UINT32 simdOpWidth)
@@ -415,7 +500,7 @@ VOID WriteStartInstructionMarker(UINT32 thr, ADDRINT ip, UINT32 instClass, UINT3
     ac.instPtr = (uint64_t) ip;
     ac.inst.simdElemCount = simdOpWidth;
     ac.inst.instClass = instClass;
-    tunnel->writeMessage(thr, ac);
+    tunnel->writeMessage(remap_id[thr], ac);
 }
 
 VOID WriteEndInstructionMarker(UINT32 thr, ADDRINT ip)
@@ -423,22 +508,20 @@ VOID WriteEndInstructionMarker(UINT32 thr, ADDRINT ip)
     ArielCommand ac;
     ac.command = ARIEL_END_INSTRUCTION;
     ac.instPtr = (uint64_t) ip;
-    tunnel->writeMessage(thr, ac);
+    tunnel->writeMessage(remap_id[thr], ac);
 }
 
 VOID WriteInstructionReadWrite(THREADID thr, ADDRINT* readAddr, UINT32 readSize,
             ADDRINT* writeAddr, UINT32 writeSize, ADDRINT ip, UINT32 instClass,
-            UINT32 simdOpWidth, BOOL first, BOOL last )
+            UINT32 simdOpWidth )
 {
 
     if(enable_output) {
-        if(thr < core_count) {
-            if (first)
-                WriteStartInstructionMarker( thr, ip, instClass, simdOpWidth);
+        if(remap_id[thr] < core_count) {
+            WriteStartInstructionMarker( thr, ip, instClass, simdOpWidth);
             WriteInstructionRead(  readAddr,  readSize,  thr, ip, instClass, simdOpWidth );
             WriteInstructionWrite( writeAddr, writeSize, thr, ip, instClass, simdOpWidth );
-            if (last)
-                WriteEndInstructionMarker( thr, ip );
+            WriteEndInstructionMarker( thr, ip );
         }
     }
 }
@@ -448,7 +531,7 @@ VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize, 
 {
 
     if(enable_output) {
-        if(thr < core_count) {
+        if(remap_id[thr] < core_count) {
             if (first)
                 WriteStartInstructionMarker(thr, ip, instClass, simdOpWidth);
             WriteInstructionRead(  readAddr,  readSize,  thr, ip, instClass, simdOpWidth );
@@ -462,11 +545,11 @@ VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize, 
 VOID WriteNoOp(THREADID thr, ADDRINT ip)
 {
     if(enable_output) {
-        if(thr < core_count) {
+        if(remap_id[thr] < core_count) {
             ArielCommand ac;
             ac.command = ARIEL_NOOP;
             ac.instPtr = (uint64_t) ip;
-            tunnel->writeMessage(thr, ac);
+            tunnel->writeMessage(remap_id[thr], ac);
         }
     }
 }
@@ -476,7 +559,7 @@ VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSiz
 {
 
     if(enable_output) {
-        if(thr < core_count) {
+        if(remap_id[thr] < core_count) {
             if (first)
                 WriteStartInstructionMarker(thr, ip, instClass, simdOpWidth);
             WriteInstructionWrite(writeAddr, writeSize,  thr, ip, instClass, simdOpWidth);
@@ -559,31 +642,15 @@ VOID InstrumentInstruction(INS ins, VOID *v)
     }
 
     UINT32 operands = INS_MemoryOperandCount(ins);
-    if (INS_HasScatteredMemoryAccess(ins))
-        operands = 0;
     for (UINT32 op = 0; op < operands; op++) {
         BOOL first = (op == 0);
         BOOL last = (op == (operands - 1));
 
-        if (INS_MemoryOperandIsRead(ins, op) && INS_MemoryOperandIsWritten(ins, op)) {
-            USIZE opSize = INS_MemoryOperandSize(ins, op);
-            INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
-                    WriteInstructionReadWrite,
-                    IARG_THREAD_ID,
-                    IARG_MEMORYREAD_EA, IARG_UINT32, opSize,
-                    IARG_MEMORYWRITE_EA, IARG_UINT32, opSize,
-                    IARG_INST_PTR,
-                    IARG_UINT32, instClass,
-                    IARG_UINT32, simdOpWidth,
-                    IARG_BOOL, first,
-                    IARG_BOOL, last,
-                    IARG_END);
-        } else if (INS_MemoryOperandIsRead(ins, op)) {
-            USIZE opSize = INS_MemoryOperandSize(ins, op);
+        if (INS_MemoryOperandIsRead(ins, op)) {
             INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
                     WriteInstructionReadOnly,
                     IARG_THREAD_ID,
-                    IARG_MEMORYREAD_EA, IARG_UINT32, opSize,
+                    IARG_MEMORYREAD_EA, IARG_UINT32, INS_MemoryOperandSize(ins, op),
                     IARG_INST_PTR,
                     IARG_UINT32, instClass,
                     IARG_UINT32, simdOpWidth,
@@ -591,17 +658,17 @@ VOID InstrumentInstruction(INS ins, VOID *v)
                     IARG_BOOL, last,
                     IARG_END);
         } else {
-            USIZE opSize = INS_MemoryOperandSize(ins, op);
             INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
                     WriteInstructionWriteOnly,
                     IARG_THREAD_ID,
-                    IARG_MEMORYWRITE_EA, IARG_UINT32, opSize,
+                    IARG_MEMORYWRITE_EA, IARG_UINT32, INS_MemoryOperandSize(ins, op),
                     IARG_INST_PTR,
                     IARG_UINT32, instClass,
                     IARG_UINT32, simdOpWidth,
                     IARG_BOOL, first,
                     IARG_BOOL, last,
                     IARG_END);
+
         }
     }
 
@@ -819,7 +886,29 @@ void mapped_ariel_output_stats()
     ArielCommand ac;
     ac.command = ARIEL_OUTPUT_STATS;
     ac.instPtr = (uint64_t) 0;
-    tunnel->writeMessage(thr, ac);
+    tunnel->writeMessage(remap_id[thr], ac);
+}
+
+void mapped_ariel_output_stats_begin_region(const char* name)
+{
+    THREADID thr = PIN_ThreadId();
+    ArielCommand ac;
+    ac.command = ARIEL_OUTPUT_STATS_BEGIN_REGION;
+    ac.instPtr = (uint64_t) 0;
+    strncpy((char*)ac.inst.payload, name, ARIEL_MAX_PAYLOAD_SIZE - 1);
+    ac.inst.payload[ARIEL_MAX_PAYLOAD_SIZE-1]='\0';
+    tunnel->writeMessage(remap_id[thr], ac);
+}
+void mapped_ariel_output_stats_end_region(const char* name)
+
+{
+    THREADID thr = PIN_ThreadId();
+    ArielCommand ac;
+    ac.command = ARIEL_OUTPUT_STATS_END_REGION;
+    ac.instPtr = (uint64_t) 0;
+    strncpy((char*)ac.inst.payload, name, ARIEL_MAX_PAYLOAD_SIZE - 1);
+    ac.inst.payload[ARIEL_MAX_PAYLOAD_SIZE-1]='\0';
+    tunnel->writeMessage(remap_id[thr], ac);
 }
 
 // same effect as mapped_ariel_output_stats(), but it also sends a user-defined reference number back
@@ -829,7 +918,7 @@ void mapped_ariel_output_stats_buoy(uint64_t marker)
     ArielCommand ac;
     ac.command = ARIEL_OUTPUT_STATS;
     ac.instPtr = (uint64_t) marker; //user the instruction pointer slot to send the marker number
-    tunnel->writeMessage(thr, ac);
+    tunnel->writeMessage(remap_id[thr], ac);
 }
 
 void mapped_ariel_flushline(void *virtualAddress)
@@ -851,18 +940,6 @@ void mapped_ariel_fence(void *virtualAddress)
     WriteFenceInstructionMarker(thr, ip);
 }
 
-void mapped_api_mpi_init() {
-    api_mpi_init_used = 1;
-}
-
-int check_for_api_mpi_init() {
-    if (!api_mpi_init_used && !getenv("ARIEL_DISABLE_MPI_INIT_CHECK")) {
-        fprintf(stderr, "Error: fesimple.cc: The Ariel API verion of MPI_Init_{thread} was not used, which can result in errors when used in conjunction with OpenMP. Please link against the Ariel API (included in this distribution at src/sst/elements/ariel/api) or disable this message by setting the environment variable `ARIEL_DISABLE_MPI_INIT_CHECK`\n");
-        exit(1);
-    }
-    return 0;
-}
-
 int ariel_mlm_memcpy(void* dest, void* source, size_t size) {
 #ifdef ARIEL_DEBUG
     fprintf(stderr, "Perform a mlm_memcpy from Ariel from %p to %p length %llu\n",
@@ -880,7 +957,7 @@ int ariel_mlm_memcpy(void* dest, void* source, size_t size) {
     THREADID currentThread = PIN_ThreadId();
     UINT32 thr = (UINT32) currentThread;
 
-    if(thr >= core_count) {
+    if(remap_id[thr] >= core_count) {
         fprintf(stderr, "Thread ID: %" PRIu32 " is greater than core count.\n", thr);
         exit(-4);
     }
@@ -895,7 +972,7 @@ int ariel_mlm_memcpy(void* dest, void* source, size_t size) {
     ac.dma_start.dest = ariel_dest;
     ac.dma_start.len = length;
 
-    tunnel->writeMessage(thr, ac);
+    tunnel->writeMessage(remap_id[thr], ac);
 
 #ifdef ARIEL_DEBUG
     fprintf(stderr, "Done with ariel memcpy.\n");
@@ -923,7 +1000,7 @@ void ariel_mlm_set_pool(int new_pool)
     ArielCommand ac;
     ac.command = ARIEL_SWITCH_POOL;
     ac.switchPool.pool = newDefaultPool;
-    tunnel->writeMessage(thr, ac);
+    tunnel->writeMessage(remap_id[thr], ac);
 
     // Keep track of the default pool
     default_pool = (UINT32) new_pool;
@@ -938,8 +1015,8 @@ void* ariel_mmap_mlm(int fileID, size_t size, int level)
     UINT32 thr = (UINT32) currentThread;
 
 #ifdef ARIEL_DEBUG
-    fprintf(stderr, "%u: Perform a mmap_mlm from Ariel %zu, level %d\n",
-            thr, size, level);
+    fprintf(stderr, "%u: Perform a mmap_mlm from Ariel %zu (remapped to %zu), level %d\n",
+            thr, remap_id[thr], size, level);
 #endif
 
     if(0 == size)
@@ -954,8 +1031,8 @@ void* ariel_mmap_mlm(int fileID, size_t size, int level)
     size_t real_req_size = 4096 * (npages + ((page_diff == 0) ? 0 : 1));
 
 #ifdef ARIEL_DEBUG
-    fprintf(stderr, "Requested: %llu, but expanded to: %llu (on thread: %lu) \n",
-            size, real_req_size, thr);
+    fprintf(stderr, "Requested: %llu, but expanded to: %llu (on thread: %lu (remapped to %zu)) \n",
+            size, real_req_size, thr, remap_id[thr]);
 #endif
 
     void* real_ptr = 0;
@@ -975,11 +1052,11 @@ void* ariel_mmap_mlm(int fileID, size_t size, int level)
     std::cout<<"File ID at FESIMPLE IS : "<<ac.mlm_mmap.fileID<<std::endl;
     std::cout<<"After ******"<<std::endl;
 
-    tunnel->writeMessage(thr, ac);
+    tunnel->writeMessage(remap_id[thr], ac);
 
 #ifdef ARIEL_DEBUG
-    fprintf(stderr, "%u: Ariel mmap_mlm call allocates data at address: 0x%llx\n",
-            thr, (uint64_t) real_ptr);
+    fprintf(stderr, "%u (remapped to %zu): Ariel mmap_mlm call allocates data at address: 0x%llx\n",
+            thr, remap_id[thr], (uint64_t) real_ptr);
 #endif
 
     PIN_GetLock(&mainLock, thr);
@@ -994,7 +1071,7 @@ void* ariel_mlm_malloc(size_t size, int level) {
     UINT32 thr = (UINT32) currentThread;
 
 #ifdef ARIEL_DEBUG
-    fprintf(stderr, "%u: Perform a mlm_malloc from Ariel %zu, level %d\n", thr, size, level);
+    fprintf(stderr, "%u: Perform a mlm_malloc from Ariel %zu (remapped to %zu) , level %d\n", thr, remap_id[thr], size, level);
 #endif
 
     if(0 == size) {
@@ -1008,8 +1085,8 @@ void* ariel_mlm_malloc(size_t size, int level) {
     size_t real_req_size = 4096 * (npages + ((page_diff == 0) ? 0 : 1));
 
 #ifdef ARIEL_DEBUG
-    fprintf(stderr, "Requested: %llu, but expanded to: %llu (on thread: %lu) \n",
-            size, real_req_size, thr);
+    fprintf(stderr, "Requested: %llu, but expanded to: %llu (on thread: %lu (remapped to %zu)) \n",
+            size, real_req_size, thr, remap_id[thr]);
 #endif
 
     void* real_ptr = 0;
@@ -1030,11 +1107,11 @@ void* ariel_mlm_malloc(size_t size, int level) {
         ac.mlm_map.alloc_level = allocationLevel;
     }
 
-    tunnel->writeMessage(thr, ac);
+    tunnel->writeMessage(remap_id[thr], ac);
 
 #ifdef ARIEL_DEBUG
-    fprintf(stderr, "%u: Ariel mlm_malloc call allocates data at address: 0x%llx\n",
-            thr, (uint64_t) real_ptr);
+    fprintf(stderr, "%zu (remapped_to %zu): Ariel mlm_malloc call allocates data at address: 0x%llx\n",
+            thr, remap_id[thr], (uint64_t) real_ptr);
 #endif
 
     PIN_GetLock(&mainLock, thr);
@@ -1049,7 +1126,7 @@ void ariel_mlm_free(void* ptr)
     UINT32 thr = (UINT32) currentThread;
 
 #ifdef ARIEL_DEBUG
-    fprintf(stderr, "Perform a mlm_free from Ariel (pointer = %p) on thread %lu\n", ptr, thr);
+    fprintf(stderr, "Perform a mlm_free from Ariel (pointer = %p) on thread %zu (remapped to %zu)\n", ptr, thr, remap_id[thr]);
 #endif
 
     bool found = false;
@@ -1075,7 +1152,7 @@ void ariel_mlm_free(void* ptr)
         ArielCommand ac;
         ac.command = ARIEL_ISSUE_TLM_FREE;
         ac.mlm_free.vaddr = virtAddr;
-        tunnel->writeMessage(thr, ac);
+        tunnel->writeMessage(remap_id[thr], ac);
 
     } else {
         fprintf(stderr, "ARIEL: Call to free in Ariel did not find a matching local allocation, this memory will be leaked.\n");
@@ -1127,14 +1204,14 @@ VOID ariel_postmalloc_instrument(ADDRINT allocLocation)
                 if (toFast[thr].count == 0) {
                     toFast[thr].valid = false;
                 }
-                tunnel->writeMessage(thr, ac);
+                tunnel->writeMessage(remap_id[thr], ac);
             }
         } else if (shouldOverride) {
             ac.mlm_map.alloc_level = overridePool;
-            tunnel->writeMessage(thr, ac);
+            tunnel->writeMessage(remap_id[thr], ac);
         } else if (InterceptMemAllocations.Value()) {
             ac.mlm_map.alloc_level = allocationLevel;
-            tunnel->writeMessage(thr, ac);
+            tunnel->writeMessage(remap_id[thr], ac);
         }
 
         /*printf("ARIEL: Created a malloc of size: %" PRIu64 " in Ariel\n",
@@ -1152,7 +1229,7 @@ VOID ariel_postfree_instrument(ADDRINT allocLocation)
     ArielCommand ac;
     ac.command = ARIEL_ISSUE_TLM_FREE;
     ac.mlm_free.vaddr = virtAddr;
-    tunnel->writeMessage(thr, ac);
+    tunnel->writeMessage(remap_id[thr], ac);
 }
 
 void mapped_ariel_malloc_flag_fortran(int* mallocLocId, int* count, int* level)
@@ -1199,7 +1276,7 @@ void ariel_start_RTL_sim(RTL_shmem_info* rtl_shmem) {
 
     THREADID thr = PIN_ThreadId();
     const uint32_t thrID = (uint32_t) thr;
-    tunnel->writeMessage(thrID, acRtl);
+    tunnel->writeMessage(remap_id[thrID], acRtl);
     #ifdef ARIEL_DEBUG
     fprintf(stderr, "\nMessage to add RTL Event into Ariel Event Queue successfully delivered via ArielTunnel");
     #endif
@@ -1220,7 +1297,7 @@ void ariel_update_RTL_signals(RTL_shmem_info* rtl_shmem) {
 
     THREADID thr = PIN_ThreadId();
     const uint32_t thrID = (uint32_t) thr;
-    tunnel->writeMessage(thrID, acRtl);
+    tunnel->writeMessage(remap_id[thrID], acRtl);
     #ifdef ARIEL_DEBUG
     fprintf(stderr, "\nMessage to add RTL Event into Ariel Event Queue to update RTL signals successfully delivered via ArielTunnel");
     #endif
@@ -1258,6 +1335,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
         RTN_Replace(rtn, (AFUNPTR) mapped_ariel_cycles);
         fprintf(stderr, "Replacement complete\n");
         return;
+        /*
     } else if (RTN_Name(rtn) == "MPI_Init" || RTN_Name(rtn) == "_MPI_Init") {
         fprintf(stderr, "Identified routine: MPI_Init. Instrumenting.\n");
         RTN_Open(rtn);
@@ -1275,7 +1353,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
         RTN_Replace(rtn, (AFUNPTR) mapped_api_mpi_init);
         fprintf(stderr, "Replacement complete\n");
         return;
-        return;
+        */
 #if ! defined(__APPLE__)
     } else if (RTN_Name(rtn) == "clock_gettime" || RTN_Name(rtn) == "_clock_gettime" ||
         RTN_Name(rtn) == "__clock_gettime") {
@@ -1294,7 +1372,6 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
         RTN_Replace(rtn, (AFUNPTR) ariel_update_RTL_signals);
         fprintf(stderr,"Replacement complete.\n");
         return;
-
     } else if ((InterceptMemAllocations.Value() > 0) && RTN_Name(rtn) == "mlm_malloc") {
         // This means we want a special malloc to be used (needs a TLB map inside the virtual core)
         fprintf(stderr,"Identified routine: mlm_malloc, replacing with Ariel equivalent...\n");
@@ -1344,6 +1421,16 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
     } else if (RTN_Name(rtn) == "ariel_output_stats" || RTN_Name(rtn) == "_ariel_output_stats" || RTN_Name(rtn) == "__arielfort_MOD_ariel_output_stats") {
         fprintf(stderr, "Identified routine: ariel_output_stats, replacing with Ariel equivalent..\n");
         RTN_Replace(rtn, (AFUNPTR) mapped_ariel_output_stats);
+        fprintf(stderr, "Replacement complete\n");
+        return;
+    } else if (RTN_Name(rtn) == "ariel_output_stats_begin_region" || RTN_Name(rtn) == "_ariel_output_stats_begin_region" || RTN_Name(rtn) == "__arielfort_MOD_ariel_output_stats_begin_region") {
+        fprintf(stderr, "Identified routine: ariel_output_stats_begin_region, replacing with Ariel equivalent..\n");
+        RTN_Replace(rtn, (AFUNPTR) mapped_ariel_output_stats_begin_region);
+        fprintf(stderr, "Replacement complete\n");
+        return;
+    } else if (RTN_Name(rtn) == "ariel_output_stats_end_region" || RTN_Name(rtn) == "_ariel_output_stats_end_region" || RTN_Name(rtn) == "__arielfort_MOD_ariel_output_stats_end_region") {
+        fprintf(stderr, "Identified routine: ariel_output_stats_end_region, replacing with Ariel equivalent..\n");
+        RTN_Replace(rtn, (AFUNPTR) mapped_ariel_output_stats_end_region);
         fprintf(stderr, "Replacement complete\n");
         return;
     } else if (RTN_Name(rtn) == "ariel_output_stats_buoy" || RTN_Name(rtn) == "_ariel_output_stats_buoy") {
@@ -1417,10 +1504,13 @@ int main(int argc, char *argv[])
 {
     if (PIN_Init(argc, argv)) return Usage();
 
+
+
     // Load the symbols ready for us to mangle functions.
     //PIN_InitSymbolsAlt(IFUNC_SYMBOLS);
     PIN_InitSymbols();
     PIN_AddFiniFunction(Fini, 0);
+    PIN_AddSyscallEntryFunction(SyscallEntry, 0);
 
     PIN_InitLock(&mainLock);
     PIN_InitLock(&mallocIndexLock);
@@ -1460,6 +1550,9 @@ int main(int argc, char *argv[])
     }
 
     core_count = MaxCoreCount.Value();
+
+    init_remapping_data(core_count);
+
     instrument_instructions = InstrumentInstructions.Value();
 
 // Pin version specific tunnel attach
