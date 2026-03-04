@@ -192,3 +192,30 @@ libfabric_la_SOURCES = \
   $(libfabric_headers) \
   $(rdmainclude_headers) \
   $(nodist_rdmainclude_headers)
+
+# Standalone libfabric install for mvapich2 (--with-ofi= prefix)
+# Install standard libfabric headers to $(includedir)/rdma/ so that
+# -I$(prefix)/include gives #include <rdma/fabric.h>
+ofi_standalone_rdmadir = $(includedir)/rdma
+ofi_standalone_rdma_HEADERS = \
+  include/rdma/fabric.h \
+  include/rdma/fi_atomic.h \
+  include/rdma/fi_cm.h \
+  include/rdma/fi_collective.h \
+  include/rdma/fi_domain.h \
+  include/rdma/fi_endpoint.h \
+  include/rdma/fi_eq.h \
+  include/rdma/fi_errno.h \
+  include/rdma/fi_rma.h \
+  include/rdma/fi_tagged.h \
+  include/rdma/fi_trigger.h
+
+# Symlink libfabric from extdir to libdir so -lfabric finds it (e.g. mvapich2 --with-ofi=)
+install-exec-hook:
+	$(MKDIR_P) $(DESTDIR)$(libdir)
+	-if test -f $(DESTDIR)$(pkglibdir)/ext/libfabric.so; then \
+	  $(LN_S) -f '$(DESTDIR)$(pkglibdir)/ext/libfabric.so' $(DESTDIR)$(libdir)/libfabric.so; \
+	elif test -f $(DESTDIR)$(pkglibdir)/ext/libfabric.so.0; then \
+	  $(LN_S) -f '$(DESTDIR)$(pkglibdir)/ext/libfabric.so.0' $(DESTDIR)$(libdir)/libfabric.so.0; \
+	  $(LN_S) -f libfabric.so.0 $(DESTDIR)$(libdir)/libfabric.so; \
+	fi

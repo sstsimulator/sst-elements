@@ -23,7 +23,11 @@
 
 #if SST_HG_EXTERNAL
 #define SST_APP_NAME_QUOTED __FILE__ __DATE__
+#ifdef __cplusplus
 #define SST_DEFINE_EXE_NAME extern "C" const char exe_main_name[] = SST_APP_NAME_QUOTED;
+#else
+#define SST_DEFINE_EXE_NAME extern const char exe_main_name[] = SST_APP_NAME_QUOTED;
+#endif
 #else
 #define SST_APP_NAME_QUOTED SSTPP_STR(ssthg_app_name)
 #define SST_DEFINE_EXE_NAME
@@ -33,6 +37,9 @@
 typedef int (*main_fxn)(int,char**);
 typedef int (*empty_main_fxn)();
 
+#ifndef __cplusplus
+#include <stdbool.h>
+#else
 /* hate that I have to do this for cmake */
 #if __cplusplus < 201103L
 #define char16_t char16type
@@ -49,10 +56,14 @@ namespace SST {
 class Params;
 }
 #endif
+#endif /* __cplusplus */
 
 #define define_var_name_pass_through(x) ssthg_dont_ignore_this##x
 #define define_var_name(x) define_var_name_pass_through(x)
 
+#ifdef __cplusplus
+/* Main refactoring uses a static initializer with a function call, which is not
+ * valid in C (compile-time constant required). Only apply for C++. */
 #ifndef SSTHG_NO_REFACTOR_MAIN
 #undef main
 #define main USER_MAIN
@@ -68,24 +79,35 @@ class Params;
 #else
 #define main ssthg_ignore_for_app_name(); int main
 #endif
+#endif /* __cplusplus */
 
+#ifdef __cplusplus
 extern "C" {
+#endif
 extern int ssthg_global_stacksize;
 extern char* static_init_glbls_segment;
 extern char* static_init_tls_segment;
 void sst_hg_init_global_space(void* ptr, int size, int offset, bool tls);
 void sst_hg_advance_time(const char* param_name);
 void sst_hg_blocking_call(int condition, double timeout, const char* api);
+/* Alias for hgcc-generated pragma: ssthg_blocking_call -> sst_hg_blocking_call */
+#define ssthg_blocking_call sst_hg_blocking_call
+#ifdef __cplusplus
 }
+#endif
 
-namespace SST::Hg {
+#ifdef __cplusplus
+namespace SST {
+namespace Hg {
 
 unsigned int ssthg_sleep(unsigned int secs);
 unsigned int ssthg_usleep(unsigned int usecs);
 unsigned int ssthg_nanosleep(unsigned int nsecs);
 
-} //end namespace SST::Hg
+} // namespace Hg
+} // namespace SST
 
 #include <mercury/common/skeleton_tls.h>
-#include <mercury/common/null_buffer.h>
+#endif /* __cplusplus */
 
+#include <mercury/common/null_buffer.h>

@@ -1,0 +1,112 @@
+// Copyright 2009-2025 NTESS. All rights reserved.
+// Map standard pthread names to mercury (HG_) implementation.
+
+#ifndef SST_HG_LIBRARIES_PTHREAD_HG_PTHREAD_MACRO_H
+#define SST_HG_LIBRARIES_PTHREAD_HG_PTHREAD_MACRO_H
+
+#include <mercury/operating_system/libraries/pthread/hg_pthread_clear_macros.h>
+
+#define PTHREAD_ONCE_INIT       HG_PTHREAD_ONCE_INIT
+#define PTHREAD_MUTEX_INITIALIZER  HG_PTHREAD_MUTEX_INITIALIZER
+#define PTHREAD_COND_INITIALIZER   HG_PTHREAD_COND_INITIALIZER
+#define PTHREAD_RWLOCK_INITIALIZER HG_PTHREAD_RWLOCK_INITIALIZER
+#define PTHREAD_CREATE_DETACHED   HG_PTHREAD_CREATE_DETACHED
+#define PTHREAD_CREATE_JOINABLE   HG_PTHREAD_CREATE_JOINABLE
+#define PTHREAD_MUTEX_NORMAL      HG_PTHREAD_MUTEX_NORMAL
+#define PTHREAD_MUTEX_RECURSIVE   HG_PTHREAD_MUTEX_RECURSIVE
+#define PTHREAD_MUTEX_ERRORCHECK  HG_PTHREAD_MUTEX_ERRORCHECK
+#define PTHREAD_MUTEX_DEFAULT     HG_PTHREAD_MUTEX_DEFAULT
+#define PTHREAD_PROCESS_SHARED    HG_PTHREAD_PROCESS_SHARED
+#define PTHREAD_PROCESS_PRIVATE   HG_PTHREAD_PROCESS_PRIVATE
+#define PTHREAD_SCOPE_PROCESS     HG_PTHREAD_SCOPE_PROCESS
+#define PTHREAD_SCOPE_SYSTEM      HG_PTHREAD_SCOPE_SYSTEM
+
+#define pthread_t                hg_pthread_t
+#define pthread_attr_t           hg_pthread_attr_t
+#define pthread_mutex_t          hg_pthread_mutex_t
+#define pthread_mutexattr_t      hg_pthread_mutexattr_t
+#define pthread_cond_t           hg_pthread_cond_t
+#define pthread_condattr_t       hg_pthread_condattr_t
+#define pthread_spinlock_t       hg_pthread_spinlock_t
+#define pthread_once_t           hg_pthread_once_t
+#define pthread_key_t            hg_pthread_key_t
+#define pthread_rwlock_t         hg_pthread_rwlock_t
+#define pthread_rwlockattr_t     hg_pthread_rwlockattr_t
+#define pthread_barrier_t        hg_pthread_barrier_t
+#define pthread_barrierattr_t    hg_pthread_barrierattr_t
+#define PTHREAD_BARRIER_SERIAL_THREAD HG_PTHREAD_BARRIER_SERIAL_THREAD
+
+#define pthread_create           HG_pthread_create
+#define pthread_join             HG_pthread_join
+#define pthread_exit             HG_pthread_exit
+#define pthread_self             HG_pthread_self
+#define pthread_equal            HG_pthread_equal
+#define pthread_mutex_init       HG_pthread_mutex_init
+#define pthread_mutex_destroy     HG_pthread_mutex_destroy
+#define pthread_mutex_lock       HG_pthread_mutex_lock
+#define pthread_mutex_trylock     HG_pthread_mutex_trylock
+#define pthread_mutex_unlock     HG_pthread_mutex_unlock
+#define pthread_mutexattr_init   HG_pthread_mutexattr_init
+#define pthread_mutexattr_destroy HG_pthread_mutexattr_destroy
+#define pthread_mutexattr_gettype HG_pthread_mutexattr_gettype
+#define pthread_mutexattr_settype HG_pthread_mutexattr_settype
+#define pthread_mutexattr_getpshared HG_pthread_mutexattr_getpshared
+#define pthread_mutexattr_setpshared HG_pthread_mutexattr_setpshared
+#define pthread_spin_init        HG_pthread_spin_init
+#define pthread_spin_destroy     HG_pthread_spin_destroy
+#define pthread_spin_lock        HG_pthread_spin_lock
+#define pthread_spin_trylock     HG_pthread_spin_trylock
+#define pthread_spin_unlock      HG_pthread_spin_unlock
+#define pthread_cond_init        HG_pthread_cond_init
+#define pthread_cond_destroy     HG_pthread_cond_destroy
+#define pthread_cond_wait        HG_pthread_cond_wait
+#define pthread_cond_timedwait   HG_pthread_cond_timedwait
+#define pthread_cond_signal      HG_pthread_cond_signal
+#define pthread_cond_broadcast   HG_pthread_cond_broadcast
+#define pthread_condattr_init    HG_pthread_condattr_init
+#define pthread_condattr_destroy HG_pthread_condattr_destroy
+#define pthread_condattr_getpshared HG_pthread_condattr_getpshared
+#define pthread_condattr_setpshared HG_pthread_condattr_setpshared
+#define pthread_once            HG_pthread_once
+#define pthread_key_create      HG_pthread_key_create
+#define pthread_key_delete      HG_pthread_key_delete
+#define pthread_setspecific     HG_pthread_setspecific
+#define pthread_getspecific     HG_pthread_getspecific
+#define pthread_attr_init       HG_pthread_attr_init
+#define pthread_attr_destroy    HG_pthread_attr_destroy
+#define pthread_attr_getdetachstate HG_pthread_attr_getdetachstate
+#define pthread_attr_setdetachstate HG_pthread_attr_setdetachstate
+#define pthread_attr_setscope   HG_pthread_attr_setscope
+#define pthread_attr_getscope   HG_pthread_attr_getscope
+#define pthread_attr_setaffinity_np HG_pthread_attr_setaffinity_np
+#define pthread_attr_getaffinity_np HG_pthread_attr_getaffinity_np
+#define pthread_attr_getstack   HG_pthread_attr_getstack
+#define pthread_detach         HG_pthread_detach
+#define pthread_yield           HG_pthread_yield
+#define pthread_testcancel     HG_pthread_testcancel
+#define pthread_kill           HG_pthread_kill
+#define pthread_rwlock_init     HG_pthread_rwlock_init
+#define pthread_rwlock_destroy HG_pthread_rwlock_destroy
+#define pthread_rwlock_rdlock  HG_pthread_rwlock_rdlock
+#define pthread_rwlock_tryrdlock HG_pthread_rwlock_tryrdlock
+#define pthread_rwlock_wrlock  HG_pthread_rwlock_wrlock
+#define pthread_rwlock_trywrlock HG_pthread_rwlock_trywrlock
+#define pthread_rwlock_unlock  HG_pthread_rwlock_unlock
+#define pthread_rwlockattr_init HG_pthread_rwlockattr_init
+#define pthread_rwlockattr_destroy HG_pthread_rwlockattr_destroy
+#define pthread_barrier_init    HG_pthread_barrier_init
+#define pthread_barrier_destroy HG_pthread_barrier_destroy
+#define pthread_barrier_wait    HG_pthread_barrier_wait
+#define pthread_barrierattr_init   HG_pthread_barrierattr_init
+#define pthread_barrierattr_destroy HG_pthread_barrierattr_destroy
+#define pthread_barrierattr_getpshared HG_pthread_barrierattr_getpshared
+#define pthread_barrierattr_setpshared HG_pthread_barrierattr_setpshared
+#define pthread_setconcurrency HG_pthread_setconcurrency
+#define pthread_getconcurrency HG_pthread_getconcurrency
+#define pthread_atfork         HG_pthread_atfork
+#define pthread_setaffinity_np HG_pthread_setaffinity_np
+#define pthread_getaffinity_np HG_pthread_getaffinity_np
+#define pthread_cleanup_push   HG_pthread_cleanup_push
+#define pthread_cleanup_pop    HG_pthread_cleanup_pop
+
+#endif
