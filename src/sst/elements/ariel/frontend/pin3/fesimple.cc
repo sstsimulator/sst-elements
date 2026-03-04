@@ -238,13 +238,13 @@ VOID SyscallEntry(THREADID tid, CONTEXT *ctxt, SYSCALL_STANDARD std, VOID *v)
       }
       PIN_ReleaseLock(&mainLock);
 
-//#ifdef ARIEL_DEBUG
+#ifdef ARIEL_DEBUG
       fprintf(stderr, "Caught clone syscall. Launching thread %d (MPI?: %d). Current thread map is:\n", next_thread, is_mpi);
       for (const auto& pair : remap_id) {
 
          std::cout << "[ " << pair.first << " -> " << pair.second << " ]\n";
       }
-//#endif
+#endif
    }
 
 

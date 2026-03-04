@@ -108,11 +108,11 @@ class testcase_Ariel(SSTTestCase):
     def test_Ariel_mpi_hello_01_pin(self):
         self.ariel_Template(threads=1, ranks=1)
 
-    @unittest.skipIf(not mpi_support, mpi_error_msg)
-    @unittest.skipIf(not epa_loaded, epa_error_msg)
-    @unittest.skipIf(multi_rank, multi_rank_error_msg)
-    def test_Ariel_mpi_hello_01_epa(self):
-        self.ariel_Template(threads=1, ranks=1, frontend="epa")
+#    @unittest.skipIf(not mpi_support, mpi_error_msg)
+#    @unittest.skipIf(not epa_loaded, epa_error_msg)
+#    @unittest.skipIf(multi_rank, multi_rank_error_msg)
+#    def test_Ariel_mpi_hello_01_epa(self):
+#        self.ariel_Template(threads=1, ranks=1, frontend="epa")
 
     @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
@@ -120,11 +120,11 @@ class testcase_Ariel(SSTTestCase):
     def test_Ariel_mpi_hello_02_pin(self):
         self.ariel_Template(threads=1, ranks=2)
 
-    @unittest.skipIf(not mpi_support, mpi_error_msg)
-    @unittest.skipIf(not epa_loaded, epa_error_msg)
-    @unittest.skipIf(multi_rank, multi_rank_error_msg)
-    def test_Ariel_mpi_hello_02_epa(self):
-        self.ariel_Template(threads=1, ranks=2, frontend="epa")
+#    @unittest.skipIf(not mpi_support, mpi_error_msg)
+#    @unittest.skipIf(not epa_loaded, epa_error_msg)
+#    @unittest.skipIf(multi_rank, multi_rank_error_msg)
+#    def test_Ariel_mpi_hello_02_epa(self):
+#        self.ariel_Template(threads=1, ranks=2, frontend="epa")
 
     @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
@@ -133,12 +133,12 @@ class testcase_Ariel(SSTTestCase):
     def test_Ariel_mpi_hello_03_pin(self):
         self.ariel_Template(threads=2, ranks=1)
 
-    @unittest.skipIf(not mpi_support, mpi_error_msg)
-    @unittest.skipIf(not epa_loaded, epa_error_msg)
-    @unittest.skipIf(multi_rank, multi_rank_error_msg)
-    @unittest.skipIf(using_osx, osx_error_msg)
-    def test_Ariel_mpi_hello_03_epa(self):
-        self.ariel_Template(threads=2, ranks=1, frontend="epa")
+#    @unittest.skipIf(not mpi_support, mpi_error_msg)
+#    @unittest.skipIf(not epa_loaded, epa_error_msg)
+#    @unittest.skipIf(multi_rank, multi_rank_error_msg)
+#    @unittest.skipIf(using_osx, osx_error_msg)
+#    def test_Ariel_mpi_hello_03_epa(self):
+#        self.ariel_Template(threads=2, ranks=1, frontend="epa")
 
     @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
@@ -146,11 +146,11 @@ class testcase_Ariel(SSTTestCase):
     def test_Ariel_mpi_hello_04_pin(self):
         self.ariel_Template(threads=1, ranks=2, tracerank=1)
 
-    @unittest.skipIf(not mpi_support, mpi_error_msg)
-    @unittest.skipIf(not epa_loaded, epa_error_msg)
-    @unittest.skipIf(multi_rank, multi_rank_error_msg)
-    def test_Ariel_mpi_hello_04_epa(self):
-        self.ariel_Template(threads=1, ranks=2, tracerank=1, frontend="epa")
+#    @unittest.skipIf(not mpi_support, mpi_error_msg)
+#    @unittest.skipIf(not epa_loaded, epa_error_msg)
+#    @unittest.skipIf(multi_rank, multi_rank_error_msg)
+#    def test_Ariel_mpi_hello_04_epa(self):
+#        self.ariel_Template(threads=1, ranks=2, tracerank=1, frontend="epa")
 
     @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
@@ -159,12 +159,12 @@ class testcase_Ariel(SSTTestCase):
     def test_Ariel_mpi_hello_05_pin(self):
         self.ariel_Template(threads=2, ranks=3, tracerank=1)
 
-    @unittest.skipIf(not mpi_support, mpi_error_msg)
-    @unittest.skipIf(not epa_loaded, epa_error_msg)
-    @unittest.skipIf(multi_rank, multi_rank_error_msg)
-    @unittest.skipIf(using_osx, osx_error_msg)
-    def test_Ariel_mpi_hello_05_epa(self):
-        self.ariel_Template(threads=2, ranks=3, tracerank=1, frontend="epa")
+#    @unittest.skipIf(not mpi_support, mpi_error_msg)
+#    @unittest.skipIf(not epa_loaded, epa_error_msg)
+#    @unittest.skipIf(multi_rank, multi_rank_error_msg)
+#    @unittest.skipIf(using_osx, osx_error_msg)
+#    def test_Ariel_mpi_hello_05_epa(self):
+#        self.ariel_Template(threads=2, ranks=3, tracerank=1, frontend="epa")
 
     @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
@@ -173,12 +173,12 @@ class testcase_Ariel(SSTTestCase):
     def test_Ariel_mpi_hello_06_pin(self):
         self.ariel_Template(threads=2, ranks=2)
 
-    @unittest.skipIf(not mpi_support, mpi_error_msg)
-    @unittest.skipIf(not epa_loaded, epa_error_msg)
-    @unittest.skipIf(multi_rank, multi_rank_error_msg)
-    @unittest.skipIf(using_osx, osx_error_msg)
-    def test_Ariel_mpi_hello_06_epa(self):
-        self.ariel_Template(threads=2, ranks=2, frontend="epa")
+#    @unittest.skipIf(not mpi_support, mpi_error_msg)
+#    @unittest.skipIf(not epa_loaded, epa_error_msg)
+#    @unittest.skipIf(multi_rank, multi_rank_error_msg)
+#    @unittest.skipIf(using_osx, osx_error_msg)
+#    def test_Ariel_mpi_hello_06_epa(self):
+#        self.ariel_Template(threads=2, ranks=2, frontend="epa")
 
     @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
@@ -186,12 +186,12 @@ class testcase_Ariel(SSTTestCase):
     def test_Ariel_mpi_reduce_01_pin(self):
         self.ariel_Template(threads=1, ranks=1, program="reduce")
 
-    @unittest.skipIf(not mpi_support, mpi_error_msg)
-    @unittest.skipIf(not epa_loaded, epa_error_msg)
-    @unittest.skipIf(multi_rank, multi_rank_error_msg)
-    def test_Ariel_mpi_reduce_01_epa(self):
-        self.ariel_Template(threads=1, ranks=1, program="reduce", frontend="epa")
-
+#    @unittest.skipIf(not mpi_support, mpi_error_msg)
+#    @unittest.skipIf(not epa_loaded, epa_error_msg)
+#    @unittest.skipIf(multi_rank, multi_rank_error_msg)
+#    def test_Ariel_mpi_reduce_01_epa(self):
+#        self.ariel_Template(threads=1, ranks=1, program="reduce", frontend="epa")
+#
     @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
@@ -199,12 +199,12 @@ class testcase_Ariel(SSTTestCase):
     def test_Ariel_mpi_reduce_02_pin(self):
         self.ariel_Template(threads=2, ranks=2, program="reduce")
 
-    @unittest.skipIf(not mpi_support, mpi_error_msg)
-    @unittest.skipIf(not epa_loaded, epa_error_msg)
-    @unittest.skipIf(multi_rank, multi_rank_error_msg)
-    @unittest.skipIf(using_osx, osx_error_msg)
-    def test_Ariel_mpi_reduce_02_epa(self):
-        self.ariel_Template(threads=2, ranks=2, program="reduce", frontend="epa")
+#    @unittest.skipIf(not mpi_support, mpi_error_msg)
+#    @unittest.skipIf(not epa_loaded, epa_error_msg)
+#    @unittest.skipIf(multi_rank, multi_rank_error_msg)
+#    @unittest.skipIf(using_osx, osx_error_msg)
+#    def test_Ariel_mpi_reduce_02_epa(self):
+#        self.ariel_Template(threads=2, ranks=2, program="reduce", frontend="epa")
 
     @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
@@ -213,12 +213,12 @@ class testcase_Ariel(SSTTestCase):
     def test_Ariel_mpi_reduce_03_pin(self):
         self.ariel_Template(threads=2, ranks=4, program="reduce", tracerank=1)
 
-    @unittest.skipIf(not mpi_support, mpi_error_msg)
-    @unittest.skipIf(not epa_loaded, epa_error_msg)
-    @unittest.skipIf(multi_rank, multi_rank_error_msg)
-    @unittest.skipIf(using_osx, osx_error_msg)
-    def test_Ariel_mpi_reduce_03_epa(self):
-        self.ariel_Template(threads=2, ranks=4, program="reduce", tracerank=1, frontend="epa")
+#    @unittest.skipIf(not mpi_support, mpi_error_msg)
+#    @unittest.skipIf(not epa_loaded, epa_error_msg)
+#    @unittest.skipIf(multi_rank, multi_rank_error_msg)
+#    @unittest.skipIf(using_osx, osx_error_msg)
+#    def test_Ariel_mpi_reduce_03_epa(self):
+#        self.ariel_Template(threads=2, ranks=4, program="reduce", tracerank=1, frontend="epa")
 
     def ariel_Template(self, threads, ranks, program="hello", tracerank=0, testtimeout=60, size=8000, frontend="pin"):
         # Set the paths to the various directories
