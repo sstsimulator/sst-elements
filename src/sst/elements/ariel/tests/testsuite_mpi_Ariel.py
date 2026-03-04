@@ -255,6 +255,9 @@ class testcase_Ariel(SSTTestCase):
         log_debug("out file = {0}".format(outfile))
         log_debug("err file = {0}".format(errfile))
 
+        # Allow application ranks to share slots with SST ranks
+        os.environ['OMPI_MCA_rmaps_base_oversubscribe'] = '1'
+
         # Run SST in the tests directory
         self.run_sst(sdlfile, outfile, errfile, set_cwd=ArielElementTestMPIDir,
                      mpi_out_files=mpioutfiles, timeout_sec=testtimeout, other_args=other_args)
