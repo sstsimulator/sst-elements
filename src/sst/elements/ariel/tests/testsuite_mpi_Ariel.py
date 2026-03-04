@@ -18,7 +18,7 @@ def get_hello_string(rank, ranks, tracerank, threads, frontend):
 
 ################################################################################
     ##############################################
-    # EPA Frontend Functions not yet in sst-core #
+    # Checks not not yet in sst-core #
     ##############################################
 def is_EPAX_loaded() -> bool:
     # Check if arm-based epa tool is available
@@ -35,6 +35,20 @@ def is_PEBIL_loaded() -> bool:
     if pebil_path is not None:
         pebildir_found = os.path.isdir(pebil_path)
     return pebildir_found
+
+# Check that MPICC is set
+def check_mpi_support():
+    try:
+        # Query only the MPICC setting
+        output = subprocess.check_output(
+            ["sst-config", "--MPICC"],
+            stderr=subprocess.DEVNULL,
+            text=True
+        ).strip()
+        mpi_support = bool(output)
+    except subprocess.CalledProcessError:
+        mpi_support = False
+    return mpi_support
 ################################################################################
 
 class testcase_Ariel(SSTTestCase):
@@ -82,123 +96,124 @@ class testcase_Ariel(SSTTestCase):
     using_osx = host_os_get_distribution_type() == OS_DIST_OSX
     osx_error_msg = "Ariel: OpenMP is not supported on macOS"
 
+    mpi_support = check_mpi_support()
+    mpi_error_msg = f"Ariel: Core was compiled without MPI"
+
     testsuite_dir = os.path.dirname(__file__)
     bindir = sstsimulator_conf_get_value('SST_ELEMENT_LIBRARY', 'SST_ELEMENT_LIBRARY_BINDIR', str)
-    mpilauncher_exists = os.path.isfile(bindir + '/mpilauncher')
-    mpi_error_msg = f"Ariel: The mpilauncher executable was not found"
 
-    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
+    @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     def test_Ariel_mpi_hello_01_pin(self):
         self.ariel_Template(threads=1, ranks=1)
 
-    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
+    @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not epa_loaded, epa_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     def test_Ariel_mpi_hello_01_epa(self):
         self.ariel_Template(threads=1, ranks=1, frontend="epa")
 
-    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
+    @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     def test_Ariel_mpi_hello_02_pin(self):
         self.ariel_Template(threads=1, ranks=2)
 
-    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
+    @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not epa_loaded, epa_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     def test_Ariel_mpi_hello_02_epa(self):
         self.ariel_Template(threads=1, ranks=2, frontend="epa")
 
-    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
+    @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     @unittest.skipIf(using_osx, osx_error_msg)
     def test_Ariel_mpi_hello_03_pin(self):
         self.ariel_Template(threads=2, ranks=1)
 
-    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
+    @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not epa_loaded, epa_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     @unittest.skipIf(using_osx, osx_error_msg)
     def test_Ariel_mpi_hello_03_epa(self):
         self.ariel_Template(threads=2, ranks=1, frontend="epa")
 
-    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
+    @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     def test_Ariel_mpi_hello_04_pin(self):
         self.ariel_Template(threads=1, ranks=2, tracerank=1)
 
-    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
+    @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not epa_loaded, epa_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     def test_Ariel_mpi_hello_04_epa(self):
         self.ariel_Template(threads=1, ranks=2, tracerank=1, frontend="epa")
 
-    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
+    @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     @unittest.skipIf(using_osx, osx_error_msg)
     def test_Ariel_mpi_hello_05_pin(self):
         self.ariel_Template(threads=2, ranks=3, tracerank=1)
 
-    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
+    @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not epa_loaded, epa_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     @unittest.skipIf(using_osx, osx_error_msg)
     def test_Ariel_mpi_hello_05_epa(self):
         self.ariel_Template(threads=2, ranks=3, tracerank=1, frontend="epa")
 
-    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
+    @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     @unittest.skipIf(using_osx, osx_error_msg)
     def test_Ariel_mpi_hello_06_pin(self):
         self.ariel_Template(threads=2, ranks=2)
 
-    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
+    @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not epa_loaded, epa_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     @unittest.skipIf(using_osx, osx_error_msg)
     def test_Ariel_mpi_hello_06_epa(self):
         self.ariel_Template(threads=2, ranks=2, frontend="epa")
 
-    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
+    @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     def test_Ariel_mpi_reduce_01_pin(self):
         self.ariel_Template(threads=1, ranks=1, program="reduce")
 
-    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
+    @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not epa_loaded, epa_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     def test_Ariel_mpi_reduce_01_epa(self):
         self.ariel_Template(threads=1, ranks=1, program="reduce", frontend="epa")
 
-    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
+    @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     @unittest.skipIf(using_osx, osx_error_msg)
     def test_Ariel_mpi_reduce_02_pin(self):
         self.ariel_Template(threads=2, ranks=2, program="reduce")
 
-    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
+    @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not epa_loaded, epa_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     @unittest.skipIf(using_osx, osx_error_msg)
     def test_Ariel_mpi_reduce_02_epa(self):
         self.ariel_Template(threads=2, ranks=2, program="reduce", frontend="epa")
 
-    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
+    @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     @unittest.skipIf(using_osx, osx_error_msg)
     def test_Ariel_mpi_reduce_03_pin(self):
         self.ariel_Template(threads=2, ranks=4, program="reduce", tracerank=1)
 
-    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
+    @unittest.skipIf(not mpi_support, mpi_error_msg)
     @unittest.skipIf(not epa_loaded, epa_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     @unittest.skipIf(using_osx, osx_error_msg)
@@ -276,7 +291,6 @@ class testcase_Ariel(SSTTestCase):
         log_debug("_setup_ariel_test_files() Running")
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
-
 
         # Set the paths to the various directories
         self.ArielElementDir = os.path.abspath("{0}/../".format(test_path))

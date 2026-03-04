@@ -368,7 +368,7 @@ int Pin3Frontend::forkChildProcess(const char* app, char** args,
             int ret_code = execve(app, args, execute_env_cp);
             perror("execve");
 
-            output->verbose(CALL_INFO, 1, 0, "Call to execvpe returned %d\n", ret_code);
+            output->verbose(CALL_INFO, 1, 0, "Call to execve returned %d\n", ret_code);
             output->fatal(CALL_INFO, -1, "Error executing %s under a PIN fork\n", app);
         }
     }
