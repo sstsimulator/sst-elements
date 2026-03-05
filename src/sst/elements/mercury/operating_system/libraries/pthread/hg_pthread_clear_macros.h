@@ -1,8 +1,7 @@
 // Copyright 2009-2025 NTESS. All rights reserved.
 // Undef system pthread macros so mercury's can be used.
 
-#ifndef SST_HG_LIBRARIES_PTHREAD_HG_PTHREAD_CLEAR_MACROS_H
-#define SST_HG_LIBRARIES_PTHREAD_HG_PTHREAD_CLEAR_MACROS_H
+#pragma once
 
 #undef pthread_create
 #undef pthread_join
@@ -79,5 +78,3 @@
 #undef pthread_cleanup_pop
 #undef pthread_testcancel
 #undef pthread_kill
-
-#endif

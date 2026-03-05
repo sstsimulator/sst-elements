@@ -4,8 +4,7 @@
 //
 // Copyright (c) 2009-2025, NTESS. All rights reserved.
 
-#ifndef SST_HG_LIBRARIES_PTHREAD_HG_PTHREAD_RUNNER_H
-#define SST_HG_LIBRARIES_PTHREAD_RUNNER_H
+#pragma once
 
 #include <mercury/operating_system/process/thread.h>
 #include <mercury/operating_system/process/software_id.h>
@@ -33,5 +32,3 @@ class HgPthreadRunner : public Thread
 
 } // namespace Hg
 } // namespace SST
-
-#endif /* SST_HG_LIBRARIES_PTHREAD_HG_PTHREAD_RUNNER_H */

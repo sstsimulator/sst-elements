@@ -8,8 +8,7 @@
 // Simulated pthread types and constants for SST mercury (hg).
 // Ported from sst-macro pthread for use when building MPI apps for simulator.
 
-#ifndef SST_HG_LIBRARIES_PTHREAD_HG_PTHREAD_IMPL_H
-#define SST_HG_LIBRARIES_PTHREAD_HG_PTHREAD_IMPL_H
+#pragma once
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -168,5 +167,3 @@ void HG_pthread_cleanup_pop(int execute);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* SST_HG_LIBRARIES_PTHREAD_HG_PTHREAD_IMPL_H */

@@ -210,12 +210,3 @@ ofi_standalone_rdma_HEADERS = \
   include/rdma/fi_tagged.h \
   include/rdma/fi_trigger.h
 
-# Symlink libfabric from extdir to libdir so -lfabric finds it (e.g. mvapich2 --with-ofi=)
-install-exec-hook:
-	$(MKDIR_P) $(DESTDIR)$(libdir)
-	-if test -f $(DESTDIR)$(pkglibdir)/ext/libfabric.so; then \
-	  $(LN_S) -f '$(DESTDIR)$(pkglibdir)/ext/libfabric.so' $(DESTDIR)$(libdir)/libfabric.so; \
-	elif test -f $(DESTDIR)$(pkglibdir)/ext/libfabric.so.0; then \
-	  $(LN_S) -f '$(DESTDIR)$(pkglibdir)/ext/libfabric.so.0' $(DESTDIR)$(libdir)/libfabric.so.0; \
-	  $(LN_S) -f libfabric.so.0 $(DESTDIR)$(libdir)/libfabric.so; \
-	fi

@@ -1,8 +1,7 @@
 // Copyright 2009-2025 NTESS. All rights reserved.
 // Map standard pthread names to mercury (HG_) implementation.
 
-#ifndef SST_HG_LIBRARIES_PTHREAD_HG_PTHREAD_MACRO_H
-#define SST_HG_LIBRARIES_PTHREAD_HG_PTHREAD_MACRO_H
+#pragma once
 
 #include <mercury/operating_system/libraries/pthread/hg_pthread_clear_macros.h>
 
@@ -108,5 +107,3 @@
 #define pthread_getaffinity_np HG_pthread_getaffinity_np
 #define pthread_cleanup_push   HG_pthread_cleanup_push
 #define pthread_cleanup_pop    HG_pthread_cleanup_pop
-
-#endif
