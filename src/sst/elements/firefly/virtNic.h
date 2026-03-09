@@ -20,14 +20,16 @@
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>
 #include "sst/elements/hermes/shmemapi.h"
-
+#include "sst/elements/hermes/networkIOapi.h"
 #include "ioVec.h"
 
 namespace SST {
 namespace Firefly {
 
+
 class NicRespEvent;
 class NicShmemRespBaseEvent;
+class NicNetworkIORespBaseEvent;
 
 class VirtNic : public SST::SubComponent {
 
@@ -207,6 +209,9 @@ class VirtNic : public SST::SubComponent {
     void notifyRecvDmaDone( int src, int tag, size_t len, void* key );
     void notifyNeedRecv( int src, int tag, size_t length );
 
+    void networkIORead( int targetNid, Hermes::Vaddr dest, size_t len, std::function<void(int)> );
+    void networkIOWrite( int targetNid, Hermes::Vaddr src, size_t len, std::function<void(int)> );
+    
     bool isBlocked() {
 		m_dbg.debug(CALL_INFO,2,0,"%d %d\n", m_curNicQdepth, m_maxNicQdepth);
         return m_curNicQdepth == m_maxNicQdepth;
@@ -254,6 +259,7 @@ class VirtNic : public SST::SubComponent {
     void handleEvent( Event * );
     void handleMsgEvent( NicRespEvent * );
     void handleShmemEvent( NicShmemRespBaseEvent * );
+    void handleNetworkIOEvent( NicNetworkIORespBaseEvent * );
 
     int         m_realNicId;
     int         m_coreId;
