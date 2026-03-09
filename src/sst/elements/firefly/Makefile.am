@@ -161,7 +161,16 @@ libfirefly_la_SOURCES = \
 	nicUnitPool.h \
 	thingHeap.h \
 	nodePerf.h \
-	pyfirefly.py
+	storageModel/simpleSSD.h \
+	storageModel/simpleSSD.cc \
+	hadesNetworkIO.h \
+	hadesNetworkIO.cc \
+	nicNetworkSendEntry.h \
+	nicNetworkIO.cc \
+	nicNetworkIO.h \
+	nicNetworkIOStream.cc \
+	nicNetworkIOStream.h \
+	pyfirefly.py 
 
 libfirefly_la_LDFLAGS = -module -avoid-version
 

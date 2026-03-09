@@ -92,6 +92,9 @@ void VirtNic::handleEvent( Event* ev )
     case NicRespBaseEvent::Shmem:
         handleShmemEvent( static_cast<NicShmemRespEvent*>(ev ) );
         break;
+    case NicRespBaseEvent::NetworkIO:
+        handleNetworkIOEvent( static_cast<NicNetworkIORespBaseEvent*>(ev ) );
+        break;
     }
     delete ev;
 }
@@ -122,6 +125,22 @@ void VirtNic::handleShmemEvent( NicShmemRespBaseEvent* event )
     NicShmemRespBaseEvent* ev = static_cast<NicShmemRespBaseEvent*>(event);
 
    	m_dbg.debug(CALL_INFO,2,0,"calling callback\n");
+   	ev->callback();
+
+	m_dbg.debug(CALL_INFO,2,0," %d %d\n", m_curNicQdepth, m_maxNicQdepth);
+   	assert( m_curNicQdepth > 0 );
+   	--m_curNicQdepth;
+   	if ( m_blockedCallback ) {
+       	m_blockedCallback();
+       	m_blockedCallback = NULL;
+   	}
+}
+
+void VirtNic::handleNetworkIOEvent( NicNetworkIORespBaseEvent* event )
+{
+    NicNetworkIORespBaseEvent* ev = static_cast<NicNetworkIORespBaseEvent*>(event);
+
+   	m_dbg.debug(CALL_INFO,2,0,"[VirtNic] calling NetworkIO callback\n");
    	ev->callback();
 
 	m_dbg.debug(CALL_INFO,2,0," %d %d\n", m_curNicQdepth, m_maxNicQdepth);
@@ -278,4 +297,16 @@ void VirtNic::setNotifyNeedRecv(
 {
     m_dbg.debug(CALL_INFO,2,0,"\n");
     m_notifyNeedRecv = functor;
+}
+
+void VirtNic::networkIORead( int targetNid, Hermes::Vaddr dest, size_t len, std::function<void(int)> callback )
+{
+    m_dbg.debug(CALL_INFO,2,0,"dest=%#lx len=%zu\n", dest, len);
+    sendCmd(0, new NicNetworkIOReadCmdEvent(  targetNid, dest, len, callback ) );
+}
+
+void VirtNic::networkIOWrite( int targetNid, Hermes::Vaddr src, size_t len, std::function<void(int)> callback )
+{
+    m_dbg.debug(CALL_INFO,2,0,"src=%#lx len=%zu\n", src, len);
+    sendCmd(0, new NicNetworkIOWriteCmdEvent(  targetNid, src, len, callback ) );
 }

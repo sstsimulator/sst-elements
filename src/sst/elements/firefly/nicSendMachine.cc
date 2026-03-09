@@ -63,9 +63,9 @@ void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev
         m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "enque load from host, %lu bytes\n",ev->bufSize());
         if ( entry->isDone() ) {
             ev->setTail();
-            m_inQ->enque( m_unit, pid, vec, ev, entry->vn(), entry->dest(), std::bind( &Nic::SendMachine::streamFini, this, entry ) );
+            m_inQ->enque( m_unit, pid, vec, ev, entry->vn(), entry->dest(), std::bind( &Nic::SendMachine::streamFini, this, entry ), entry);
         } else {
-            m_inQ->enque( m_unit, pid, vec, ev, entry->vn(), entry->dest() );
+            m_inQ->enque( m_unit, pid, vec, ev, entry->vn(), entry->dest() , Callback(), entry );
             m_nic.schedCallback( std::bind( &Nic::SendMachine::getPayload, this, entry, new FireflyNetworkEvent(m_pktOverhead) ), 0);
         }
 
@@ -97,7 +97,7 @@ void Nic::SendMachine::streamFini( SendEntryBase* entry )
 }
 
 void  Nic::SendMachine::InQ::enque( int unit, int pid, std::vector< MemOp >* vec,
-            FireflyNetworkEvent* ev, int vn, int dest, Callback callback )
+            FireflyNetworkEvent* ev, int vn, int dest, Callback callback , SendEntryBase* entry)
 {
     ++m_numPending;
 	m_nic.m_sendStreamPending->addData( m_numPending );
@@ -105,9 +105,16 @@ void  Nic::SendMachine::InQ::enque( int unit, int pid, std::vector< MemOp >* vec
     m_dbg.verbosePrefix(prefix(), CALL_INFO,2,NIC_DBG_SEND_MACHINE, "get timing for packet %" PRIu64 " size=%lu numPending=%d\n",
                  m_pktNum,ev->bufSize(), m_numPending);
 
-    m_nic.dmaRead( unit, pid, vec,
+    bool isWrite=entry && entry->isWriteOp();
+    if(isWrite){
+        m_nic.dmaWrite( unit, pid, vec,
+             std::bind( &Nic::SendMachine::InQ::ready, this,  ev, vn, dest, callback, m_pktNum++ )
+        );
+    } else {
+        m_nic.dmaRead( unit, pid, vec,
 		std::bind( &Nic::SendMachine::InQ::ready, this,  ev, vn, dest, callback, m_pktNum++ )
     );
+}
 	// don't put code after this, the callback may be called serially
 }
 

@@ -38,6 +38,9 @@ Nic::RecvMachine::StreamBase* Nic::RecvMachine::Ctx::newStream( FireflyNetworkEv
       case MsgHdr::Shmem:
         return new ShmemStream( m_dbg, this, ev->getSrcNode(),ev->getSrcPid(), ev->getDestPid(), ev );
         break;
+      case MsgHdr::NetworkIO:
+        return new NetworkIOStream( m_dbg, this, ev->getSrcNode(),ev->getSrcPid(), ev->getDestPid(), ev );
+        break;
     }
     assert(0);
 }

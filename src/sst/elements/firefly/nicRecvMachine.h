@@ -43,6 +43,7 @@ class RecvMachine {
     #include "nicMsgStream.h"
     #include "nicRdmaStream.h"
     #include "nicShmemStream.h"
+    #include "nicNetworkIOStream.h"
 
       public:
 
