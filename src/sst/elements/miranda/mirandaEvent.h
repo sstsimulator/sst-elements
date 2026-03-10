@@ -1,5 +1,20 @@
-#ifndef _H_SST_MIRANDA_EVENT
-#define _H_SST_MIRANDA_EVENT
+// Copyright 2009-2025 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2025, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// of the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
+#ifndef _H_SST_MEM_H_REQUEST_GEN_EVENT
+#define _H_SST_MEM_H_REQUEST_GEN_EVENT
 
 #include <cstdint>
 #include <deque>
@@ -12,21 +27,15 @@
 namespace SST {
 namespace Miranda {
 
-//==============================================================================
-// MirandaReqEvent
-//==============================================================================
 class MirandaReqEvent : public SST::Event {
 public:
-    // 1) default ctor for deserialization / checkpoint-restart
     MirandaReqEvent() = default;
 
-    // 2) “normal” ctor you probably already had
-    MirandaReqEvent(uint64_t _key,
+    MirandaReqEvent(uint64_t key,
                     const std::deque<std::pair<std::string,SST::Params>>& gens) :
-        key(_key), generators(gens)
+        key(key), generators(gens)
     {}
 
-    // data members
     uint64_t key;
     std::deque<std::pair<std::string,SST::Params>> generators;
 
@@ -41,16 +50,11 @@ private:
     ImplementSerializable(SST::Miranda::MirandaReqEvent);
 };
 
-//==============================================================================
-// MirandaRspEvent
-//==============================================================================
 class MirandaRspEvent : public SST::Event {
 public:
-    // default ctor for UNPACK
     MirandaRspEvent() = default;
 
-    // convenience ctor
-    explicit MirandaRspEvent(uint64_t _key) : key(_key) {}
+    explicit MirandaRspEvent(uint64_t key) : key(key) {}
 
     uint64_t key;
 
