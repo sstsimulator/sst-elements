@@ -1,8 +1,37 @@
 // Copyright 2009-2025 NTESS. All rights reserved.
 // Undef system pthread macros so mercury's can be used.
+// If the macro guard is set, clear it so hg_pthread_macro.h can be re-included.
+// No include guard: this file is meant to be re-included (e.g. before each system header).
 
-#pragma once
+#ifdef SST_HG_LIBRARIES_PTHREAD_HG_PTHREAD_MACRO_H
+#undef SST_HG_LIBRARIES_PTHREAD_HG_PTHREAD_MACRO_H
+#endif
 
+#undef PTHREAD_ONCE_INIT
+#undef PTHREAD_MUTEX_INITIALIZER
+#undef PTHREAD_COND_INITIALIZER
+#undef PTHREAD_RWLOCK_INITIALIZER
+#undef PTHREAD_CREATE_DETACHED
+#undef PTHREAD_CREATE_JOINABLE
+#undef PTHREAD_MUTEX_NORMAL
+#undef PTHREAD_MUTEX_RECURSIVE
+#undef PTHREAD_MUTEX_ERRORCHECK
+#undef PTHREAD_MUTEX_DEFAULT
+#undef PTHREAD_PROCESS_SHARED
+#undef PTHREAD_PROCESS_PRIVATE
+#undef PTHREAD_SCOPE_PROCESS
+#undef PTHREAD_SCOPE_SYSTEM
+#undef pthread_t
+#undef pthread_attr_t
+#undef pthread_mutex_t
+#undef pthread_mutexattr_t
+#undef pthread_cond_t
+#undef pthread_condattr_t
+#undef pthread_spinlock_t
+#undef pthread_once_t
+#undef pthread_key_t
+#undef pthread_rwlock_t
+#undef pthread_rwlockattr_t
 #undef pthread_create
 #undef pthread_join
 #undef pthread_exit

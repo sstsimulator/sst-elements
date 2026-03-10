@@ -179,6 +179,7 @@ nobase_library_include_HEADERS = \
   operating_system/libraries/pthread/hg_pthread_impl.h \
   operating_system/libraries/pthread/hg_pthread_macro.h \
   operating_system/libraries/pthread/hg_pthread_clear_macros.h \
+  operating_system/libraries/pthread/hg_pthread_return.h \
   operating_system/libraries/pthread/hg_pthread_runner.h \
   operating_system/threading/context_util.h \
   operating_system/threading/thread_lock.h \

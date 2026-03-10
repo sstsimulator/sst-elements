@@ -1,9 +1,10 @@
 // Copyright 2009-2025 NTESS. All rights reserved.
 // Map standard pthread names to mercury (HG_) implementation.
+// Guard allows re-inclusion after hg_pthread_clear_macros.h has cleared it.
 
-#pragma once
-
+#ifndef SST_HG_LIBRARIES_PTHREAD_HG_PTHREAD_MACRO_H
 #include <mercury/operating_system/libraries/pthread/hg_pthread_clear_macros.h>
+#define SST_HG_LIBRARIES_PTHREAD_HG_PTHREAD_MACRO_H
 
 #define PTHREAD_ONCE_INIT       HG_PTHREAD_ONCE_INIT
 #define PTHREAD_MUTEX_INITIALIZER  HG_PTHREAD_MUTEX_INITIALIZER
@@ -107,3 +108,5 @@
 #define pthread_getaffinity_np HG_pthread_getaffinity_np
 #define pthread_cleanup_push   HG_pthread_cleanup_push
 #define pthread_cleanup_pop    HG_pthread_cleanup_pop
+
+#endif /* SST_HG_LIBRARIES_PTHREAD_HG_PTHREAD_MACRO_H */
