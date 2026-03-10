@@ -35,50 +35,50 @@ namespace OS {
 
 class Page {
   public:
-    Page( PhysMemManager* mem ) : mem(mem), refCnt(1) {
-        ppn = mem->allocPage( PhysMemManager::PageSize::FourKB );
-        PageDbg("ppn=%d\n",ppn);
+    Page( PhysMemManager* mem ) : mem_(mem), ref_cnt_(1) {
+        ppn_ = mem_->allocPage( PhysMemManager::PageSize::FourKB );
+        PageDbg("ppn=%" PRIu32 "\n",ppn_);
     }
 
-    Page( PhysMemManager* mem, int ppn, int refCnt ) : mem(mem), ppn(ppn), refCnt(1) {
+    Page( PhysMemManager* mem, uint32_t ppn, uint32_t ref_cnt ) : mem_(mem), ppn_(ppn), ref_cnt_(ref_cnt) {
     }
 
     ~Page() {
-        PageDbg("ppn=%d\n",ppn);
-        assert( 0 == refCnt );
-        mem->freePage( PhysMemManager::PageSize::FourKB, ppn );
+        PageDbg("ppn=%" PRIu32 "\n",ppn_);
+        assert( 0 == ref_cnt_ );
+        mem_->freePage( PhysMemManager::PageSize::FourKB, ppn_ );
     }
 
-    unsigned getRefCnt() {
-        PageDbg("ppn=%d refCnt=%d\n",ppn,refCnt);
-        return refCnt;
+    uint32_t getRefCnt() {
+        PageDbg("ppn=%" PRIu32 " ref_cnt=%" PRIu32 "\n",ppn,ref_cnt_);
+        return ref_cnt_;
     }
-    unsigned getPPN() {
-        return ppn;
+    uint32_t getPPN() {
+        return ppn_;
     }
 
     void incRefCnt() {
-        ++refCnt;
-        PageDbg("ppn=%d refCnt=%d\n",ppn,refCnt);
+        ++ref_cnt_;
+        PageDbg("ppn=%" PRIu32 " ref_cnt=%" PRIu32 "\n",ppn_,ref_cnt_);
     }
-    unsigned decRefCnt() {
-        assert( refCnt > 0 );
-        --refCnt;
-        PageDbg("ppn=%d refCnt=%d\n",ppn,refCnt);
-        return refCnt;
+    uint32_t decRefCnt() {
+        assert( ref_cnt_ > 0 );
+        --ref_cnt_;
+        PageDbg("ppn=%" PRIu32 " ref_cnt=%" PRIu32 "\n",ppn_,ref_cnt_);
+        return ref_cnt_;
     }
 
     std::string snapshot() {
         std::stringstream ss;
-        ss << "ppn: " << ppn;
-        ss << ", refCnt: " << refCnt;
+        ss << "ppn: " << ppn_;
+        ss << ", ref_cnt: " << ref_cnt_;
         return ss.str();
     }
 
   private:
-    PhysMemManager* mem;
-    unsigned refCnt;
-    unsigned ppn;
+    PhysMemManager* mem_;   /* Pointer to page table manager */
+    uint32_t ref_cnt_;      /* Reference count per page */
+    uint32_t ppn_;          /* Physical page number (index) */
 };
 
 }

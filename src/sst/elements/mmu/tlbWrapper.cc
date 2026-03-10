@@ -109,7 +109,7 @@ void TLB_Wrapper::tlbCallback( RequestID req_id, uint64_t phys_addr )
     dbg_.debug(CALL_INFO_LONG,1,0,"reqId=%#" PRIx64 " virtAddr=%#" PRIx64 "  physAddr=%#" PRIx64 "\n", req_id, addr, phys_addr);
 #endif
 
-    if( phys_addr == -1 ) {
+    if( phys_addr == std::numeric_limits<uint64_t>::max() ) {
         auto resp = mem_event->makeResponse();
         static_cast<MemHierarchy::MemEvent*>(resp)->setFail();
         cpu_if_->send( resp );
@@ -133,7 +133,7 @@ void TLB_Wrapper::tlbCallback( RequestID req_id, uint64_t phys_addr )
         }
 
 #ifdef __SST_DEBUG_OUTPUT__
-        dbg_.debug(CALL_INFO_LONG,1,0,"memEvent thread=%d  addr=%#" PRIx64 " -> %#" PRIx64 "\n",
+        dbg_.debug(CALL_INFO_LONG,1,0,"memEvent thread=%" PRIu32 "  addr=%#" PRIx64 " -> %#" PRIx64 "\n",
                 mem_event->getThreadID(), addr, mem_event->getAddr() );
 #endif
         cache_if_->send( mem_event );
@@ -146,11 +146,11 @@ void TLB_Wrapper::handleCpuEvent( Event* ev )
     ++pending_;
     MemHierarchy::MemEvent* mem_event = static_cast<MemHierarchy::MemEvent*>(ev);
 #ifdef __SST_DEBUG_OUTPUT__
-    dbg_.debug(CALL_INFO_LONG,1,0,"memEvent thread=%d baseAddr=%#" PRIx64  " addr=%#"  PRIx64  "\n",  mem_event->getThreadID(), mem_event->getBaseAddr(), mem_event->getAddr() );
+    dbg_.debug(CALL_INFO_LONG,1,0,"memEvent thread=%" PRIu32 " baseAddr=%#" PRIx64  " addr=%#"  PRIx64  "\n",  mem_event->getThreadID(), mem_event->getBaseAddr(), mem_event->getAddr() );
     dbg_.debug(CALL_INFO_LONG,1,0," %s \n", mem_event->getVerboseString(16).c_str() );
 #endif
     auto req_id = reinterpret_cast<RequestID>(mem_event);
-    int hw_thread = mem_event->getThreadID();
+    uint32_t hw_thread = mem_event->getThreadID();
     uint64_t virt_addr = mem_event->getAddr(); // getVirtualAddress()
     uint64_t inst_ptr = mem_event->getInstructionPointer();
     uint32_t perms = getPerms( mem_event );

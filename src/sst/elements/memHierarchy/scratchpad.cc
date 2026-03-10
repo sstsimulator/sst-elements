@@ -622,18 +622,10 @@ void Scratchpad::handleScratchWrite(MemEvent * ev) {
             }
             return;
         }
-    } else if (directory_ && ev->isWriteback() && mshr_.find(ev->getBaseAddr()) != mshr_.end()) {
-        /* Drop writeback if we're stalled waiting for a ForceInv response */
-        MSHREntry * entry = &(mshr_.find(ev->getBaseAddr())->second.front());
-        if (outstandingEventList_.find(entry->id)->second.request->getCmd() == Command::Get) {
-            MemEvent * response = ev->makeResponse();
-            sendResponse(response);
-            delete ev;
-            return;
-        }
     }
 
     /* Drop clean writebacks after sending AckPut */
+    /* Ignore any writeback/invalidation races with a directory since it won't matter */
     if (ev->isWriteback() && !ev->getDirty()) {
         if (caching_) {
             cacheStatus_.at(ev->getBaseAddr()/scratchLineSize_) = directory_;
@@ -656,8 +648,16 @@ void Scratchpad::handleScratchWrite(MemEvent * ev) {
     if (directory_ && ev->isWriteback() && mshr_.find(ev->getBaseAddr()) != mshr_.end()) {
         /* For directory - jump write ahead of a Put so we have correct data but otherwise
          * do not resolve race by treating writeback as ackinv since it may not actually signal that
-         * the block is not present in caches */
+         * the block is not present in caches
+         * For dirty events only, writeback data to scratch ahead of Get since dir does not keep a copy
+         */
         std::list<MSHREntry>* entry = &(mshr_.find(ev->getBaseAddr())->second);
+        if (outstandingEventList_.find(entry->front().id)->second.request->getCmd() == Command::Get) {
+            doScratchWrite(write);
+            delete ev;
+            return;
+        }
+
         for (std::list<MSHREntry>::iterator it = entry->begin(); it != entry->end(); it++) {
             if (it->cmd == Command::Put) {
                 if (it == entry->begin()) {

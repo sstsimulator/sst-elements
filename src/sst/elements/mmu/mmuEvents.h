@@ -26,57 +26,57 @@ namespace MMU_Lib {
 class TlbInitEvent  : public SST::Event {
   public:
 
-    TlbInitEvent() : Event(), pageShift(0) {}
+    TlbInitEvent() : Event(), page_shift_(0) {}
 
-    TlbInitEvent( int pageShift ) : Event(), pageShift(pageShift) { }
+    TlbInitEvent( uint32_t page_shift ) : Event(), page_shift_(page_shift) { }
     virtual ~TlbInitEvent() {}
-    int getPageShift() { return pageShift; }
+    uint32_t getPageShift() { return page_shift_; }
 
   private:
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        SST_SER(pageShift);
+        SST_SER(page_shift_);
     }
 
     ImplementSerializable(TlbInitEvent);
 
-    int pageShift;
+    uint32_t page_shift_;
 };
 
 class TlbMissEvent  : public SST::Event {
   public:
 
     TlbMissEvent() : Event() {}
-    TlbMissEvent( RequestID id, int hwThread, size_t vpn, uint32_t perms, uint64_t instPtr, uint64_t memAddr  )
-        : Event(), id(id), hwThread(hwThread), vpn(vpn), perms(perms), instPtr(instPtr), memAddr(memAddr) { }
+    TlbMissEvent( RequestID id, uint32_t hw_thread, uint32_t vpn, uint32_t perms, uint64_t inst_ptr, uint64_t mem_addr  )
+        : Event(), id_(id), hw_thread_(hw_thread), vpn_(vpn), perms_(perms), inst_ptr_(inst_ptr), mem_addr_(mem_addr) { }
     virtual ~TlbMissEvent() {}
 
-    RequestID getReqId() { return id; }
-    int getHardwareThread() { return hwThread; }
-    size_t getVPN() { return vpn; }
-    uint32_t getPerms() { return perms; }
-    uint64_t getInstPtr() { return instPtr; }
-    uint64_t getMemAddr() { return memAddr; }
+    RequestID getReqId() { return id_; }
+    uint32_t getHardwareThread() { return hw_thread_; }
+    uint32_t getVPN() { return vpn_; }
+    uint32_t getPerms() { return perms_; }
+    uint64_t getInstPtr() { return inst_ptr_; }
+    uint64_t getMemAddr() { return mem_addr_; }
 
   private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        SST_SER(id);
-        SST_SER(hwThread);
-        SST_SER(vpn);
-        SST_SER(perms);
-        SST_SER(instPtr);
-        SST_SER(memAddr);
+        SST_SER(id_);
+        SST_SER(hw_thread_);
+        SST_SER(vpn_);
+        SST_SER(perms_);
+        SST_SER(inst_ptr_);
+        SST_SER(mem_addr_);
     }
         ImplementSerializable(TlbMissEvent);
 
-        RequestID id;
-        int hwThread;
-        size_t vpn;
-        uint32_t perms;
-        uint64_t instPtr;
-        uint64_t memAddr;
+        RequestID id_;
+        uint32_t hw_thread_;
+        uint32_t vpn_;
+        uint32_t perms_;
+        uint64_t inst_ptr_;
+        uint64_t mem_addr_;
 
     };
 
@@ -84,30 +84,30 @@ class TlbMissEvent  : public SST::Event {
 
       public:
         TlbFillEvent() : Event() {}
-        TlbFillEvent( RequestID id, PTE pte ) : Event(), id(id), perms(pte.perms), ppn(pte.ppn), success(true) { }
-        TlbFillEvent( RequestID id ) : Event(), id(id), success(false) { }
+        TlbFillEvent( RequestID id, PTE pte ) : Event(), id_(id), perms_(pte.perms), ppn_(pte.ppn), success_(true) { }
+        TlbFillEvent( RequestID id ) : Event(), id_(id), success_(false) { }
         virtual ~TlbFillEvent() {}
 
 
-    RequestID getReqId() { return id; }
-    size_t getPPN() { return ppn; }
-    int32_t getPerms() { return perms; }
-    bool isSuccess() { return success; }
+    RequestID getReqId() { return id_; }
+    uint32_t getPPN() { return ppn_; }
+    uint32_t getPerms() { return perms_; }
+    bool isSuccess() { return success_; }
 
   private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        SST_SER(id);
-        SST_SER(perms);
-        SST_SER(ppn);
-        SST_SER(success);
+        SST_SER(id_);
+        SST_SER(perms_);
+        SST_SER(ppn_);
+        SST_SER(success_);
     }
     ImplementSerializable(TlbFillEvent);
 
-    RequestID id;
-    uint32_t ppn;
-    uint32_t perms;
-    bool success;
+    RequestID id_;
+    uint32_t ppn_;
+    uint32_t perms_;
+    bool success_;
 
 };
 
@@ -115,19 +115,19 @@ class TlbFlushReqEvent  : public SST::Event {
 
   public:
     TlbFlushReqEvent() : Event() {}
-    TlbFlushReqEvent( unsigned hwThread ) : Event(), hwThread(hwThread) { }
+    TlbFlushReqEvent( uint32_t hw_thread ) : Event(), hw_thread_(hw_thread) { }
     virtual ~TlbFlushReqEvent() {}
 
-    unsigned getHwThread() { return hwThread; }
+    uint32_t getHwThread() { return hw_thread_; }
 
   private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        SST_SER(hwThread);
+        SST_SER(hw_thread_);
     }
     ImplementSerializable(TlbFlushReqEvent);
 
-    unsigned hwThread;
+    uint32_t hw_thread_;
 };
 
 class TlbFlushRespEvent  : public SST::Event {
@@ -135,19 +135,19 @@ class TlbFlushRespEvent  : public SST::Event {
 
   public:
     TlbFlushRespEvent() : Event() {}
-    TlbFlushRespEvent( unsigned hwThread ) : Event(), hwThread(hwThread) { }
+    TlbFlushRespEvent( uint32_t hw_thread ) : Event(), hw_thread_(hw_thread) { }
     virtual ~TlbFlushRespEvent() {}
 
-    unsigned getHwThread() { return hwThread; }
+    uint32_t getHwThread() { return hw_thread_; }
 
   private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        SST_SER(hwThread);
+        SST_SER(hw_thread_);
     }
     ImplementSerializable(TlbFlushRespEvent);
 
-    unsigned hwThread;
+    uint32_t hw_thread_;
 };
 
 } //namespace MMU_Lib

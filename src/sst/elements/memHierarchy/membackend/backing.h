@@ -42,7 +42,7 @@ public:
 
     // Get the value of the byte at 'addr'
     virtual uint8_t get( Addr addr ) = 0;
-    // Get the 'size' bytes ad 'addr' and put them in the vector 'data'
+    // Get the 'size' bytes at 'addr' and put them in the vector 'data'
     virtual void get( Addr addr, size_t size, std::vector<uint8_t>& data ) = 0;
     // Dump contents of backing to the file named by 'outfile'
     virtual void printToFile( std::string outfile ) = 0;
@@ -119,10 +119,10 @@ public:
     }
 
     void set( Addr addr, uint8_t value ) override {
-        buffer_[addr - offset_ ] = value;
+        buffer_[addr - offset_] = value;
     }
 
-    void set ( Addr addr, size_t size, std::vector<uint8_t> &data ) override {
+    void set( Addr addr, size_t size, std::vector<uint8_t> &data ) override {
         for (size_t i = 0; i < size; i++)
             buffer_[addr + i] = data[i];
     }
@@ -468,6 +468,75 @@ private:
     unsigned int alloc_unit_;
     unsigned int shift_;
     bool init_;
+};
+
+
+class BackingHybrid : public Backing {
+private:
+    Backing* getBacking(Addr addr) {
+        for ( hybridStruct* item : mmapList ) {
+            Backing* backing = item->myBacking;
+            Addr startAddr = item->startAddr;
+            Addr endAddr   = item->endAddr;
+            if ( startAddr <= addr && addr < endAddr ) {
+                return backing;
+            }
+        }
+        return backingMalloc;
+    }
+public:
+    struct hybridStruct {
+        Backing* myBacking;
+        Addr  startAddr;
+        Addr  endAddr;
+        hybridStruct(Addr stAddr, Addr eAddr, Backing* backing) : startAddr(stAddr), endAddr(eAddr), myBacking(backing) { }
+    };
+    std::list<hybridStruct*> mmapList;
+    BackingMalloc* backingMalloc;
+    BackingHybrid(size_t size, bool init = false ) {
+        backingMalloc = new BackingMalloc(1024, true);
+    }
+    void addBacking(std::string fname, Addr start, Addr end)
+    {
+        BackingMMAP* newBack = new BackingMMAP( fname, fname, end - start, start );
+        hybridStruct* newStruct = new hybridStruct(start, end, newBack);
+        mmapList.push_front(newStruct);
+    }
+
+    void set( Addr addr, uint8_t value ) override {
+        Backing* backing = getBacking(addr);
+        backing->set(addr, value);
+    }
+
+    void set( Addr addr, size_t size, std::vector<uint8_t> &data ) override {
+        Backing* backing = getBacking(addr);
+        backing->set(addr, size, data);
+    }
+
+    uint8_t get( Addr addr ) override {
+        Backing* backing = getBacking(addr);
+        return backing->get(addr);
+    }
+    void printToFile(std::string outfile) override
+    {
+        for ( hybridStruct* item : mmapList ) {
+            item->myBacking->printToFile(outfile);
+        }
+        backingMalloc->printToFile(outfile);
+    }
+    void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) override
+    {
+        Output out("", 1, 0, Output::STDOUT);
+        for ( hybridStruct* item : mmapList ) {
+            out.output("==================================================================================================\n");
+            out.output("Hybrid backing mmap region\n");
+            out.output("Start address: %#" PRIx64 "\n", item->startAddr);
+            out.output("End address: %#" PRIx64 "\n", item->endAddr);
+            out.output("==================================================================================================\n");
+            item->myBacking->printToScreen(addr_offset, addr_start, addr_interleave_size, addr_interleave_step);
+        }
+        backingMalloc->printToScreen(addr_offset, addr_start, addr_interleave_size, addr_interleave_step);
+    }
 };
 
 }
