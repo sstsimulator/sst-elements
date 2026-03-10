@@ -148,7 +148,7 @@ public:
         SST_SER(requestsInFlight);
         SST_SER(cache_link);
         SST_SER(srcLink);
-        SST_SER(srcReqEvent);
+        SST_SER(srcReqEvent );
         SST_SER(stdMemHandlers);
 
         SST_SER(pendingRequests);
@@ -199,7 +199,7 @@ private:
     std::map<StandardMem::Request::id_t, CPURequest*> requestsInFlight;
     StandardMem* cache_link;
     Link* srcLink;
-    MirandaReqEvent* srcReqEvent;
+    MirandaReqEvent* srcReqEvent = nullptr;
     StdMemHandler* stdMemHandlers;
 
     MirandaRequestQueue<GeneratorRequest*> pendingRequests;
