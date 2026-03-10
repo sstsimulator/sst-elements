@@ -31,16 +31,10 @@ class MirandaReqEvent : public SST::Event {
 public:
     MirandaReqEvent() = default;
 
-    MirandaReqEvent(uint64_t key,
-                    const std::deque<std::pair<std::string,SST::Params>>& gens) :
-        key(key), generators(gens)
-    {}
-
     uint64_t key;
     std::deque<std::pair<std::string,SST::Params>> generators;
 
 private:
-    // serialize in declaration order, calling base class first
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
         Event::serialize_order(ser);
         SST_SER(key);
@@ -54,8 +48,6 @@ class MirandaRspEvent : public SST::Event {
 public:
     MirandaRspEvent() = default;
 
-    explicit MirandaRspEvent(uint64_t key) : key(key) {}
-
     uint64_t key;
 
 private:
@@ -67,7 +59,7 @@ private:
     ImplementSerializable(SST::Miranda::MirandaRspEvent);
 };
 
-} // namespace Miranda
-} // namespace SST
+}
+}
 
-#endif // _H_SST_MIRANDA_EVENT
+#endif
