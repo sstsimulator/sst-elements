@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Copyright Hewlett Packard Enterprise Development LP
+// SPDX-License-Identifier: BSD-3-Clause
+
 class NetworkIO {
     public:
         NetworkIO(Nic& nic, Params& params, Output& output);

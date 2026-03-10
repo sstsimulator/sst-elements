@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Copyright Hewlett Packard Enterprise Development LP
+// SPDX-License-Identifier: BSD-3-Clause
+
 #pragma once
 #include "sst/elements/ember/embergen.h"
 #include "sst/elements/ember/libs/emberLib.h"
