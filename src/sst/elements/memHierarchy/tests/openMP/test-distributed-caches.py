@@ -874,7 +874,7 @@ comp_n0_l2cache.addParams({
 highlink_n0_l2cache = comp_n0_l2cache.setSubComponent("highlink", "memHierarchy.MemLink")
 lowlink_n0_l2cache = comp_n0_l2cache.setSubComponent("lowlink", "memHierarchy.MemNIC")
 lowlink_n0_l2cache.addParams({
-    "group" : 0, 
+    "group" : 0,
     "network_bw" : """25GB/s""",
     "network_input_buffer_size" : "2KB",
     "network_output_buffer_size" : "2KB"
