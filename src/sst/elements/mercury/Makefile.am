@@ -26,6 +26,7 @@ libhg_la_SOURCES = \
   common/timestamp.cc \
   common/connection.cc \
   common/skeleton.cc \
+  common/hgcc_wrappers.cc \
   components/compute_library/node_cl.cc \
   components/compute_library/operating_system_cl.cc \
   components/compute_library/operating_system_cl_api.cc \
@@ -46,6 +47,8 @@ libhg_la_SOURCES = \
   operating_system/launch/app_launcher.cc \
   operating_system/libraries/library.cc \
   operating_system/libraries/unblock_event.cc \
+  operating_system/libraries/pthread/hg_pthread.cc \
+  operating_system/libraries/pthread/hg_pthread_runner.cc \
   operating_system/process/app.cc \
   operating_system/process/global.cc \
   operating_system/process/progress_queue.cc \
@@ -172,6 +175,12 @@ nobase_library_include_HEADERS = \
   operating_system/libraries/library.h \
   operating_system/libraries/library_fwd.h \
   operating_system/libraries/unblock_event.h \
+  operating_system/libraries/pthread/hg_pthread.h \
+  operating_system/libraries/pthread/hg_pthread_impl.h \
+  operating_system/libraries/pthread/hg_pthread_macro.h \
+  operating_system/libraries/pthread/hg_pthread_clear_macros.h \
+  operating_system/libraries/pthread/hg_pthread_return.h \
+  operating_system/libraries/pthread/hg_pthread_runner.h \
   operating_system/threading/context_util.h \
   operating_system/threading/thread_lock.h \
   operating_system/threading/stack_alloc.h \

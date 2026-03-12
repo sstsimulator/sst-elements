@@ -28,12 +28,16 @@
 #endif
 
 
+#ifdef __cplusplus
 extern "C" {
+#endif
 extern char* static_init_glbls_segment;
 extern char* static_init_tls_segment;
 void allocate_static_init_glbls_segment();
 void allocate_static_init_tls_segment();
+#ifdef __cplusplus
 }
+#endif
 
 SST_HG_MAYBE_UNUSED
 static SST_HG_INLINE char* get_sst_hg_global_data(){
