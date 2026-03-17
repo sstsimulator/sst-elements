@@ -224,7 +224,8 @@ endif
 
 libhg_la_LDFLAGS = -module -avoid-version -shared
 libcomputelibrary_la_LDFLAGS = -module -avoid-version -shared
-libostest_la_LDFLAGS = -module -avoid-version
+libostest_la_LDFLAGS = -module -avoid-version -shared
+libostest_nano_la_LDFLAGS = -module -avoid-version -shared
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     mercury=$(abs_srcdir)
