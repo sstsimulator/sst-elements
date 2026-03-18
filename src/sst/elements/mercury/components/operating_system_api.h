@@ -120,6 +120,8 @@ public:
    virtual void unregisterEventLib(Library *lib) = 0;
 
    virtual void handleRequest(Request *req) = 0;
+
+   virtual void reassignCores(Thread* thr) { }
 };
 
 } // namespace Hg
