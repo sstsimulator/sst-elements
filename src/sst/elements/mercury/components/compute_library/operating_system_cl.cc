@@ -79,5 +79,16 @@ OperatingSystemCL::execute(COMP_FUNC func, Event *data, int nthr)
   }
 }
 
+void
+OperatingSystemCL::reassignCores(Thread *thr)
+{
+  int ncores = thr->numActiveCcores();
+  //this is not equivalent to a no-op
+  //I could release cores - then based on changes
+  //to the cpumask, reserve different cores
+  compute_sched_->releaseCores(ncores, thr);
+  compute_sched_->reserveCores(ncores, thr);
+}
+
 } // namespace Hg
 } // namespace SST

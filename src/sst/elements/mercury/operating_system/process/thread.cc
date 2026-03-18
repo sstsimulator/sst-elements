@@ -241,6 +241,19 @@ Thread::~Thread()
 }
 
 void
+Thread::setCpumask(uint64_t cpumask)
+{
+  cpumask_ = cpumask;
+  os_->reassignCores(this);
+}
+
+void
+Thread::setThreadId(int thr)
+{
+  thread_id_ = thr;
+}
+
+void
 Thread::startThread(Thread* thr)
 {
   thr->p_txt_ = p_txt_;
