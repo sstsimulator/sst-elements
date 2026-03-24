@@ -54,6 +54,8 @@ class OperatingSystemCL : public OperatingSystemCLAPI, public OperatingSystemImp
 
   void execute(COMP_FUNC, Event *data, int nthr = 1) override;
 
+  void reassignCores(Thread* thr) override;
+
   static size_t stacksize() {
     return sst_hg_global_stacksize;
   }
