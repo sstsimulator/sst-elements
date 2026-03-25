@@ -80,8 +80,8 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
 
         VanadisBasicLoadStoreQueue(ComponentId_t id, Params& params, int coreid, int hwthreads) : VanadisLoadStoreQueue(id, params, coreid, hwthreads),
             max_stores_(params.find<size_t>("max_stores", 8)),
-        max_loads_(params.find<size_t>("max_loads", 16)),
-        max_issue_attempts_per_cycle_(params.find("issues_per_cycle", 2))
+            max_loads_(params.find<size_t>("max_loads", 16)),
+            max_issue_attempts_per_cycle_(params.find("issues_per_cycle", 2))
         {
             std_mem_handlers_ = new VanadisBasicLoadStoreQueue::StandardMemHandlers(this, output_);
 

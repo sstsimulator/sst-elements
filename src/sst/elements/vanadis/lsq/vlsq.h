@@ -57,7 +57,7 @@ public:
      * hwthreads - the total number of hardware threads supported by the core. The LSQ will use this to appropriately partition queues and detect
      *              ordering violations
      */
-    VanadisLoadStoreQueue(ComponentId_t id, Params& params, uint32_t coreid, uint32_t hwthreads) : SubComponent(id) {
+    VanadisLoadStoreQueue(ComponentId_t id, Params& params, uint32_t core_id, uint32_t hw_threads) : SubComponent(id) {
 
         uint32_t verbosity = params.find<uint32_t>("verbose");
         uint32_t mask = params.find<uint32_t>("verboseMask",-1);
@@ -69,8 +69,8 @@ public:
         setDbgAddrs( params.find<std::string>("dbgAddrs", "") );
         #endif
 
-        core_id_ = coreid;
-        hw_threads_ = hwthreads;
+        core_id_ = core_id;
+        hw_threads_ = hw_threads;
         register_files_ = nullptr;
     }
 
