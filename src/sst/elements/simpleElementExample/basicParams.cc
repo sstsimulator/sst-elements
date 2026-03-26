@@ -91,7 +91,7 @@ basicParams::basicParams(ComponentId_t id, Params& params) : Component(id) {
     primaryComponentDoNotEndSim();
 
     // Register a clock
-    registerClock("1MHz", new Clock::Handler2<basicParams, &basicParams::tick>(this));
+    registerClock("1MHz", new Clock::Handler<basicParams, &basicParams::tick>(this));
 
 }
 

@@ -31,7 +31,7 @@ MemNICFour::MemNICFour(ComponentId_t id, Params &params, TimeConverter tc) : Mem
     std::array<std::string,4> pref = {"req", "ack", "fwd", "data"};
 
     clockOn = true;
-    clockHandler = new Clock::Handler2<MemNICFour, &MemNICFour::clock>(this);
+    clockHandler = new Clock::Handler<MemNICFour, &MemNICFour::clock>(this);
     clockTC = registerClock(tc, clockHandler);
 
     for (int i = 0; i < 4; i++) {
@@ -53,10 +53,10 @@ MemNICFour::MemNICFour(ComponentId_t id, Params &params, TimeConverter tc) : Mem
 
     // Set link control to call recvNotify on event receive
 
-    link_control[REQ]->setNotifyOnReceive(new SimpleNetwork::Handler2<MemNICFour, &MemNICFour::recvNotifyReq>(this));
-    link_control[ACK]->setNotifyOnReceive(new SimpleNetwork::Handler2<MemNICFour, &MemNICFour::recvNotifyAck>(this));
-    link_control[FWD]->setNotifyOnReceive(new SimpleNetwork::Handler2<MemNICFour, &MemNICFour::recvNotifyFwd>(this));
-    link_control[DATA]->setNotifyOnReceive(new SimpleNetwork::Handler2<MemNICFour, &MemNICFour::recvNotifyData>(this));
+    link_control[REQ]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour, &MemNICFour::recvNotifyReq>(this));
+    link_control[ACK]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour, &MemNICFour::recvNotifyAck>(this));
+    link_control[FWD]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour, &MemNICFour::recvNotifyFwd>(this));
+    link_control[DATA]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour, &MemNICFour::recvNotifyData>(this));
 
     // Register statistics
     stat_oooEvent[REQ] = registerStatistic<uint64_t>("outoforder_req_events");

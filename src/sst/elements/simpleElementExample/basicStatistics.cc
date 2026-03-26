@@ -45,7 +45,7 @@ basicStatistics::basicStatistics(ComponentId_t id, Params& params) : Component(i
     primaryComponentDoNotEndSim();
 
     //set our clock. The simulator will call 'clockTic' at a 4GHz frequency
-    registerClock("4 GHz", new Clock::Handler2<basicStatistics, &basicStatistics::clockTic>(this));
+    registerClock("4 GHz", new Clock::Handler<basicStatistics, &basicStatistics::clockTic>(this));
 
     // Initialize the random number generators
     rng0 = new SST::RNG::MarsagliaRNG(mars_z, mars_w);

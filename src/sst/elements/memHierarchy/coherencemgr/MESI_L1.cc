@@ -40,7 +40,7 @@ MESIL1::MESIL1(ComponentId_t id, Params& params, Params& owner_params, bool pref
 
     std::string frequency = params.find<std::string>("cache_frequency", "");
 
-    llsc_timeout_ = configureSelfLink("llscTimeoutLink", frequency, new Event::Handler2<MESIL1, &MESIL1::handleLoadLinkExpiration>(this));
+    llsc_timeout_ = configureSelfLink("llscTimeoutLink", frequency, new Event::Handler<MESIL1, &MESIL1::handleLoadLinkExpiration>(this));
 
     // Coherence protocol transition states
     if (MESI) {

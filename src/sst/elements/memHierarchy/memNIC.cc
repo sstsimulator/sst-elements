@@ -48,12 +48,12 @@ MemNIC::MemNIC(ComponentId_t id, Params &params, TimeConverter tc) : MemNICBase(
             dbg.fatal(CALL_INFO, -1, "%s, Error: MemNIC is unable to load the default merlin.linkcontrol subcomponent. Ensure merlin library is available or load a linkcontrol in the MemNIC's 'linkcontrol' subcomponent slot\n", getName().c_str());
         }
     }
-    link_control->setNotifyOnReceive(new SimpleNetwork::Handler2<MemNIC, &MemNIC::recvNotify>(this));
+    link_control->setNotifyOnReceive(new SimpleNetwork::Handler<MemNIC, &MemNIC::recvNotify>(this));
 
     // Packet size
     packetHeaderBytes = extractPacketHeaderSize(params, "min_packet_size");
 
-    clockHandler = new Clock::Handler2<MemNIC, &MemNIC::clock>(this);
+    clockHandler = new Clock::Handler<MemNIC, &MemNIC::clock>(this);
     clockTC = registerClock(tc, clockHandler);
 }
 

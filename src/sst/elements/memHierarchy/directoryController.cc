@@ -97,7 +97,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
                 getName().c_str(), ilStep.c_str());
     }
 
-    clockHandler = new Clock::Handler2<DirectoryController, &DirectoryController::clock>(this);
+    clockHandler = new Clock::Handler<DirectoryController, &DirectoryController::clock>(this);
     defaultTimeBase = registerClock(params.find<std::string>("clock", "1GHz"), clockHandler);
     clockOn = true;
 
@@ -163,12 +163,12 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         if (linkDown_)
             linkDown_->setRegion(region);
 
-        linkUp_->setRecvHandler(new Event::Handler2<DirectoryController, &DirectoryController::handlePacket>(this));
+        linkUp_->setRecvHandler(new Event::Handler<DirectoryController, &DirectoryController::handlePacket>(this));
         if (!linkDown_) {
             if (params.find<std::string>("net_memory_name", "") != "")
                 dbg.fatal(CALL_INFO, -1, "%s, Error: parameter 'net_memory_name' is no longer supported. Memory and directory components should specify their own address regions (address_range_start/end, interleave_step/size) and mapping will be inferred from that. Remove this parameter from your input deck to eliminate this error.\n", getName().c_str());
         } else {
-            linkDown_->setRecvHandler(new Event::Handler2<DirectoryController, &DirectoryController::handlePacket>(this));
+            linkDown_->setRecvHandler(new Event::Handler<DirectoryController, &DirectoryController::handlePacket>(this));
         }
     } else {
         /* Set up links/network to cache & memory the old way -> and fixup params accordingly */
@@ -217,7 +217,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             dbg.fatal(CALL_INFO, -1, "%s, Error: Either this component's 'highlink' port must be connected OR the 'highlink' subcomponent slot must be filled\n", getName().c_str());
         }
 
-        linkUp_->setRecvHandler(new Event::Handler2<DirectoryController, &DirectoryController::handlePacket>(this));
+        linkUp_->setRecvHandler(new Event::Handler<DirectoryController, &DirectoryController::handlePacket>(this));
 
         if (isPortConnected("memory")) {
             Params memParams = params.get_scoped_params("memlink");
@@ -231,7 +231,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             if (!linkDown_) {
                 dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
             }
-            linkDown_->setRecvHandler(new Event::Handler2<DirectoryController, &DirectoryController::handlePacket>(this));
+            linkDown_->setRecvHandler(new Event::Handler<DirectoryController, &DirectoryController::handlePacket>(this));
             out.output("%s, DEPRECATION WARNING: The 'memory' port is deprecated. Use the 'lowlink' port instead.\n", getName().c_str());
         } else if (isPortConnected("lowlink")) {
             Params memParams;
@@ -244,7 +244,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             if (!linkDown_) {
                 dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
             }
-            linkDown_->setRecvHandler(new Event::Handler2<DirectoryController, &DirectoryController::handlePacket>(this));
+            linkDown_->setRecvHandler(new Event::Handler<DirectoryController, &DirectoryController::handlePacket>(this));
         } else {
             // No linkDown_, traffic to/from memory will use the linkUp_
             linkDown_ = nullptr;

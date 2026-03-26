@@ -28,9 +28,9 @@ MemLink::MemLink(ComponentId_t id, Params &params, TimeConverter tc) : MemLinkBa
     std::string port = params.find<std::string>("port", "port");
 
     if (found) {
-        link_ = configureLink(port, latency, new Event::Handler2<MemLinkBase, &MemLinkBase::recvNotify>(this));
+        link_ = configureLink(port, latency, new Event::Handler<MemLinkBase, &MemLinkBase::recvNotify>(this));
     } else {
-        link_ = configureLink(port, new Event::Handler2<MemLinkBase, &MemLinkBase::recvNotify>(this));
+        link_ = configureLink(port, new Event::Handler<MemLinkBase, &MemLinkBase::recvNotify>(this));
     }
 
     if (!link_)

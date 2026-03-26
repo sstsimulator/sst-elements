@@ -76,7 +76,7 @@ nic::nic(ComponentId_t cid, Params& params) :
         next_seq[i] = 0;
 
     // Register a clock
-    registerClock( "1GHz", new Clock::Handler2<nic,&nic::clock_handler>(this), false);
+    registerClock( "1GHz", new Clock::Handler<nic,&nic::clock_handler>(this), false);
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();

@@ -32,7 +32,7 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) :
     statsOutputTarget = (Output::output_location_t)params.find<int>("printStats", 0);
 
     TimeConverter tc = registerClock(params.find<std::string>("clockRate", "1 GHz"),
-            new Clock::Handler2<DMAEngine, &DMAEngine::clock>(this));
+            new Clock::Handler<DMAEngine, &DMAEngine::clock>(this));
     commandLink = configureLink("cmdLink", tc, NULL);
     if ( NULL == commandLink ) dbg.fatal(CALL_INFO, 1, "Missing cmdLink\n");
 

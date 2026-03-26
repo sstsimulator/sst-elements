@@ -149,7 +149,7 @@ void Bus::configureLinks() {
     SST::Link* link;
     std::string linkname = linkprefix + "0";
     while (isPortConnected(linkname)) {
-        link = configureLink(linkname, new Event::Handler2<Bus, &Bus::processIncomingEvent>(this));
+        link = configureLink(linkname, new Event::Handler<Bus, &Bus::processIncomingEvent>(this));
         if (!link)
             dbg_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), linkname.c_str());
         highNetPorts_.push_back(link);
@@ -164,7 +164,7 @@ void Bus::configureLinks() {
     }
     linkname = linkprefix + "0";
     while (isPortConnected(linkname)) {
-        link = configureLink(linkname, new Event::Handler2<Bus, &Bus::processIncomingEvent>(this));
+        link = configureLink(linkname, new Event::Handler<Bus, &Bus::processIncomingEvent>(this));
         if (!link)
             dbg_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), linkname.c_str());
         lowNetPorts_.push_back(link);
@@ -205,7 +205,7 @@ void Bus::configureParameters(SST::Params& params) {
     uA = uA * 2;
     frequency = uA.toString();
 
-    clockHandler_ = new Clock::Handler2<Bus, &Bus::clockTick>(this);
+    clockHandler_ = new Clock::Handler<Bus, &Bus::clockTick>(this);
     defaultTimeBase_ = registerClock(frequency, clockHandler_);
 }
 

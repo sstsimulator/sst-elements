@@ -73,7 +73,7 @@ void API::setVars( Info* info, VirtNic* nic, Thornhill::MemoryHeapLink* mem, Lin
                                 this, &API::notifyRecvDmaDone )
     );
     nic->setNotifyNeedRecv(
-        new VirtNic::Handler2Args<API,int,size_t>(
+        new VirtNic::HandlerArgs<API,int,size_t>(
                                 this, &API::notifyNeedRecv )
     );
 
