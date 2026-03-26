@@ -127,7 +127,7 @@ public:
         assert( 1 == f );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"flags: %d\n", flags );
 
-        f = fscanf(fp,"mode: %d\n", &mode);
+        f = fscanf(fp,"mode: %hd\n", &mode);
         assert( 1 == f );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"mode: %d\n", mode);
     }

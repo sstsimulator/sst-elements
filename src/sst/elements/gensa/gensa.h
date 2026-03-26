@@ -76,7 +76,7 @@ public:
 
     std::vector<Neuron*> neurons;
 
-    TimeConverter *             clockTC;
+    TimeConverter               clockTC;
     Interfaces::StandardMem *   memory;
     Interfaces::SimpleNetwork * link;
     std::set<uint64_t>                                   memoryRequests;

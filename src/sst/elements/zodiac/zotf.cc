@@ -60,7 +60,7 @@ ZodiacOTFTraceReader::ZodiacOTFTraceReader(ComponentId_t id, Params& params) :
     primaryComponentDoNotEndSim();
 
     registerClock( "1GHz",
-                 new Clock::Handler2<ZodiacOTFTraceReader,&ZodiacOTFTraceReader::clockTic>(this) );
+                 new Clock::Handler<ZodiacOTFTraceReader,&ZodiacOTFTraceReader::clockTic>(this) );
 }
 
 ZodiacOTFTraceReader::~ZodiacOTFTraceReader() {

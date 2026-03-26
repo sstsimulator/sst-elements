@@ -86,11 +86,11 @@ private:
     	m_maxRequestsPending[Write] = params.find<uint32_t>("maxstorememreqpending", 16);
 
 		UnitAlgebra freq = params.find<SST::UnitAlgebra>( "freq", "1Ghz" );
-		m_clock_handler = new Clock::Handler2<DetailedInterface,&DetailedInterface::clock_handler>(this);
+		m_clock_handler = new Clock::Handler<DetailedInterface,&DetailedInterface::clock_handler>(this);
 		m_clock = registerClock( freq, m_clock_handler);
 
 		m_mem_link = loadUserSubComponent<Interfaces::StandardMem>("standardInterface", ComponentInfo::SHARE_NONE,
-			&m_clock , new Interfaces::StandardMem::Handler2<DetailedInterface,&DetailedInterface::handleEvent>(this) );
+			&m_clock , new Interfaces::StandardMem::Handler<DetailedInterface,&DetailedInterface::handleEvent>(this) );
 
 	    if( m_mem_link ) {
 			m_dbg.verbose(CALL_INFO, 1, MY_MASK, "Loaded memory interface successfully.\n");

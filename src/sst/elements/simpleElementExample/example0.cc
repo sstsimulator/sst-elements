@@ -62,14 +62,14 @@ example0::example0(ComponentId_t id, Params& params) : Component(id) {
 
     // configure our link with a callback function that will be called whenever an event arrives
     // Callback function is optional, if not provided then component must poll the link
-    link = configureLink("port", new Event::Handler2<example0, &example0::handleEvent>(this));
+    link = configureLink("port", new Event::Handler<example0, &example0::handleEvent>(this));
 
     // Make sure we successfully configured the links
     // Failure usually means the user didn't connect the port in the input file
     sst_assert(link, CALL_INFO, -1, "Error in %s: Link configuration failed\n", getName().c_str());
 
     //set our clock. The simulator will call 'clockTic' at a 1GHz frequency
-    registerClock("1GHz", new Clock::Handler2<example0, &example0::clockTic>(this));
+    registerClock("1GHz", new Clock::Handler<example0, &example0::clockTic>(this));
 
     // This simulation will end when we have sent 'eventsToSend' events and received a 'LAST' event
     lastEventReceived = false;

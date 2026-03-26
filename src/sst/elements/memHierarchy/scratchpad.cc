@@ -179,7 +179,7 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     directory_ = false;
 
     // Create clock
-    TimeConverter tc = registerClock(clock_freq, new Clock::Handler2<Scratchpad, &Scratchpad::clock>(this));
+    TimeConverter tc = registerClock(clock_freq, new Clock::Handler<Scratchpad, &Scratchpad::clock>(this));
 
     // Register statistics
     stat_ScratchReadReceived      = registerStatistic<uint64_t>("request_received_scratch_read");
@@ -208,7 +208,7 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
         }
     }
     if (linkUp_)
-        linkUp_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingCPUEvent>(this));
+        linkUp_->setRecvHandler(new Event::Handler<Scratchpad, &Scratchpad::processIncomingCPUEvent>(this));
 
     linkDown_ = loadUserSubComponent<MemLinkBase>("lowlink", ComponentInfo::SHARE_NONE, &tc);
     if (!linkDown_) {
@@ -223,14 +223,14 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
         }
     }
     if (linkDown_)
-        linkDown_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingRemoteEvent>(this));
+        linkDown_->setRecvHandler(new Event::Handler<Scratchpad, &Scratchpad::processIncomingRemoteEvent>(this));
 
     if (linkUp_ && !linkDown_) {
         linkDown_ = linkUp_;
-        linkDown_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingNetworkEvent>(this));
+        linkDown_->setRecvHandler(new Event::Handler<Scratchpad, &Scratchpad::processIncomingNetworkEvent>(this));
     } else if (linkDown_ && !linkUp_) {
         linkUp_ = linkDown_;
-        linkDown_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingNetworkEvent>(this));
+        linkDown_->setRecvHandler(new Event::Handler<Scratchpad, &Scratchpad::processIncomingNetworkEvent>(this));
     }
 
     if (!linkUp_) {
@@ -252,14 +252,14 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
             Params cpulink = params.get_scoped_params("cpulink");
             cpulink.insert("port", "cpu");
             linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, cpulink, &tc);
-            linkUp_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingCPUEvent>(this));
+            linkUp_->setRecvHandler(new Event::Handler<Scratchpad, &Scratchpad::processIncomingCPUEvent>(this));
             out.output("%s, DEPRECATION WARNING: The scratchpad's 'cpu' port has been renamed to 'highlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
         }
         if (memoryDirect) {
             Params memlink = params.get_scoped_params("memlink");
             memlink.insert("port", "memory");
             linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memlink, &tc);
-            linkDown_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingRemoteEvent>(this));
+            linkDown_->setRecvHandler(new Event::Handler<Scratchpad, &Scratchpad::processIncomingRemoteEvent>(this));
             out.output("%s, DEPRECATION WARNING: The scratchpad's 'memory' port has been renamed to 'lowlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
         }
 
@@ -286,14 +286,14 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
 
             if (!memoryDirect) { /* Connect mem side to network */
                 linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, &tc);
-                linkDown_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingRemoteEvent>(this));
+                linkDown_->setRecvHandler(new Event::Handler<Scratchpad, &Scratchpad::processIncomingRemoteEvent>(this));
                 if (!cpuDirect) {
                     linkUp_ = linkDown_; /* Connect cpu side to same network */
-                    linkDown_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingNetworkEvent>(this));
+                    linkDown_->setRecvHandler(new Event::Handler<Scratchpad, &Scratchpad::processIncomingNetworkEvent>(this));
                 }
             } else {
                 linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, &tc);
-                linkUp_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingCPUEvent>(this));
+                linkUp_->setRecvHandler(new Event::Handler<Scratchpad, &Scratchpad::processIncomingCPUEvent>(this));
             }
         }
     }

@@ -96,7 +96,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         out.fatal(CALL_INFO, -1, "%s, ERROR - Invalid parameter: 'clock'. Must have units of Hz or s and be > 0. (SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
     }
 
-    clockHandler_ = new Clock::Handler2<MemController, &MemController::clock>(this);
+    clockHandler_ = new Clock::Handler<MemController, &MemController::clock>(this);
     clockTimeBase_ = registerClock(clockfreq, clockHandler_);
     clockOn_ = true;
 
@@ -248,7 +248,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     }
 
     clockLink_ = link_->isClocked();
-    link_->setRecvHandler( new Event::Handler2<MemController, &MemController::handleEvent>(this));
+    link_->setRecvHandler( new Event::Handler<MemController, &MemController::handleEvent>(this));
 
     link_->setRegion(region_);
 

@@ -30,7 +30,7 @@ OperatingSystemCL::OperatingSystemCL(SST::ComponentId_t id, SST::Params& params)
   OperatingSystemCLAPI(id,params), OperatingSystemImpl(id,params,this)
 {
   // Configure self link to handle event timing
-  selfEventLink_ = configureSelfLink("self", time_converter_, new Event::Handler2<Hg::OperatingSystemCL,&OperatingSystemCL::handleEvent>(this));
+  selfEventLink_ = configureSelfLink("self", time_converter_, new Event::Handler<Hg::OperatingSystemCL,&OperatingSystemCL::handleEvent>(this));
   assert(selfEventLink_);
   selfEventLink_->setDefaultTimeBase(time_converter_);
 
