@@ -72,7 +72,7 @@ class ArielCore : public ComponentExtension {
             uint32_t thisCoreID, uint32_t maxPendTans, Output* out,
             uint32_t maxIssuePerCyc, uint32_t maxQLen, uint64_t cacheLineSz,
             ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params,
-            TimeConverter *timeconverter);
+            TimeConverter timeconverter);
         ~ArielCore();
 
         bool isCoreHalted() const;

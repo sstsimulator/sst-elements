@@ -21,7 +21,7 @@ using namespace SST::Opal;
 
 /* Constructor */
 
-OpalMemNIC::OpalMemNIC(ComponentId_t id, Params &params, TimeConverter* tc) : SST::MemHierarchy::MemNICBase(id, params, tc) {
+OpalMemNIC::OpalMemNIC(ComponentId_t id, Params &params, TimeConverter tc) : SST::MemHierarchy::MemNICBase(id, params, tc) {
 
     node = params.find<uint32_t>("node", 0);
     enable = params.find<bool>("shared_memory", true);

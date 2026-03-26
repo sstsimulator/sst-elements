@@ -21,7 +21,7 @@ using namespace SST::MemHierarchy;
 
 /* Constructor */
 
-MemLink::MemLink(ComponentId_t id, Params &params, TimeConverter* tc) : MemLinkBase(id, params, tc) {
+MemLink::MemLink(ComponentId_t id, Params &params, TimeConverter tc) : MemLinkBase(id, params, tc) {
     // Configure link
     bool found;
     std::string latency = params.find<std::string>("latency", "0ps", found);

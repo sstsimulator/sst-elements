@@ -38,7 +38,7 @@ public:
         : ComputeArray(id, params, tc, handler) {
         // Configure selfLink
         selfLink = configureSelfLink("Self", *tc, new Event::Handler2<MVMComputeArray,&MVMComputeArray::handleSelfEvent>(this));
-        selfLink->setDefaultTimeBase(*latencyTC);
+        selfLink->setDefaultTimeBase(latencyTC);
 
         // Initialize vectors
         inputVectors.resize(numArrays);

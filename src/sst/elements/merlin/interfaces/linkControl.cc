@@ -708,7 +708,8 @@ void LinkControl::handle_output(Event* ev)
         output_timing->send(size,nullptr);
         if ( found_has_throttle ) {
             CongestionState& info = congestion_state[send_event->getDest()];
-            info.throttle_time = getCurrentSimCycle() + (size * output_timing->getDefaultTimeBase()->getFactor() * (2+info.backoff));
+            TimeConverter tc = output_timing->getDefaultTimeBase();
+            info.throttle_time = getCurrentSimCycle() + (size * tc.getFactor() * (2+info.backoff));
 
             // Subtract from the count for the stream
             info.count--;

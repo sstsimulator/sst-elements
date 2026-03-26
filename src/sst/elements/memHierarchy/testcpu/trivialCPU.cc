@@ -74,13 +74,13 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     clockTC = registerClock( clockFreq, clockHandler );
 
 
-    memory = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::StandardMem::Handler2<trivialCPU, &trivialCPU::handleEvent>(this));
+    memory = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, &clockTC, new Interfaces::StandardMem::Handler2<trivialCPU, &trivialCPU::handleEvent>(this));
 
     if (!memory) {
         Params interfaceParams;
         interfaceParams.insert("port", "mem_link");
         memory = loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
-                interfaceParams, clockTC, new Interfaces::StandardMem::Handler2<trivialCPU, &trivialCPU::handleEvent>(this));
+                interfaceParams, &clockTC, new Interfaces::StandardMem::Handler2<trivialCPU, &trivialCPU::handleEvent>(this));
         //out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.standardInterface subcomponent\n");
     }
 

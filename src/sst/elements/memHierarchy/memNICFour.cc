@@ -26,13 +26,13 @@ using namespace SST::Interfaces;
 
 /* Constructor */
 
-MemNICFour::MemNICFour(ComponentId_t id, Params &params, TimeConverter* tc) : MemNICBase(id, params, tc) {
+MemNICFour::MemNICFour(ComponentId_t id, Params &params, TimeConverter tc) : MemNICBase(id, params, tc) {
     bool found;
     std::array<std::string,4> pref = {"req", "ack", "fwd", "data"};
 
     clockOn = true;
     clockHandler = new Clock::Handler2<MemNICFour, &MemNICFour::clock>(this);
-    clockTC = registerClock(*tc, clockHandler);
+    clockTC = registerClock(tc, clockHandler);
 
     for (int i = 0; i < 4; i++) {
         link_control[i] = loadUserSubComponent<SST::Interfaces::SimpleNetwork>(pref[i], ComponentInfo::SHARE_NONE, 1);

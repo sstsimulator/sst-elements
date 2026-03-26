@@ -439,7 +439,8 @@ void Cache::checkTimeout() {
 
     if (entry) {
         SimTime_t curTime = getCurrentSimTimeNano();
-        SimTime_t startTime = getTimeConverter("1ns")->convertFromCoreTime(entry->getStartTime());
+        TimeConverter tc = getTimeConverter("1ns");
+        SimTime_t startTime = tc.convertFromCoreTime(entry->getStartTime());
         SimTime_t waitTime = curTime - startTime;
         if (waitTime > timeout_) {
             out_->fatal(CALL_INFO, -1, "%s, Error: Maximum cache timeout reached - potential deadlock or other error. Event: %s. Current time: %" PRIu64 "ns. Event start time: %" PRIu64 "ns.\n",

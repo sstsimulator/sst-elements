@@ -93,8 +93,9 @@ public:
                 "Error: unable to load memory interface subcomponent for RoCCAnalog.\n");
         }
 
+        TimeConverter tc = getTimeConverter("1ps");
         array = loadUserSubComponent<Golem::ComputeArray>(
-            "array", ComponentInfo::SHARE_NONE, getTimeConverter("1ps"),
+            "array", ComponentInfo::SHARE_NONE, &tc,
             new SST::Event::Handler2<RoCCAnalog<T>, &RoCCAnalog<T>::handleArrayEvent>(this));
 
         if ( nullptr == array ) {

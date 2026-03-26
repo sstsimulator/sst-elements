@@ -51,7 +51,7 @@ public:
 /* Begin class definition */
 
     /* Constructor */
-    OpalMemNIC(ComponentId_t id, Params &params, TimeConverter* tc);
+    OpalMemNIC(ComponentId_t id, Params &params, TimeConverter tc);
 
     /* Destructor */
     virtual ~OpalMemNIC() { }

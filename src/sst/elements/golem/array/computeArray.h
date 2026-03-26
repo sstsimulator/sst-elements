@@ -100,7 +100,7 @@ protected:
     SST::Link* selfLink = nullptr;
     SST::Event::HandlerBase* tileHandler = nullptr;
     UnitAlgebra arrayLatency;
-    TimeConverter* latencyTC = nullptr;
+    TimeConverter latencyTC;
 
     uint64_t numArrays;
     uint64_t inputArraySize;

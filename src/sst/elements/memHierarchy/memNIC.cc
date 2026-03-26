@@ -28,7 +28,7 @@ using namespace SST::Interfaces;
 
 /* Constructor */
 
-MemNIC::MemNIC(ComponentId_t id, Params &params, TimeConverter* tc) : MemNICBase(id, params, tc) {
+MemNIC::MemNIC(ComponentId_t id, Params &params, TimeConverter tc) : MemNICBase(id, params, tc) {
 
     link_control = loadUserSubComponent<SimpleNetwork>("linkcontrol", ComponentInfo::SHARE_NONE, 1); // 1 is the num virtual networks
     if (!link_control) {
@@ -54,7 +54,7 @@ MemNIC::MemNIC(ComponentId_t id, Params &params, TimeConverter* tc) : MemNICBase
     packetHeaderBytes = extractPacketHeaderSize(params, "min_packet_size");
 
     clockHandler = new Clock::Handler2<MemNIC, &MemNIC::clock>(this);
-    clockTC = registerClock(*tc, clockHandler);
+    clockTC = registerClock(tc, clockHandler);
 }
 
 void MemNIC::init(unsigned int phase) {

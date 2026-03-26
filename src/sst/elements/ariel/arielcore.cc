@@ -30,7 +30,7 @@ ArielCore::ArielCore(ComponentId_t id, ArielTunnel *tunnel,
             Output* out, uint32_t maxIssuePerCyc,
             uint32_t maxQLen, uint64_t cacheLineSz,
             ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params,
-            TimeConverter *timeconverter) :
+            TimeConverter timeconverter) :
             ComponentExtension(id), output(out), tunnel(tunnel),
             perform_checks(perform_address_checks),
             verbosity(static_cast<uint32_t>(out->getVerboseLevel())),
