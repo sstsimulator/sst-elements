@@ -119,8 +119,7 @@ process_list = (
         "env_count" : 1,
         "env0" : "OMP_NUM_THREADS=8",
         "exe" : Executable,
-        "arg0" : Executable,
-        "arg1" : "-ifeellucky"
+        "arg0" : Executable+
     } ),
 )
 
@@ -224,19 +223,19 @@ cpu0 = sst.Component(prefix + ".cpu0", "vanadis.dbg_VanadisCPU")
 cpu0.addParams(cpu_params)
 cpu0.addParam("core_id", 0)
 
-decoder0 = cpu0.setSubComponent("decoder0", "vanadis.Vanadis.RISCV64Decoder")
+decoder0 = cpu0.setSubComponent("decoder", "vanadis.Vanadis.RISCV64Decoder")
 decoder0.addParams(decoderParams)
 
-os_hdlr0 = decoder0.setSubComponent("os_handler0", "vanadis.Vanadis.RISCV64OSHandler")
+os_hdlr0 = decoder0.setSubComponent("os_handler", "vanadis.Vanadis.RISCV64OSHandler")
 
-branch_pred0 = decoder0.setSubComponent("branch_unit0", "vanadis.VanadisBasicBranchUnit")
+branch_pred0 = decoder0.setSubComponent("branch_unit", "vanadis.VanadisBasicBranchUnit")
 branch_pred0.addParams(branchPredictorParams)
 
-lsq0 = cpu0.setSubComponent("lsq0", "vanadis.VanadisBasicLoadStoreQueue")
+lsq0 = cpu0.setSubComponent("lsq", "vanadis.VanadisBasicLoadStoreQueue")
 lsq0.addParams(lsqParams)
 
-cpu0_dcacheIf = lsq0.setSubcomponent("memory_interface0", "memHierarchy.standardInterface")
-cpu0_icacheIf = cpu0.setSubComponent("mem_interface_inst0", "memHierarchy.standardInterface")
+cpu0_dcacheIf = lsq0.setSubcomponent("memory_interface", "memHierarchy.standardInterface")
+cpu0_icacheIf = cpu0.setSubComponent("mem_interface_inst", "memHierarchy.standardInterface")
 
 comp_c0_l1Dcache = sst.Component("c0.l1Dcache", "memHierarchy.Cache")
 comp_c0_l1Dcache.addParams({
@@ -253,8 +252,8 @@ comp_c0_l1Dcache.addParams({
       "prefetcher" : Pref1
 })
 
-cpu0_l1Dcache_2_cpu = comp_c0_l1Dcache.setSubComponent("cpu0_l1dcache_cpulink", "memHierarchy.MemLink")
-cpu0_liDcache_2_l2cache = comp_c0_l1Dcache.setSubComponent("cpu0_l1icache_memlink", "memHierarchy.MemLink")
+cpu0_l1Dcache_2_cpu = comp_c0_l1Dcache.setSubComponent("cpulink", "memHierarchy.MemLink")
+cpu0_liDcache_2_l2cache = comp_c0_l1Dcache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 cpu0_l1Icache = sst.Component("c0.l1Icache", "memHierarchy.Cache")
 cpu0_l1Icache.addParams({
@@ -272,19 +271,19 @@ cpu0_l1Icache.addParams({
     "debug_level" :  """6""",
 })
 
-cpu0_l1Icache_2_cpu = cpu0_l1Icache.setSubComponent("cpu0_l1Icache_cpulink", "memHierarchy.MemLink")
-cpu0_l1Icache_2_l2cache = cpu0_l1Icache.setSubComponent("cpu0_l1Icache_memlink", "memHierarcy.MemLink")
+cpu0_l1Icache_2_cpu = cpu0_l1Icache.setSubComponent("cpulink", "memHierarchy.MemLink")
+cpu0_l1Icache_2_l2cache = cpu0_l1Icache.setSubComponent("memlink", "memHierarcy.MemLink")
 
 cpu0_dtlb_wrapper = sst.Component("cpu0_dtlb", "mmu.tlb_wrapper")
 cpu0_dtlb_wrapper.addParams(tlbWrapperParams)
 
-cpu0_dtlb = cpu0_dtlb_wrapper.setSubComponent("cpu0_dtlb", "mmu.simpleTLB")
+cpu0_dtlb = cpu0_dtlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu0_dtlb.addParams(tlbParams)
 
 cpu0_itlb_wrapper = sst.Component("cpu0_itlb", "mmu.tlb_wrapper")
 cpu0_itlb_wrapper.addParams(tlbWrapperParams)
 
-cpu0_itlb = cpu0_itlb_wrapper.setSubComponent("cpu0_itlb", "mmu.simpleTLB")
+cpu0_itlb = cpu0_itlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu0_itlb.addParams(tlbParams)
 
 cpu0_dtlb_link = sst.Link("cpu0_dtlb_link")
@@ -303,19 +302,19 @@ cpu1 = sst.Component(prefix + ".cpu1", "vanadis.dbg_VanadisCPU")
 cpu1.addParams(cpu_params)
 cpu1.addParam("core_id", 1)
 
-decoder1 = cpu1.setSubComponent("decoder1", "vanadis.Vanadis.RISCV64Decoder")
+decoder1 = cpu1.setSubComponent("decoder", "vanadis.Vanadis.RISCV64Decoder")
 decoder1.addParams(decoderParams)
 
-os_hdlr1 = decoder1.setSubComponent("os_handler1", "vanadis.Vanadis.RISCV64OSHandler")
+os_hdlr1 = decoder1.setSubComponent("os_handler", "vanadis.Vanadis.RISCV64OSHandler")
 
-branch_pred1 = decoder1.setSubComponent("branch_unit1", "vanadis.VanadisBasicBranchUnit")
+branch_pred1 = decoder1.setSubComponent("branch_unit", "vanadis.VanadisBasicBranchUnit")
 branch_pred1.addParams(branchPredictorParams)
 
-lsq1 = cpu1.setSubComponent("lsq1", "vanadis.VanadisBasicLoadStoreQueue")
+lsq1 = cpu1.setSubComponent("lsq", "vanadis.VanadisBasicLoadStoreQueue")
 lsq1.addParams(lsqParams)
 
-cpu1_dcacheIf = lsq1.setSubcomponent("memory_interface1", "memHierarchy.standardInterface")
-cpu1_icacheIf = cpu1.setSubComponent("mem_interface_inst1", "memHierarchy.standardInterface")
+cpu1_dcacheIf = lsq1.setSubcomponent("memory_interface", "memHierarchy.standardInterface")
+cpu1_icacheIf = cpu1.setSubComponent("mem_interface_inst", "memHierarchy.standardInterface")
 
 comp_c1_l1Dcache = sst.Component("c1.l1Dcache", "memHierarchy.Cache")
 comp_c1_l1Dcache.addParams({
@@ -332,8 +331,8 @@ comp_c1_l1Dcache.addParams({
       "prefetcher" : Pref1
 })
 
-cpu1_l1Dcache_2_cpu = comp_c1_l1Dcache.setSubComponent("cpu1_l1dcache_cpulink", "memHierarchy.MemLink")
-cpu1_liDcache_2_l2cache = comp_c1_l1Dcache.setSubComponent("cpu1_l1icache_memlink", "memHierarchy.MemLink")
+cpu1_l1Dcache_2_cpu = comp_c1_l1Dcache.setSubComponent("cpulink", "memHierarchy.MemLink")
+cpu1_liDcache_2_l2cache = comp_c1_l1Dcache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 cpu1_l1Icache = sst.Component("c1.l1Icache", "memHierarchy.Cache")
 cpu1_l1Icache.addParams({
@@ -351,19 +350,19 @@ cpu1_l1Icache.addParams({
     "debug_level" :  """6""",
 })
 
-cpu1_l1Icache_2_cpu = cpu1_l1Icache.setSubComponent("cpu1_l1Icache_cpulink", "memHierarchy.MemLink")
-cpu1_l1Icache_2_l2cache = cpu1_l1Icache.setSubComponent("cpu1_l1Icache_memlink", "memHierarcy.MemLink")
+cpu1_l1Icache_2_cpu = cpu1_l1Icache.setSubComponent("cpulink", "memHierarchy.MemLink")
+cpu1_l1Icache_2_l2cache = cpu1_l1Icache.setSubComponent("memlink", "memHierarcy.MemLink")
 
 cpu1_dtlb_wrapper = sst.Component("cpu1_dtlb", "mmu.tlb_wrapper")
 cpu1_dtlb_wrapper.addParams(tlbWrapperParams)
 
-cpu1_dtlb = cpu0_dtlb_wrapper.setSubComponent("cpu1_dtlb", "mmu.simpleTLB")
+cpu1_dtlb = cpu0_dtlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu1_dtlb.addParams(tlbParams)
 
 cpu1_itlb_wrapper = sst.Component("cpu1_itlb", "mmu.tlb_wrapper")
 cpu1_itlb_wrapper.addParams(tlbWrapperParams)
 
-cpu1_itlb = cpu0_itlb_wrapper.setSubComponent("cpu1_itlb", "mmu.simpleTLB")
+cpu1_itlb = cpu0_itlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu1_itlb.addParams(tlbParams)
 
 cpu1_dtlb_link = sst.Link("cpu1_dtlb_link")
@@ -382,19 +381,19 @@ cpu2 = sst.Component(prefix + ".cpu2", "vanadis.dbg_VanadisCPU")
 cpu2.addParams(cpu_params)
 cpu2.addParam("core_id", 2)
 
-decoder2 = cpu2.setSubComponent("decoder2", "vanadis.Vanadis.RISCV64Decoder")
+decoder2 = cpu2.setSubComponent("decoder", "vanadis.Vanadis.RISCV64Decoder")
 decoder2.addParams(decoderParams)
 
-os_hdlr2 = decoder2.setSubComponent("os_handler2", "vanadis.Vanadis.RISCV64OSHandler")
+os_hdlr2 = decoder2.setSubComponent("os_handler", "vanadis.Vanadis.RISCV64OSHandler")
 
-branch_pred2 = decoder2.setSubComponent("branch_unit2", "vanadis.VanadisBasicBranchUnit")
+branch_pred2 = decoder2.setSubComponent("branch_unit", "vanadis.VanadisBasicBranchUnit")
 branch_pred2.addParams(branchPredictorParams)
 
-lsq2 = cpu2.setSubComponent("lsq2", "vanadis.VanadisBasicLoadStoreQueue")
+lsq2 = cpu2.setSubComponent("lsq", "vanadis.VanadisBasicLoadStoreQueue")
 lsq2.addParams(lsqParams)
 
-cpu2_dcacheIf = lsq2.setSubcomponent("memory_interface2", "memHierarchy.standardInterface")
-cpu2_icacheIf = cpu2.setSubComponent("mem_interface_inst12", "memHierarchy.standardInterface")
+cpu2_dcacheIf = lsq2.setSubcomponent("memory_interface", "memHierarchy.standardInterface")
+cpu2_icacheIf = cpu2.setSubComponent("mem_interface_inst", "memHierarchy.standardInterface")
 
 comp_c2_l1Dcache = sst.Component("c2.l1Dcache", "memHierarchy.Cache")
 comp_c2_l1Dcache.addParams({
@@ -411,8 +410,8 @@ comp_c2_l1Dcache.addParams({
       "prefetcher" : Pref1
 })
 
-cpu2_l1Dcache_2_cpu2 = comp_c2_l1Dcache.setSubComponent("cpu2_l1dcache_cpulink", "memHierarchy.MemLink")
-cpu2_liDcache_2_l2cache = comp_c2_l1Dcache.setSubComponent("cpu2_l1icache_memlink", "memHierarchy.MemLink")
+cpu2_l1Dcache_2_cpu2 = comp_c2_l1Dcache.setSubComponent("cpulink", "memHierarchy.MemLink")
+cpu2_liDcache_2_l2cache = comp_c2_l1Dcache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 cpu2_l1Icache = sst.Component("c2.l1Icache", "memHierarchy.Cache")
 cpu2_l1Icache.addParams({
@@ -430,26 +429,26 @@ cpu2_l1Icache.addParams({
     "debug_level" :  """6""",
 })
 
-cpu2_l1Icache_2_cpu = cpu2_l1Icache.setSubComponent("cpu2_l1Icache_cpulink", "memHierarchy.MemLink")
-cpu2_l1Icache_2_l2cache = cpu2_l1Icache.setSubComponent("cpu2_l1Icache_memlink", "memHierarcy.MemLink")
+cpu2_l1Icache_2_cpu = cpu2_l1Icache.setSubComponent("cpulink", "memHierarchy.MemLink")
+cpu2_l1Icache_2_l2cache = cpu2_l1Icache.setSubComponent("memlink", "memHierarcy.MemLink")
 
 cpu2_dtlb_wrapper = sst.Component("cpu2_dtlb", "mmu.tlb_wrapper")
 cpu2_dtlb_wrapper.addParams(tlbWrapperParams)
 
-cpu2_dtlb = cpu2_dtlb_wrapper.setSubComponent("cpu2_dtlb", "mmu.simpleTLB")
+cpu2_dtlb = cpu2_dtlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu2_dtlb.addParams(tlbParams)
 
 cpu2_itlb_wrapper = sst.Component("cpu2_itlb", "mmu.tlb_wrapper")
 cpu2_itlb_wrapper.addParams(tlbWrapperParams)
 
-cpu2_itlb = cpu2_itlb_wrapper.setSubComponent("cpu2_itlb", "mmu.simpleTLB")
+cpu2_itlb = cpu2_itlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu2_itlb.addParams(tlbParams)
 
 cpu2_dtlb_link = sst.Link("cpu2_dtlb_link")
 cpu2_dtlb_link.connect( (cpu2_dcacheIf, "port", "500ps"), (cpu2_dtlb_wrapper, "cpu_if", "500ps") )
 
 cpu2_l1Dcache_link = sst.Link("cpu0_l1Dcache_link")
-cpu2_l1Dcache_link.connect( (cpu2_dtlb_wrapper, "dcache_link_2", "500ps" ), (cpu2_l1Dcache_2_cpu, "highlink", "500ps") )
+cpu2_l1Dcache_link.connect( (cpu2_dtlb_wrapper, "dcache_link_2", "500ps" ), (cpu2_l1Dcache_2_cpu2, "highlink", "500ps") )
 
 cpu2_itlb_link = sst.Link("cpu2_itlb_link")
 cpu2_itlb_link.connect( (cpu2_icacheIf, "port", "500ps"), (cpu2_itlb_wrapper, "cpu_if", "500ps") )
@@ -461,19 +460,19 @@ cpu3 = sst.Component(prefix + ".cpu3", "vanadis.dbg_VanadisCPU")
 cpu3.addParams(cpu_params)
 cpu3.addParam("core_id", 3)
 
-decoder3 = cpu3.setSubComponent("decoder3", "vanadis.Vanadis.RISCV64Decoder")
+decoder3 = cpu3.setSubComponent("decoder", "vanadis.Vanadis.RISCV64Decoder")
 decoder3.addParams(decoderParams)
 
-os_hdlr3 = decoder3.setSubComponent("os_handler3", "vanadis.Vanadis.RISCV64OSHandler")
+os_hdlr3 = decoder3.setSubComponent("os_handler", "vanadis.Vanadis.RISCV64OSHandler")
 
-branch_pred3 = decoder3.setSubComponent("branch_unit3", "vanadis.VanadisBasicBranchUnit")
+branch_pred3 = decoder3.setSubComponent("branch_unit", "vanadis.VanadisBasicBranchUnit")
 branch_pred3.addParams(branchPredictorParams)
 
-lsq3 = cpu3.setSubComponent("lsq3", "vanadis.VanadisBasicLoadStoreQueue")
+lsq3 = cpu3.setSubComponent("lsq", "vanadis.VanadisBasicLoadStoreQueue")
 lsq3.addParams(lsqParams)
 
-cpu3_dcacheIf = lsq3.setSubcomponent("memory_interface3", "memHierarchy.standardInterface")
-cpu3_icacheIf = cpu3.setSubComponent("mem_interface_inst3", "memHierarchy.standardInterface")
+cpu3_dcacheIf = lsq3.setSubcomponent("memory_interface", "memHierarchy.standardInterface")
+cpu3_icacheIf = cpu3.setSubComponent("mem_interface_inst", "memHierarchy.standardInterface")
 
 comp_c3_l1Dcache = sst.Component("c3.l1Dcache", "memHierarchy.Cache")
 comp_c3_l1Dcache.addParams({
@@ -490,8 +489,8 @@ comp_c3_l1Dcache.addParams({
       "prefetcher" : Pref1
 })
 
-cpu3_l1Dcache_2_cpu = comp_c3_l1Dcache.setSubComponent("cpu3_l1dcache_cpulink", "memHierarchy.MemLink")
-cpu3_liDcache_2_l2cache = comp_c3_l1Dcache.setSubComponent("cpu3_l1icache_memlink", "memHierarchy.MemLink")
+cpu3_l1Dcache_2_cpu = comp_c3_l1Dcache.setSubComponent("cpulink", "memHierarchy.MemLink")
+cpu3_liDcache_2_l2cache = comp_c3_l1Dcache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 cpu3_l1Icache = sst.Component("c3.l1Icache", "memHierarchy.Cache")
 cpu3_l1Icache.addParams({
@@ -509,19 +508,19 @@ cpu3_l1Icache.addParams({
     "debug_level" :  """6""",
 })
 
-cpu3_l1Icache_2_cpu = cpu3_l1Icache.setSubComponent("cpu3_l1Icache_cpulink", "memHierarchy.MemLink")
-cpu3_l1Icache_2_l2cache = cpu3_l1Icache.setSubComponent("cpu3_l1Icache_memlink", "memHierarcy.MemLink")
+cpu3_l1Icache_2_cpu = cpu3_l1Icache.setSubComponent("cpulink", "memHierarchy.MemLink")
+cpu3_l1Icache_2_l2cache = cpu3_l1Icache.setSubComponent("memlink", "memHierarcy.MemLink")
 
 cpu3_dtlb_wrapper = sst.Component("cpu3_dtlb", "mmu.tlb_wrapper")
 cpu3_dtlb_wrapper.addParams(tlbWrapperParams)
 
-cpu3_dtlb = cpu3_dtlb_wrapper.setSubComponent("cpu3_dtlb", "mmu.simpleTLB")
+cpu3_dtlb = cpu3_dtlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu3_dtlb.addParams(tlbParams)
 
 cpu3_itlb_wrapper = sst.Component("cpu3_itlb", "mmu.tlb_wrapper")
 cpu3_itlb_wrapper.addParams(tlbWrapperParams)
 
-cpu3_itlb = cpu3_itlb_wrapper.setSubComponent("cpu3_itlb", "mmu.simpleTLB")
+cpu3_itlb = cpu3_itlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu3_itlb.addParams(tlbParams)
 
 cpu3_dtlb_link = sst.Link("cpu3_dtlb_link")
@@ -540,19 +539,19 @@ cpu4 = sst.Component(prefix + ".cpu4", "vanadis.dbg_VanadisCPU")
 cpu4.addParams(cpu_params)
 cpu4.addParam("core_id", 4)
 
-decoder4 = cpu4.setSubComponent("decoder4", "vanadis.Vanadis.RISCV64Decoder")
+decoder4 = cpu4.setSubComponent("decoder", "vanadis.Vanadis.RISCV64Decoder")
 decoder4.addParams(decoderParams)
 
-os_hdlr4 = decoder4.setSubComponent("os_handler4", "vanadis.Vanadis.RISCV64OSHandler")
+os_hdlr4 = decoder4.setSubComponent("os_handler", "vanadis.Vanadis.RISCV64OSHandler")
 
-branch_pred4 = decoder4.setSubComponent("branch_unit4", "vanadis.VanadisBasicBranchUnit")
+branch_pred4 = decoder4.setSubComponent("branch_unit", "vanadis.VanadisBasicBranchUnit")
 branch_pred4.addParams(branchPredictorParams)
 
-lsq4 = cpu4.setSubComponent("lsq4", "vanadis.VanadisBasicLoadStoreQueue")
+lsq4 = cpu4.setSubComponent("lsq", "vanadis.VanadisBasicLoadStoreQueue")
 lsq4.addParams(lsqParams)
 
-cpu4_dcacheIf = lsq4.setSubcomponent("memory_interface4", "memHierarchy.standardInterface")
-cpu4_icacheIf = cpu4.setSubComponent("mem_interface_inst4", "memHierarchy.standardInterface")
+cpu4_dcacheIf = lsq4.setSubcomponent("memory_interface", "memHierarchy.standardInterface")
+cpu4_icacheIf = cpu4.setSubComponent("mem_interface_inst", "memHierarchy.standardInterface")
 
 comp_c4_l1Dcache = sst.Component("c4.l1Dcache", "memHierarchy.Cache")
 comp_c4_l1Dcache.addParams({
@@ -569,8 +568,8 @@ comp_c4_l1Dcache.addParams({
       "prefetcher" : Pref1
 })
 
-cpu4_l1Dcache_2_cpu = comp_c4_l1Dcache.setSubComponent("cpu4_l1dcache_cpulink", "memHierarchy.MemLink")
-cpu4_liDcache_2_l2cache = comp_c4_l1Dcache.setSubComponent("cpu4_l1icache_memlink", "memHierarchy.MemLink")
+cpu4_l1Dcache_2_cpu = comp_c4_l1Dcache.setSubComponent("cpulink", "memHierarchy.MemLink")
+cpu4_liDcache_2_l2cache = comp_c4_l1Dcache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 cpu4_l1Icache = sst.Component("c4.l1Icache", "memHierarchy.Cache")
 cpu4_l1Icache.addParams({
@@ -588,19 +587,19 @@ cpu4_l1Icache.addParams({
     "debug_level" :  """6""",
 })
 
-cpu4_l1Icache_2_cpu = cpu4_l1Icache.setSubComponent("cpu4_l1Icache_cpulink", "memHierarchy.MemLink")
-cpu4_l1Icache_2_l2cache = cpu4_l1Icache.setSubComponent("cpu4_l1Icache_memlink", "memHierarcy.MemLink")
+cpu4_l1Icache_2_cpu = cpu4_l1Icache.setSubComponent("cpulink", "memHierarchy.MemLink")
+cpu4_l1Icache_2_l2cache = cpu4_l1Icache.setSubComponent("memlink", "memHierarcy.MemLink")
 
 cpu4_dtlb_wrapper = sst.Component("cpu4_dtlb", "mmu.tlb_wrapper")
 cpu4_dtlb_wrapper.addParams(tlbWrapperParams)
 
-cpu4_dtlb = cpu4_dtlb_wrapper.setSubComponent("cpu4_dtlb", "mmu.simpleTLB")
+cpu4_dtlb = cpu4_dtlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu4_dtlb.addParams(tlbParams)
 
 cpu4_itlb_wrapper = sst.Component("cpu4_itlb", "mmu.tlb_wrapper")
 cpu4_itlb_wrapper.addParams(tlbWrapperParams)
 
-cpu4_itlb = cpu4_itlb_wrapper.setSubComponent("cpu4_itlb", "mmu.simpleTLB")
+cpu4_itlb = cpu4_itlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu4_itlb.addParams(tlbParams)
 
 cpu4_dtlb_link = sst.Link("cpu4_dtlb_link")
@@ -619,19 +618,19 @@ cpu5 = sst.Component(prefix + ".cpu5", "vanadis.dbg_VanadisCPU")
 cpu5.addParams(cpu_params)
 cpu5.addParam("core_id", 5)
 
-decoder5 = cpu5.setSubComponent("decoder5", "vanadis.Vanadis.RISCV64Decoder")
+decoder5 = cpu5.setSubComponent("decoder", "vanadis.Vanadis.RISCV64Decoder")
 decoder5.addParams(decoderParams)
 
-os_hdlr5 = decoder5.setSubComponent("os_handler5", "vanadis.Vanadis.RISCV64OSHandler")
+os_hdlr5 = decoder5.setSubComponent("os_handler", "vanadis.Vanadis.RISCV64OSHandler")
 
-branch_pred5 = decoder5.setSubComponent("branch_unit5", "vanadis.VanadisBasicBranchUnit")
+branch_pred5 = decoder5.setSubComponent("branch_unit", "vanadis.VanadisBasicBranchUnit")
 branch_pred5.addParams(branchPredictorParams)
 
-lsq5 = cpu5.setSubComponent("lsq5", "vanadis.VanadisBasicLoadStoreQueue")
+lsq5 = cpu5.setSubComponent("lsq", "vanadis.VanadisBasicLoadStoreQueue")
 lsq5.addParams(lsqParams)
 
-cpu5_dcacheIf = lsq5.setSubcomponent("memory_interface5", "memHierarchy.standardInterface")
-cpu5_icacheIf = cpu5.setSubComponent("mem_interface_inst5", "memHierarchy.standardInterface")
+cpu5_dcacheIf = lsq5.setSubcomponent("memory_interface", "memHierarchy.standardInterface")
+cpu5_icacheIf = cpu5.setSubComponent("mem_interface_inst", "memHierarchy.standardInterface")
 
 comp_c5_l1Dcache = sst.Component("c5.l1Dcache", "memHierarchy.Cache")
 comp_c5_l1Dcache.addParams({
@@ -648,8 +647,8 @@ comp_c5_l1Dcache.addParams({
       "prefetcher" : Pref1
 })
 
-cpu5_l1Dcache_2_cpu = comp_c5_l1Dcache.setSubComponent("cpu5_l1dcache_cpulink", "memHierarchy.MemLink")
-cpu5_liDcache_2_l2cache = comp_c5_l1Dcache.setSubComponent("cpu5_l1icache_memlink", "memHierarchy.MemLink")
+cpu5_l1Dcache_2_cpu = comp_c5_l1Dcache.setSubComponent("cpulink", "memHierarchy.MemLink")
+cpu5_liDcache_2_l2cache = comp_c5_l1Dcache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 cpu5_l1Icache = sst.Component("c5.l1Icache", "memHierarchy.Cache")
 cpu5_l1Icache.addParams({
@@ -667,19 +666,19 @@ cpu5_l1Icache.addParams({
     "debug_level" :  """6""",
 })
 
-cpu5_l1Icache_2_cpu = cpu5_l1Icache.setSubComponent("cpu5_l1Icache_cpulink", "memHierarchy.MemLink")
-cpu5_l1Icache_2_l2cache = cpu5_l1Icache.setSubCompnent("cpu5_l1Icache_memlink", "memHierarcy.MemLink")
+cpu5_l1Icache_2_cpu = cpu5_l1Icache.setSubComponent("cpulink", "memHierarchy.MemLink")
+cpu5_l1Icache_2_l2cache = cpu5_l1Icache.setSubCompnent("memlink", "memHierarcy.MemLink")
 
 cpu5_dtlb_wrapper = sst.Component("cpu5_dtlb", "mmu.tlb_wrapper")
 cpu5_dtlb_wrapper.addParams(tlbWrapperParams)
 
-cpu5_dtlb = cpu0_dtlb_wrapper.setSubComponent("cpu5_dtlb", "mmu.simpleTLB")
+cpu5_dtlb = cpu0_dtlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu5_dtlb.addParams(tlbParams)
 
 cpu5_itlb_wrapper = sst.Component("cpu5_itlb", "mmu.tlb_wrapper")
 cpu5_itlb_wrapper.addParams(tlbWrapperParams)
 
-cpu5_itlb = cpu5_itlb_wrapper.setSubComponent("cpu5_itlb", "mmu.simpleTLB")
+cpu5_itlb = cpu5_itlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu5_itlb.addParams(tlbParams)
 
 cpu5_dtlb_link = sst.Link("cpu5_dtlb_link")
@@ -698,19 +697,19 @@ cpu6 = sst.Component(prefix + ".cpu6", "vanadis.dbg_VanadisCPU")
 cpu6.addParams(cpu_params)
 cpu6.addParam("core_id", 6)
 
-decoder6 = cpu6.setSubComponent("decoder6", "vanadis.Vanadis.RISCV64Decoder")
+decoder6 = cpu6.setSubComponent("decoder", "vanadis.Vanadis.RISCV64Decoder")
 decoder6.addParams(decoderParams)
 
-os_hdlr6 = decoder6.setSubComponent("os_handler6", "vanadis.Vanadis.RISCV64OSHandler")
+os_hdlr6 = decoder6.setSubComponent("os_handler", "vanadis.Vanadis.RISCV64OSHandler")
 
-branch_pred6 = decoder6.setSubComponent("branch_unit6", "vanadis.VanadisBasicBranchUnit")
+branch_pred6 = decoder6.setSubComponent("branch_unit", "vanadis.VanadisBasicBranchUnit")
 branch_pred6.addParams(branchPredictorParams)
 
-lsq6 = cpu6.setSubComponent("lsq6", "vanadis.VanadisBasicLoadStoreQueue")
+lsq6 = cpu6.setSubComponent("lsq", "vanadis.VanadisBasicLoadStoreQueue")
 lsq6.addParams(lsqParams)
 
-cpu6_dcacheIf = lsq6.setSubcomponent("memory_interface6", "memHierarchy.standardInterface")
-cpu6_icacheIf = cpu6.setSubComponent("mem_interface_inst6", "memHierarchy.standardInterface")
+cpu6_dcacheIf = lsq6.setSubcomponent("memory_interface", "memHierarchy.standardInterface")
+cpu6_icacheIf = cpu6.setSubComponent("mem_interface_inst", "memHierarchy.standardInterface")
 
 comp_c6_l1Dcache = sst.Component("c6.l1Dcache", "memHierarchy.Cache")
 comp_c6_l1Dcache.addParams({
@@ -726,8 +725,8 @@ comp_c6_l1Dcache.addParams({
       "cache_size" : L1cachesz,
       "prefetcher" : Pref1
 })
-cpu6_l1Dcache_2_cpu = comp_c6_l1Dcache.setSubComponent("cpu6_l1dcache_cpulink", "memHierarchy.MemLink")
-cpu6_liDcache_2_l2cache = comp_c6_l1Dcache.setSubComponent("cpu6_l1icache_memlink", "memHierarchy.MemLink")
+cpu6_l1Dcache_2_cpu = comp_c6_l1Dcache.setSubComponent("cpulink", "memHierarchy.MemLink")
+cpu6_liDcache_2_l2cache = comp_c6_l1Dcache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 cpu6_l1Icache = sst.Component("c6.l1Icache", "memHierarchy.Cache")
 cpu6_l1Icache.addParams({
@@ -745,19 +744,19 @@ cpu6_l1Icache.addParams({
     "debug_level" :  """6""",
 })
 
-cpu6_l1Icache_2_cpu = cpu6_l1Icache.setSubComponent("cpu6_l1Icache_cpulink", "memHierarchy.MemLink")
-cpu6_l1Icache_2_l2cache = cpu6_l1Icache.setSubCompnent("cpu6_l1Icache_memlink", "memHierarcy.MemLink")
+cpu6_l1Icache_2_cpu = cpu6_l1Icache.setSubComponent("cpulink", "memHierarchy.MemLink")
+cpu6_l1Icache_2_l2cache = cpu6_l1Icache.setSubCompnent("memlink", "memHierarcy.MemLink")
 
 cpu6_dtlb_wrapper = sst.Component("cpu6_dtlb", "mmu.tlb_wrapper")
 cpu6_dtlb_wrapper.addParams(tlbWrapperParams)
 
-cpu6_dtlb = cpu0_dtlb_wrapper.setSubComponent("cpu6_dtlb", "mmu.simpleTLB")
+cpu6_dtlb = cpu0_dtlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu6_dtlb.addParams(tlbParams)
 
 cpu6_itlb_wrapper = sst.Component("cpu6_itlb", "mmu.tlb_wrapper")
 cpu6_itlb_wrapper.addParams(tlbWrapperParams)
 
-cpu6_itlb = cpu6_itlb_wrapper.setSubComponent("cpu6_itlb", "mmu.simpleTLB")
+cpu6_itlb = cpu6_itlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu6_itlb.addParams(tlbParams)
 
 cpu6_dtlb_link = sst.Link("cpu0_dtlb_link")
@@ -776,19 +775,19 @@ cpu7 = sst.Component(prefix + ".cpu7", "vanadis.dbg_VanadisCPU")
 cpu7.addParams(cpu_params)
 cpu7.addParam("core_id", 7)
 
-decoder7 = cpu7.setSubComponent("decoder7", "vanadis.Vanadis.RISCV64Decoder")
+decoder7 = cpu7.setSubComponent("decoder", "vanadis.Vanadis.RISCV64Decoder")
 decoder7.addParams(decoderParams)
 
-os_hdlr7 = decoder7.setSubComponent("os_handler7", "vanadis.Vanadis.RISCV64OSHandler")
+os_hdlr7 = decoder7.setSubComponent("os_handler", "vanadis.Vanadis.RISCV64OSHandler")
 
-branch_pred7 = decoder7.setSubComponent("branch_unit7", "vanadis.VanadisBasicBranchUnit")
+branch_pred7 = decoder7.setSubComponent("branch_unit", "vanadis.VanadisBasicBranchUnit")
 branch_pred7.addParams(branchPredictorParams)
 
-lsq7 = cpu7.setSubComponent("lsq7", "vanadis.VanadisBasicLoadStoreQueue")
+lsq7 = cpu7.setSubComponent("lsq", "vanadis.VanadisBasicLoadStoreQueue")
 lsq7.addParams(lsqParams)
 
-cpu7_dcacheIf = lsq7.setSubcomponent("memory_interface7", "memHierarchy.standardInterface")
-cpu7_icacheIf = cpu7.setSubComponent("mem_interface_inst7", "memHierarchy.standardInterface")
+cpu7_dcacheIf = lsq7.setSubcomponent("memory_interface", "memHierarchy.standardInterface")
+cpu7_icacheIf = cpu7.setSubComponent("mem_interface_inst", "memHierarchy.standardInterface")
 
 comp_c7_l1Dcache = sst.Component("c7.l1Dcache", "memHierarchy.Cache")
 comp_c7_l1Dcache.addParams({
@@ -805,8 +804,8 @@ comp_c7_l1Dcache.addParams({
       "prefetcher" : Pref1
 })
 
-cpu7_l1Dcache_2_cpu7 = comp_c7_l1Dcache.setSubComponent("cpu7_l1dcache_cpulink", "memHierarchy.MemLink")
-cpu7_liDcache_2_l2cache = comp_c7_l1Dcache.setSubComponent("cpu7_l1icache_memlink", "memHierarchy.MemLink")
+cpu7_l1Dcache_2_cpu7 = comp_c7_l1Dcache.setSubComponent("cpulink", "memHierarchy.MemLink")
+cpu7_liDcache_2_l2cache = comp_c7_l1Dcache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 cpu7_l1Icache = sst.Component("c7.l1Icache", "memHierarchy.Cache")
 cpu7_l1Icache.addParams({
@@ -824,26 +823,26 @@ cpu7_l1Icache.addParams({
     "debug_level" :  """6""",
 })
 
-cpu7_l1Icache_2_cpu = cpu7_l1Icache.setSubComponent("cpu7_l1Icache_cpulink", "memHierarchy.MemLink")
-cpu7_l1Icache_2_l2cache = cpu7_l1Icache.setSubCompnent("cpu7_l1Icache_memlink", "memHierarcy.MemLink")
+cpu7_l1Icache_2_cpu = cpu7_l1Icache.setSubComponent("cpulink", "memHierarchy.MemLink")
+cpu7_l1Icache_2_l2cache = cpu7_l1Icache.setSubCompnent("memlink", "memHierarcy.MemLink")
 
 cpu7_dtlb_wrapper = sst.Component("cpu7_dtlb", "mmu.tlb_wrapper")
 cpu7_dtlb_wrapper.addParams(tlbWrapperParams)
 
-cpu7_dtlb = cpu7_dtlb_wrapper.setSubComponent("cpu7_dtlb", "mmu.simpleTLB")
+cpu7_dtlb = cpu7_dtlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu7_dtlb.addParams(tlbParams)
 
 cpu7_itlb_wrapper = sst.Component("cpu7_itlb", "mmu.tlb_wrapper")
 cpu7_itlb_wrapper.addParams(tlbWrapperParams)
 
-cpu7_itlb = cpu7_itlb_wrapper.setSubComponent("cpu7_itlb", "mmu.simpleTLB")
+cpu7_itlb = cpu7_itlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu7_itlb.addParams(tlbParams)
 
 cpu7_dtlb_link = sst.Link("cpu7_dtlb_link")
 cpu7_dtlb_link.connect( (cpu7_dcacheIf, "port", "500ps"), (cpu7_dtlb_wrapper, "cpu_if", "500ps") )
 
 cpu7_l1Dcache_link = sst.Link("cpu7_l1Dcache_link")
-cpu7_l1Dcache_link.connect( (cpu7_dtlb_wrapper, "dcache_link_7", "500ps" ), (cpu7_l1Dcache_2_cpu, "highlink", "500ps") )
+cpu7_l1Dcache_link.connect( (cpu7_dtlb_wrapper, "dcache_link_7", "500ps" ), (cpu7_l1Dcache_2_cpu7, "highlink", "500ps") )
 
 cpu7_itlb_link = sst.Link("cpu7_itlb_link")
 cpu7_itlb_link.connect( (cpu7_icacheIf, "port", "500ps"), (cpu7_itlb_wrapper, "cpu_if", "500ps") )
