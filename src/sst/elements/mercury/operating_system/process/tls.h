@@ -34,12 +34,13 @@
 #endif
 
 //
+#ifdef __cplusplus
 #include <cstdint>
 extern "C" int sst_hg_global_stacksize;
-//#else
-//#include <stdint.h>
-//extern int sst_hg_global_stacksize;
-//#endif
+#else
+#include <stdint.h>
+extern int sst_hg_global_stacksize;
+#endif
 
 
 static SST_HG_INLINE uintptr_t get_sst_hg_tls(){

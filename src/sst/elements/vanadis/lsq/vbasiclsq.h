@@ -87,7 +87,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
 
             mem_interface_ = loadUserSubComponent<Interfaces::StandardMem>(
                 "memory_interface", ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, getTimeConverter("1ps"),
-                new StandardMem::Handler2<SST::Vanadis::VanadisBasicLoadStoreQueue,&VanadisBasicLoadStoreQueue::processIncomingDataCacheEvent>(this));
+                new StandardMem::Handler<SST::Vanadis::VanadisBasicLoadStoreQueue,&VanadisBasicLoadStoreQueue::processIncomingDataCacheEvent>(this));
 
             #ifdef VANADIS_BUILD_DEBUG
             address_mask_ = params.find<uint64_t>("address_mask", 0xFFFFFFFFFFFFFFFFULL);

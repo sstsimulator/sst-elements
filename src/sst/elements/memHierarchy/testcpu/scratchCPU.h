@@ -78,7 +78,7 @@ private:
     // Local variables
     Interfaces::StandardMem * memory;         // scratch interface
     std::unordered_map<uint64_t, SimTime_t> requests; // Request queue (outstanding requests)
-    TimeConverter *clockTC;                 // Clock object
+    TimeConverter clockTC;                 // Clock object
     Clock::HandlerBase *clockHandler;       // Clock handler
     SST::RNG::MarsagliaRNG rng;             // Random number generator for addresses, etc.
 

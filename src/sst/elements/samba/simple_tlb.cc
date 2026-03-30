@@ -98,8 +98,8 @@ SimpleTLB::SimpleTLB(SST::ComponentId_t id, SST::Params& params): Component(id) 
 
     // configure our link with a callback function that will be called whenever an event arrives
     // Callback function gets true for link_low
-    link_high = configureLink("high_network", new Event::Handler2<SimpleTLB,&SimpleTLB::handleEvent,bool>(this,false));
-    link_low = configureLink("low_network", new Event::Handler2<SimpleTLB,&SimpleTLB::handleEvent,bool>(this,true));
+    link_high = configureLink("high_network", new Event::Handler<SimpleTLB,&SimpleTLB::handleEvent,bool>(this,false));
+    link_low = configureLink("low_network", new Event::Handler<SimpleTLB,&SimpleTLB::handleEvent,bool>(this,true));
 
     // Failure usually means the user didn't connect the port in the input file
     sst_assert(link_low, CALL_INFO, -1, "Error in %s: Link configuration failed\n", getName().c_str());
@@ -110,7 +110,7 @@ SimpleTLB::SimpleTLB(SST::ComponentId_t id, SST::Params& params): Component(id) 
 
 
 	std::string cpu_clock = params.find<std::string>("clock", "1GHz");
-	registerClock( cpu_clock, new Clock::Handler2<SimpleTLB,&SimpleTLB::clockTick>(this) );
+	registerClock( cpu_clock, new Clock::Handler<SimpleTLB,&SimpleTLB::clockTick>(this) );
 
 
 }

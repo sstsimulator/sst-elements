@@ -31,10 +31,10 @@ using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
 
 
-StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, TimeConverter * time, HandlerBase* handler) :
-    StandardMem(id, params, time, handler)
+StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, TimeConverter time, HandlerBase* handler) :
+    StandardMem(id, params, &time, handler)
 {
-    setDefaultTimeBase(*time); // Links are required to have a timebase
+    setDefaultTimeBase(time); // Links are required to have a timebase
 
     debug_level_ = params.find<int>("debug_level", 0);
     // Output object for warnings/debug/etc.
@@ -76,7 +76,7 @@ StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, Time
     if (!link_)
         output_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link. Three options: (1) Fill the 'lowlink' subcomponent slot and connect the subcomponent's port(s). (2) Connect this interface's 'lowlink' port. (3) Connect this interface's parent component's port and pass the port's name as a parameter to this interface.\n", getName().c_str());
 
-    link_->setRecvHandler( new SST::Event::Handler2<StandardInterface, &StandardInterface::receive>(this));
+    link_->setRecvHandler( new SST::Event::Handler<StandardInterface, &StandardInterface::receive>(this));
     link_->setName(getName());
 
     /* Set region to default (all addresses) */

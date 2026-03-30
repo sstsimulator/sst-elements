@@ -50,7 +50,7 @@ gensa::gensa (ComponentId_t id, Params & params)
 
     //set our clock
     string clockFreq = params.find<string> ("clock", "1GHz");
-    clockTC = registerClock (clockFreq, new Clock::Handler2<gensa,&gensa::clockTic>(this));
+    clockTC = registerClock (clockFreq, new Clock::Handler<gensa,&gensa::clockTic>(this));
 
     // tell the simulator not to end without us
     registerAsPrimaryComponent ();
@@ -59,23 +59,23 @@ gensa::gensa (ComponentId_t id, Params & params)
     // init memory
     memory = loadUserSubComponent<Interfaces::StandardMem> (
         "memory",
-        ComponentInfo::SHARE_NONE, clockTC,
-        new Interfaces::StandardMem::Handler2<gensa,&gensa::handleMemory>(this)
+        ComponentInfo::SHARE_NONE, &clockTC,
+        new Interfaces::StandardMem::Handler<gensa,&gensa::handleMemory>(this)
     );
     if (!memory)
     {
         params.insert ("port", "mem_link");
         memory = loadAnonymousSubComponent<Interfaces::StandardMem> (
             "memHierarchy.standardInterface", "memory", 0,
-            ComponentInfo::SHARE_PORTS, params, clockTC,
-            new Interfaces::StandardMem::Handler2<gensa,&gensa::handleMemory>(this)
+            ComponentInfo::SHARE_PORTS, params, &clockTC,
+            new Interfaces::StandardMem::Handler<gensa,&gensa::handleMemory>(this)
         );
     }
     if (!memory) out.fatal (CALL_INFO, -1, "Unable to load memHierarchy.standardInterface subcomponent\n");
 
     link = loadUserSubComponent<Interfaces::SimpleNetwork> ("networkIF", ComponentInfo::SHARE_NONE, 1);
     if (!link) out.fatal (CALL_INFO, 1, "No networkIF subcomponent\n");
-    link->setNotifyOnReceive (new Interfaces::SimpleNetwork::Handler2<gensa,&gensa::handleNetwork>(this));
+    link->setNotifyOnReceive (new Interfaces::SimpleNetwork::Handler<gensa,&gensa::handleNetwork>(this));
 }
 
 gensa::gensa ()

@@ -30,7 +30,7 @@ OperatingSystemCL::OperatingSystemCL(SST::ComponentId_t id, SST::Params& params)
   OperatingSystemCLAPI(id,params), OperatingSystemImpl(id,params,this)
 {
   // Configure self link to handle event timing
-  selfEventLink_ = configureSelfLink("self", time_converter_, new Event::Handler2<Hg::OperatingSystemCL,&OperatingSystemCL::handleEvent>(this));
+  selfEventLink_ = configureSelfLink("self", time_converter_, new Event::Handler<Hg::OperatingSystemCL,&OperatingSystemCL::handleEvent>(this));
   assert(selfEventLink_);
   selfEventLink_->setDefaultTimeBase(time_converter_);
 
@@ -77,6 +77,17 @@ OperatingSystemCL::execute(COMP_FUNC func, Event *data, int nthr)
   if (owned_ncores < nthr){
     compute_sched_->releaseCores(nthr-owned_ncores,active_thread_);
   }
+}
+
+void
+OperatingSystemCL::reassignCores(Thread *thr)
+{
+  int ncores = thr->numActiveCcores();
+  //this is not equivalent to a no-op
+  //I could release cores - then based on changes
+  //to the cpumask, reserve different cores
+  compute_sched_->releaseCores(ncores, thr);
+  compute_sched_->reserveCores(ncores, thr);
 }
 
 } // namespace Hg

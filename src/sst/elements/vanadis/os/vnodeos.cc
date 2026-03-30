@@ -181,7 +181,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
     mem_if_ = loadUserSubComponent<Interfaces::StandardMem>(
         "mem_interface", ComponentInfo::SHARE_NONE,
         getTimeConverter("1ps"),
-        new StandardMem::Handler2<SST::Vanadis::VanadisNodeOSComponent,&VanadisNodeOSComponent::handleIncomingMemoryCallback>(this));
+        new StandardMem::Handler<SST::Vanadis::VanadisNodeOSComponent,&VanadisNodeOSComponent::handleIncomingMemoryCallback>(this));
 
     if (mem_if_ == nullptr) {
         output_->fatal(CALL_INFO, -1, "Error: failed to load mem interface subcomponent!\n");
@@ -199,7 +199,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
 
         SST::Link* core_link = configureLink(
             port_name_buffer, "0ns",
-            new Event::Handler2<VanadisNodeOSComponent,&VanadisNodeOSComponent::handleIncomingSyscallEvent>(this));
+            new Event::Handler<VanadisNodeOSComponent,&VanadisNodeOSComponent::handleIncomingSyscallEvent>(this));
 
         if (nullptr == core_link) {
             output_->fatal(CALL_INFO, -1, "Error: unable to configure link: %s\n", port_name_buffer);
@@ -416,7 +416,7 @@ int VanadisNodeOSComponent::checkpointLoad( std::string dir )
             uint32_t hw_thread;
             // hw_thread: 0
             assert( 1 == fscanf(fp, "hw_thread: %" SCNu32 "\n",&hw_thread) );
-            output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"hw_thread: " PRIu32 "\n",hw_thread);
+            output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"hw_thread: %" PRIu32 "\n",hw_thread);
             assert( hw_thread == j );
             uint32_t pid,tid;
             assert ( 2 == fscanf(fp, "pid,tid: %" SCNu32 ", %" SCNu32 "\n",&pid,&tid) );
@@ -720,7 +720,7 @@ void VanadisNodeOSComponent::pageFaultHandler2( MMU_Lib::RequestID req_id, uint3
                 uint32_t pid,  uint32_t vpn, uint32_t fault_perms, uint64_t inst_ptr, uint64_t mem_virt_addr, VanadisSyscall* syscall )
 {
     #ifdef VANADIS_BUILD_DEBUG
-    output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "RequestID=%#" PRIx64 " link=%" PRIu32 " pid=%" PRIu32 " vpn=%" PRIu32 " perms=%#" PRIu32 " inst_ptr=%#" PRIx64 " syscall=%p\n",
+    output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "RequestID=%#" PRIxPTR " link=%" PRIu32 " pid=%" PRIu32 " vpn=%" PRIu32 " perms=%#" PRIu32 " inst_ptr=%#" PRIx64 " syscall=%p\n",
             req_id, link, pid, vpn, fault_perms, inst_ptr, syscall );
     #endif
 

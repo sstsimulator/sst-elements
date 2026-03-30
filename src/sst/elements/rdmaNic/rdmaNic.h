@@ -287,7 +287,7 @@ class RdmaNic : public SST::Component {
 	void writeCompletionToHost(int thread, int cqId, RdmaCompletion& comp );
 
 
-    TimeConverter *m_clockTC;
+    TimeConverter m_clockTC;
     Clock::HandlerBase *m_clockHandler;
 
     Interfaces::SimpleNetwork*     m_linkControl;

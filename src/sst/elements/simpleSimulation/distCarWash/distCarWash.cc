@@ -50,13 +50,13 @@ distCarWash::distCarWash(ComponentId_t id, Params& params) :
 	setDefaultTimeBase(minute_tc_);
 
 	// Cars arrive on the car link
-	car_link_ = configureLink("car", new SST::Event::Handler2<distCarWash, &distCarWash::queueACar>(this));
+	car_link_ = configureLink("car", new SST::Event::Handler<distCarWash, &distCarWash::queueACar>(this));
 
 	// * Wake up every hour to do the hourly report
-	registerClock("3600s", new SST::Clock::Handler2<distCarWash, &distCarWash::report>(this));
+	registerClock("3600s", new SST::Clock::Handler<distCarWash, &distCarWash::report>(this));
 
 	// * Use a self-link (internal link) to wakeup whenever a car is done washing
-	bay_link_ = configureSelfLink("bay", minute_tc_, new SST::Event::Handler2<distCarWash, &distCarWash::cycleWashBays>(this));
+	bay_link_ = configureSelfLink("bay", minute_tc_, new SST::Event::Handler<distCarWash, &distCarWash::cycleWashBays>(this));
 	last_wakeup_time_ = 0; // Keep track of when we wake up
 
     // Tell the simulator that this component will tell it when to end the simulation

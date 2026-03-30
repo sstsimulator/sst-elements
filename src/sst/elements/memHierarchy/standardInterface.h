@@ -96,7 +96,7 @@ public:
         {"memlink", "DEPRECATED: Renamed to 'lowlink'. Port manager, optional - if not filled this subcomponent's port should be connected", "SST::MemHierarchy::MemLinkBase"})
 
 /* Begin class definition */
-    StandardInterface(SST::ComponentId_t id, Params &params, TimeConverter* time, HandlerBase* handler = NULL);
+    StandardInterface(SST::ComponentId_t id, Params &params, TimeConverter time, HandlerBase* handler = NULL);
 
     /* Begin API to Parent */
 

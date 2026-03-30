@@ -47,7 +47,7 @@ class MemNICBase : public MemLinkBase {
         SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::MemHierarchy::MemNICBase, SST::MemHierarchy::MemLinkBase)
 
         /* Constructor */
-        MemNICBase(ComponentId_t id, Params &params, TimeConverter* tc) : MemLinkBase(id, params, tc) {
+        MemNICBase(ComponentId_t id, Params &params, TimeConverter tc) : MemLinkBase(id, params, tc) {
             build(params);
         }
 
