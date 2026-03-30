@@ -308,19 +308,10 @@ class Builder():
             "tlb_set_size": 4,
         }
 
-        balarTlbWrapperParams = {
-            "debug_level": 0,
-        }
-        balarTlbWrapper = sst.Component("balarTlb", "mmu.tlb_wrapper")
-        balarTlbWrapper.addParams(balarTlbWrapperParams)
-        balarTlb = balarTlbWrapper.setSubComponent("tlb", "mmu.simpleTLB")
+        balarTlb = dma_mem_if.setSubComponent("tlb", "mmu.simpleTLB")
         balarTlb.addParams(balarTlbParams)
 
-        # Connect the data link for dmaEngine to TLB
-        connect("balar_balarBus_link", dma_mem_if, "lowlink",
-                balarTlbWrapper, "cpu_if", "1ns")
-
         # mem_iface replaced by TLB, keep mmio_iface
-        return balarTlbWrapper, balarTlb, balar_mmio_iface, dma_mmio_if
+        return dma_mem_if, balarTlb, balar_mmio_iface, dma_mmio_if
 
 

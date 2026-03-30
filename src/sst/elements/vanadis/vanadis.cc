@@ -2100,7 +2100,7 @@ VanadisCore::handleIncomingInstCacheEvent(StandardMem::Request* ev)
     StandardMem::ReadResp* read_resp = static_cast<StandardMem::ReadResp*>(ev);
 
     output->verbose(
-        CALL_INFO, 16, 0, "-> Incoming i-cache event (addr=0x%" PRIx64 ")...\n", read_resp->pAddr);
+        CALL_INFO, 16, 0, "-> Incoming i-cache event (addr=0x%" PRIx64 ")...\n", read_resp->vAddr);
     #endif
     // Needs to get attached to the decoder
     bool hit = false;

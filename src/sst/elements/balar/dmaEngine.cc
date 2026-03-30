@@ -250,7 +250,7 @@ void DMAEngine::DMAHandlers::handle(StandardMem::ReadResp* resp) {
 
     // Find the simulator buffer pointer value by offset
     // of the sst mem space addr
-    size_t offset = resp->pAddr - dma_req->sst_mem_addr;
+    size_t offset = resp->vAddr - dma_req->sst_mem_addr;
     uint8_t * offseted_ptr = dma_req->simulator_mem_addr + offset;
 
     // Perform copy from response

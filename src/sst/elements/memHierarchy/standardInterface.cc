@@ -44,9 +44,6 @@ StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, Time
     rqstr_ = "";
     init_done_ = false;
 
-    converter_ = new StandardInterface::MemEventConverter(this);
-    untimed_converter_ = new StandardInterface::UntimedMemEventConverter(this);
-
     // Handler - if nullptr then polling will be assumed
     recv_handler_ = handler;
 
@@ -68,7 +65,7 @@ StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, Time
         else port = params.find<std::string>("port", "");
 
         if (port == "") {
-            output_.fatal(CALL_INFO, -1, "%s, Error: Unable to configure link. Three options: (1) Fill the 'lowlink' subcomponent slot and connect the subcomponent's port(s). (2) Connect this interface's 'lowlink' port. (3) Connect this interface's parent component's port and pass its name as a parameter to this interface.\n", getName().c_str());
+            output_.fatal(CALL_INFO, -1, "%s, Error: Unable to configure link. Three options: (1) Fill the 'lowlink' subcomponent slot and connect the subcomponent's port(s). (2) Connect this interface's 'lowlink' port. (3) Connect this interface's parent component's port and pass the port's name as a parameter to this interface.\n", getName().c_str());
         }
 
         Params lparams;
@@ -77,7 +74,7 @@ StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, Time
     }
 
     if (!link_)
-        output_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link. Three options: (1) Fill the 'lowlink' subcomponent slot and connect the subcomponent's port(s). (2) Connect this interface's 'lowlink' port. (3) Connect this interface's parent component's port and pass its name as a parameter to this interface.\n", getName().c_str());
+        output_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link. Three options: (1) Fill the 'lowlink' subcomponent slot and connect the subcomponent's port(s). (2) Connect this interface's 'lowlink' port. (3) Connect this interface's parent component's port and pass the port's name as a parameter to this interface.\n", getName().c_str());
 
     link_->setRecvHandler( new SST::Event::Handler<StandardInterface, &StandardInterface::receive>(this));
     link_->setName(getName());
@@ -103,6 +100,19 @@ StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, Time
         reg.end = noncache[i+1];
         noncacheable_regions_.insert(std::make_pair(reg.start, reg));
     }
+
+    tlb_ = loadUserSubComponent<SST::MMU_Lib::TLB>("tlb");
+    if ( tlb_ != nullptr ) {
+        MMU_Lib::TLB::Callback callback = std::bind(&StandardInterface::handleTLBResponse, this, std::placeholders::_1, std::placeholders::_2);
+        tlb_->registerCallback( callback );
+        converter_ = new StandardInterface::MemEventTLBRequestConverter(this);
+        tlb_converter_ = new StandardInterface::MemEventTLBResponseConverter(this);
+
+        default_permissions_ = (uint32_t) (params.find<bool>("tlb_exe_permission", false));
+    } else {
+        converter_ = new StandardInterface::MemEventConverter(this);
+    }
+    untimed_converter_ = new StandardInterface::UntimedMemEventConverter(this);
 }
 
 void StandardInterface::setMemoryMappedAddressRegion(Addr start, Addr size) {
@@ -202,13 +212,14 @@ void StandardInterface::init(unsigned int phase) {
         }
     }
 
+    if (tlb_) tlb_->init(phase);
+
     if (init_done_) { // Drain send queue
         while (!init_send_queue_.empty()) {
             link_->sendUntimedData(init_send_queue_.front(), false);
             init_send_queue_.pop();
         }
     }
-
 }
 
 /* Nothing to do, just report some debug info about our configuration */
@@ -236,17 +247,7 @@ void StandardInterface::finish() { }
 /* Writes are allowed during init() but nothing else */
 void StandardInterface::sendUntimedData(StandardMem::Request *req) {
     MemEventInit* me = static_cast<MemEventInit*>(req->convert(untimed_converter_));
-/*
-#ifdef __SST_DEBUG_OUTPUT__
-    StandardMem::Write* wr = dynamic_cast<StandardMem::Write*>(req);
-    if (!wr)
-        output_.fatal(CALL_INFO, -1, "%s, Error: sendUntimedData(Request*) only accepts Write requests\n", getName().c_str());
-#else
-    StandardMem::Write* wr = static_cast<StandardMem::Write*>(req);
-#endif
 
-    MemEventInit *me = new MemEventInit(getName(), Command::Write, wr->pAddr, wr->data);
-*/
     if (init_done_)
         link_->sendUntimedData(me, false);
     else
@@ -266,6 +267,13 @@ StandardMem::Request* StandardInterface::recvUntimedData() {
 /* This could be a request or a response. */
 void StandardInterface::send(StandardMem::Request* req) {
     MemEventBase *me = static_cast<MemEventBase*>(req->convert(converter_));
+    if ( me == nullptr ) {
+#ifdef __SST_DEBUG_OUTPUT__
+        debug_.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Convert   TLB translation (%s)\n",
+            getCurrentSimCycle(), getName().c_str(), req->getString().c_str());
+#endif
+        return;
+    }
 #ifdef __SST_DEBUG_OUTPUT__
       debug_.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Convert   EventID: <%" PRIu64", %" PRIu32 "> (%s)\n", getCurrentSimCycle(), getName().c_str(), me->getID().first, me->getID().second, req->getString().c_str());
       if (me->getCmd() == Command::Write) {
@@ -285,6 +293,50 @@ void StandardInterface::send(StandardMem::Request* req) {
 #endif
     link_->send(me);
 }
+
+
+void StandardInterface::handleTLBResponse(uintptr_t request_id, Addr physical_address) {
+    StandardMem::Request* req = reinterpret_cast<StandardMem::Request*>(request_id);
+    tlb_converter_->translated_address_ = physical_address; // Ugly but can't easily pass the address via convert()
+
+    if( physical_address == std::numeric_limits<uint64_t>::max() ) { // Error condition, no translation
+        auto resp = req->makeResponse();
+        resp->setFail();
+        (*recv_handler_)(resp); // Return fail indicator to CPU
+        return;
+    }
+
+    MemEventBase *me = static_cast<MemEventBase*>(req->convert(tlb_converter_));
+    if ( me ) {
+#ifdef __SST_DEBUG_OUTPUT__
+        debug_.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Convert   EventID: <%" PRIu64", %" PRIu32 "> (%s)\n",
+            getCurrentSimCycle(), getName().c_str(), me->getID().first, me->getID().second, req->getString().c_str());
+        if (me->getCmd() == Command::Write) {
+            MemEvent* mev = static_cast<MemEvent*>(me);
+            debug_.debug(_L11_, "V: %-40" PRIu64 " %-20s  WRITE         0x%-16" PRIx64 "              B: %-3" PRIu32 "   %s\n",
+                getCurrentSimCycle(), getName().c_str(), mev->getAddr(), mev->getSize(), getDataString(&(mev->getPayload())).c_str() );
+        }
+        fflush(stdout);
+#endif
+
+        if (req->needsResponse())
+            requests_[me->getID()] = std::make_pair(req,me->getCmd());   /* Save this request so we can use it when a response is returned */
+        else
+            delete req;
+
+#ifdef __SST_DEBUG_OUTPUT__
+        debug_.debug(_L4_, "E: %-40" PRIu64 "  %-20s Event:Send    (%s)\n",
+            getCurrentSimCycle(), getName().c_str(), me->getBriefString().c_str());
+#endif
+        link_->send(me);
+#ifdef __SST_DEBUG_OUTPUT__
+    } else { // Multiple addresses needed translation
+        debug_.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Convert   TLB translation (%s)\n",
+            getCurrentSimCycle(), getName().c_str(), req->getString().c_str());
+#endif
+    }
+}
+
 
 StandardMem::Request* StandardInterface::poll() {
     // TODO FIX THIS
@@ -418,11 +470,11 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Read* req
         }
     }
 
-    Addr bAddr = (iface->line_size_ == 0 || noncacheable) ? req->pAddr : req->pAddr & iface->base_addr_mask_; // Line address
-    MemEvent* read = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetS, req->size);
+    Addr base_addr = (iface->line_size_ == 0 || noncacheable) ? req->pAddr : req->pAddr & iface->base_addr_mask_; // Line address
+    MemEvent* read = new MemEvent(iface->getName(), req->pAddr, base_addr, Command::GetS, req->size);
     read->setRqstr(iface->getName());
     read->setThreadID(req->tid);
-    read->setDst(iface->link_->getTargetDestination(bAddr));
+    read->setDst(iface->link_->getTargetDestination(base_addr));
     read->setVirtualAddress(req->vAddr);
     read->setInstructionPointer(req->iPtr);
     if (noncacheable)
@@ -434,6 +486,17 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Read* req
     return read;
 }
 
+SST::Event* StandardInterface::MemEventTLBRequestConverter::convert(StandardMem::Read* req) {
+    auto req_id = reinterpret_cast<uintptr_t>(req);
+    uint32_t perms = iface->default_permissions_ | MMU_Lib::page_perms::read;
+    iface->tlb_->getVirtToPhys( req_id, req->tid, req->vAddr, perms, req->iPtr );
+    return nullptr;
+}
+
+SST::Event* StandardInterface::MemEventTLBResponseConverter::convert(StandardMem::Read* req) {
+    req->pAddr = translated_address_;
+    return MemEventConverter::convert(req);
+}
 
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Write* req) {
     bool noncacheable = false;
@@ -452,12 +515,12 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Write* re
         }
     }
 
-    Addr bAddr = (iface->line_size_ == 0 || noncacheable) ? req->pAddr : req->pAddr & iface->base_addr_mask_;
-    MemEvent* write = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::Write, req->data);
+    Addr base_addr = (iface->line_size_ == 0 || noncacheable) ? req->pAddr : req->pAddr & iface->base_addr_mask_;
+    MemEvent* write = new MemEvent(iface->getName(), req->pAddr, base_addr, Command::Write, req->data);
 
     write->setRqstr(iface->getName());
     write->setThreadID(req->tid);
-    write->setDst(iface->link_->getTargetDestination(bAddr));
+    write->setDst(iface->link_->getTargetDestination(base_addr));
     write->setVirtualAddress(req->vAddr);
     write->setInstructionPointer(req->iPtr);
 
@@ -480,15 +543,25 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Write* re
     return write;
 }
 
+SST::Event* StandardInterface::MemEventTLBRequestConverter::convert(StandardMem::Write* req) {
+    auto req_id = reinterpret_cast<uintptr_t>(req);
+    uint32_t perms = iface->default_permissions_ | MMU_Lib::page_perms::write;
+    iface->tlb_->getVirtToPhys( req_id, req->tid, req->vAddr, perms, req->iPtr );
+    return nullptr;
+}
+
+SST::Event* StandardInterface::MemEventTLBResponseConverter::convert(StandardMem::Write* req) {
+    req->pAddr = translated_address_;
+    return MemEventConverter::convert(req);
+}
 
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::FlushAddr* req) {
-    Addr bAddr = (iface->line_size_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->base_addr_mask_;
+    Addr base_addr = (iface->line_size_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->base_addr_mask_;
     Command cmd = req->inv ? Command::FlushLineInv : Command::FlushLine;
-
-    MemEvent* flush = new MemEvent(iface->getName(), req->pAddr, bAddr, cmd, req->size);
+    MemEvent* flush = new MemEvent(iface->getName(), req->pAddr, base_addr, cmd, req->size);
     flush->setRqstr(iface->getName());
     flush->setThreadID(req->tid);
-    flush->setDst(iface->link_->getTargetDestination(bAddr));
+    flush->setDst(iface->link_->getTargetDestination(base_addr));
     flush->setVirtualAddress(req->vAddr);
     flush->setInstructionPointer(req->iPtr);
 #ifdef __SST_DEBUG_OUTPUT__
@@ -500,6 +573,17 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::FlushAddr
     return flush;
 }
 
+SST::Event* StandardInterface::MemEventTLBRequestConverter::convert(StandardMem::FlushAddr* req) {
+    auto req_id = reinterpret_cast<uintptr_t>(req);
+    uint32_t perms = iface->default_permissions_ | MMU_Lib::page_perms::read;
+    iface->tlb_->getVirtToPhys( req_id, req->tid, req->vAddr, perms, req->iPtr );
+    return nullptr;
+}
+
+SST::Event* StandardInterface::MemEventTLBResponseConverter::convert(StandardMem::FlushAddr* req) {
+    req->pAddr = translated_address_;
+    return MemEventConverter::convert(req);
+}
 
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::FlushCache* req) {
     MemEvent* flush = new MemEvent(iface->getName(), Command::FlushAll);
@@ -514,11 +598,11 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::FlushCach
 
 
 Event* StandardInterface::MemEventConverter::convert(StandardMem::ReadLock* req) {
-    Addr bAddr = (iface->line_size_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->base_addr_mask_;
-    MemEvent* read = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetSX, req->size);
+    Addr base_addr = (iface->line_size_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->base_addr_mask_;
+    MemEvent* read = new MemEvent(iface->getName(), req->pAddr, base_addr, Command::GetSX, req->size);
     read->setRqstr(iface->getName());
     read->setThreadID(req->tid);
-    read->setDst(iface->link_->getTargetDestination(bAddr));
+    read->setDst(iface->link_->getTargetDestination(base_addr));
     read->setVirtualAddress(req->vAddr);
     read->setInstructionPointer(req->iPtr);
     read->setFlag(MemEvent::F_LOCKED);
@@ -531,13 +615,24 @@ Event* StandardInterface::MemEventConverter::convert(StandardMem::ReadLock* req)
     return read;
 }
 
+SST::Event* StandardInterface::MemEventTLBRequestConverter::convert(StandardMem::ReadLock* req) {
+    auto req_id = reinterpret_cast<uintptr_t>(req);
+    uint32_t perms = iface->default_permissions_ | MMU_Lib::page_perms::read;
+    iface->tlb_->getVirtToPhys( req_id, req->tid, req->vAddr, perms, req->iPtr );
+    return nullptr;
+}
+
+SST::Event* StandardInterface::MemEventTLBResponseConverter::convert(StandardMem::ReadLock* req) {
+    req->pAddr = translated_address_;
+    return MemEventConverter::convert(req);
+}
 
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::WriteUnlock* req) {
-    Addr bAddr = (iface->line_size_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->base_addr_mask_;
-    MemEvent* write = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::Write, req->data);
+    Addr base_addr = (iface->line_size_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->base_addr_mask_;
+    MemEvent* write = new MemEvent(iface->getName(), req->pAddr, base_addr, Command::Write, req->data);
     write->setRqstr(iface->getName());
     write->setThreadID(req->tid);
-    write->setDst(iface->link_->getTargetDestination(bAddr));
+    write->setDst(iface->link_->getTargetDestination(base_addr));
     write->setVirtualAddress(req->vAddr);
     write->setInstructionPointer(req->iPtr);
     write->setFlag(MemEvent::F_LOCKED);
@@ -552,14 +647,25 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::WriteUnlo
     return write;
 }
 
+SST::Event* StandardInterface::MemEventTLBRequestConverter::convert(StandardMem::WriteUnlock* req) {
+    auto req_id = reinterpret_cast<uintptr_t>(req);
+    uint32_t perms = iface->default_permissions_ | MMU_Lib::page_perms::write;
+    iface->tlb_->getVirtToPhys( req_id, req->tid, req->vAddr, perms, req->iPtr );
+    return nullptr;
+}
+
+SST::Event* StandardInterface::MemEventTLBResponseConverter::convert(StandardMem::WriteUnlock* req) {
+    req->pAddr = translated_address_;
+    return MemEventConverter::convert(req);
+}
 
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::LoadLink* req) {
-    Addr bAddr = (iface->line_size_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->base_addr_mask_;
-    MemEvent* load = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetSX, req->size);
+    Addr base_addr = (iface->line_size_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->base_addr_mask_;
+    MemEvent* load = new MemEvent(iface->getName(), req->pAddr, base_addr, Command::GetSX, req->size);
     load->setFlag(MemEvent::F_LLSC);
     load->setRqstr(iface->getName());
     load->setThreadID(req->tid);
-    load->setDst(iface->link_->getTargetDestination(bAddr));
+    load->setDst(iface->link_->getTargetDestination(base_addr));
     load->setVirtualAddress(req->vAddr);
     load->setInstructionPointer(req->iPtr);
     if (req->getNoncacheable())
@@ -570,14 +676,25 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::LoadLink*
     return load;
 }
 
+SST::Event* StandardInterface::MemEventTLBRequestConverter::convert(StandardMem::LoadLink* req) {
+    auto req_id = reinterpret_cast<uintptr_t>(req);
+    uint32_t perms = iface->default_permissions_ | MMU_Lib::page_perms::read;
+    iface->tlb_->getVirtToPhys( req_id, req->tid, req->vAddr, perms, req->iPtr );
+    return nullptr;
+}
+
+SST::Event* StandardInterface::MemEventTLBResponseConverter::convert(StandardMem::LoadLink* req) {
+    req->pAddr = translated_address_;
+    return MemEventConverter::convert(req);
+}
 
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::StoreConditional* req) {
-    Addr bAddr = (iface->line_size_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->base_addr_mask_;
-    MemEvent* store = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::Write, req->data);
+    Addr base_addr = (iface->line_size_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->base_addr_mask_;
+    MemEvent* store = new MemEvent(iface->getName(), req->pAddr, base_addr, Command::Write, req->data);
     store->setFlag(MemEvent::F_LLSC);
     store->setRqstr(iface->getName());
     store->setThreadID(req->tid);
-    store->setDst(iface->link_->getTargetDestination(bAddr));
+    store->setDst(iface->link_->getTargetDestination(base_addr));
     store->setVirtualAddress(req->vAddr);
     store->setInstructionPointer(req->iPtr);
 
@@ -593,16 +710,27 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::StoreCond
     return store;
 }
 
+SST::Event* StandardInterface::MemEventTLBRequestConverter::convert(StandardMem::StoreConditional* req) {
+    auto req_id = reinterpret_cast<uintptr_t>(req);
+    uint32_t perms = iface->default_permissions_ | MMU_Lib::page_perms::write;
+    iface->tlb_->getVirtToPhys( req_id, req->tid, req->vAddr, perms, req->iPtr );
+    return nullptr;
+}
+
+SST::Event* StandardInterface::MemEventTLBResponseConverter::convert(StandardMem::StoreConditional* req) {
+    req->pAddr = translated_address_;
+    return MemEventConverter::convert(req);
+}
 
 Event* StandardInterface::MemEventConverter::convert(StandardMem::MoveData* req) {
-    Addr bAddrSrc = (iface->line_size_ == 0) ? req-> pSrc : req->pSrc & iface->base_addr_mask_;
-    Addr bAddrDst = (iface->line_size_ == 0) ? req-> pDst : req->pDst & iface->base_addr_mask_;
+    Addr base_addr_src = (iface->line_size_ == 0) ? req->pSrc : req->pSrc & iface->base_addr_mask_;
+    Addr base_addr_dst = (iface->line_size_ == 0) ? req->pDst : req->pDst & iface->base_addr_mask_;
     // The memHierarchy scratchpad implementation has its local addresses lower than the memory addresses
     // This would need to change if that invariant is removed
     // TODO May work to replace both Get/Put with generic Move and let scratchpad/other component decide
     // how to treat it based on the addresses
     Command cmd = (req->pDst > req->pSrc) ? Command::Put : Command::Get;
-    MoveEvent* move = new MoveEvent(iface->getName(), req->pSrc, bAddrSrc, req->pDst, bAddrDst, cmd);
+    MoveEvent* move = new MoveEvent(iface->getName(), req->pSrc, base_addr_src, req->pDst, base_addr_dst, cmd);
 
     if (req->posted) {
         move->setFlag(MemEventBase::F_NORESPONSE);
@@ -616,6 +744,27 @@ Event* StandardInterface::MemEventConverter::convert(StandardMem::MoveData* req)
     return move;
 }
 
+SST::Event* StandardInterface::MemEventTLBRequestConverter::convert(StandardMem::MoveData* req) {
+    auto req_id = reinterpret_cast<uintptr_t>(req);
+    uint32_t perms = iface->default_permissions_ | MMU_Lib::page_perms::read;
+    req->pSrc = std::numeric_limits<uint64_t>().max();
+    req->pDst = std::numeric_limits<uint64_t>().max();
+    iface->tlb_->getVirtToPhys( req_id, req->tid, req->vSrc, perms, req->iPtr );
+    return nullptr;
+}
+
+SST::Event* StandardInterface::MemEventTLBResponseConverter::convert(StandardMem::MoveData* req) {
+    if ( req->pSrc == std::numeric_limits<uint64_t>().max() ) {
+        req->pSrc = translated_address_;
+        auto req_id = reinterpret_cast<uintptr_t>(req);
+        uint32_t perms = iface->default_permissions_ | MMU_Lib::page_perms::write;
+        iface->tlb_->getVirtToPhys( req_id, req->tid, req->vDst, perms, req->iPtr );
+        return nullptr;
+    }
+
+    req->pDst = translated_address_;
+    return MemEventConverter::convert(req);
+}
 
 Event* StandardInterface::MemEventConverter::convert(StandardMem::CustomReq* req) {
     CustomMemEvent* creq = new CustomMemEvent(iface->getName(), Command::CustomReq, req->data);
@@ -975,5 +1124,14 @@ void StandardInterface::serialize_order(SST::Core::Serialization::serializer& se
 
     SST_SER(recv_handler_);
     SST_SER(converter_);
+    SST_SER(tlb_converter_);
     SST_SER(untimed_converter_);
+
+    SST_SER(tlb_);
+
+    // If restarting, reset tlb callbacks
+    if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK && tlb_ ) {
+        MMU_Lib::TLB::Callback callback = std::bind(&StandardInterface::handleTLBResponse, this, std::placeholders::_1, std::placeholders::_2);
+        tlb_->registerCallback( callback );
+    }
 }

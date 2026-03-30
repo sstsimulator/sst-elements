@@ -26,7 +26,7 @@ namespace MMU_Lib {
 
 class TLB : public SubComponent {
 
-  public:
+public:
 
     typedef std::function<void(uint64_t,uint64_t)> Callback;
 
@@ -43,7 +43,15 @@ class TLB : public SubComponent {
     virtual void registerCallback( Callback& callback ) = 0;
     virtual void getVirtToPhys( RequestID req_id, uint32_t hw_thread_id, uint64_t virt_addr, uint32_t perms, uint64_t inst_ptr ) = 0;
 
-  protected:
+    TLB() = default;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::SubComponent::serialize_order(ser);
+        SST_SER(dbg_);
+        // callback_ must be re-registered on restart
+    }
+    ImplementVirtualSerializable(SST::MMU_Lib::TLB);
+
+protected:
     Callback callback_;
     Output dbg_;
 };
@@ -68,6 +76,12 @@ class PassThroughTLB : public TLB {
     void getVirtToPhys( RequestID req_id, uint32_t hw_thread_id, uint64_t virt_addr, uint32_t perms, uint64_t inst_ptr  ) override {
         callback_( req_id, virt_addr );
     }
+
+    PassThroughTLB() = default;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        TLB::serialize_order(ser);
+    }
+    ImplementSerializable(SST::MMU_Lib::PassThroughTLB);
 };
 
 } //namespace MMU_Lib
