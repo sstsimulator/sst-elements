@@ -48,7 +48,7 @@ public:
     )
 
     CrossSimFloatArray(ComponentId_t id, Params& params,
-        TimeConverter* tc,
+        TimeConverter tc,
         Event::HandlerBase* handler)
         : CrossSimComputeArray<float>(id, params, tc, handler) {
         // Constructor can be empty if no additional initialization is required

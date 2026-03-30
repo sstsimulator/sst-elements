@@ -59,7 +59,7 @@ gensa::gensa (ComponentId_t id, Params & params)
     // init memory
     memory = loadUserSubComponent<Interfaces::StandardMem> (
         "memory",
-        ComponentInfo::SHARE_NONE, &clockTC,
+        ComponentInfo::SHARE_NONE, clockTC,
         new Interfaces::StandardMem::Handler<gensa,&gensa::handleMemory>(this)
     );
     if (!memory)
@@ -67,7 +67,7 @@ gensa::gensa (ComponentId_t id, Params & params)
         params.insert ("port", "mem_link");
         memory = loadAnonymousSubComponent<Interfaces::StandardMem> (
             "memHierarchy.standardInterface", "memory", 0,
-            ComponentInfo::SHARE_PORTS, params, &clockTC,
+            ComponentInfo::SHARE_PORTS, params, clockTC,
             new Interfaces::StandardMem::Handler<gensa,&gensa::handleMemory>(this)
         );
     }

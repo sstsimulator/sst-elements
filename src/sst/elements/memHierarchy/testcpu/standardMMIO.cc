@@ -44,7 +44,7 @@ StandardMMIO::StandardMMIO(ComponentId_t id, Params &params) : SST::Component(id
     }
     TimeConverter tc = getTimeConverter(clockfreq);
 
-    iface = loadUserSubComponent<SST::Interfaces::StandardMem>("iface", ComponentInfo::SHARE_NONE, &tc,
+    iface = loadUserSubComponent<SST::Interfaces::StandardMem>("iface", ComponentInfo::SHARE_NONE, tc,
             new StandardMem::Handler<StandardMMIO, &StandardMMIO::handleEvent>(this));
 
     if (!iface) {

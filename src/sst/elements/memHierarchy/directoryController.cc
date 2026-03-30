@@ -117,9 +117,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
      *  the MCs their own region. We cannot error check from the parameters...
      */
 
-    linkUp_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, &defaultTimeBase);
+    linkUp_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, defaultTimeBase);
     if (!linkUp_) {
-        linkUp_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, &defaultTimeBase);
+        linkUp_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, defaultTimeBase);
         if (linkUp_) {
             out.output("%s, DEPRECATION WARNING: The 'cpulink' subcomponent slot has been renamed to 'highlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
         }
@@ -127,13 +127,13 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         if (!linkUp_ && isPortConnected("highlink")) {
             Params p;
             p.insert("port", "highlink");
-            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, p, &defaultTimeBase);
+            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, p, defaultTimeBase);
         }
     }
 
-    linkDown_ = loadUserSubComponent<MemLinkBase>("lowlink", ComponentInfo::SHARE_NONE, &defaultTimeBase);
+    linkDown_ = loadUserSubComponent<MemLinkBase>("lowlink", ComponentInfo::SHARE_NONE, defaultTimeBase);
     if (!linkDown_) {
-        linkDown_ = loadUserSubComponent<MemLinkBase>("memlink", ComponentInfo::SHARE_NONE, &defaultTimeBase);
+        linkDown_ = loadUserSubComponent<MemLinkBase>("memlink", ComponentInfo::SHARE_NONE, defaultTimeBase);
         if (linkDown_) {
             out.output("%s, DEPRECATION WARNING: The 'memlink' subcomponent slot has been renamed to 'lowlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
         }
@@ -141,7 +141,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         if (!linkDown_ && isPortConnected("lowlink")) {
             Params p;
             p.insert("port", "lowlink");
-            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, p, &defaultTimeBase);
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, p, defaultTimeBase);
         }
     }
 
@@ -202,17 +202,17 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             nicParams.insert("ack.port", "network_ack");
             nicParams.insert("fwd.port", "network_fwd");
             nicParams.insert("data.port", "network_data");
-            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, &defaultTimeBase);
+            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, defaultTimeBase);
             out.output("%s, DEPRECATION WARNING: The 'network', 'network_ack', 'network_fwd', and 'network_data' ports are deprecated. Instead, in your input file, fill the directory's 'highlink' subcomponent slot with 'memHierarchy.MemNICFour'.\n", getName().c_str());
 
         } else if (isPortConnected("network")) {
             nicParams.insert("port", "network");
-            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, &defaultTimeBase);
+            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, defaultTimeBase);
             out.output("%s, DEPRECATION WARNING: The 'network' port is deprecated. Instead, in your input file, fill the directory's 'highlink' subcomponent slot with 'memHierarchy.MemNIC'.\n", getName().c_str());
         } else if (isPortConnected("highlink")) {
             Params linkParams;
             linkParams.insert("port", "highlink");
-            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, &defaultTimeBase);
+            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, defaultTimeBase);
         } else {
             dbg.fatal(CALL_INFO, -1, "%s, Error: Either this component's 'highlink' port must be connected OR the 'highlink' subcomponent slot must be filled\n", getName().c_str());
         }
@@ -227,7 +227,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             memParams.insert("addr_range_end", std::to_string(region.end), false);
             memParams.insert("interleave_size", ilSize, false);
             memParams.insert("interleave_step", ilStep, false);
-            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams, &defaultTimeBase);
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams, defaultTimeBase);
             if (!linkDown_) {
                 dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
             }
@@ -240,7 +240,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             memParams.insert("addr_range_end", std::to_string(region.end), false);
             memParams.insert("interleave_size", ilSize, false);
             memParams.insert("interleave_step", ilStep, false);
-            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams, &defaultTimeBase);
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams, defaultTimeBase);
             if (!linkDown_) {
                 dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
             }

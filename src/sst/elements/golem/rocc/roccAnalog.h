@@ -95,7 +95,7 @@ public:
 
         TimeConverter tc = getTimeConverter("1ps");
         array = loadUserSubComponent<Golem::ComputeArray>(
-            "array", ComponentInfo::SHARE_NONE, &tc,
+            "array", ComponentInfo::SHARE_NONE, tc,
             new SST::Event::Handler<RoCCAnalog<T>, &RoCCAnalog<T>::handleArrayEvent>(this));
 
         if ( nullptr == array ) {

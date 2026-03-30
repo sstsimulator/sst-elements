@@ -85,7 +85,7 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
     requestsThisCycle_ = 0;
 
     /* Configure links */
-    configureLinks(params, &defaultTimeBase_); // Must be called after createClock so timeebase is initialized
+    configureLinks(params, defaultTimeBase_); // Must be called after createClock so timeebase is initialized
 
     createCoherenceManager(params);
 
@@ -224,7 +224,7 @@ void Cache::createCoherenceManager(Params &params) {
  * Complicated because of so many deprecations. Will be simpler as of SST 16 when deprecated
  * names are removed.
  */
-void Cache::configureLinks(Params &params, TimeConverter* tc) {
+void Cache::configureLinks(Params &params, TimeConverter tc) {
     bool highlink = isPortConnected("highlink");
     bool lowlink = isPortConnected("lowlink");
 

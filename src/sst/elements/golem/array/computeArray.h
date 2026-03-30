@@ -48,7 +48,7 @@ class ComputeArray : public SST::SubComponent {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT_API(
         SST::Golem::ComputeArray,
-        TimeConverter*,
+        TimeConverter,
         Event::HandlerBase*
     )
 
@@ -63,7 +63,7 @@ public:
     )
 
     ComputeArray(ComponentId_t id, Params& params,
-                 TimeConverter* tc,
+                 TimeConverter tc,
                  Event::HandlerBase* handler)
         : SubComponent(id), out("", params.find<int>("verbose", 1), 0, Output::STDOUT),
           tileHandler(handler) {

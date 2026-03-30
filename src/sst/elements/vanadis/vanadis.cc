@@ -247,7 +247,7 @@ VanadisCore::VanadisCore(SST::ComponentId_t id, SST::Params& params) : Component
     // ComponentInfo::SHARE_NONE, clock_tc_, 		new
     //&VanadisCore::handleIncomingDataCacheEvent ));
     memInstInterface = loadUserSubComponent<Interfaces::StandardMem>(
-        "mem_interface_inst", ComponentInfo::SHARE_NONE, &clock_tc_,
+        "mem_interface_inst", ComponentInfo::SHARE_NONE, clock_tc_,
         new StandardMem::Handler<SST::Vanadis::VanadisCore,&VanadisCore::handleIncomingInstCacheEvent>(this));
 
     if ( nullptr == memInstInterface ) {

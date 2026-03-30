@@ -75,13 +75,13 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	output->verbose(CALL_INFO, 1, 0, "Configuring Prospero cache connection...\n");
 
     // Check for interface in the input config; if not, load an anonymous interface (must use our port instead of its own)
-    cache_link = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, &time,
+    cache_link = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, time,
             new StandardMem::Handler<ProsperoComponent,&ProsperoComponent::handleResponse>(this));
     if (!cache_link) {
         Params par;
         par.insert("port", "cache_link");
         cache_link = loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "memory", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, par,
-                    &time, new StandardMem::Handler<ProsperoComponent,&ProsperoComponent::handleResponse>(this));
+                    time, new StandardMem::Handler<ProsperoComponent,&ProsperoComponent::handleResponse>(this));
     }
 	output->verbose(CALL_INFO, 1, 0, "Configuration of memory interface completed.\n");
 
