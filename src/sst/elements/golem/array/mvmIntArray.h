@@ -47,7 +47,7 @@ public:
     )
 
     MVMIntArray(ComponentId_t id, Params& params,
-        TimeConverter* tc,
+        TimeConverter tc,
         Event::HandlerBase* handler)
         : MVMComputeArray<int64_t>(id, params, tc, handler) {
         // Constructor can be empty if no additional initialization is required

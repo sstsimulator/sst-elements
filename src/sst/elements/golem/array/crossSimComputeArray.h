@@ -34,7 +34,7 @@ public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(
         CrossSimComputeArray<T>,
         SST::Golem::ComputeArray,
-        TimeConverter*,
+        TimeConverter,
         Event::HandlerBase*
     )
 
@@ -43,7 +43,7 @@ public:
     )
 
     CrossSimComputeArray(ComponentId_t id, Params& params,
-                         TimeConverter* tc,
+                         TimeConverter tc,
                          Event::HandlerBase* handler)
         : ComputeArray(id, params, tc, handler)
     {

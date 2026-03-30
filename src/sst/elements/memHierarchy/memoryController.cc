@@ -205,9 +205,9 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     region_.interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
     region_.interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
 
-    link_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, &clockTimeBase_);
+    link_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, clockTimeBase_);
     if (!link_) {
-        link_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, &clockTimeBase_);
+        link_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, clockTimeBase_);
         if (link_) {
             out.output("%s, WARNING - Deprecation: The 'cpulink' subcomponent slot has been renamed to 'highlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
         }
@@ -217,13 +217,13 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         Params linkParams = params.get_scoped_params("cpulink");
         linkParams.insert("port", "direct_link");
         linkParams.insert("latency", link_lat, false);
-        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, &clockTimeBase_);
+        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, clockTimeBase_);
         out.output("%s, WARNING - Deprecation: To standardize port names across memHierarchy elements, the MemController's port 'direct_link' has been renamed to 'highlink'. The 'direct_link' port will be removed in SST 16.\n", getName().c_str());
     } else if (!link_ && isPortConnected("highlink")) {
         Params linkParams = params.get_scoped_params("highlink");
         linkParams.insert("port", "highlink");
         linkParams.insert("latency", link_lat, false);
-        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, &clockTimeBase_);
+        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, clockTimeBase_);
     } else if (!link_) {
 
         if (!isPortConnected("network")) {
@@ -240,10 +240,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
             nicParams.insert("ack.port", "network_ack");
             nicParams.insert("fwd.port", "network_fwd");
             nicParams.insert("data.port", "network_data");
-            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, &clockTimeBase_);
+            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, clockTimeBase_);
         } else {
             nicParams.insert("port", "network");
-            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, &clockTimeBase_);
+            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, clockTimeBase_);
         }
     }
 

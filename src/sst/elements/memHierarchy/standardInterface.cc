@@ -32,7 +32,7 @@ using namespace SST::Interfaces;
 
 
 StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, TimeConverter time, HandlerBase* handler) :
-    StandardMem(id, params, &time, handler)
+    StandardMem(id, params, time, handler)
 {
     setDefaultTimeBase(time); // Links are required to have a timebase
 
