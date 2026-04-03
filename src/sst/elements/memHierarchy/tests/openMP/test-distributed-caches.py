@@ -119,7 +119,7 @@ process_list = (
         "env_count" : 1,
         "env0" : "OMP_NUM_THREADS=8",
         "exe" : Executable,
-        "arg0" : Executable+
+        "arg0" : Executable
     } ),
 )
 
