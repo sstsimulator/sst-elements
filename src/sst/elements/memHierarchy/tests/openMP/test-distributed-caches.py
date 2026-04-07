@@ -18,7 +18,7 @@ L3MSHR = 32
 MSIMESI = "MSI"
 Pref1 = "cassini.NextBlockPrefetcher"
 Pref2 = "cassini.NextBlockPrefetcher"
-Executable = os.getenv('OMP_EXE', "ompbarrier/ompbarrier.x")
+Executable = os.getenv('OMP_EXE', "ompbarrier/ompbarrier-riscv")
 
 # The parameters for processes are sub-parameters, and need to be keyed differently.
 # This function accomplishes prefixing the keys.
@@ -110,7 +110,7 @@ os_params = {
     "useMMU" : True
 }
 
-node_os = sst.Component("core0_os", "vanadis.VanadisNodeOs")
+node_os = sst.Component("core0_os", "vanadis.VanadisNodeOS")
 node_os.addParams(os_params)
 
 # process set up needs to be verified
@@ -132,8 +132,8 @@ for i, process in process_list:
         node_os.addParams(addParamsPrefix("process" + str(num), process))
         num+=1
 
-node_os_mmu = node_os.setSubComponent("mmu", "mmu.SimpleMMU")
-node_os_mmu.addParams(mmuParams = {
+node_os_mmu = node_os.setSubComponent("mmu", "mmu.simpleMMU")
+node_os_mmu.addParams({
     "debug_level": 0,
     "num_cores": 8,
     "num_threads": 1,
@@ -234,7 +234,7 @@ branch_pred0.addParams(branchPredictorParams)
 lsq0 = cpu0.setSubComponent("lsq", "vanadis.VanadisBasicLoadStoreQueue")
 lsq0.addParams(lsqParams)
 
-cpu0_dcacheIf = lsq0.setSubcomponent("memory_interface", "memHierarchy.standardInterface")
+cpu0_dcacheIf = lsq0.setSubComponent("memory_interface", "memHierarchy.standardInterface")
 cpu0_icacheIf = cpu0.setSubComponent("mem_interface_inst", "memHierarchy.standardInterface")
 
 comp_c0_l1Dcache = sst.Component("c0.l1Dcache", "memHierarchy.Cache")
@@ -290,13 +290,13 @@ cpu0_dtlb_link = sst.Link("cpu0_dtlb_link")
 cpu0_dtlb_link.connect( (cpu0_dcacheIf, "port", "500ps"), (cpu0_dtlb_wrapper, "cpu_if", "500ps") )
 
 cpu0_l1Dcache_link = sst.Link("cpu0_l1Dcache_link")
-cpu0_l1Dcache_link.connect( (cpu0_dtlb_wrapper, "dcache_link_0", "500ps" ), (cpu0_l1Dcache_2_cpu, "highlink", "500ps") )
+cpu0_l1Dcache_link.connect( (cpu0_dtlb_wrapper, "cache_if", "500ps" ), (cpu0_l1Dcache_2_cpu, "port", "500ps") )
 
 cpu0_itlb_link = sst.Link("cpu0_itlb_link")
 cpu0_itlb_link.connect( (cpu0_icacheIf, "port", "500ps"), (cpu0_itlb_wrapper, "cpu_if", "500ps") )
 
 cpu0_l1Icache_link = sst.Link("cpu_l1Icache_link")
-cpu0_l1Icache_link.connect( (cpu0_itlb_wrapper, "icache_link_0", "500ps"), (cpu0_l1Icache_2_cpu, "highlink", "500ps") )
+cpu0_l1Icache_link.connect( (cpu0_itlb_wrapper, "cache_if", "500ps"), (cpu0_l1Icache_2_cpu, "port", "500ps") )
 
 cpu1 = sst.Component(prefix + ".cpu1", "vanadis.dbg_VanadisCPU")
 cpu1.addParams(cpu_params)
@@ -313,7 +313,7 @@ branch_pred1.addParams(branchPredictorParams)
 lsq1 = cpu1.setSubComponent("lsq", "vanadis.VanadisBasicLoadStoreQueue")
 lsq1.addParams(lsqParams)
 
-cpu1_dcacheIf = lsq1.setSubcomponent("memory_interface", "memHierarchy.standardInterface")
+cpu1_dcacheIf = lsq1.setSubComponent("memory_interface", "memHierarchy.standardInterface")
 cpu1_icacheIf = cpu1.setSubComponent("mem_interface_inst", "memHierarchy.standardInterface")
 
 comp_c1_l1Dcache = sst.Component("c1.l1Dcache", "memHierarchy.Cache")
@@ -356,26 +356,26 @@ cpu1_l1Icache_2_l2cache = cpu1_l1Icache.setSubComponent("memlink", "memHierarcy.
 cpu1_dtlb_wrapper = sst.Component("cpu1_dtlb", "mmu.tlb_wrapper")
 cpu1_dtlb_wrapper.addParams(tlbWrapperParams)
 
-cpu1_dtlb = cpu0_dtlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
+cpu1_dtlb = cpu1_dtlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu1_dtlb.addParams(tlbParams)
 
 cpu1_itlb_wrapper = sst.Component("cpu1_itlb", "mmu.tlb_wrapper")
 cpu1_itlb_wrapper.addParams(tlbWrapperParams)
 
-cpu1_itlb = cpu0_itlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
+cpu1_itlb = cpu1_itlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu1_itlb.addParams(tlbParams)
 
 cpu1_dtlb_link = sst.Link("cpu1_dtlb_link")
 cpu1_dtlb_link.connect( (cpu1_dcacheIf, "port", "500ps"), (cpu1_dtlb_wrapper, "cpu_if", "500ps") )
 
 cpu1_l1Dcache_link = sst.Link("cpu1_l1Dcache_link")
-cpu1_l1Dcache_link.connect( (cpu1_dtlb_wrapper, "dcache_link_1", "500ps" ), (cpu1_l1Dcache_2_cpu, "highlink", "500ps") )
+cpu1_l1Dcache_link.connect( (cpu1_dtlb_wrapper, "cache_if", "500ps" ), (cpu1_l1Dcache_2_cpu, "port", "500ps") )
 
 cpu1_itlb_link = sst.Link("cpu1_itlb_link")
 cpu1_itlb_link.connect( (cpu1_icacheIf, "port", "500ps"), (cpu1_itlb_wrapper, "cpu_if", "500ps") )
 
 cpu1_l1Icache_link = sst.Link("cpu_l1Icache_link")
-cpu1_l1Icache_link.connect( (cpu1_itlb_wrapper, "icache_link_1", "500ps"), (cpu1_l1Icache_2_cpu, "highlink", "500ps") )
+cpu1_l1Icache_link.connect( (cpu1_itlb_wrapper, "cache_if", "500ps"), (cpu1_l1Icache_2_cpu, "port", "500ps") )
 
 cpu2 = sst.Component(prefix + ".cpu2", "vanadis.dbg_VanadisCPU")
 cpu2.addParams(cpu_params)
@@ -392,7 +392,7 @@ branch_pred2.addParams(branchPredictorParams)
 lsq2 = cpu2.setSubComponent("lsq", "vanadis.VanadisBasicLoadStoreQueue")
 lsq2.addParams(lsqParams)
 
-cpu2_dcacheIf = lsq2.setSubcomponent("memory_interface", "memHierarchy.standardInterface")
+cpu2_dcacheIf = lsq2.setSubComponent("memory_interface", "memHierarchy.standardInterface")
 cpu2_icacheIf = cpu2.setSubComponent("mem_interface_inst", "memHierarchy.standardInterface")
 
 comp_c2_l1Dcache = sst.Component("c2.l1Dcache", "memHierarchy.Cache")
@@ -448,13 +448,13 @@ cpu2_dtlb_link = sst.Link("cpu2_dtlb_link")
 cpu2_dtlb_link.connect( (cpu2_dcacheIf, "port", "500ps"), (cpu2_dtlb_wrapper, "cpu_if", "500ps") )
 
 cpu2_l1Dcache_link = sst.Link("cpu0_l1Dcache_link")
-cpu2_l1Dcache_link.connect( (cpu2_dtlb_wrapper, "dcache_link_2", "500ps" ), (cpu2_l1Dcache_2_cpu2, "highlink", "500ps") )
+cpu2_l1Dcache_link.connect( (cpu2_dtlb_wrapper, "cache_if", "500ps" ), (cpu2_l1Dcache_2_cpu2, "port", "500ps") )
 
 cpu2_itlb_link = sst.Link("cpu2_itlb_link")
 cpu2_itlb_link.connect( (cpu2_icacheIf, "port", "500ps"), (cpu2_itlb_wrapper, "cpu_if", "500ps") )
 
 cpu2_l1Icache_link = sst.Link("cpu2_l1Icache_link")
-cpu2_l1Icache_link.connect( (cpu2_itlb_wrapper, "icache_link_2", "500ps"), (cpu2_l1Icache_2_cpu, "highlink", "500ps") )
+cpu2_l1Icache_link.connect( (cpu2_itlb_wrapper, "cache_if", "500ps"), (cpu2_l1Icache_2_cpu, "port", "500ps") )
 
 cpu3 = sst.Component(prefix + ".cpu3", "vanadis.dbg_VanadisCPU")
 cpu3.addParams(cpu_params)
@@ -471,7 +471,7 @@ branch_pred3.addParams(branchPredictorParams)
 lsq3 = cpu3.setSubComponent("lsq", "vanadis.VanadisBasicLoadStoreQueue")
 lsq3.addParams(lsqParams)
 
-cpu3_dcacheIf = lsq3.setSubcomponent("memory_interface", "memHierarchy.standardInterface")
+cpu3_dcacheIf = lsq3.setSubComponent("memory_interface", "memHierarchy.standardInterface")
 cpu3_icacheIf = cpu3.setSubComponent("mem_interface_inst", "memHierarchy.standardInterface")
 
 comp_c3_l1Dcache = sst.Component("c3.l1Dcache", "memHierarchy.Cache")
@@ -527,13 +527,13 @@ cpu3_dtlb_link = sst.Link("cpu3_dtlb_link")
 cpu3_dtlb_link.connect( (cpu3_dcacheIf, "port", "500ps"), (cpu3_dtlb_wrapper, "cpu_if", "500ps") )
 
 cpu3_l1Dcache_link = sst.Link("cpu0_l1Dcache_link")
-cpu3_l1Dcache_link.connect( (cpu3_dtlb_wrapper, "dcache_link_3", "500ps" ), (cpu3_l1Dcache_2_cpu, "highlink", "500ps") )
+cpu3_l1Dcache_link.connect( (cpu3_dtlb_wrapper, "cache_if", "500ps" ), (cpu3_l1Dcache_2_cpu, "port", "500ps") )
 
 cpu3_itlb_link = sst.Link("cpu3_itlb_link")
 cpu3_itlb_link.connect( (cpu3_icacheIf, "port", "500ps"), (cpu3_itlb_wrapper, "cpu_if", "500ps") )
 
 cpu3_l1Icache_link = sst.Link("cpu3_l1Icache_link")
-cpu3_l1Icache_link.connect( (cpu3_itlb_wrapper, "icache_link_3", "500ps"), (cpu3_l1Icache_2_cpu, "highlink", "500ps") )
+cpu3_l1Icache_link.connect( (cpu3_itlb_wrapper, "cache_if", "500ps"), (cpu3_l1Icache_2_cpu, "port", "500ps") )
 
 cpu4 = sst.Component(prefix + ".cpu4", "vanadis.dbg_VanadisCPU")
 cpu4.addParams(cpu_params)
@@ -550,7 +550,7 @@ branch_pred4.addParams(branchPredictorParams)
 lsq4 = cpu4.setSubComponent("lsq", "vanadis.VanadisBasicLoadStoreQueue")
 lsq4.addParams(lsqParams)
 
-cpu4_dcacheIf = lsq4.setSubcomponent("memory_interface", "memHierarchy.standardInterface")
+cpu4_dcacheIf = lsq4.setSubComponent("memory_interface", "memHierarchy.standardInterface")
 cpu4_icacheIf = cpu4.setSubComponent("mem_interface_inst", "memHierarchy.standardInterface")
 
 comp_c4_l1Dcache = sst.Component("c4.l1Dcache", "memHierarchy.Cache")
@@ -606,13 +606,13 @@ cpu4_dtlb_link = sst.Link("cpu4_dtlb_link")
 cpu4_dtlb_link.connect( (cpu4_dcacheIf, "port", "500ps"), (cpu4_dtlb_wrapper, "cpu_if", "500ps") )
 
 cpu4_l1Dcache_link = sst.Link("cpu4_l1Dcache_link")
-cpu4_l1Dcache_link.connect( (cpu4_dtlb_wrapper, "dcache_link_4", "500ps" ), (cpu4_l1Dcache_2_cpu, "highlink", "500ps") )
+cpu4_l1Dcache_link.connect( (cpu4_dtlb_wrapper, "cache_if", "500ps" ), (cpu4_l1Dcache_2_cpu, "port", "500ps") )
 
 cpu4_itlb_link = sst.Link("cpu4_itlb_link")
 cpu4_itlb_link.connect( (cpu4_icacheIf, "port", "500ps"), (cpu4_itlb_wrapper, "cpu_if", "500ps") )
 
 cpu4_l1Icache_link = sst.Link("cpu4_l1Icache_link")
-cpu4_l1Icache_link.connect( (cpu4_itlb_wrapper, "icache_link_4", "500ps"), (cpu4_l1Icache_2_cpu, "highlink", "500ps") )
+cpu4_l1Icache_link.connect( (cpu4_itlb_wrapper, "cache_if", "500ps"), (cpu4_l1Icache_2_cpu, "port", "500ps") )
 
 cpu5 = sst.Component(prefix + ".cpu5", "vanadis.dbg_VanadisCPU")
 cpu5.addParams(cpu_params)
@@ -629,7 +629,7 @@ branch_pred5.addParams(branchPredictorParams)
 lsq5 = cpu5.setSubComponent("lsq", "vanadis.VanadisBasicLoadStoreQueue")
 lsq5.addParams(lsqParams)
 
-cpu5_dcacheIf = lsq5.setSubcomponent("memory_interface", "memHierarchy.standardInterface")
+cpu5_dcacheIf = lsq5.setSubComponent("memory_interface", "memHierarchy.standardInterface")
 cpu5_icacheIf = cpu5.setSubComponent("mem_interface_inst", "memHierarchy.standardInterface")
 
 comp_c5_l1Dcache = sst.Component("c5.l1Dcache", "memHierarchy.Cache")
@@ -667,12 +667,12 @@ cpu5_l1Icache.addParams({
 })
 
 cpu5_l1Icache_2_cpu = cpu5_l1Icache.setSubComponent("cpulink", "memHierarchy.MemLink")
-cpu5_l1Icache_2_l2cache = cpu5_l1Icache.setSubCompnent("memlink", "memHierarcy.MemLink")
+cpu5_l1Icache_2_l2cache = cpu5_l1Icache.setSubComponent("memlink", "memHierarcy.MemLink")
 
 cpu5_dtlb_wrapper = sst.Component("cpu5_dtlb", "mmu.tlb_wrapper")
 cpu5_dtlb_wrapper.addParams(tlbWrapperParams)
 
-cpu5_dtlb = cpu0_dtlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
+cpu5_dtlb = cpu5_dtlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu5_dtlb.addParams(tlbParams)
 
 cpu5_itlb_wrapper = sst.Component("cpu5_itlb", "mmu.tlb_wrapper")
@@ -685,13 +685,13 @@ cpu5_dtlb_link = sst.Link("cpu5_dtlb_link")
 cpu5_dtlb_link.connect( (cpu5_dcacheIf, "port", "500ps"), (cpu5_dtlb_wrapper, "cpu_if", "500ps") )
 
 cpu5_l1Dcache_link = sst.Link("cpu5_l1Dcache_link")
-cpu5_l1Dcache_link.connect( (cpu5_dtlb_wrapper, "dcache_link_5", "500ps" ), (cpu5_l1Dcache_2_cpu, "highlink", "500ps") )
+cpu5_l1Dcache_link.connect( (cpu5_dtlb_wrapper, "cache_if", "500ps" ), (cpu5_l1Dcache_2_cpu, "port", "500ps") )
 
 cpu5_itlb_link = sst.Link("cpu5_itlb_link")
 cpu5_itlb_link.connect( (cpu5_icacheIf, "port", "500ps"), (cpu5_itlb_wrapper, "cpu_if", "500ps") )
 
 cpu5_l1Icache_link = sst.Link("cpu5_l1Icache_link")
-cpu5_l1Icache_link.connect( (cpu5_itlb_wrapper, "icache_link_5", "500ps"), (cpu5_l1Icache_2_cpu, "highlink", "500ps") )
+cpu5_l1Icache_link.connect( (cpu5_itlb_wrapper, "cache_if", "500ps"), (cpu5_l1Icache_2_cpu, "port", "500ps") )
 
 cpu6 = sst.Component(prefix + ".cpu6", "vanadis.dbg_VanadisCPU")
 cpu6.addParams(cpu_params)
@@ -708,7 +708,7 @@ branch_pred6.addParams(branchPredictorParams)
 lsq6 = cpu6.setSubComponent("lsq", "vanadis.VanadisBasicLoadStoreQueue")
 lsq6.addParams(lsqParams)
 
-cpu6_dcacheIf = lsq6.setSubcomponent("memory_interface", "memHierarchy.standardInterface")
+cpu6_dcacheIf = lsq6.setSubComponent("memory_interface", "memHierarchy.standardInterface")
 cpu6_icacheIf = cpu6.setSubComponent("mem_interface_inst", "memHierarchy.standardInterface")
 
 comp_c6_l1Dcache = sst.Component("c6.l1Dcache", "memHierarchy.Cache")
@@ -745,12 +745,12 @@ cpu6_l1Icache.addParams({
 })
 
 cpu6_l1Icache_2_cpu = cpu6_l1Icache.setSubComponent("cpulink", "memHierarchy.MemLink")
-cpu6_l1Icache_2_l2cache = cpu6_l1Icache.setSubCompnent("memlink", "memHierarcy.MemLink")
+cpu6_l1Icache_2_l2cache = cpu6_l1Icache.setSubComponent("memlink", "memHierarcy.MemLink")
 
 cpu6_dtlb_wrapper = sst.Component("cpu6_dtlb", "mmu.tlb_wrapper")
 cpu6_dtlb_wrapper.addParams(tlbWrapperParams)
 
-cpu6_dtlb = cpu0_dtlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
+cpu6_dtlb = cpu6_dtlb_wrapper.setSubComponent("tlb", "mmu.simpleTLB")
 cpu6_dtlb.addParams(tlbParams)
 
 cpu6_itlb_wrapper = sst.Component("cpu6_itlb", "mmu.tlb_wrapper")
@@ -763,13 +763,13 @@ cpu6_dtlb_link = sst.Link("cpu0_dtlb_link")
 cpu6_dtlb_link.connect( (cpu0_dcacheIf, "port", "500ps"), (cpu0_dtlb_wrapper, "cpu_if", "500ps") )
 
 cpu6_l1Dcache_link = sst.Link("cpu6_l1Dcache_link")
-cpu6_l1Dcache_link.connect( (cpu6_dtlb_wrapper, "dcache_link_6", "500ps" ), (cpu6_l1Dcache_2_cpu, "highlink", "500ps") )
+cpu6_l1Dcache_link.connect( (cpu6_dtlb_wrapper, "cache_if", "500ps" ), (cpu6_l1Dcache_2_cpu, "port", "500ps") )
 
 cpu6_itlb_link = sst.Link("cpu6_itlb_link")
 cpu6_itlb_link.connect( (cpu6_icacheIf, "port", "500ps"), (cpu6_itlb_wrapper, "cpu_if", "500ps") )
 
 cpu6_l1Icache_link = sst.Link("cpu6_l1Icache_link")
-cpu6_l1Icache_link.connect( (cpu6_itlb_wrapper, "icache_link_6", "500ps"), (cpu6_l1Icache_2_cpu, "highlink", "500ps") )
+cpu6_l1Icache_link.connect( (cpu6_itlb_wrapper, "cache_if", "500ps"), (cpu6_l1Icache_2_cpu, "port", "500ps") )
 
 cpu7 = sst.Component(prefix + ".cpu7", "vanadis.dbg_VanadisCPU")
 cpu7.addParams(cpu_params)
@@ -786,7 +786,7 @@ branch_pred7.addParams(branchPredictorParams)
 lsq7 = cpu7.setSubComponent("lsq", "vanadis.VanadisBasicLoadStoreQueue")
 lsq7.addParams(lsqParams)
 
-cpu7_dcacheIf = lsq7.setSubcomponent("memory_interface", "memHierarchy.standardInterface")
+cpu7_dcacheIf = lsq7.setSubComponent("memory_interface", "memHierarchy.standardInterface")
 cpu7_icacheIf = cpu7.setSubComponent("mem_interface_inst", "memHierarchy.standardInterface")
 
 comp_c7_l1Dcache = sst.Component("c7.l1Dcache", "memHierarchy.Cache")
@@ -824,7 +824,7 @@ cpu7_l1Icache.addParams({
 })
 
 cpu7_l1Icache_2_cpu = cpu7_l1Icache.setSubComponent("cpulink", "memHierarchy.MemLink")
-cpu7_l1Icache_2_l2cache = cpu7_l1Icache.setSubCompnent("memlink", "memHierarcy.MemLink")
+cpu7_l1Icache_2_l2cache = cpu7_l1Icache.setSubComponent("memlink", "memHierarcy.MemLink")
 
 cpu7_dtlb_wrapper = sst.Component("cpu7_dtlb", "mmu.tlb_wrapper")
 cpu7_dtlb_wrapper.addParams(tlbWrapperParams)
@@ -842,13 +842,13 @@ cpu7_dtlb_link = sst.Link("cpu7_dtlb_link")
 cpu7_dtlb_link.connect( (cpu7_dcacheIf, "port", "500ps"), (cpu7_dtlb_wrapper, "cpu_if", "500ps") )
 
 cpu7_l1Dcache_link = sst.Link("cpu7_l1Dcache_link")
-cpu7_l1Dcache_link.connect( (cpu7_dtlb_wrapper, "dcache_link_7", "500ps" ), (cpu7_l1Dcache_2_cpu7, "highlink", "500ps") )
+cpu7_l1Dcache_link.connect( (cpu7_dtlb_wrapper, "cache_if", "500ps" ), (cpu7_l1Dcache_2_cpu7, "port", "500ps") )
 
 cpu7_itlb_link = sst.Link("cpu7_itlb_link")
 cpu7_itlb_link.connect( (cpu7_icacheIf, "port", "500ps"), (cpu7_itlb_wrapper, "cpu_if", "500ps") )
 
 cpu7_l1Icache_link = sst.Link("cpu7_l1Icache_link")
-cpu7_l1Icache_link.connect( (cpu7_itlb_wrapper, "icache_link_7", "500ps"), (cpu7_l1Icache_2_cpu, "highlink", "500ps") )
+cpu7_l1Icache_link.connect( (cpu7_itlb_wrapper, "cache_if", "500ps"), (cpu7_l1Icache_2_cpu, "port", "500ps") )
 
 comp_n0_bus = sst.Component("n0.bus", "memHierarchy.Bus")
 comp_n0_bus.addParams({
@@ -870,7 +870,7 @@ comp_n0_l2cache.addParams({
       "prefetcher" : Pref2,
 })
 
-highlink_n0_l2cache = comp_n0_l2cache.setSubComponent("highlink", "memHierarchy.MemLink")
+port_n0_l2cache = comp_n0_l2cache.setSubComponent("port", "memHierarchy.MemLink")
 lowlink_n0_l2cache = comp_n0_l2cache.setSubComponent("lowlink", "memHierarchy.MemNIC")
 lowlink_n0_l2cache.addParams({
     "group" : 0,
@@ -898,7 +898,7 @@ comp_n1_l2cache.addParams({
       "mshr_num_entries" : L2MSHR,
       "prefetcher" : Pref2,
 })
-highlink_n1_l2cache = comp_n1_l2cache.setSubComponent("highlink", "memHierarchy.MemLink")
+port_n1_l2cache = comp_n1_l2cache.setSubComponent("port", "memHierarchy.MemLink")
 lowlink_n1_l2cache = comp_n1_l2cache.setSubComponent("lowlink", "memHierarchy.MemNIC")
 lowlink_n1_l2cache.addParams({
     "group" : 0,
@@ -923,8 +923,8 @@ comp_l3cache0.addParams({
       "slice_id" : """0""",
       "slice_allocation_policy" : """rr"""
 })
-highlink_l3cache0 = comp_l3cache0.setSubComponent("highlink", "memHierarchy.MemNIC")
-highlink_l3cache0.addParams({
+port_l3cache0 = comp_l3cache0.setSubComponent("port", "memHierarchy.MemNIC")
+port_l3cache0.addParams({
     "group" : 1,
     "network_bw" : """25GB/s""",
     "network_input_buffer_size" : "2KB",
@@ -946,8 +946,8 @@ comp_l3cache1.addParams({
       "slice_id" : """1""",
       "slice_allocation_policy" : """rr"""
 })
-highlink_l3cache1 = comp_l3cache1.setSubComponent("highlink", "memHierarchy.MemNIC")
-highlink_l3cache1.addParams({
+port_l3cache1 = comp_l3cache1.setSubComponent("port", "memHierarchy.MemNIC")
+port_l3cache1.addParams({
     "group" : 1,
     "network_bw" : """25GB/s""",
     "network_input_buffer_size" : "2KB",
@@ -973,9 +973,9 @@ comp_dirctrl0.addParams({
       "addr_range_end" : """0x000FFFFF""",
       "mshr_num_entries" : "2",
 })
-highlink_dirctrl0 = comp_dirctrl0.setSubComponent("highlink", "memHierarchy.MemNIC")
+port_dirctrl0 = comp_dirctrl0.setSubComponent("port", "memHierarchy.MemNIC")
 lowlink_dirctrl0 = comp_dirctrl0.setSubComponent("lowlink", "memHierarchy.MemLink")
-highlink_dirctrl0.addParams({
+port_dirctrl0.addParams({
     "group" : 2,
     "network_bw" : """25GB/s""",
     "network_input_buffer_size" : "2KB",
@@ -1000,9 +1000,9 @@ comp_dirctrl1.addParams({
       "addr_range_end" : """0x3FFFFFFF""",
       "mshr_num_entries" : "2",
 })
-highlink_dirctrl1 = comp_dirctrl1.setSubComponent("highlink", "memHierarchy.MemNIC")
+port_dirctrl1 = comp_dirctrl1.setSubComponent("port", "memHierarchy.MemNIC")
 lowlink_dirctrl1 = comp_dirctrl1.setSubComponent("lowlink", "memHierarchy.MemLink")
-highlink_dirctrl1.addParams({
+port_dirctrl1.addParams({
     "group" : 2,
     "network_bw" : """25GB/s""",
     "network_input_buffer_size" : "2KB",
@@ -1021,39 +1021,82 @@ comp_memory1.addParams({
 
 # Define the simulation links
 link_c0dcache_bus_link = sst.Link("link_c0dcache_bus_link")
-link_c0dcache_bus_link.connect( (comp_c0_l1Dcache, "lowlink", "100ps"), (comp_n0_bus, "highlink0", "100ps") )
+link_c0dcache_bus_link.connect( (comp_c0_l1Dcache, "lowlink", "100ps"), (comp_n0_bus, "high_network_0", "100ps") )
 link_c1dcache_bus_link = sst.Link("link_c1dcache_bus_link")
-link_c1dcache_bus_link.connect( (comp_c1_l1Dcache, "lowlink", "100ps"), (comp_n0_bus, "highlink1", "100ps") )
+link_c1dcache_bus_link.connect( (comp_c1_l1Dcache, "lowlink", "100ps"), (comp_n0_bus, "high_network_1", "100ps") )
 link_c2dcache_bus_link = sst.Link("link_c2dcache_bus_link")
-link_c2dcache_bus_link.connect( (comp_c2_l1Dcache, "lowlink", "100ps"), (comp_n0_bus, "highlink2", "100ps") )
+link_c2dcache_bus_link.connect( (comp_c2_l1Dcache, "lowlink", "100ps"), (comp_n0_bus, "high_network_2", "100ps") )
 link_c3dcache_bus_link = sst.Link("link_c3dcache_bus_link")
-link_c3dcache_bus_link.connect( (comp_c3_l1Dcache, "lowlink", "100ps"), (comp_n0_bus, "highlink3", "100ps") )
+link_c3dcache_bus_link.connect( (comp_c3_l1Dcache, "lowlink", "100ps"), (comp_n0_bus, "high_network_3", "100ps") )
 link_c4dcache_bus_link = sst.Link("link_c4dcache_bus_link")
-link_c4dcache_bus_link.connect( (comp_c4_l1Dcache, "lowlink", "100ps"), (comp_n1_bus, "highlink0", "100ps") )
+link_c4dcache_bus_link.connect( (comp_c4_l1Dcache, "lowlink", "100ps"), (comp_n1_bus, "high_network_0", "100ps") )
 link_c5dcache_bus_link = sst.Link("link_c5dcache_bus_link")
-link_c5dcache_bus_link.connect( (comp_c5_l1Dcache, "lowlink", "100ps"), (comp_n1_bus, "highlink1", "100ps") )
+link_c5dcache_bus_link.connect( (comp_c5_l1Dcache, "lowlink", "100ps"), (comp_n1_bus, "high_network_1", "100ps") )
 link_c6dcache_bus_link = sst.Link("link_c6dcache_bus_link")
-link_c6dcache_bus_link.connect( (comp_c6_l1Dcache, "lowlink", "100ps"), (comp_n1_bus, "highlink2", "100ps") )
+link_c6dcache_bus_link.connect( (comp_c6_l1Dcache, "lowlink", "100ps"), (comp_n1_bus, "high_network_2", "100ps") )
 link_c7dcache_bus_link = sst.Link("link_c7dcache_bus_link")
-link_c7dcache_bus_link.connect( (comp_c7_l1Dcache, "lowlink", "100ps"), (comp_n1_bus, "highlink3", "100ps") )
+link_c7dcache_bus_link.connect( (comp_c7_l1Dcache, "lowlink", "100ps"), (comp_n1_bus, "high_network_3", "100ps") )
 link_n0bus_n0l2cache = sst.Link("link_n0bus_n0l2cache")
-link_n0bus_n0l2cache.connect( (comp_n0_bus, "lowlink0", "100ps"), (highlink_n0_l2cache, "port", "100ps") )
+link_n0bus_n0l2cache.connect( (comp_n0_bus, "lowlink0", "100ps"), (port_n0_l2cache, "port", "100ps") )
 link_n0bus_router = sst.Link("link_n0bus_router")
 link_n0bus_router.connect( (lowlink_n0_l2cache, "port", "100ps"), (comp_chipRtr, "port2", "1000ps") )
 link_n1bus_n1l2cache = sst.Link("link_n1bus_n1l2cache")
-link_n1bus_n1l2cache.connect( (comp_n1_bus, "lowlink0", "100ps"), (highlink_n1_l2cache, "port", "100ps") )
+link_n1bus_n1l2cache.connect( (comp_n1_bus, "lowlink0", "100ps"), (port_n1_l2cache, "port", "100ps") )
 link_n1bus_router = sst.Link("link_n1bus_router")
 link_n1bus_router.connect( (lowlink_n1_l2cache, "port", "100ps"), (comp_chipRtr, "port3", "1000ps") )
 link_l3cache0_router = sst.Link("link_l3cache0_router")
-link_l3cache0_router.connect( (comp_chipRtr, "port4", "1000ps"), (highlink_l3cache0, "port", "100ps") );
+link_l3cache0_router.connect( (comp_chipRtr, "port4", "1000ps"), (port_l3cache0, "port", "100ps") );
 link_l3cache1_router = sst.Link("link_l3cache1_router")
-link_l3cache1_router.connect( (comp_chipRtr, "port5", "1000ps"), (highlink_l3cache1, "port", "100ps") );
+link_l3cache1_router.connect( (comp_chipRtr, "port5", "1000ps"), (port_l3cache1, "port", "100ps") );
 link_dirctrl0_router = sst.Link("link_dirctrl0_router")
-link_dirctrl0_router.connect( (comp_chipRtr, "port0", "1000ps"), (highlink_dirctrl0, "port", "100ps") )
+link_dirctrl0_router.connect( (comp_chipRtr, "port0", "1000ps"), (port_dirctrl0, "port", "100ps") )
 link_dirctrl1_router = sst.Link("link_dirctrl1_router")
-link_dirctrl1_router.connect( (comp_chipRtr, "port1", "1000ps"), (highlink_dirctrl1, "port", "100ps") )
-link_dirctrl0_mem = sst.Link("link_dirctrl0_mem")
-link_dirctrl0_mem.connect( (lowlink_dirctrl0, "port", "100ps"), (comp_memctrl0, "highlink", "100ps") )
-link_dirctrl1_mem = sst.Link("link_dirctrl1_mem")
-link_dirctrl1_mem.connect( (lowlink_dirctrl1, "port", "100ps"), (comp_memctrl1, "highlink", "100ps") )
+link_dirctrl1_router.connect( (comp_chipRtr, "port1", "1000ps"), (port_dirctrl1, "port", "100ps") )
+# link_dirctrl0_mem = sst.Link("link_dirctrl0_mem")
+# link_dirctrl0_mem.connect( (lowlink_dirctrl0, "port", "100ps"), (comp_memory0, "port", "100ps") )
+# link_dirctrl1_mem = sst.Link("link_dirctrl1_mem")
+# link_dirctrl1_mem.connect( (lowlink_dirctrl1, "port", "100ps"), (comp_memory1, "port", "100ps") )
+link_mmu_dtlb0 = sst.Link("link_mmu_dtlb0")
+link_mmu_dtlb0.connect( (node_os_mmu, "core0.dtlb", "1ns"), (cpu0_dtlb, "mmu", "1ns") )
+link_mmu_itlb0 = sst.Link("link_mmu_itlb0")
+link_mmu_itlb0.connect( (node_os_mmu, "core0.itlb", "1ns"), (cpu0_itlb, "mmu", "1ns") )
+
+link_mmu_dtlb1 = sst.Link("link_mmu_dtlb1")
+link_mmu_dtlb1.connect( (node_os_mmu, "core1.dtlb", "1ns"), (cpu1_dtlb, "mmu", "1ns") )
+link_mmu_itlb1 = sst.Link("link_mmu_itlb1")
+link_mmu_itlb1.connect( (node_os_mmu, "core1.itlb", "1ns"), (cpu1_itlb, "mmu", "1ns") )
+
+link_mmu_dtlb2 = sst.Link("link_mmu_dtlb2")
+link_mmu_dtlb2.connect( (node_os_mmu, "core2.dtlb", "1ns"), (cpu2_dtlb, "mmu", "1ns") )
+link_mmu_itlb2 = sst.Link("link_mmu_itlb2")
+link_mmu_itlb2.connect( (node_os_mmu, "core2.itlb", "1ns"), (cpu2_itlb, "mmu", "1ns") )
+
+link_mmu_dtlb3 = sst.Link("link_mmu_dtlb3")
+link_mmu_dtlb3.connect( (node_os_mmu, "core3.dtlb", "1ns"), (cpu3_dtlb, "mmu", "1ns") )
+link_mmu_itlb3 = sst.Link("link_mmu_itlb3")
+link_mmu_itlb3.connect( (node_os_mmu, "core3.itlb", "1ns"), (cpu3_itlb, "mmu", "1ns") )
+
+link_mmu_dtlb4 = sst.Link("link_mmu_dtlb4")
+link_mmu_dtlb4.connect( (node_os_mmu, "core4.dtlb", "1ns"), (cpu4_dtlb, "mmu", "1ns") )
+link_mmu_itlb4 = sst.Link("link_mmu_itlb4")
+link_mmu_itlb4.connect( (node_os_mmu, "core4.itlb", "1ns"), (cpu4_itlb, "mmu", "1ns") )
+
+link_mmu_dtlb5 = sst.Link("link_mmu_dtlb5")
+link_mmu_dtlb5.connect( (node_os_mmu, "core5.dtlb", "1ns"), (cpu5_dtlb, "mmu", "1ns") )
+link_mmu_itlb5 = sst.Link("link_mmu_itlb5")
+link_mmu_itlb5.connect( (node_os_mmu, "core5.itlb", "1ns"), (cpu5_itlb, "mmu", "1ns") )
+
+link_mmu_dtlb6 = sst.Link("link_mmu_dtlb6")
+link_mmu_dtlb6.connect( (node_os_mmu, "core6.dtlb", "1ns"), (cpu6_dtlb, "mmu", "1ns") )
+link_mmu_itlb6 = sst.Link("link_mmu_itlb6")
+link_mmu_itlb6.connect( (node_os_mmu, "core6.itlb", "1ns"), (cpu6_itlb, "mmu", "1ns") )
+
+link_mmu_dtlb7 = sst.Link("link_mmu_dtlb7")
+link_mmu_dtlb7.connect( (node_os_mmu, "core7.dtlb", "1ns"), (cpu7_dtlb, "mmu", "1ns") )
+link_mmu_itlb7 = sst.Link("link_mmu_itlb7")
+link_mmu_itlb7.connect( (node_os_mmu, "core7.itlb", "1ns"), (cpu7_itlb, "mmu", "1ns") )
+
+link_os_cache = sst.Link("link_os_cache")
+link_os_cache.connect( (node_os_mem_if, "lowlink", "1ns"), (os_cache_2_cpu, "port", "1ns") )
+
 # End of generated output.
