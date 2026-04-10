@@ -22,6 +22,14 @@ namespace MMU_Lib {
 
 typedef uintptr_t RequestID;
 
+namespace page_perms {
+    const uint32_t read = 0x4;
+    const uint32_t write = 0x2;
+    const uint32_t exe = 0x1;
+    const uint32_t rwx = 0x7;
+    const uint32_t unset = std::numeric_limits<uint32_t>::max();
+};
+
 struct PTE {
     PTE() : ppn(0), perms(0) {}
     PTE( uint32_t ppn, uint32_t perms ) : ppn(ppn), perms(perms) {}

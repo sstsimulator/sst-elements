@@ -35,20 +35,20 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) : SST::Component(id) {
         out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: clock. Must have units of Hz or s and be > 0. "
                 "(SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
     }
-    TimeConverter* tc = getTimeConverter(clockfreq);
+    TimeConverter tc = getTimeConverter(clockfreq);
 
     // Bind tick function
-    registerClock(*tc, new Clock::Handler2<DMAEngine,&DMAEngine::tick>(this));
+    registerClock(tc, new Clock::Handler<DMAEngine,&DMAEngine::tick>(this));
 
     // MMIO Memory address and size
     mmio_addr = params.find<uint64_t>("mmio_addr", 0);
     mmio_size = params.find<uint32_t>("mmio_size", 512);
 
     // Get interfaces and bind handlers
-    mmio_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mmio_iface", ComponentInfo::SHARE_NONE, tc,
-            new StandardMem::Handler2<DMAEngine,&DMAEngine::handleEvent>(this));
-    mem_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mem_iface", ComponentInfo::SHARE_NONE, tc,
-            new StandardMem::Handler2<DMAEngine,&DMAEngine::handleEvent>(this));
+    mmio_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mmio_iface", ComponentInfo::SHARE_NONE, &tc,
+            new StandardMem::Handler<DMAEngine,&DMAEngine::handleEvent>(this));
+    mem_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mem_iface", ComponentInfo::SHARE_NONE, &tc,
+            new StandardMem::Handler<DMAEngine,&DMAEngine::handleEvent>(this));
 
     if (!mmio_iface) {
         out.fatal(CALL_INFO, -1, "%s, Error: No interface found loaded into 'mmio_iface' subcomponent slot. Please check input file\n", getName().c_str());
@@ -250,7 +250,7 @@ void DMAEngine::DMAHandlers::handle(StandardMem::ReadResp* resp) {
 
     // Find the simulator buffer pointer value by offset
     // of the sst mem space addr
-    size_t offset = resp->pAddr - dma_req->sst_mem_addr;
+    size_t offset = resp->vAddr - dma_req->sst_mem_addr;
     uint8_t * offseted_ptr = dma_req->simulator_mem_addr + offset;
 
     // Perform copy from response

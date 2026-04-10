@@ -43,7 +43,7 @@ simpleCarWash::simpleCarWash(ComponentId_t id, Params& params) :
     out_.output("Random seed used is: %" PRId64 "\n", random_seed);
     out_.output("The car wash will operate for %" PRId64 " minutes\n\n", simulation_time_);
 
-	registerClock("60s", new SST::Clock::Handler2<simpleCarWash, &simpleCarWash::tick>(this));
+	registerClock("60s", new SST::Clock::Handler<simpleCarWash, &simpleCarWash::tick>(this));
 
     // Tell the simulator that this component will tell it when to end the simulation
     registerAsPrimaryComponent();

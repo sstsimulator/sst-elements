@@ -124,7 +124,7 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
 
     //set our clock
     registerClock(k_controllerClockFreqStr,
-                  new Clock::Handler2<c_Controller,&c_Controller::clockTic>(this));
+                  new Clock::Handler<c_Controller,&c_Controller::clockTic>(this));
 
 
 
@@ -141,10 +141,10 @@ void c_Controller::configure_link() {
 
     // TxnGen <-> Controller (Txn)
     m_txngenLink = configureLink("txngenLink",
-                                 new Event::Handler2<c_Controller,&c_Controller::handleIncomingTransaction>(this));
+                                 new Event::Handler<c_Controller,&c_Controller::handleIncomingTransaction>(this));
     // Controller <-> Device (Cmd)
     m_memLink = configureLink("memLink",
-                              new Event::Handler2<c_Controller,&c_Controller::handleInDeviceResPtrEvent>(this));
+                              new Event::Handler<c_Controller,&c_Controller::handleInDeviceResPtrEvent>(this));
 }
 
 

@@ -83,7 +83,7 @@ public:
 
         memInterface = loadUserSubComponent<Interfaces::StandardMem>(
             "memory_interface", ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, getTimeConverter("1ps"),
-            new StandardMem::Handler2<SST::Vanadis::VanadisRoCCBasic,&VanadisRoCCBasic::processIncomingDataCacheEvent>(this));
+            new StandardMem::Handler<SST::Vanadis::VanadisRoCCBasic,&VanadisRoCCBasic::processIncomingDataCacheEvent>(this));
 
         if ( nullptr == memInterface ) {
             output->fatal(

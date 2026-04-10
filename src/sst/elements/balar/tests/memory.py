@@ -4,8 +4,8 @@ import sst
 
 coherence_protocol="MESI"
 
-dc_debug = 1
-mc_debug = 1
+dc_debug = 0
+mc_debug = 0
 stdMem_debug = 0
 
 debug_addr = 0x6280

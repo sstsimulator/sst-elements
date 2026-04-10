@@ -34,7 +34,7 @@ SingleThread::SingleThread( ComponentId_t id,
 
     if ( isPortConnected( portName.c_str() ) ) {
         m_link = configureLink( portName.c_str(), "0ps",
-            new Event::Handler2<SingleThread,&SingleThread::eventHandler>(this) );
+            new Event::Handler<SingleThread,&SingleThread::eventHandler>(this) );
     }
     assert(m_link);
 }

@@ -130,7 +130,7 @@ private:
 
     std::string         mapping_tool_;
 
-    SST::TimeConverter*     time_converter_;
+    SST::TimeConverter      time_converter_;
     Clock::HandlerBase*     clock_tick_handler_;
     bool                    handler_registered_;
     bool                    clock_enabled_;

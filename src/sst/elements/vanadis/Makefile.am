@@ -288,27 +288,27 @@ EXTRA_DIST = \
 	tests/small/basic-io/hello-world-cpp/riscv64/vanadis.stderr.gold \
 	tests/small/basic-io/hello-world-cpp/riscv64/vanadis.stdout.gold \
 \
-    tests/small/basic-io/printf-check/Makefile \
-    tests/small/basic-io/printf-check/printf-check.c \
-    tests/small/basic-io/printf-check/mipsel/printf-check \
+	tests/small/basic-io/printf-check/Makefile \
+	tests/small/basic-io/printf-check/printf-check.c \
+	tests/small/basic-io/printf-check/mipsel/printf-check \
 	tests/small/basic-io/printf-check/mipsel/sst.stdout.gold \
 	tests/small/basic-io/printf-check/mipsel/vanadis.stdout.gold \
-    tests/small/basic-io/printf-check/mipsel/vanadis.stderr.gold \
-    tests/small/basic-io/printf-check/riscv64/printf-check \
+	tests/small/basic-io/printf-check/mipsel/vanadis.stderr.gold \
+	tests/small/basic-io/printf-check/riscv64/printf-check \
 	tests/small/basic-io/printf-check/riscv64/sst.stdout.gold \
 	tests/small/basic-io/printf-check/riscv64/vanadis.stdout.gold \
-    tests/small/basic-io/printf-check/riscv64/vanadis.stderr.gold \
+	tests/small/basic-io/printf-check/riscv64/vanadis.stderr.gold \
 \
-    tests/small/basic-io/unlinkat/Makefile \
-    tests/small/basic-io/unlinkat/unlinkat.c \
-    tests/small/basic-io/unlinkat/mipsel/unlinkat \
-    tests/small/basic-io/unlinkat/mipsel/sst.stdout.gold \
-    tests/small/basic-io/unlinkat/mipsel/vanadis.stderr.gold \
-    tests/small/basic-io/unlinkat/mipsel/vanadis.stdout.gold \
-    tests/small/basic-io/unlinkat/riscv64/unlinkat \
-    tests/small/basic-io/unlinkat/riscv64/sst.stdout.gold \
-    tests/small/basic-io/unlinkat/riscv64/vanadis.stderr.gold \
-    tests/small/basic-io/unlinkat/riscv64/vanadis.stdout.gold \
+	tests/small/basic-io/unlinkat/Makefile \
+	tests/small/basic-io/unlinkat/unlinkat.c \
+	tests/small/basic-io/unlinkat/mipsel/unlinkat \
+	tests/small/basic-io/unlinkat/mipsel/sst.stdout.gold \
+	tests/small/basic-io/unlinkat/mipsel/vanadis.stderr.gold \
+	tests/small/basic-io/unlinkat/mipsel/vanadis.stdout.gold \
+	tests/small/basic-io/unlinkat/riscv64/unlinkat \
+	tests/small/basic-io/unlinkat/riscv64/sst.stdout.gold \
+	tests/small/basic-io/unlinkat/riscv64/vanadis.stderr.gold \
+	tests/small/basic-io/unlinkat/riscv64/vanadis.stdout.gold \
 \
     tests/small/basic-io/unlink/Makefile \
     tests/small/basic-io/unlink/unlink.c \
@@ -529,22 +529,40 @@ EXTRA_DIST = \
 	tests/small/misc/openmp/mipsel/4core/sst.stdout.gold \
 	tests/small/misc/openmp/mipsel/4core/vanadis.stderr.gold \
 	tests/small/misc/openmp/mipsel/4core/vanadis.stdout.gold \
+	tests/small/misc/openmp/mipsel/4core-tlbif/sst.stdout.gold \
+	tests/small/misc/openmp/mipsel/4core-tlbif/vanadis.stderr.gold \
+	tests/small/misc/openmp/mipsel/4core-tlbif/vanadis.stdout.gold \
 	tests/small/misc/openmp/mipsel/2core-2thread/sst.stdout.gold \
 	tests/small/misc/openmp/mipsel/2core-2thread/vanadis.stderr.gold \
 	tests/small/misc/openmp/mipsel/2core-2thread/vanadis.stdout.gold \
+	tests/small/misc/openmp/mipsel/2core-2thread-tlbif/sst.stdout.gold \
+	tests/small/misc/openmp/mipsel/2core-2thread-tlbif/vanadis.stderr.gold \
+	tests/small/misc/openmp/mipsel/2core-2thread-tlbif/vanadis.stdout.gold \
 	tests/small/misc/openmp/mipsel/4thread/sst.stdout.gold \
 	tests/small/misc/openmp/mipsel/4thread/vanadis.stderr.gold \
 	tests/small/misc/openmp/mipsel/4thread/vanadis.stdout.gold \
+	tests/small/misc/openmp/mipsel/4thread-tlbif/sst.stdout.gold \
+	tests/small/misc/openmp/mipsel/4thread-tlbif/vanadis.stderr.gold \
+	tests/small/misc/openmp/mipsel/4thread-tlbif/vanadis.stdout.gold \
 	tests/small/misc/openmp/riscv64/openmp \
 	tests/small/misc/openmp/riscv64/4core/sst.stdout.gold \
 	tests/small/misc/openmp/riscv64/4core/vanadis.stderr.gold \
 	tests/small/misc/openmp/riscv64/4core/vanadis.stdout.gold \
+	tests/small/misc/openmp/riscv64/4core-tlbif/sst.stdout.gold \
+	tests/small/misc/openmp/riscv64/4core-tlbif/vanadis.stderr.gold \
+	tests/small/misc/openmp/riscv64/4core-tlbif/vanadis.stdout.gold \
 	tests/small/misc/openmp/riscv64/2core-2thread/sst.stdout.gold \
 	tests/small/misc/openmp/riscv64/2core-2thread/vanadis.stderr.gold \
 	tests/small/misc/openmp/riscv64/2core-2thread/vanadis.stdout.gold \
+	tests/small/misc/openmp/riscv64/2core-2thread-tlbif/sst.stdout.gold \
+	tests/small/misc/openmp/riscv64/2core-2thread-tlbif/vanadis.stderr.gold \
+	tests/small/misc/openmp/riscv64/2core-2thread-tlbif/vanadis.stdout.gold \
 	tests/small/misc/openmp/riscv64/4thread/sst.stdout.gold \
 	tests/small/misc/openmp/riscv64/4thread/vanadis.stderr.gold \
 	tests/small/misc/openmp/riscv64/4thread/vanadis.stdout.gold \
+	tests/small/misc/openmp/riscv64/4thread-tlbif/sst.stdout.gold \
+	tests/small/misc/openmp/riscv64/4thread-tlbif/vanadis.stderr.gold \
+	tests/small/misc/openmp/riscv64/4thread-tlbif/vanadis.stdout.gold \
 \
 	tests/small/misc/openmp2/Makefile \
 	tests/small/misc/openmp2/openmp2.c \

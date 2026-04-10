@@ -23,7 +23,7 @@ public:
         tmp <<  id;
 
         m_toCoreLink = m_nic->configureLink( portName + tmp.str(), "1 ns",
-                                          new Event::Handler2<Nic::VirtNic,&Nic::VirtNic::handleCoreEvent>(this) );
+                                          new Event::Handler<Nic::VirtNic,&Nic::VirtNic::handleCoreEvent>(this) );
         assert( m_toCoreLink );
     }
     ~VirtNic() {}

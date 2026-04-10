@@ -48,7 +48,7 @@ MemoryHeap::MemoryHeap(ComponentId_t id, Params& params ) :
         m_output.verbose(CALL_INFO,1,1,"connect port %s\n",
 										linkName.str().c_str());
        	Link* link = configureLink( linkName.str(), "0ps",
-            new Event::Handler2<MemoryHeap,&MemoryHeap::eventHandler,int>(
+            new Event::Handler<MemoryHeap,&MemoryHeap::eventHandler,int>(
                     this, num ) );
         assert(link);
 		m_links.push_back(link);

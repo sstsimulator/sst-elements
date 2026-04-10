@@ -93,6 +93,7 @@ class testcase_Samba_Component(SSTTestCase):
         cmd = "wc {0} | awk '{{print $1, $2}}' > {1}".format(in_file, self.tmp_file)
         os.system(cmd)
         cmd = "cat {0}".format(self.tmp_file)
-        cmd_rtn = os_simple_command(cmd)
-        cat_out = cmd_rtn[1]
+        rtn = os_command(cmd).run()
+        rtn_data = (rtn.result(), rtn.output())
+        cat_out = rtn_data[1]
         return cat_out
