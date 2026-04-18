@@ -16,6 +16,7 @@
 #pragma once
 
 #include <sst_element_config.h>
+#include <mutex>
 #include <thread>
 
 #ifdef SST_HG_PTHREAD_MACRO_H
