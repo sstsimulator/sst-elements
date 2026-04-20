@@ -143,7 +143,7 @@ private:
 	uint64_t pageSize;
 	uint64_t pageCount;
 	uint64_t maxMemoryAddress;
-	SST::Output* output;
+	SST::Output* output = nullptr;
 
     Shared::SharedArray<uint64_t> pageMap;
 	// const uint64_t * pageMap;

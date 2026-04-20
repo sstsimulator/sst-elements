@@ -185,7 +185,7 @@ public:
 	}
 
 private:
-	QueueType* theQ;
+	QueueType* theQ = nullptr;
 	uint32_t maxCapacity;
 	uint32_t curSize;
 };
@@ -242,7 +242,7 @@ public:
     ImplementSerializable(SST::Miranda::CustomOpRequest)
 
 protected:
-    Interfaces::StandardMem::CustomData* data;
+    Interfaces::StandardMem::CustomData* data = nullptr;
 };
 
 class FenceOpRequest : public GeneratorRequest {

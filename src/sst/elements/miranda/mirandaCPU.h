@@ -81,7 +81,7 @@ public:
 
         ImplementSerializable(SST::Miranda::RequestGenCPU::StdMemHandler)
 
-        RequestGenCPU* cpu;
+        RequestGenCPU* cpu = nullptr;
     };
 
 	SST_ELI_REGISTER_COMPONENT(
@@ -191,19 +191,19 @@ private:
     void issueCustomRequest(CustomOpRequest* req);
     void handleSrcEvent( SST::Event* );
 
-    Output* out;
+    Output* out = nullptr;
 
     TimeConverter timeConverter;
-    Clock::HandlerBase* clockHandler;
-    RequestGenerator* reqGen;
+    Clock::HandlerBase* clockHandler = nullptr;
+    RequestGenerator* reqGen = nullptr;
     std::map<StandardMem::Request::id_t, CPURequest*> requestsInFlight;
-    StandardMem* cache_link;
-    Link* srcLink;
+    StandardMem* cache_link = nullptr;
+    Link* srcLink = nullptr;
     MirandaReqEvent* srcReqEvent = nullptr;
-    StdMemHandler* stdMemHandlers;
+    StdMemHandler* stdMemHandlers = nullptr;
 
     MirandaRequestQueue<GeneratorRequest*> pendingRequests;
-    MirandaMemoryManager* memMgr;
+    MirandaMemoryManager* memMgr = nullptr;
 
     uint32_t maxRequestsPending[OPCOUNT];
 	uint32_t requestsPending[OPCOUNT];
@@ -213,15 +213,15 @@ private:
 
     Statistic<uint64_t>* statReqs[OPCOUNT] = {nullptr, nullptr, nullptr, nullptr};
 	Statistic<uint64_t>* statSplitReqs[OPCOUNT] = {nullptr, nullptr, nullptr, nullptr};
-	Statistic<uint64_t>* statCyclesWithIssue;
-	Statistic<uint64_t>* statMaxIssuePerCycle;
-	Statistic<uint64_t>* statCyclesWithoutIssue;
+	Statistic<uint64_t>* statCyclesWithIssue = nullptr;
+	Statistic<uint64_t>* statMaxIssuePerCycle = nullptr;
+	Statistic<uint64_t>* statCyclesWithoutIssue = nullptr;
 	Statistic<uint64_t>* statBytes[OPCOUNT] = {nullptr, nullptr, nullptr, nullptr};
-	Statistic<uint64_t>* statReqLatency;
-	Statistic<uint64_t>* statTime;
-	Statistic<uint64_t>* statCyclesHitFence;
-	Statistic<uint64_t>* statCyclesHitReorderLimit;
-	Statistic<uint64_t>* statCycles;
+	Statistic<uint64_t>* statReqLatency = nullptr;
+	Statistic<uint64_t>* statTime = nullptr;
+	Statistic<uint64_t>* statCyclesHitFence = nullptr;
+	Statistic<uint64_t>* statCyclesHitReorderLimit = nullptr;
+	Statistic<uint64_t>* statCycles = nullptr;
 };
 
 }

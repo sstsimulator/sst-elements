@@ -413,8 +413,11 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
             statTime->addData(getCurrentSimTimeNano());
 
             reqGen->completed();
-            delete reqGen;
-            reqGen = NULL;
+
+			// Removed as deleting subcomponents breaks checkpointing. All srcLink
+			// related functionality will be removed in a future PR.
+            //delete reqGen;
+            //reqGen = NULL;
 
             if ( NULL == srcLink ) {
                 primaryComponentOKToEndSim();
