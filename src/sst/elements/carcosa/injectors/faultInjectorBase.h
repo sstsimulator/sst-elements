@@ -12,12 +12,12 @@
 #ifndef SST_ELEMENTS_CARCOSA_FAULTINJECTORBASE_H
 #define SST_ELEMENTS_CARCOSA_FAULTINJECTORBASE_H
 
+#include <sst_config.h>
 #include "sst/core/portModule.h"
 #include "sst/core/event.h"
 #include "sst/core/output.h"
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/carcosa/faultlogic/faultBase.h"
-#include <sst_config.h>
 #include "sst/core/rng/mersenne.h"
 #include <vector>
 #include <string>

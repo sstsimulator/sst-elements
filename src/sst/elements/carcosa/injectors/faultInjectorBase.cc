@@ -156,13 +156,9 @@ void FaultInjectorBase::setValidInstallation(Params& params, std::array<bool,2> 
  * added to the vector
  */
 void FaultInjectorBase::executeFaults(Event*& ev) {
-    bool success = false;
     for (int i = 0; i < fault.size(); i++) {
         if (fault[i]) {
-            success = fault[i]->faultLogic(ev);
+            fault[i]->faultLogic(ev);
         }
-    }
-    if (!success) {
-        out_->fatal(CALL_INFO_LONG, -1, "No valid fault object, or no fault successfully executed.\n");
     }
 }

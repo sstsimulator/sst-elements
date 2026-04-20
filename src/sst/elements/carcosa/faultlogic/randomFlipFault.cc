@@ -28,7 +28,7 @@ bool RandomFlipFault::faultLogic(Event*& ev) {
     return true;
 }
 
-inline std::pair<uint32_t, uint32_t> RandomFlipFault::pickByteAndBit(size_t payload_sz) {
+std::pair<uint32_t, uint32_t> RandomFlipFault::pickByteAndBit(size_t payload_sz) {
     uint32_t byte = injector_->randUInt32(0, payload_sz);
     uint32_t bit = injector_->randUInt32(0, 8);
 #ifdef __SST_DEBUG_OUTPUT__

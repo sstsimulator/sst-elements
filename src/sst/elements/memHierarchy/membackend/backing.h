@@ -517,6 +517,14 @@ public:
         Backing* backing = getBacking(addr);
         return backing->get(addr);
     }
+
+    void get( Addr addr, size_t size, std::vector<uint8_t> &data ) override {
+        data.resize(size);
+        for (size_t i = 0; i < size; i++) {
+            data[i] = getBacking(addr + i)->get(addr + i);
+        }
+    }
+
     void printToFile(std::string outfile) override
     {
         for ( hybridStruct* item : mmapList ) {
