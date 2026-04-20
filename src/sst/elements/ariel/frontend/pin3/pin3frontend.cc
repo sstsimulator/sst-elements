@@ -17,9 +17,7 @@
 #include <sst_config.h>
 #include "pin3frontend.h"
 #include <signal.h>
-#if !defined(SST_COMPILE_MACOSX)
 #include <sys/prctl.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -317,23 +315,9 @@ int Pin3Frontend::forkChildProcess(const char* app, char** args,
         output->verbose(CALL_INFO, 1, 0, "Launching executable: %s...\n", app);
 
         if(0 == app_env.size()) {
-#if defined(SST_COMPILE_MACOSX)
-
-            char *dyldpath = getenv("DYLD_LIBRARY_PATH");
-
-            if(dyldpath) {
-                setenv("PIN_APP_DYLD_LIBRARY_PATH", dyldpath, 1);
-                setenv("PIN_DYLD_RESTORE_REQUIRED", "t", 1);
-                unsetenv("DYLD_LIBRARY_PATH");
-            }
-
-#else
 #if defined(HAVE_SET_PTRACER)
-
             prctl(PR_SET_PTRACER, getppid(), 0, 0 ,0);
-
 #endif // End of HAVE_SET_PTRACER
-#endif // End SST_COMPILE_MACOSX (else branch)
 
             int ret_code = execvp(app, args);
             perror("execvp");
@@ -543,11 +527,7 @@ void Pin3Frontend::parsePin3Params(Params& params) {
     // Parse pintool
     size_t tool_path_size = sizeof(char) * 1024;
     char* tool_path = (char*) malloc(tool_path_size);
-#ifdef SST_COMPILE_MACOSX
-    snprintf(tool_path, tool_path_size, "%s/fesimple.dylib", ARIEL_STRINGIZE(ARIEL_TOOL_DIR));
-#else
     snprintf(tool_path, tool_path_size, "%s/fesimple.so", ARIEL_STRINGIZE(ARIEL_TOOL_DIR));
-#endif
     arieltool = params.find<std::string>("arieltool", tool_path);
     if("" == arieltool) {
         output->fatal(CALL_INFO, -1, "The arieltool parameter specifying which PIN tool to run was not specified\n");
