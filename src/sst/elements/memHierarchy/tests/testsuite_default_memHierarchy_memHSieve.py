@@ -226,7 +226,7 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
 
         # Now run the make on it
         cmd = "make"
-        rtn = OSCommand(cmd, set_cwd=self.testMemHSieveDir).run()
+        rtn = os_command(cmd, set_cwd=self.testMemHSieveDir).run()
         log_debug("Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
         self.assertTrue(rtn.result() == 0, "ompsievetest.c failed to compile")
 

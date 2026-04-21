@@ -282,7 +282,7 @@ class testcase_vanadis(SSTTestCase):
 
         # Now build the array application
         cmd = "which " + isa + "-linux-musl-gcc"
-        rtn = OSCommand(cmd).run()
+        rtn = os_command(cmd).run()
         log_debug("Vanadis detecting musl compiler [mipsel-linux-musl-gcc] - result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
         return rtn.result() == 0
 
@@ -296,7 +296,7 @@ class testcase_vanadis(SSTTestCase):
         makefilepath = "{0}/Makefile".format(sourcedirpath)
 
         cmd = "make ARCH=" + isa
-        rtn = OSCommand(cmd, set_cwd=sourcedirpath).run()
+        rtn = os_command(cmd, set_cwd=sourcedirpath).run()
         log_debug("Vanadis tests source - Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
         self.assertTrue(rtn.result() == 0, "{0} failed to build properly".format(makefilepath))
 
