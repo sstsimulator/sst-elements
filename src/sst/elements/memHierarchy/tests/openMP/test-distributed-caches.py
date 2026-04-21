@@ -157,8 +157,8 @@ os_cache.addParams({
     "prefectcher" : Pref1
 })
 
-os_cache_2_cpu = os_cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-os_cache_2_mem = os_cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+os_cache_2_cpu = os_cache.setSubComponent("highlink", "memHierarchy.MemLink")
+os_cache_2_mem = os_cache.setSubComponent("lowlink", "memHierarchy.MemNIC")
 os_cache_2_mem.addParams({
     "group" : 1,
     "network_bw" : "25GB/s"
@@ -289,6 +289,9 @@ cpu0_itlb.addParams(tlbParams)
 cpu0_dtlb_link = sst.Link("cpu0_dtlb_link")
 cpu0_dtlb_link.connect( (cpu0_dcacheIf, "port", "500ps"), (cpu0_dtlb_wrapper, "cpu_if", "500ps") )
 
+cpu0_core_os_link = sst.Link("cpu0_core_os_link")
+cpu0_core_os_link.connect( (cpu0, "os_link", "5ns"), (node_os, "core0", "5ns") )
+
 cpu0_l1Dcache_link = sst.Link("cpu0_l1Dcache_link")
 cpu0_l1Dcache_link.connect( (cpu0_dtlb_wrapper, "cache_if", "500ps" ), (cpu0_l1Dcache_2_cpu, "port", "500ps") )
 
@@ -367,6 +370,9 @@ cpu1_itlb.addParams(tlbParams)
 
 cpu1_dtlb_link = sst.Link("cpu1_dtlb_link")
 cpu1_dtlb_link.connect( (cpu1_dcacheIf, "port", "500ps"), (cpu1_dtlb_wrapper, "cpu_if", "500ps") )
+
+cpu1_core_os_link = sst.Link("cpu1_core_os_link")
+cpu1_core_os_link.connect( (cpu1, "os_link", "5ns"), (node_os, "core1", "5ns") )
 
 cpu1_l1Dcache_link = sst.Link("cpu1_l1Dcache_link")
 cpu1_l1Dcache_link.connect( (cpu1_dtlb_wrapper, "cache_if", "500ps" ), (cpu1_l1Dcache_2_cpu, "port", "500ps") )
@@ -447,6 +453,9 @@ cpu2_itlb.addParams(tlbParams)
 cpu2_dtlb_link = sst.Link("cpu2_dtlb_link")
 cpu2_dtlb_link.connect( (cpu2_dcacheIf, "port", "500ps"), (cpu2_dtlb_wrapper, "cpu_if", "500ps") )
 
+cpu2_core_os_link = sst.Link("cpu2_core_os_link")
+cpu2_core_os_link.connect( (cpu2, "os_link", "5ns"), (node_os, "core2", "5ns") )
+
 cpu2_l1Dcache_link = sst.Link("cpu0_l1Dcache_link")
 cpu2_l1Dcache_link.connect( (cpu2_dtlb_wrapper, "cache_if", "500ps" ), (cpu2_l1Dcache_2_cpu2, "port", "500ps") )
 
@@ -525,6 +534,9 @@ cpu3_itlb.addParams(tlbParams)
 
 cpu3_dtlb_link = sst.Link("cpu3_dtlb_link")
 cpu3_dtlb_link.connect( (cpu3_dcacheIf, "port", "500ps"), (cpu3_dtlb_wrapper, "cpu_if", "500ps") )
+
+cpu3_core_os_link = sst.Link("cpu3_core_os_link")
+cpu3_core_os_link.connect( (cpu3, "os_link", "5ns"), (node_os, "core3", "5ns") )
 
 cpu3_l1Dcache_link = sst.Link("cpu0_l1Dcache_link")
 cpu3_l1Dcache_link.connect( (cpu3_dtlb_wrapper, "cache_if", "500ps" ), (cpu3_l1Dcache_2_cpu, "port", "500ps") )
@@ -605,6 +617,9 @@ cpu4_itlb.addParams(tlbParams)
 cpu4_dtlb_link = sst.Link("cpu4_dtlb_link")
 cpu4_dtlb_link.connect( (cpu4_dcacheIf, "port", "500ps"), (cpu4_dtlb_wrapper, "cpu_if", "500ps") )
 
+cpu4_core_os_link = sst.Link("cpu4_core_os_link")
+cpu4_core_os_link.connect( (cpu4, "os_link", "5ns"), (node_os, "core4", "5ns") )
+
 cpu4_l1Dcache_link = sst.Link("cpu4_l1Dcache_link")
 cpu4_l1Dcache_link.connect( (cpu4_dtlb_wrapper, "cache_if", "500ps" ), (cpu4_l1Dcache_2_cpu, "port", "500ps") )
 
@@ -684,6 +699,9 @@ cpu5_itlb.addParams(tlbParams)
 cpu5_dtlb_link = sst.Link("cpu5_dtlb_link")
 cpu5_dtlb_link.connect( (cpu5_dcacheIf, "port", "500ps"), (cpu5_dtlb_wrapper, "cpu_if", "500ps") )
 
+cpu5_core_os_link = sst.Link("cpu5_core_os_link")
+cpu5_core_os_link.connect( (cpu5, "os_link", "5ns"), (node_os, "core5", "5ns") )
+
 cpu5_l1Dcache_link = sst.Link("cpu5_l1Dcache_link")
 cpu5_l1Dcache_link.connect( (cpu5_dtlb_wrapper, "cache_if", "500ps" ), (cpu5_l1Dcache_2_cpu, "port", "500ps") )
 
@@ -761,6 +779,9 @@ cpu6_itlb.addParams(tlbParams)
 
 cpu6_dtlb_link = sst.Link("cpu0_dtlb_link")
 cpu6_dtlb_link.connect( (cpu0_dcacheIf, "port", "500ps"), (cpu0_dtlb_wrapper, "cpu_if", "500ps") )
+
+cpu6_core_os_link = sst.Link("cpu6_core_os_link")
+cpu6_core_os_link.connect( (cpu6, "os_link", "5ns"), (node_os, "core6", "5ns") )
 
 cpu6_l1Dcache_link = sst.Link("cpu6_l1Dcache_link")
 cpu6_l1Dcache_link.connect( (cpu6_dtlb_wrapper, "cache_if", "500ps" ), (cpu6_l1Dcache_2_cpu, "port", "500ps") )
@@ -840,6 +861,9 @@ cpu7_itlb.addParams(tlbParams)
 
 cpu7_dtlb_link = sst.Link("cpu7_dtlb_link")
 cpu7_dtlb_link.connect( (cpu7_dcacheIf, "port", "500ps"), (cpu7_dtlb_wrapper, "cpu_if", "500ps") )
+
+cpu7_core_os_link = sst.Link("cpu7_core_os_link")
+cpu7_core_os_link.connect( (cpu7, "os_link", "5ns"), (node_os, "core7", "5ns") )
 
 cpu7_l1Dcache_link = sst.Link("cpu7_l1Dcache_link")
 cpu7_l1Dcache_link.connect( (cpu7_dtlb_wrapper, "cache_if", "500ps" ), (cpu7_l1Dcache_2_cpu7, "port", "500ps") )
@@ -956,7 +980,7 @@ port_l3cache1.addParams({
 comp_chipRtr = sst.Component("chipRtr", "merlin.hr_router")
 comp_chipRtr.addParams({
       "input_buf_size" : """2KB""",
-      "num_ports" : """6""",
+      "num_ports" : """8""",
       "id" : """0""",
       "output_buf_size" : """2KB""",
       "flit_size" : """64B""",
@@ -1098,5 +1122,11 @@ link_mmu_itlb7.connect( (node_os_mmu, "core7.itlb", "1ns"), (cpu7_itlb, "mmu", "
 
 link_os_cache = sst.Link("link_os_cache")
 link_os_cache.connect( (node_os_mem_if, "lowlink", "1ns"), (os_cache_2_cpu, "port", "1ns") )
+
+os_cache_2_rtr = sst.Link("os_cache_2_rtr")
+os_cache_2_rtr.connect( (os_cache_2_mem, "port", "1ns"), (comp_chipRtr, "port9", "1ns") )
+
+# link_dir_2_rtr = sst.Link("link_dir_2_rtr")
+# link_dir_2_rtr.connect( (comp_chipRtr, "port"+str(8), "1ns"), (dirNIC, "port", "1ns") )
 
 # End of generated output.
