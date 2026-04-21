@@ -93,7 +93,7 @@ private:
 
     Interfaces::StandardMem *memory;
 
-    TimeConverter *clockTC;
+    TimeConverter clockTC;
     Clock::HandlerBase *clockHandler;
 
     // Create request to call CUDA API

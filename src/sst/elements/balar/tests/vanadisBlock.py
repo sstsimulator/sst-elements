@@ -50,15 +50,11 @@ if (verbosity > 0):
     print( "Verbosity: " + str(verbosity) + " -> loading Vanadis CPU type: " + vanadis_cpu_type )
 
 tlbParams = {
-    "debug_level": 10,
+    "debug_level": 0,
     "hit_latency": 10,
     "num_hardware_threads": 1,
     "num_tlb_entries_per_thread": 64,
     "tlb_set_size": 4,
-}
-
-tlbWrapperParams = {
-    "debug_level": 10,
 }
 
 class Vanadis_Builder:
@@ -132,7 +128,6 @@ class Vanadis_Builder:
         cpu_lsq.enableAllStatistics()
 
         dcache_if = cpu_lsq.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
-        dcache_if.addParam("coreId",cpuId)
         dcache_if.addParams( {
             "debug" : stdMem_debug,
             "debug_level" : 11,
@@ -200,25 +195,13 @@ class Vanadis_Builder:
         l2cache_2_cpu = l2cache.setSubComponent("highlink", "memHierarchy.MemLink")
 
         # CPU D-TLB
-        dtlbWrapper = sst.Component(prefix+".dtlb", "mmu.tlb_wrapper")
-        dtlbWrapper.addParams(tlbWrapperParams)
-        dtlb = dtlbWrapper.setSubComponent("tlb", "mmu.simpleTLB" )
+        dtlb = dcache_if.setSubComponent("tlb", "mmu.simpleTLB")
         dtlb.addParams(tlbParams)
 
         # CPU I-TLB
-        itlbWrapper = sst.Component(prefix+".itlb", "mmu.tlb_wrapper")
-        itlbWrapper.addParams(tlbWrapperParams)
-        itlbWrapper.addParam("exe",True)
-        itlb = itlbWrapper.setSubComponent("tlb", "mmu.simpleTLB" );
+        itlb = icache_if.setSubComponent("tlb", "mmu.simpleTLB")
         itlb.addParams(tlbParams)
-
-        # CPU (data) -> D-TLB
-        link = sst.Link(prefix+".link_cpu_dtlb")
-        link.connect( (dcache_if, "lowlink", "1ns"), (dtlbWrapper, "cpu_if", "1ns") )
-
-        # CPU (instruction) -> I-TLB
-        link = sst.Link(prefix+".link_cpu_itlb")
-        link.connect( (icache_if, "lowlink", "1ns"), (itlbWrapper, "cpu_if", "1ns") )
+        itlb.addParam("tlb_exe_permission",True)
 
         l1icache_2_cpu     = l1icache.setSubComponent("highlink", "memHierarchy.MemLink")
         l1icache_2_l2cache = l1icache.setSubComponent("lowlink", "memHierarchy.MemLink")
@@ -230,7 +213,7 @@ class Vanadis_Builder:
 
         # I-TLB -> I-L1
         link = sst.Link(prefix+".link_l1icache")
-        link.connect( (itlbWrapper, "cache_if", "1ns"), (l1icache_2_cpu, "port", "1ns") )
+        link.connect( (icache_if, "lowlink", "1ns"), (l1icache_2_cpu, "port", "1ns") )
 
         # L1 I-Cache to bus
         link = sst.Link(prefix + ".link_l1dcache_l2cache")
@@ -244,4 +227,4 @@ class Vanadis_Builder:
         link = sst.Link(prefix+".link_bus_l2cache")
         link.connect( (cache_bus, "lowlink0", "1ns"), (l2cache_2_cpu, "port", "1ns") )
 
-        return cpu, l1cache, l1dcache_2_cpu, l2cache, dtlb, dtlbWrapper, itlb
+        return cpu, l1cache, l1dcache_2_cpu, l2cache, dtlb, dcache_if, itlb

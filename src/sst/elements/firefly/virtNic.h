@@ -103,14 +103,14 @@ class VirtNic : public SST::SubComponent {
     };
 
     template <typename classT, typename T1, typename T2 >
-    class Handler2Args : public HandlerBase2Args< T1, T2 > {
+    class HandlerArgs : public HandlerBase2Args< T1, T2 > {
       private:
         typedef bool (classT::*PtrMember)( T1, T2 );
         classT* object;
         const PtrMember member;
 
       public:
-        Handler2Args( classT* const object, PtrMember member ) :
+        HandlerArgs( classT* const object, PtrMember member ) :
             object(object),
             member(member)
         {}

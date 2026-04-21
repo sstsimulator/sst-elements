@@ -192,3 +192,21 @@ libfabric_la_SOURCES = \
   $(libfabric_headers) \
   $(rdmainclude_headers) \
   $(nodist_rdmainclude_headers)
+
+# Standalone libfabric install for mvapich2 (--with-ofi= prefix)
+# Install standard libfabric headers to $(includedir)/rdma/ so that
+# -I$(prefix)/include gives #include <rdma/fabric.h>
+ofi_standalone_rdmadir = $(includedir)/rdma
+ofi_standalone_rdma_HEADERS = \
+  include/rdma/fabric.h \
+  include/rdma/fi_atomic.h \
+  include/rdma/fi_cm.h \
+  include/rdma/fi_collective.h \
+  include/rdma/fi_domain.h \
+  include/rdma/fi_endpoint.h \
+  include/rdma/fi_eq.h \
+  include/rdma/fi_errno.h \
+  include/rdma/fi_rma.h \
+  include/rdma/fi_tagged.h \
+  include/rdma/fi_trigger.h
+

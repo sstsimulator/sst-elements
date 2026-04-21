@@ -61,7 +61,7 @@ cpu::cpu( ComponentId_t id, Params& params ) :
   // connect chain
   toMem = configureLink( "toMem", frequency);
 
-  registerClock( frequency, new Clock::Handler2<cpu,&cpu::clock>(this) );
+  registerClock( frequency, new Clock::Handler<cpu,&cpu::clock>(this) );
 
   //printf("made cpu %p\n", toMem);
 

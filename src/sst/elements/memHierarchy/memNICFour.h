@@ -88,7 +88,7 @@ public:
 
     enum NetType { REQ, ACK, FWD, DATA };
     /* Constructor */
-    MemNICFour(ComponentId_t id, Params &params, TimeConverter* tc);
+    MemNICFour(ComponentId_t id, Params &params, TimeConverter tc);
 
     /* Destructor */
     ~MemNICFour() { }

@@ -47,7 +47,7 @@ public:
     )
 
     MVMFloatArray(ComponentId_t id, Params& params,
-        TimeConverter* tc,
+        TimeConverter tc,
         Event::HandlerBase* handler)
         : MVMComputeArray<float>(id, params, tc, handler) {
         // Constructor can be empty if no additional initialization is required

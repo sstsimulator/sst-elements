@@ -87,7 +87,7 @@ public:
     };
 
     /* Constructor */
-    MemLink(ComponentId_t id, Params &params, TimeConverter* tc);
+    MemLink(ComponentId_t id, Params &params, TimeConverter tc);
 
     /* Destructor */
     virtual ~MemLink() { }

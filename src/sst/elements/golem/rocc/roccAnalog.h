@@ -85,7 +85,7 @@ public:
             "memory_interface",
             ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
             getTimeConverter("1ps"),
-            new StandardMem::Handler2<RoCCAnalog<T>, &RoCCAnalog<T>::processIncomingDataCacheEvent>(this));
+            new StandardMem::Handler<RoCCAnalog<T>, &RoCCAnalog<T>::processIncomingDataCacheEvent>(this));
 
         if ( nullptr == memInterface ) {
             output->fatal(
@@ -93,9 +93,10 @@ public:
                 "Error: unable to load memory interface subcomponent for RoCCAnalog.\n");
         }
 
+        TimeConverter tc = getTimeConverter("1ps");
         array = loadUserSubComponent<Golem::ComputeArray>(
-            "array", ComponentInfo::SHARE_NONE, getTimeConverter("1ps"),
-            new SST::Event::Handler2<RoCCAnalog<T>, &RoCCAnalog<T>::handleArrayEvent>(this));
+            "array", ComponentInfo::SHARE_NONE, tc,
+            new SST::Event::Handler<RoCCAnalog<T>, &RoCCAnalog<T>::handleArrayEvent>(this));
 
         if ( nullptr == array ) {
             output->fatal(

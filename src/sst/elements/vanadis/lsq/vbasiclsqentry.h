@@ -36,37 +36,37 @@ enum class VanadisBasicLoadStoreEntryOp {
 
 class VanadisBasicLoadStoreEntry {
 public:
-    VanadisBasicLoadStoreEntry(VanadisInstruction* the_ins) : ins(the_ins) {sw_thr=65536;}
+    VanadisBasicLoadStoreEntry(VanadisInstruction* the_ins) : ins_(the_ins) {sw_thr_=65536;}
     virtual ~VanadisBasicLoadStoreEntry() {}
     virtual VanadisBasicLoadStoreEntryOp getEntryOp() = 0;
-    virtual VanadisInstruction* getInstruction() { return ins; }
+    virtual VanadisInstruction* getInstruction() { return ins_; }
 
-    virtual bool isInstructionIssued() const { return ins->completedIssue(); }
-    virtual bool isinstructionExecuted() const { return ins->completedExecution(); }
+    virtual bool isInstructionIssued() const { return ins_->completedIssue(); }
+    virtual bool isinstructionExecuted() const { return ins_->completedExecution(); }
 
-    uint32_t getHWThread() const { return ins->getHWThread(); }
-    uint64_t getInstructionAddress() const { return ins->getInstructionAddress(); }
+    uint32_t getHWThread() const { return ins_->getHWThread(); }
+    uint64_t getInstructionAddress() const { return ins_->getInstructionAddress(); }
 
-    uint32_t getSWThr() { return sw_thr; }
-    void setSWThr(uint32_t thr) { sw_thr = thr; }
-    void addThr(uint16_t thr) {sw_thrs.push_back(thr);}
-    uint16_t getCoalescedSwThr(int i)
+    uint32_t getSWThr() { return sw_thr_; }
+    void setSWThr(uint32_t thr) { sw_thr_ = thr; }
+    void addThr(uint16_t thr) {sw_thrs_.push_back(thr);}
+    uint16_t getCoalescedSwThr(int index)
     {
-        if(i>=sw_thrs.size())
+        if(index>=sw_thrs_.size())
         {
             return 0;
         }
-        return sw_thrs[i];
+        return sw_thrs_[index];
     }
     uint16_t getNumCoalescedThreads()
     {
-        return sw_thrs.size();
+        return sw_thrs_.size();
     }
 
 protected:
-    VanadisInstruction* ins;
-    uint32_t sw_thr;
-    std::vector<uint16_t> sw_thrs;
+    VanadisInstruction* ins_;       // Instruction
+    uint32_t sw_thr_;               // Thread to which instruction belongs
+    std::vector<uint16_t> sw_thrs_; // SIMT threads to which instruction belongs
 
 };
 
@@ -79,7 +79,7 @@ public:
     }
 
     VanadisFenceInstruction* getStoreInstruction() {
-        return dynamic_cast<VanadisFenceInstruction*>(ins);
+        return dynamic_cast<VanadisFenceInstruction*>(ins_);
     }
 };
 
@@ -92,44 +92,48 @@ public:
     }
 
     VanadisStoreInstruction* getStoreInstruction() {
-        return dynamic_cast<VanadisStoreInstruction*> (ins);
+        return dynamic_cast<VanadisStoreInstruction*> (ins_);
     }
 };
 
 class VanadisBasicStorePendingEntry : public VanadisBasicStoreEntry {
     public:
         VanadisBasicStorePendingEntry(VanadisStoreInstruction* store_ins, uint64_t addr, uint64_t width,
-            VanadisStoreRegisterType valRegType, uint16_t valReg) :
-            VanadisBasicStoreEntry(store_ins), storeAddress(addr), storeWidth(width),
-            valueRegister(valReg), valueRegisterType(valRegType), dispatched(false) {}
+            VanadisStoreRegisterType value_register_type, uint16_t value_register) :
+            VanadisBasicStoreEntry(store_ins), store_address_(addr), store_width_(width),
+            value_register_(value_register), value_register_type_(value_register_type), dispatched_(false) {}
 
         ~VanadisBasicStorePendingEntry() {
-            requests.clear();
+            requests_.clear();
         }
 
-        bool     isDispatched() const { return dispatched; }
-        void     markDispatched() { dispatched = true; }
+        bool isDispatched() const { return dispatched_; }
+        void markDispatched() { dispatched_ = true; }
 
-        uint64_t getStoreAddress() const { return storeAddress; }
-        uint64_t getStoreWidth() const { return storeWidth; }
-        uint16_t getValueRegister() const { return valueRegister; }
+        uint64_t getStoreAddress() const { return store_address_; }
 
-        size_t   countRequests() const { return requests.size(); }
-        void     addRequest(StandardMem::Request::id_t req) { requests.push_back(req); }
-        void     removeRequest(StandardMem::Request::id_t req) {
-            for(auto req_itr = requests.begin(); req_itr != requests.end(); ) {
+        uint64_t getStoreWidth() const { return store_width_; }
+
+        uint16_t getValueRegister() const { return value_register_; }
+
+        size_t countRequests() const { return requests_.size(); }
+
+        void addRequest(StandardMem::Request::id_t req) { requests_.push_back(req); }
+
+        void removeRequest(StandardMem::Request::id_t req) {
+            for(auto req_itr = requests_.begin(); req_itr != requests_.end(); ) {
                 if( (*req_itr) == req ) {
-                    requests.erase(req_itr);
+                    requests_.erase(req_itr);
                     break;
                 } else {
                     req_itr++;
                 }
             }
         }
-        bool     containsRequest(StandardMem::Request::id_t req) {
+        bool containsRequest(StandardMem::Request::id_t req) {
             bool found = false;
 
-            for(auto req_itr = requests.begin(); req_itr != requests.end(); req_itr++) {
+            for(auto req_itr = requests_.begin(); req_itr != requests_.end(); req_itr++) {
                 if((*req_itr) == req) {
                     found = true;
                     break;
@@ -139,7 +143,7 @@ class VanadisBasicStorePendingEntry : public VanadisBasicStoreEntry {
             return found;
         }
 
-        bool    storeAddressOverlaps(const uint64_t loadAddress, const uint64_t loadWidth) const {
+        bool storeAddressOverlaps(const uint64_t load_address, const uint64_t load_width) const {
             bool overlaps = false;
 
             // Address Overlaps
@@ -147,8 +151,8 @@ class VanadisBasicStorePendingEntry : public VanadisBasicStoreEntry {
             // 1. the address being checked is within the range of the store being performed (overlaps fully/right side)
             // 2. the address + width being checked is within the range of the store being performed (overlaps left side)
 
-            const auto store_end = storeAddress + storeWidth - 1;
-            const auto load_end  = loadAddress + loadWidth - 1;
+            const auto store_end = store_address_ + store_width_ - 1;
+            const auto load_end  = load_address + load_width - 1;
 
             /*
                 There are five main cases to capture:
@@ -178,27 +182,26 @@ class VanadisBasicStorePendingEntry : public VanadisBasicStoreEntry {
 
             // Load address is between the start and end of the store
             // captures cases 1, 3 and 5
-            overlaps = ((loadAddress >= storeAddress) & (loadAddress <= (store_end)));
+            overlaps = ((load_address >= store_address_) & (load_address <= (store_end)));
 
             // Load address is less than the start of the store but its end is within the store range
             // captures cases 1, 2 and 4
-            overlaps |= ((loadAddress <= storeAddress) & (load_end >= storeAddress));
+            overlaps |= ((load_address <= store_address_) & (load_end >= store_address_));
 
             return overlaps;
         }
 
         VanadisStoreRegisterType getValueRegisterType() const {
-            return valueRegisterType;
+            return value_register_type_;
         }
 
     protected:
-        std::vector<StandardMem::Request::id_t> requests;
-        const uint64_t storeAddress;
-        const uint64_t storeWidth;
-        const uint16_t valueRegister;
-
-        bool dispatched;
-        const VanadisStoreRegisterType valueRegisterType;
+        std::vector<StandardMem::Request::id_t> requests_;  // Memory requests generated for this store
+        const uint64_t store_address_;  // Memory address of store
+        const uint64_t store_width_;    // Number of bytes to be stored
+        const uint16_t value_register_; // Index of the register to store
+        bool dispatched_;               // Whether instruction has been dispatched
+        const VanadisStoreRegisterType value_register_type_; // Type of the store register
     };
 
 
@@ -211,7 +214,7 @@ class VanadisBasicLoadEntry : public VanadisBasicLoadStoreEntry {
         }
 
         VanadisLoadInstruction* getLoadInstruction() {
-            return dynamic_cast<VanadisLoadInstruction*>(ins);
+            return dynamic_cast<VanadisLoadInstruction*>(ins_);
         }
     };
 

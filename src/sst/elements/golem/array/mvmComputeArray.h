@@ -28,17 +28,17 @@ public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(
             MVMComputeArray<T>,
             SST::Golem::ComputeArray,
-            TimeConverter*,
+            TimeConverter,
             Event::HandlerBase*
     )
 
     MVMComputeArray(ComponentId_t id, Params& params,
-                         TimeConverter* tc,
+                         TimeConverter tc,
                          Event::HandlerBase* handler)
         : ComputeArray(id, params, tc, handler) {
         // Configure selfLink
-        selfLink = configureSelfLink("Self", *tc, new Event::Handler2<MVMComputeArray,&MVMComputeArray::handleSelfEvent>(this));
-        selfLink->setDefaultTimeBase(*latencyTC);
+        selfLink = configureSelfLink("Self", tc, new Event::Handler<MVMComputeArray,&MVMComputeArray::handleSelfEvent>(this));
+        selfLink->setDefaultTimeBase(latencyTC);
 
         // Initialize vectors
         inputVectors.resize(numArrays);

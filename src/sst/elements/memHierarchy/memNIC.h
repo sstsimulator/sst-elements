@@ -68,7 +68,7 @@ public:
 
 /* Begin class definition */
     /* Constructor */
-    MemNIC(ComponentId_t id, Params &params, TimeConverter* tc);
+    MemNIC(ComponentId_t id, Params &params, TimeConverter tc);
 
     /* Destructor */
     virtual ~MemNIC() { }
