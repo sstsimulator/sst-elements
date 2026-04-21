@@ -45,9 +45,9 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) : SST::Component(id) {
     mmio_size = params.find<uint32_t>("mmio_size", 512);
 
     // Get interfaces and bind handlers
-    mmio_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mmio_iface", ComponentInfo::SHARE_NONE, &tc,
+    mmio_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mmio_iface", ComponentInfo::SHARE_NONE, tc,
             new StandardMem::Handler<DMAEngine,&DMAEngine::handleEvent>(this));
-    mem_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mem_iface", ComponentInfo::SHARE_NONE, &tc,
+    mem_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mem_iface", ComponentInfo::SHARE_NONE, tc,
             new StandardMem::Handler<DMAEngine,&DMAEngine::handleEvent>(this));
 
     if (!mmio_iface) {
