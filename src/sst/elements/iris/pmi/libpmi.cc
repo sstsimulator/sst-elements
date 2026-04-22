@@ -16,13 +16,13 @@ static SST::Iris::sumi::Transport* sstmac_pmi()
   return t->getLibrary<SST::Iris::sumi::Transport>("libfabric");
 }
 
-extern "C" int PMI_Get_rank(int *ret)
+int PMI_Get_rank(int *ret)
 {
   *ret = sstmac_pmi()->rank();
   return PMI_SUCCESS;
 }
 
-extern "C" int PMI_Get_size(int* ret)
+int PMI_Get_size(int* ret)
 {
   *ret = sstmac_pmi()->nproc();
   return PMI_SUCCESS;
@@ -62,7 +62,7 @@ static std::string current_jobid_str()
   return std::string(buf);
 }
 
-extern "C" int
+int
 PMI_KVS_Put(const char kvsname[], const char key[], const char value[])
 {
   kvs_lock.lock();
@@ -71,7 +71,7 @@ PMI_KVS_Put(const char kvsname[], const char key[], const char value[])
   return PMI_SUCCESS;
 }
 
-extern "C" int
+int
 PMI_KVS_Get( const char kvsname[], const char key[], char value[], int length)
 {
   kvs_lock.lock();
@@ -95,7 +95,7 @@ PMI_KVS_Get( const char kvsname[], const char key[], char value[], int length)
   return PMI_SUCCESS;
 }
 
-extern "C" int
+int
 PMI2_KVS_Put(const char key[], const char value[])
 {
   std::string kvsname = current_jobid_str();
@@ -105,7 +105,7 @@ PMI2_KVS_Put(const char key[], const char value[])
   return PMI_SUCCESS;
 }
 
-extern "C" int
+int
 PMI2_KVS_Get(const char *jobid, int /*src_pmi_id*/, const char key[],
              char value[], int maxvalue, int *vallen)
 {
@@ -135,20 +135,20 @@ PMI2_KVS_Get(const char *jobid, int /*src_pmi_id*/, const char key[],
   return PMI_SUCCESS;
 }
 
-extern "C" int
+int
 PMI2_KVS_Fence(void)
 {
   return PMI_SUCCESS;
 }
 
-extern "C" int
+int
 PMI2_Abort(void)
 {
   SST::Hg::abort("unimplemented: PMI2_Abort");
   __builtin_unreachable();
 }
 
-extern "C" int
+int
 PMI2_Job_GetId(char jobid[], int jobid_size)
 {
   auto* api = sstmac_pmi();
@@ -156,7 +156,7 @@ PMI2_Job_GetId(char jobid[], int jobid_size)
   return PMI_SUCCESS;
 }
 
-extern "C" int
+int
 PMI2_Init(int *spawned, int *size, int *rank, int *appnum)
 {
   auto api = sstmac_pmi();
@@ -169,19 +169,19 @@ PMI2_Init(int *spawned, int *size, int *rank, int *appnum)
   return PMI_SUCCESS;
 }
 
-extern "C" int PMI_Abort(int rc, const char error_msg[])
+int PMI_Abort(int rc, const char error_msg[])
 {
   SST::Hg::abort(error_msg ? error_msg : "PMI_Abort called with null message");
   __builtin_unreachable();
 }
 
-extern "C" int PMI_Initialized( PMI_BOOL *initialized )
+int PMI_Initialized( PMI_BOOL *initialized )
 {
   *initialized = pmi_flag_get(pmi_initialized_map) ? 1 : 0;
   return PMI_SUCCESS;
 }
 
-extern "C" int
+int
 PMI2_Finalize()
 {
   pmi_flag_set(pmi_finalized_map, true);
@@ -191,14 +191,14 @@ PMI2_Finalize()
   return PMI_SUCCESS;
 }
 
-extern "C" int
+int
 PMI_Get_nidlist_ptr(void** nidlist)
 {
   *nidlist = sstmac_pmi()->nidlist();
   return PMI_SUCCESS;
 }
 
-extern "C" int PMI_Init(int* spawned)
+int PMI_Init(int* spawned)
 {
   auto* tport = sstmac_pmi();
   tport->init();
@@ -221,7 +221,7 @@ extern "C" int PMI_Init(int* spawned)
   return PMI_SUCCESS;
 }
 
-extern "C" int PMI_Finalize()
+int PMI_Finalize()
 {
   sstmac_pmi()->finish();
   pmi_flag_set(pmi_initialized_map, false);
@@ -230,7 +230,7 @@ extern "C" int PMI_Finalize()
 }
 
 
-extern "C" int PMI_Allgather(void *in, void *out, int len)
+int PMI_Allgather(void *in, void *out, int len)
 {
   auto tport = sstmac_pmi();
   int init_tag = tport->engine()->allocateGlobalCollectiveTag();
@@ -239,7 +239,7 @@ extern "C" int PMI_Allgather(void *in, void *out, int len)
   return PMI_SUCCESS;
 }
 
-extern "C" int PMI_Barrier()
+int PMI_Barrier()
 {
   auto api = sstmac_pmi();
   int init_tag = api->engine()->allocateGlobalCollectiveTag();
@@ -249,7 +249,7 @@ extern "C" int PMI_Barrier()
   return PMI_SUCCESS;
 }
 
-extern "C" int PMI_Ibarrier()
+int PMI_Ibarrier()
 {
   auto api = sstmac_pmi();
   int init_tag = api->engine()->allocateGlobalCollectiveTag();
@@ -258,7 +258,7 @@ extern "C" int PMI_Ibarrier()
   return PMI_SUCCESS;
 }
 
-extern "C" int PMI_Wait()
+int PMI_Wait()
 {
   if (!pmi_flag_get(ibarrier_pending_map))
     return PMI_SUCCESS;
@@ -269,49 +269,49 @@ extern "C" int PMI_Wait()
   return PMI_SUCCESS;
 }
 
-extern "C" int
+int
 PMI_Get_numpes_on_smp(int* num)
 {
   *num = 1;
   return PMI_SUCCESS;
 }
 
-extern "C" int
+int
 PMI_Publish_name( const char service_name[], const char port[] )
 {
   SST::Hg::abort("unimplemented error: PMI_Publish_name");
   __builtin_unreachable();
 }
 
-extern "C" int
+int
 PMI_Unpublish_name( const char service_name[] )
 {
   SST::Hg::abort("unimplemented error: PMI_Unpublish_name");
   __builtin_unreachable();
 }
 
-extern "C" int
+int
 PMI_KVS_Get_name_length_max( int *length )
 {
   *length = 256;
   return PMI_SUCCESS;
 }
 
-extern "C" int
+int
 PMI_KVS_Get_key_length_max( int *length )
 {
   *length = 256;
   return PMI_SUCCESS;
 }
 
-extern "C" int
+int
 PMI_KVS_Get_value_length_max( int *length )
 {
   *length = 256;
   return PMI_SUCCESS;
 }
 
-extern "C" int
+int
 PMI_KVS_Get_my_name( char kvsname[], int length )
 {
   auto* api = sstmac_pmi();
@@ -323,7 +323,7 @@ PMI_KVS_Get_my_name( char kvsname[], int length )
   }
 }
 
-extern "C" int
+int
 PMI_Spawn_multiple(int count,
                        const char * cmds[],
                        const char ** argvs[],
@@ -338,20 +338,20 @@ PMI_Spawn_multiple(int count,
   __builtin_unreachable();
 }
 
-extern "C" int
+int
 PMI_Lookup_name( const char service_name[], char port[] )
 {
   SST::Hg::abort("unimplemented error: PMI_Lookup_name");
   __builtin_unreachable();
 }
 
-extern "C" int
+int
 PMI_KVS_Commit( const char kvsname[] )
 {
   return PMI_SUCCESS;
 }
 
-extern "C" int
+int
 PMI_Get_universe_size( int *size )
 {
   auto* api = sstmac_pmi();
@@ -359,7 +359,7 @@ PMI_Get_universe_size( int *size )
   return PMI_SUCCESS;
 }
 
-extern "C" int
+int
 PMI_Get_appnum( int *appnum )
 {
   auto* api = sstmac_pmi();
