@@ -72,7 +72,7 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
     gpuCachePendingTransactions = new std::unordered_map<StandardMem::Request::id_t, cache_req_params>();
 
     // Interface to CPU via MMIO
-    mmio_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mmio_iface", ComponentInfo::SHARE_NONE, &tc,
+    mmio_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mmio_iface", ComponentInfo::SHARE_NONE, tc,
             new StandardMem::Handler<BalarMMIO,&BalarMMIO::handleEvent>(this));
     if (!mmio_iface) {
         out.fatal(CALL_INFO, -1, "%s, Error: No interface found loaded into 'mmio_iface' subcomponent slot. Please check input file\n", getName().c_str());
@@ -103,7 +103,7 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
     // Create and initialize GPU memHierarchy links (StandardMem)
     for (uint32_t i = 0; i < gpu_core_count; i++) {
         if (gpu_to_cache) {
-            gpu_to_cache_links[i] = gpu_to_cache->create<Interfaces::StandardMem>(i, ComponentInfo::INSERT_STATS, &tc, new StandardMem::Handler<BalarMMIO,&BalarMMIO::handleGPUCache>(this));
+            gpu_to_cache_links[i] = gpu_to_cache->create<Interfaces::StandardMem>(i, ComponentInfo::INSERT_STATS, tc, new StandardMem::Handler<BalarMMIO,&BalarMMIO::handleGPUCache>(this));
         } else {
     	    // Create a unique name for all links, the configure file links need to match this
     	    sprintf(link_cache_buffer, "requestGPUCacheLink%" PRIu32, i);
@@ -113,7 +113,7 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
 
             gpu_to_cache_links[i] = loadAnonymousSubComponent<SST::Interfaces::StandardMem>("memHierarchy.standardInterface",
                     "gpu_cache", i, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
-                    param, &tc, new StandardMem::Handler<BalarMMIO,&BalarMMIO::handleGPUCache>(this));
+                    param, tc, new StandardMem::Handler<BalarMMIO,&BalarMMIO::handleGPUCache>(this));
             out.verbose(CALL_INFO, 1, 0, "Finish configure cache link for core %d\n", i);
         }
 
