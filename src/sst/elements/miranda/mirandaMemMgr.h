@@ -102,7 +102,9 @@ public:
            free(pageArr);
 
        } // End mapping by 'first' sharer
-   }
+    }
+
+    MirandaMemoryManager() = default;
 
 	uint64_t mapAddress(const uint64_t addrIn) const {
 		if( __builtin_expect(addrIn >= maxMemoryAddress, 0) ) {
@@ -128,11 +130,20 @@ public:
 		return physAddress;
 	}
 
+    void serialize_order(SST::Core::Serialization::serializer& ser) {
+        SST_SER(pageSize);
+        SST_SER(pageCount);
+        SST_SER(maxMemoryAddress);
+        SST_SER(output);
+
+        SST_SER(pageMap);
+    }
+
 private:
 	uint64_t pageSize;
 	uint64_t pageCount;
 	uint64_t maxMemoryAddress;
-	SST::Output* output;
+	SST::Output* output = nullptr;
 
     Shared::SharedArray<uint64_t> pageMap;
 	// const uint64_t * pageMap;
