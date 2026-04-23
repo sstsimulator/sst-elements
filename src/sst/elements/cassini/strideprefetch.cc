@@ -227,3 +227,27 @@ void StridePrefetcher::registerResponseCallback(Event::HandlerBase* handler) {
 
 void StridePrefetcher::printStats(Output& out) {
 }
+
+void StridePrefetcher::serialize_order(SST::Core::Serialization::serializer& ser) {
+    CacheListener::serialize_order(ser);
+    SST_SER(output);
+    SST_SER(registeredCallbacks);
+    SST_SER(prefetchHistory);
+    SST_SER(prefetchHistoryCount);
+    SST_SER(blockSize);
+    SST_SER(overrunPageBoundary);
+    SST_SER(pageSize);
+    SST_SER(SST::Core::Serialization::array(recentAddrList, recentAddrListCount));
+    SST_SER(recentAddrListCount);
+    SST_SER(nextRecentAddressIndex);
+    SST_SER(strideDetectionRange);
+    SST_SER(strideReach);
+    SST_SER(recheckCountdown);
+    SST_SER(missEventsProcessed);
+    SST_SER(hitEventsProcessed);
+    SST_SER(verbosity);
+    SST_SER(statPrefetchOpportunities);
+    SST_SER(statPrefetchEventsIssued);
+    SST_SER(statPrefetchIssueCanceledByPageBoundary);
+    SST_SER(statPrefetchIssueCanceledByHistory);
+}
