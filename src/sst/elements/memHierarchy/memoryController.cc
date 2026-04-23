@@ -45,7 +45,7 @@ using namespace SST::MemHierarchy;
  */
 
 /*************************** Memory Controller ********************/
-MemController::MemController(ComponentId_t id, Params &params) : Component(id), backing_(NULL) {
+MemController::MemController(ComponentId_t id, Params &params) : Component(id), backing_(nullptr) {
 
     dlevel = params.find<int>("debug_level", 0);
 
@@ -447,7 +447,7 @@ void MemController::handleEvent(SST::Event* event) {
         case Command::FlushLine:
         case Command::FlushLineInv:
             {
-                MemEvent* put = NULL;
+                MemEvent* put = nullptr;
                 if ( ev->getPayloadSize() != 0 ) {
                     put = new MemEvent(getName(), ev->getBaseAddr(), ev->getBaseAddr(), Command::PutM, ev->getPayload());
                     put->setFlag(MemEvent::F_NORESPONSE);
@@ -627,7 +627,7 @@ void MemController::complete(unsigned int phase) {
     link_->complete(phase);
 
     // Initiate flush here if configured to do so
-    if (!phase && (backing_outfile_ != "" || backing_outscreen_)) {
+    if (!phase && backing_ && (backing_outfile_ != "" || backing_outscreen_)) {
         MemEventUntimedFlush* flush = new MemEventUntimedFlush(getName());
         mem_h_debug_output(_L10_, "U: %-20s   Event:Untimed   (%s)\n", getName().c_str(), flush->getVerboseString().c_str());
         link_->sendUntimedData(flush, true); /* Broadcast to all sources */
@@ -643,14 +643,14 @@ void MemController::finish(void) {
     cycle--;
     memBackendConvertor_->finish(cycle);
     link_->finish();
-    if ( backing_outfile_ != "" ) {
+    if ( backing_ && backing_outfile_ != "" ) {
         try {
             backing_->printToFile(backing_outfile_);
         } catch (int e) { // Don't fatal so late in simulation
             out.output("%s, WARNING: Unable to open file '%s' provided by parameter 'backing_out_file' to write memory contents. Memory contents will not be written.\n", getName().c_str(), backing_outfile_.c_str());
         }
     }
-    if (backing_outscreen_) {
+    if (backing_ && backing_outscreen_) {
         backing_->printToScreen(privateMemOffset_, region_.start, region_.interleaveSize, region_.interleaveStep);
     }
 }
