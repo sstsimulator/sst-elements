@@ -29,7 +29,7 @@ protected:
      * Randomly choose which bit in which byte to flip
      * @return (byte, bit)
      */
-    inline std::pair<uint32_t, uint32_t> pickByteAndBit(size_t payload_sz);
+    std::pair<uint32_t, uint32_t> pickByteAndBit(size_t payload_sz);
 protected:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         FaultBase::serialize_order(ser);
