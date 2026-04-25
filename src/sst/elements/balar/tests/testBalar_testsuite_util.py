@@ -414,25 +414,25 @@ class BalarTestCase(SSTTestCase):
 
         # Now build libcudart
         cmd = "make"
-        rtn = OSCommand(cmd, set_cwd=self.cudartDir).run()
+        rtn = os_command(cmd, set_cwd=self.cudartDir).run()
         log_debug("Balar cudart Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
         self.assertTrue(rtn.result() == 0, "libcudart failed to compile")
 
         # Now build the vectorAdd example
         cmd = "make"
-        rtn = OSCommand(cmd, set_cwd=self.testbalarVectorAddDir).run()
+        rtn = os_command(cmd, set_cwd=self.testbalarVectorAddDir).run()
         log_debug("Balar vectorAdd Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
         self.assertTrue(rtn.result() == 0, "vecAdd.cu failed to compile")
 
         # Build vanadishandshake
 #        cmd = "make"
-#        rtn = OSCommand(cmd, set_cwd=self.testbalarVanadisHandshakeDir).run()
+#        rtn = os_command(cmd, set_cwd=self.testbalarVanadisHandshakeDir).run()
 #        log_debug("Balar vanadisHandshake Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
 #        self.assertTrue(rtn.result() == 0, "vanadisHandshake.c failed to compile")
 
         # Build vanadis_llvm_rv64, contains helloworld, vecadd, and the custom CUDA lib
         cmd = "make"
-        rtn = OSCommand(cmd, set_cwd=self.testbalarLLVMVanadisDir).run()
+        rtn = os_command(cmd, set_cwd=self.testbalarLLVMVanadisDir).run()
         log_debug("Balar vanadisLLVM Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
         self.assertTrue(rtn.result() == 0, "vanadisLLVM executables and lib failed to compile")
 
@@ -445,13 +445,13 @@ class BalarTestCase(SSTTestCase):
             # Build rodinia
             # Use the same amount of concurrent run to compile rodinia
             cmd_compile = f"make rodinia_2.0-ft -j{nthreads} -C ./src"
-            rtn = OSCommand(cmd_compile, set_cwd=os.environ["GPUAPPS_ROOT"]).run()
+            rtn = os_command(cmd_compile, set_cwd=os.environ["GPUAPPS_ROOT"]).run()
             log_debug("Balar vanadisLLVM GPU App rodinia 2.0 Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
             self.assertTrue(rtn.result() == 0, "vanadisLLVM GPU app rodinia 2.0 benchmark failed to compile in {0} with command {1}".format(os.environ["GPUAPPS_ROOT"], cmd_compile))
 
             # Pull data
             cmd_pulldata = "make data -C ./src"
-            rtn = OSCommand(cmd_pulldata, set_cwd=os.environ["GPUAPPS_ROOT"]).run()
+            rtn = os_command(cmd_pulldata, set_cwd=os.environ["GPUAPPS_ROOT"]).run()
             log_debug("Balar vanadisLLVM GPU App Data pull result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
             self.assertTrue(rtn.result() == 0, "vanadisLLVM GPU app benchmark failed to pull data")
         else:
@@ -493,14 +493,14 @@ class BalarTestCase(SSTTestCase):
 
         # Get nvcc
         cmd = "which nvcc"
-        rtn = OSCommand(cmd).run()
+        rtn = os_command(cmd).run()
         log_debug("which nvcc result = {0}; output = {1}".format(rtn.result(), rtn.output()))
         self.assertTrue(rtn.result() == 0, "'which nvcc' command failed")
         os.environ["NVCC_PATH"] = rtn.output()
 
         # Set the CUDA version here as well by parsing the nvcc version string
         cmd = "nvcc --version"
-        rtn = OSCommand(cmd).run()
+        rtn = os_command(cmd).run()
         log_debug("CUDA version string: result = {0}; output = {1}".format(rtn.result(), rtn.output()))
         # Parse version string
         version_string = rtn.output()

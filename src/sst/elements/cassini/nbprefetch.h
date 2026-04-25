@@ -70,11 +70,11 @@ public:
 
 private:
     std::vector<Event::HandlerBase*> registeredCallbacks;
-    uint64_t blockSize;
+    uint64_t blockSize = 64;
 
-    Statistic<uint64_t>* statPrefetchEventsIssued;
-    Statistic<uint64_t>* statMissEventsProcessed;
-    Statistic<uint64_t>* statHitEventsProcessed;
+    Statistic<uint64_t>* statPrefetchEventsIssued = nullptr;
+    Statistic<uint64_t>* statMissEventsProcessed = nullptr;
+    Statistic<uint64_t>* statHitEventsProcessed = nullptr;
 
 };
 

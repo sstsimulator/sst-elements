@@ -263,7 +263,7 @@ class testcase_Ariel(SSTTestCase):
 
         # Build the testio binary
         cmd = "make testio"
-        rtn1 = OSCommand(cmd, set_cwd=self.ArielElementTestIODir).run()
+        rtn1 = os_command(cmd, set_cwd=self.ArielElementTestIODir).run()
         log_debug("Ariel ariel/tests/testIO make result = {1}; output =\n{2}".format(self.ArielElementTestIODir, rtn1.result(), rtn1.output()))
 
         # Check that everything compiled OK
@@ -283,7 +283,7 @@ class testcase_Ariel(SSTTestCase):
             # Instrument with pebil
             if (pebil_loaded):
                 cmd = "pebil --tool ArielIntercept --app testio --inp +"
-                rtn2 = OSCommand(cmd, set_cwd=self.ArielElementTestIODir).run()
+                rtn2 = os_command(cmd, set_cwd=self.ArielElementTestIODir).run()
                 log_debug("Ariel ariel/tests/testIO pebil result = {0}; output =\n{1}".format(rtn2.result(), rtn2.output()))
                 if rtn2.result() != 0:
                     log_debug("Ariel {0} pebil returned non-zero exit code. Error:\n{1}".format(self.ArielElementTestIODir, rtn2.error()))
