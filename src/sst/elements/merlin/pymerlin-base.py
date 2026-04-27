@@ -805,6 +805,9 @@ class Job(Buildable):
     def createLinearNidMap(self):
         self._nid_map = list(range(self.size))
 
+    def setEndpointNIC(self, endpointNIC):
+        self.network_interface = endpointNIC
+        self._lockVariable("network_interface")
 
 class RouterTemplate(TemplateBase):
     def __init__(self):
@@ -1144,3 +1147,47 @@ System.addAllocationFunction("linear", _allocate_linear)
 System.addAllocationFunction("random-linear",_allocate_random_linear)
 System.addAllocationFunction("interval",_allocate_interval)
 System.addAllocationFunction("indexed",_allocate_indexed)
+
+# A helper function to serialize a routing table entry (for source routing)
+def serialize_routing_entry(routing_table_src_entry, source_router_id):
+    """
+    Serialize an entry of the routing table to a compact string format.
+
+    Format: dest1:w1,hop1,hop2;w2,hop3|dest2:w1,hop1...
+    - Each destination separated by |
+    - Each path separated by ;
+    - Each path: weight,hop1,hop2,...
+
+    Args:
+        routing_table_src_entry: format - dict[dst] = list of weighted paths
+                        Each weighted path is (weight, [hop1, hop2, ..., dst]), note that source is not included in hops.
+    Returns:
+        str: Serialized routing table string from this router as source.
+    """
+    dest_parts = []
+
+    for dest_rtr_id in routing_table_src_entry.keys():
+        if dest_rtr_id == source_router_id:
+            continue  # skip self-routes
+
+        paths = routing_table_src_entry[dest_rtr_id]
+        path_strs = []
+
+        for weight, hops in paths:
+            # Format: weight,hop1,hop2,...,dst
+            hop_str = f"{weight:.5f},{','.join(str(h) for h in hops)}"
+            path_strs.append(hop_str)
+
+        if path_strs:
+            dest_parts.append(f"{dest_rtr_id}:{';'.join(path_strs)}")
+
+    result = '|'.join(dest_parts)
+
+    # Log size information
+    size_bytes = len(result)
+    size_kb = size_bytes / 1024
+    # print(f"Routing table entry serialized to string: {size_bytes} bytes ({size_kb:.2f} KB)")
+    if size_kb > 1024:
+        print(f"WARNING: Large routing table string ({size_kb/1024:.2f} MB). Consider using file-based transfer (not implemented yet).")
+
+    return result
