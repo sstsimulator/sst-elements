@@ -107,7 +107,7 @@ unsigned int ssthg_nanosleep(unsigned int nsecs);
 } // namespace Hg
 } // namespace SST
 
-#include <mercury/common/skeleton_tls.h>
 #endif /* __cplusplus */
 
+#include <mercury/common/skeleton_tls.h>
 #include <mercury/common/null_buffer.h>
