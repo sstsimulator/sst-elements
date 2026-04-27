@@ -32,11 +32,11 @@ namespace Merlin {
 
 class topo_torus_event : public internal_router_event {
 public:
-    int dimensions;
-    int routing_dim;
-    int* dest_loc;
+    int dimensions = 0;
+    int routing_dim = 0;
+    int* dest_loc = nullptr;
 
-    topo_torus_event() {}
+    topo_torus_event() = default;
     topo_torus_event(int dim) {	dimensions = dim; routing_dim = 0; dest_loc = new int[dim]; }
     ~topo_torus_event() { delete[] dest_loc; }
     virtual internal_router_event* clone(void) override
@@ -52,13 +52,7 @@ public:
         SST_SER(dimensions);
         SST_SER(routing_dim);
 
-        if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
-            dest_loc = new int[dimensions];
-        }
-
-        for ( int i = 0 ; i < dimensions ; i++ ) {
-            SST_SER(dest_loc[i]);
-        }
+        SST_SER(SST::Core::Serialization::array(dest_loc, dimensions));
     }
 
 private:
@@ -99,34 +93,54 @@ public:
 
 
 private:
-    int router_id;
-    int* id_loc;
+    int router_id = -1;
+    int* id_loc = nullptr;
 
-    int dimensions;
-    int* dim_size;
-    int* dim_width;
+    int dimensions = 0;
+    int* dim_size = nullptr;
+    int* dim_width = nullptr;
 
     int (* port_start)[2]; // port_start[dim][direction: 0=pos, 1=neg]
 
-    int num_local_ports;
-    int local_port_start;
+    int num_local_ports = 0;
+    int local_port_start = 0;
 
-    int num_vns;
+    int num_vns = 0;
 
 public:
     topo_torus(ComponentId_t cid, Params& params, int num_ports, int rtr_id, int num_vns);
     ~topo_torus();
 
-    virtual void route_packet(int port, int vc, internal_router_event* ev);
-    virtual internal_router_event* process_input(RtrEvent* ev);
+    topo_torus() = default;
 
-    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts);
-    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev);
+    void serialize_order(SST::Core::Serialization::serializer& ser) override
+    {
+        Topology::serialize_order(ser);
+        SST_SER(router_id);
+        SST_SER(dimensions);
+        SST_SER(num_local_ports);
+        SST_SER(local_port_start);
+        SST_SER(num_vns);
 
-    virtual PortState getPortState(int port) const;
-    virtual int getEndpointID(int port);
+        SST_SER(SST::Core::Serialization::array(id_loc, dimensions));
+        SST_SER(SST::Core::Serialization::array(dim_size, dimensions));
+        SST_SER(SST::Core::Serialization::array(dim_width, dimensions));
+        SST_SER(SST::Core::Serialization::array(port_start, dimensions));
+    }
 
-    virtual void getVCsPerVN(std::vector<int>& vcs_per_vn) {
+    ImplementSerializable(SST::Merlin::topo_torus)
+
+    virtual void route_packet(int port, int vc, internal_router_event* ev) override;
+    virtual internal_router_event* process_input(RtrEvent* ev) override;
+
+    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts) override;
+    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev) override;
+
+    virtual PortState getPortState(int port) const override;
+    virtual int getEndpointID(int port) override;
+
+    virtual void getVCsPerVN(std::vector<int>& vcs_per_vn) override
+    {
         for ( int i = 0; i < num_vns; ++i ) {
             vcs_per_vn[i] = 2;
         }

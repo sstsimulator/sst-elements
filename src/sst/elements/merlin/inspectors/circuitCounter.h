@@ -53,11 +53,56 @@ private:
 public:
     CircNetworkInspector(SST::ComponentId_t, SST::Params &params, const std::string& sub_id);
 
-    void finish();
+    void finish() override;
 
-    void inspectNetworkData(SimpleNetwork::Request* req);
+    void inspectNetworkData(SimpleNetwork::Request* req) override;
 
+    CircNetworkInspector() :
+        SimpleNetwork::NetworkInspector(),
+        uniquePaths(nullptr) {}
 
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SimpleNetwork::NetworkInspector::serialize_order(ser);
+        SST_SER(outFileName);
+
+        // Static setMap is rebuilt from individual instances on UNPACK:
+        // first inspector per router creates the shared pairSet, subsequent ones reuse it.
+        if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+            uniquePaths = new pairSet_t;
+            std::string fullname = getName();
+            int index = fullname.find(":");
+            const std::string& key = index == std::string::npos ? fullname : fullname.substr(0, index);
+            mapLock.lock();
+            setMap_t::iterator iter = setMap.find(key);
+            if ( iter != setMap.end() ) {
+                delete uniquePaths;
+                uniquePaths = iter->second;
+            } else {
+                setMap[key] = uniquePaths;
+            }
+            mapLock.unlock();
+        }
+
+        size_t set_size = (uniquePaths != nullptr) ? uniquePaths->size() : 0;
+        SST_SER(set_size);
+        if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+            for ( size_t i = 0; i < set_size; i++ ) {
+                SimpleNetwork::nid_t src = 0, dest = 0;
+                SST_SER(src);
+                SST_SER(dest);
+                uniquePaths->insert(SDPair(src, dest));
+            }
+        } else {
+            for ( auto& pair : *uniquePaths ) {
+                SimpleNetwork::nid_t src = pair.first;
+                SimpleNetwork::nid_t dest = pair.second;
+                SST_SER(src);
+                SST_SER(dest);
+            }
+        }
+    }
+
+    ImplementSerializable(SST::Merlin::CircNetworkInspector)
 };
 
 

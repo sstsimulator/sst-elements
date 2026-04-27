@@ -34,22 +34,21 @@ namespace Merlin {
 
 class topo_hyperx_event : public internal_router_event {
 public:
-    int dimensions;
+    int dimensions = 0;
     // First non aligned dimension
-    int last_routing_dim;
-    int* dest_loc;
-    bool val_route_dest;
-    int* val_loc;
+    int last_routing_dim = -1;
+    int* dest_loc = nullptr;
+    bool val_route_dest = false;
+    int* val_loc = nullptr;
 
     id_type id;
-    bool rerouted;
+    bool rerouted = false;
 
-    topo_hyperx_event() : internal_router_event() {}
+    topo_hyperx_event() = default;
+
     topo_hyperx_event(int dim) :
         internal_router_event(),
-        dimensions(dim),
-        last_routing_dim(-1),
-        val_route_dest(false)
+        dimensions(dim)
     {
         dest_loc = new int[dim];
         val_loc = new int[dim];
@@ -75,21 +74,8 @@ public:
         SST_SER(dimensions);
         SST_SER(last_routing_dim);
 
-        if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
-            dest_loc = new int[dimensions];
-        }
-
-        for ( int i = 0 ; i < dimensions ; i++ ) {
-            SST_SER(dest_loc[i]);
-        }
-
-        if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
-            val_loc = new int[dimensions];
-        }
-
-        for ( int i = 0 ; i < dimensions ; i++ ) {
-            SST_SER(val_loc[i]);
-        }
+        SST_SER(SST::Core::Serialization::array(dest_loc, dimensions));
+        SST_SER(SST::Core::Serialization::array(val_loc, dimensions));
 
         SST_SER(val_route_dest);
         SST_SER(id);
@@ -106,9 +92,9 @@ private:
 
 class topo_hyperx_init_event : public topo_hyperx_event {
 public:
-    int phase;
+    int phase = 0;
 
-    topo_hyperx_init_event() : topo_hyperx_event() {}
+    topo_hyperx_init_event() = default;
     topo_hyperx_init_event(int dim) : topo_hyperx_event(dim), phase(0) { }
     virtual ~topo_hyperx_init_event() { }
     virtual internal_router_event* clone(void) override
@@ -132,13 +118,19 @@ private:
 
 
 class RNGFunc {
-    RNG::Random* rng;
+    RNG::Random* rng = nullptr;
 
 public:
+    RNGFunc() = default;
     RNGFunc(RNG::Random* rng) : rng(rng) {}
 
     int operator() (int i) {
         return rng->generateNextUInt32() % i;
+    }
+
+    void serialize_order(SST::Core::Serialization::serializer& ser)
+    {
+        SST_SER(rng);
     }
 };
 
@@ -183,53 +175,69 @@ public:
     };
 
 private:
-    int router_id;
-    int* id_loc;
+    int router_id = -1;
+    int* id_loc = nullptr;
 
-    int dimensions;
-    int* dim_size;
-    int* dim_width;
-    int total_routers;
+    int dimensions = 0;
+    int* dim_size = nullptr;
+    int* dim_width = nullptr;
+    int total_routers = 0;
 
-    int* port_start; // where does each dimension start
+    int* port_start = nullptr; // where does each dimension start
 
-    int num_local_ports;
-    int local_port_start;
+    int num_local_ports = 0;
+    int local_port_start = 0;
 
     int const* output_credits;
     int const* output_queue_lengths;
-    int num_vcs;
-    int num_vns;
+    int num_vcs = 0;
+    int num_vns = 0;
 
-    RNG::Random* rng;
-    RNGFunc* rng_func;
+    RNG::Random* rng = nullptr;
+    RNGFunc* rng_func = nullptr;
 
-    struct vn_info {
+    struct vn_info
+    {
         int start_vc;
         int num_vcs;
-        RouteAlgo algorithm;
+        RouteAlgo algorithm = DOR;
+
+        void serialize_order(SST::Core::Serialization::serializer& ser)
+        {
+            SST_SER(start_vc);
+            SST_SER(num_vcs);
+            SST_SER(algorithm);
+        }
+
     };
 
-    vn_info* vns;
+    vn_info* vns = nullptr;
 
 
 public:
     topo_hyperx(ComponentId_t cid, Params& p, int num_ports, int rtr_id, int num_vns);
     ~topo_hyperx();
 
-    virtual void route_packet(int port, int vc, internal_router_event* ev);
-    virtual internal_router_event* process_input(RtrEvent* ev);
+    topo_hyperx() : Topology() {}
 
-    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts);
-    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev);
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
 
-    virtual PortState getPortState(int port) const;
-    virtual int getEndpointID(int port);
+    ImplementSerializable(SST::Merlin::topo_hyperx)
 
-    virtual void setOutputBufferCreditArray(int const* array, int vcs);
-    virtual void setOutputQueueLengthsArray(int const* array, int vcs);
+    virtual void route_packet(int port, int vc, internal_router_event* ev) override;
+    virtual internal_router_event* process_input(RtrEvent* ev) override;
 
-    virtual void getVCsPerVN(std::vector<int>& vcs_per_vn) {
+    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts) override;
+    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev) override;
+
+    virtual PortState getPortState(int port) const override;
+    virtual int getEndpointID(int port) override;
+
+    virtual void setOutputBufferCreditArray(int const* array, int vcs) override;
+    virtual void setOutputQueueLengthsArray(int const* array, int vcs) override;
+
+    virtual void getVCsPerVN(std::vector<int>& vcs_per_vn)  override
+    {
         for ( int i = 0; i < num_vns; ++i ) {
             vcs_per_vn[i] = vns[i].num_vcs;
         }
