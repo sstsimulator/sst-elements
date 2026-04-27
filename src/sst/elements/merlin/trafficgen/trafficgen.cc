@@ -145,11 +145,6 @@ TrafficGen::serialize_order(SST::Core::Serialization::serializer& ser)
 {
     Component::serialize_order(ser);
 
-    // int mode_int = static_cast<int>(addressMode);
-    // SST_SER(mode_int);
-    // if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
-    //     addressMode = static_cast<AddressMode>(mode_int);
-    // }
     SST_SER(addressMode);
 
     SST_SER(out);
