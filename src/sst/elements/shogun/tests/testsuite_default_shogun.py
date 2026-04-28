@@ -49,10 +49,11 @@ class testcase_shogun(SSTTestCase):
         #       TESTS & RESULT FILES ARE STILL VALID
 
         # Perform the tests
+        filter1 = StartsWithFilter("WARNING: EmptyRankSync")
         if os_test_file(errfile, "-s"):
             log_testing_note("shogun test {0} has a Non-Empty Error File {1}".format(testDataFileName, errfile))
 
-        cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
+        cmp_result = testing_compare_filtered_diff(testcase, outfile, reffile, sort=True, filters=[filter1])
         if (cmp_result == False):
             diffdata = testing_get_diff_data(testcase)
             log_failure(diffdata)

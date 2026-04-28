@@ -100,7 +100,8 @@ class testcase_simpleComponents(SSTTestCase):
             if os_test_file(errfile, "-s"):
                 log_testing_note("simpleComponents test {0} has a Non-Empty Error File {1}".format(testDataFileName, errfile))
 
-            cmp_result = testing_compare_sorted_diff(testcase, cmpfile, reffile)
+            filter1 = StartsWithFilter("WARNING: EmptyRankSync")
+            cmp_result = testing_compare_filtered_diff(testcase, cmpfile, reffile, True, [filter1])
             if (cmp_result == False):
                 diffdata = testing_get_diff_data(testcase)
                 log_failure(diffdata)
@@ -124,5 +125,6 @@ class testcase_simpleComponents(SSTTestCase):
             self.run_sst(sdlfile_restart, outfile_restart, other_args=options_restart)
 
             # Check that restart output is a subset of checkpoint output
-            cmp_result = testing_compare_filtered_subset(outfile_restart, outfile_generate)
+            filter1 = StartsWithFilter("WARNING: EmptyRankSync")
+            cmp_result = testing_compare_filtered_subset(outfile_restart, outfile_generate, [filter1])
             self.assertTrue(cmp_result, "Output/Compare file {0} does not match Reference File {1}".format(outfile_restart, outfile_generate))
