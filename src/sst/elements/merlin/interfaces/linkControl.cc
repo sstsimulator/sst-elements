@@ -27,6 +27,113 @@ using namespace Interfaces;
 
 namespace Merlin {
 
+LinkControl::LinkControl() :
+    SST::Interfaces::SimpleNetwork(),
+    rtr_link(nullptr), output_timing(nullptr), congestion_timing(nullptr),
+    req_vns(0), used_vns(0), total_vns(0), vn_out_map(nullptr),
+    vn_remap_out(nullptr), output_queues(nullptr), router_credits(nullptr),
+    router_return_credits(nullptr), input_queues(nullptr),
+    last_time(0), last_recv_time(0),
+    id(-1), logical_nid(-1), job_id(0), use_nid_map(false),
+    curr_out_vn(0), idle_start(0), is_idle(true),
+    waiting(true), have_packets(false), start_block(0),
+    receiveFunctor(nullptr), sendFunctor(nullptr),
+    packet_latency(nullptr), send_bit_count(nullptr),
+    output_port_stalls(nullptr), idle_time(nullptr), recv_bit_count(nullptr),
+    output(getSimulationOutput()),
+    network_initialized(false), sent(0), foo(0)
+{}
+
+void
+LinkControl::serialize_order(SST::Core::Serialization::serializer& ser) {
+    SST::Interfaces::SimpleNetwork::serialize_order(ser);
+
+    SST_SER(rtr_link);
+    SST_SER(output_timing);
+    SST_SER(congestion_timing);
+
+    SST_SER(link_bw);
+    SST_SER(inbuf_size);
+    SST_SER(outbuf_size);
+    SST_SER(flit_size);
+    SST_SER(flit_size_ua);
+
+    SST_SER(req_vns);
+    SST_SER(used_vns);
+    SST_SER(total_vns);
+
+    // This should work, but the array() function in the serialization library doesn't seem to check for nullptr
+    // SST_SER(SST::Core::Serialization::array(vn_out_map, req_vns));
+
+    if ( vn_out_map != nullptr || ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+        bool has_vn_out_map = (vn_out_map != nullptr);
+        SST_SER(has_vn_out_map);
+        if ( has_vn_out_map ) {
+            if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+                vn_out_map = new int[req_vns];
+            }
+            for ( int i = 0; i < req_vns; ++i ) {
+                SST_SER(vn_out_map[i]);
+            }
+        }
+    }
+    else {
+        bool has_vn_out_map = false;
+        SST_SER(has_vn_out_map);
+    }
+
+    SST_SER(SST::Core::Serialization::array(output_queues, used_vns));
+    SST_SER(SST::Core::Serialization::array(router_credits, total_vns));
+    SST_SER(SST::Core::Serialization::array(router_return_credits, total_vns));
+    SST_SER(SST::Core::Serialization::array(input_queues, req_vns));
+
+    if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+        vn_remap_out = new output_queue_bundle_t*[req_vns];
+        if ( vn_out_map != nullptr ) {
+            for ( int i = 0; i < req_vns; ++i ) {
+                vn_remap_out[i] = &output_queues[vn_out_map[i]];
+            }
+        }
+        else {
+            for ( int i = 0; i < req_vns; ++i ) {
+                vn_remap_out[i] = &output_queues[i];
+            }
+        }
+    }
+
+    SST_SER(last_time);
+    SST_SER(last_recv_time);
+    SST_SER(id);
+    SST_SER(logical_nid);
+    SST_SER(job_id);
+    SST_SER(nid_map);
+    SST_SER(use_nid_map);
+    SST_SER(curr_out_vn);
+    SST_SER(idle_start);
+    SST_SER(is_idle);
+    SST_SER(waiting);
+    SST_SER(have_packets);
+    SST_SER(start_block);
+
+    SST_SER(congestion_state);
+
+    SST_SER(receiveFunctor);
+    SST_SER(sendFunctor);
+
+    SST_SER(packet_latency);
+    SST_SER(send_bit_count);
+    SST_SER(output_port_stalls);
+    SST_SER(idle_time);
+
+    SST_SER(network_initialized);
+    SST_SER(sent);
+    SST_SER(foo);
+
+    if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+        output = getSimulationOutput();
+    }
+}
+
 LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     SST::Interfaces::SimpleNetwork(cid),
     rtr_link(nullptr), output_timing(nullptr), congestion_timing(nullptr),
@@ -328,6 +435,7 @@ void LinkControl::init(unsigned int phase)
 
         // Don't need this map anymore
         delete[] vn_out_map;
+        vn_out_map = nullptr;
 
 
         network_initialized = true;

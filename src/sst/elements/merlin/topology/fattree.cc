@@ -153,6 +153,29 @@ topo_fattree::~topo_fattree()
     delete[] vns;
 }
 
+void
+topo_fattree::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Topology::serialize_order(ser);
+    SST_SER(rtr_level);
+    SST_SER(level_id);
+    SST_SER(level_group);
+    SST_SER(high_host);
+    SST_SER(low_host);
+    SST_SER(down_route_factor);
+    SST_SER(id);
+    SST_SER(up_ports);
+    SST_SER(down_ports);
+    SST_SER(num_ports);
+    SST_SER(num_vns);
+    SST_SER(num_vcs);
+    SST_SER(adaptive_threshold);
+
+    SST_SER(SST::Core::Serialization::array(vns, num_vcs));
+    int total_vcs = num_vcs * num_ports;
+    SST_SER(SST::Core::Serialization::array(thresholds, total_vcs));
+}
+
 void topo_fattree::route_deterministic(int port, int vc, internal_router_event* ev)  {
     int dest = ev->getDest();
     // Down routes

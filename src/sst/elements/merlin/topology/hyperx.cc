@@ -151,6 +151,27 @@ topo_hyperx::~topo_hyperx()
 }
 
 void
+topo_hyperx::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Topology::serialize_order(ser);
+    SST_SER(router_id);
+    SST_SER(dimensions);
+    SST_SER(total_routers);
+    SST_SER(num_local_ports);
+    SST_SER(local_port_start);
+    SST_SER(num_vcs);
+    SST_SER(num_vns);
+    SST_SER(rng);
+    SST_SER(rng_func);
+
+    SST_SER(SST::Core::Serialization::array(id_loc, dimensions));
+    SST_SER(SST::Core::Serialization::array(dim_size, dimensions));
+    SST_SER(SST::Core::Serialization::array(dim_width, dimensions));
+    SST_SER(SST::Core::Serialization::array(port_start, dimensions));
+    SST_SER(SST::Core::Serialization::array(vns, num_vns));
+}
+
+void
 topo_hyperx::route_packet(int port, int vc, internal_router_event* ev)
 {
     topo_hyperx_event *tt_ev = static_cast<topo_hyperx_event*>(ev);

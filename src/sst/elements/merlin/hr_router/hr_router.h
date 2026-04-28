@@ -91,8 +91,6 @@ public:
     )
 
 private:
-    static int num_routers;
-    static int print_debug;
     int id;
     int num_ports;
     int num_vns;
@@ -137,26 +135,32 @@ private:
 
     Shared::SharedArray<int> shared_array;
 
+    SST_ELI_IS_CHECKPOINTABLE()
+
 public:
     hr_router(ComponentId_t cid, Params& params);
+    hr_router();
     ~hr_router();
 
-    void init(unsigned int phase);
-    void complete(unsigned int phase);
-    void setup();
-    void finish();
+    void init(unsigned int phase) override;
+    void complete(unsigned int phase) override;
+    void setup() override;
+    void finish() override;
 
-    void notifyEvent();
-    int const* getOutputBufferCredits() {return xbar_in_credits;}
+    void notifyEvent() override;
+    int const* getOutputBufferCredits() override {return xbar_in_credits;}
     int const* getOutputQueueLengths() {return output_queue_lengths;}
 
-    void sendCtrlEvent(CtrlRtrEvent* ev, int port = -1);
-    void recvCtrlEvent(int port, CtrlRtrEvent* ev);
+    void sendCtrlEvent(CtrlRtrEvent* ev, int port = -1) override;
+    void recvCtrlEvent(int port, CtrlRtrEvent* ev) override;
 
     void dumpState(std::ostream& stream);
-    void printStatus(Output& out);
+    void printStatus(Output& out) override;
 
-    void reportIncomingEvent(internal_router_event* ev);
+    void reportIncomingEvent(internal_router_event* ev) override;
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::Merlin::hr_router)
 };
 
 }

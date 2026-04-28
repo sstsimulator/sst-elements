@@ -31,7 +31,19 @@ empty_nic::empty_nic(ComponentId_t cid, Params& params) :
 
 empty_nic::~empty_nic()
 {
-    delete link_control;
+    // SST framework manages SubComponent lifecycle — do not delete link_control
+}
+
+empty_nic::empty_nic() :
+    Component(),
+    link_control(nullptr)
+{}
+
+void
+empty_nic::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Component::serialize_order(ser);
+    SST_SER(link_control);
 }
 
 void empty_nic::finish()

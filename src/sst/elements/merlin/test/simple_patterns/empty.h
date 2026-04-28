@@ -49,9 +49,11 @@ public:
         {"networkIF", "Network interface", "SST::Interfaces::SimpleNetwork" }
     )
 
-    void finish();
-    void init(unsigned int phase);
-    void setup();
+    SST_ELI_IS_CHECKPOINTABLE()
+
+    void finish() override;
+    void init(unsigned int phase) override;
+    void setup() override;
 
 
 private:
@@ -60,6 +62,9 @@ private:
 public:
     empty_nic(ComponentId_t cid, Params& params);
     ~empty_nic();
+    empty_nic();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::Merlin::empty_nic)
 };
 
 }

@@ -62,16 +62,27 @@ public:
     ~ShiftDist() {
     }
 
-    void initialize(int id, int num_peers) {
+    void initialize(int id, int num_peers) override
+    {
         dest = num_peers - 1 - id;
     }
 
-    int getNextValue(void) {
+    int getNextValue(void) override
+    {
         return dest;
     }
 
-    void seed(uint32_t val) {
+    void seed(uint32_t val) override
+    {}
+
+    ShiftDist() : TargetGenerator(), dest(0) {}
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        TargetGenerator::serialize_order(ser);
+        SST_SER(dest);
     }
+
+    ImplementSerializable(SST::Merlin::ShiftDist)
 };
 
 } //namespace Merlin

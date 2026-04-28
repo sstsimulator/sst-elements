@@ -52,6 +52,8 @@ protected:
 
     int vcs_with_data;
 
+    Router() : Component() {} // For serialization
+
 public:
 
     Router(ComponentId_t id) :
@@ -76,6 +78,12 @@ public:
 
     virtual void reportIncomingEvent(internal_router_event* ev) = 0;
 
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::Component::serialize_order(ser);
+        SST_SER(requestNotifyOnEvent);
+        SST_SER(vcs_with_data);
+    }
+    ImplementVirtualSerializable(SST::Merlin::Router)
 };
 
 #define MERLIN_ENABLE_TRACE
@@ -493,6 +501,7 @@ public:
 
     enum PortState {R2R, R2N, UNCONNECTED, FAILED};
     Topology(ComponentId_t cid) : SubComponent(cid), output(getSimulationOutput()) {}
+    Topology() : SubComponent(), output(getSimulationOutput()) {}
     virtual ~Topology() {}
 
     virtual void route_packet(int port, int vc, internal_router_event* ev) = 0;
@@ -554,6 +563,11 @@ public:
     // topology object for the router
     virtual void recvTopologyEvent(int port, TopologyEvent* ev) {};
 
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::SubComponent::serialize_order(ser);
+    }
+    ImplementVirtualSerializable(SST::Merlin::Topology)
+
 protected:
     Output &output;
 };
@@ -587,10 +601,10 @@ public:
     virtual void reportIncomingEvent(internal_router_event* ev) = 0;
 
 
-    // time_base is a frequency which represents the bandwidth of the link in flits/second.
     PortInterface(ComponentId_t cid) :
         SubComponent(cid)
         {}
+    PortInterface() : SubComponent() {}
 
 
     virtual void initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads, int* xbar_in_credits, int* output_queue_lengths) = 0;
@@ -613,6 +627,10 @@ public:
 	virtual bool decreaseLinkWidth() = 0;
 	virtual bool increaseLinkWidth() = 0;
 
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::SubComponent::serialize_order(ser);
+    }
+    ImplementVirtualSerializable(SST::Merlin::PortInterface)
 
     class OutputArbitration : public SubComponent {
     public:
@@ -622,11 +640,17 @@ public:
         OutputArbitration(ComponentId_t cid) :
             SubComponent(cid)
         {}
+        OutputArbitration() : SubComponent() {}
         virtual ~OutputArbitration() {}
 
         virtual void setVCs(int num_vns, int* vcs_per_vn) = 0;
         virtual int arbitrate(Cycle_t cycle, PortInterface::port_queue_t* out_q, int* port_out_credits, bool isHostPort, bool& have_packets) = 0;
         virtual void dumpState(std::ostream& stream) {};
+
+        void serialize_order(SST::Core::Serialization::serializer& ser) override {
+            SST::SubComponent::serialize_order(ser);
+        }
+        ImplementVirtualSerializable(SST::Merlin::PortInterface::OutputArbitration)
     };
 
 };
@@ -640,6 +664,7 @@ public:
     XbarArbitration(ComponentId_t cid) :
         SubComponent(cid)
     {}
+    XbarArbitration() : SubComponent() {}
     virtual ~XbarArbitration() {}
 
 #if VERIFY_DECLOCKING
@@ -652,6 +677,10 @@ public:
     virtual void reportSkippedCycles(Cycle_t cycles) {};
     virtual void dumpState(std::ostream& stream) {};
 
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::SubComponent::serialize_order(ser);
+    }
+    ImplementVirtualSerializable(SST::Merlin::XbarArbitration)
 };
 
 }

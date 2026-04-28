@@ -337,6 +337,25 @@ topo_dragonfly::~topo_dragonfly()
     delete[] vns;
 }
 
+void
+topo_dragonfly::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Topology::serialize_order(ser);
+    SST_SER(group_to_global_port);
+    SST_SER(params);
+    SST_SER(adaptive_threshold);
+    SST_SER(group_id);
+    SST_SER(router_id);
+    SST_SER(rtr_id);
+    SST_SER(rng);
+    SST_SER(num_vcs);
+    SST_SER(num_vns);
+    SST_SER(global_start);
+    SST_SER(global_route_mode);
+
+    SST_SER(SST::Core::Serialization::array(vns, num_vns));
+}
+
 
 void topo_dragonfly::route_nonadaptive(int port, int vc, internal_router_event* ev)
 {

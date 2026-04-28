@@ -138,7 +138,35 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
 
 TrafficGen::~TrafficGen()
 {
-    delete link_control;
+}
+
+void
+TrafficGen::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Component::serialize_order(ser);
+
+    SST_SER(addressMode);
+
+    SST_SER(out);
+    SST_SER(id);
+    SST_SER(ft_loading);
+    SST_SER(ft_radix);
+    SST_SER(num_peers);
+    SST_SER(num_vns);
+    SST_SER(packets_sent);
+    SST_SER(packets_recd);
+    SST_SER(done);
+    SST_SER(link_control);
+    SST_SER(send_notify_functor);
+    SST_SER(clock_functor);
+    SST_SER(clock_tc);
+    SST_SER(base_packet_size);
+    SST_SER(packets_to_send);
+    SST_SER(base_packet_delay);
+    SST_SER(packet_delay);
+    SST_SER(packetDestGen);
+    SST_SER(packetSizeGen);
+    SST_SER(packetDelayGen);
 }
 
 
