@@ -224,6 +224,124 @@ PortControl::reportIncomingEvent(internal_router_event* ev)
 }
 
 
+void
+PortControl::serialize_order(SST::Core::Serialization::serializer& ser) {
+    PortInterface::serialize_order(ser);
+
+    SST_SER(topo);
+    SST_SER(parent);
+
+    SST_SER(port_link);
+    SST_SER(output_timing);
+    SST_SER(flit_cycle);
+    SST_SER(dynlink_timing);
+    SST_SER(dlink_thresh);
+    SST_SER(disable_timing);
+
+    SST_SER(rtr_id);
+    SST_SER(num_vcs);
+    SST_SER(num_vns);
+    SST_SER(vn_remap_shm);
+    SST_SER(vn_remap_shm_size);
+    SST_SER(vn_remap);
+    SST_SER(max_link_width);
+    SST_SER(cur_link_width);
+    SST_SER(link_width_transition_delay);
+    SST_SER(link_bw);
+    SST_SER(flit_size);
+    SST_SER(input_buf_size);
+    SST_SER(output_buf_size);
+
+    SST_SER(port_number);
+    SST_SER(host_port);
+    SST_SER(remote_rdy_for_credits);
+    SST_SER(remote_rtr_id);
+    SST_SER(remote_port_number);
+    SST_SER(connected);
+
+    if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+        if ( connected ) {
+            input_buf = new port_queue_t[num_vcs];
+            output_buf = new port_queue_t[num_vcs];
+            input_buf_count = new int[num_vcs];
+            output_buf_count = new int[num_vcs];
+            port_ret_credits = new int[num_vcs];
+            port_out_credits = new int[num_vcs];
+        }
+    }
+
+    if ( connected ) {
+        for ( int i = 0; i < num_vcs; ++i ) {
+            SST_SER(input_buf[i]);
+            SST_SER(output_buf[i]);
+            SST_SER(input_buf_count[i]);
+            SST_SER(output_buf_count[i]);
+            SST_SER(port_ret_credits[i]);
+            SST_SER(port_out_credits[i]);
+        }
+    }
+    // vc_heads, xbar_in_credits, output_queue_lengths are non-owning
+    // pointers into hr_router arrays — re-established via initVCs post-UNPACK
+
+    SST_SER(ctrl_queue);
+    SST_SER(oql_track_port);
+    SST_SER(oql_track_remote);
+
+    SST_SER(idle_start);
+    SST_SER(active_start);
+    SST_SER(is_idle);
+    SST_SER(is_active);
+    SST_SER(waiting);
+    SST_SER(have_packets);
+    SST_SER(start_block);
+
+    SST_SER(send_bit_count);
+    SST_SER(send_packet_count);
+    SST_SER(output_port_stalls);
+    SST_SER(idle_time);
+    SST_SER(width_adj_count);
+
+    SST_SER(stalled);
+    SST_SER(active);
+    SST_SER(idle);
+    SST_SER(sai_win_length);
+    SST_SER(sai_win_length_nano);
+    SST_SER(sai_win_length_pico);
+    SST_SER(sai_win_start);
+    SST_SER(sai_adj_delay);
+    SST_SER(sai_port_disabled);
+    SST_SER(ongoing_transmit);
+    SST_SER(time_active_nano_remaining);
+
+    SST_SER(output_arb);
+    SST_SER(network_inspectors);
+
+    SST_SER(mtu_ser_time);
+    SST_SER(flit_ser_time);
+    SST_SER(enable_congestion_management);
+    SST_SER(cm_activated);
+    SST_SER(cm_outstanding_threshold);
+    SST_SER(cm_incast_threshold);
+    SST_SER(cm_pktsize_threshold);
+    SST_SER(cm_window_factor);
+
+    SST_SER(congestion_map);
+    SST_SER(current_incast);
+    SST_SER(total_flits_incoming);
+    SST_SER(total_incast_flits);
+    SST_SER(congestion_events);
+    SST_SER(congestion_count_at_last_throttle);
+
+    if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+        output = getSimulationOutput();
+        for ( auto& entry : congestion_map ) {
+            if ( entry.second.active ) {
+                expiration_queue.push(&entry.second);
+            }
+        }
+    }
+}
+
 PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rtr_id, int port_number, Topology *topo) :
     PortInterface(cid),
     rtr_id(rtr_id),
@@ -549,9 +667,7 @@ PortControl::~PortControl() {
     if ( output_buf_count != NULL ) delete [] output_buf_count;
     if ( port_ret_credits != NULL ) delete [] port_ret_credits;
     if ( port_out_credits != NULL ) delete [] port_out_credits;
-    for ( unsigned int i = 0; i < network_inspectors.size(); i++ ) {
-        delete network_inspectors[i];
-    }
+    // SST framework manages SubComponent lifecycle — do not delete network_inspectors
 }
 
 void

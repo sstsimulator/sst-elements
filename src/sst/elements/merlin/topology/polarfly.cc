@@ -78,6 +78,33 @@ topo_polarfly::~topo_polarfly(){
 }
 
 void
+topo_polarfly::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Topology::serialize_order(ser);
+    SST_SER(router_id);
+    SST_SER(q);
+    SST_SER(hosts_per_router);
+    SST_SER(network_radix);
+    SST_SER(total_radix);
+    SST_SER(total_routers);
+    SST_SER(total_endnodes);
+    SST_SER(routing_algo);
+    SST_SER(node_links);
+    SST_SER(route_table);
+    SST_SER(neighbor_list);
+    SST_SER(num_vns);
+    SST_SER(num_vcs);
+    SST_SER(rng);
+    SST_SER(output_buffer_size);
+    SST_SER(adaptive_bias);
+    SST_SER(polar);
+    SST_SER(hopcount1);
+    SST_SER(hopcount2);
+    SST_SER(hopcount3);
+    SST_SER(hopcount4);
+}
+
+void
 topo_polarfly::setOutputBufferCreditArray(int const* array, int vcs)
 {
     output_credits      = array;

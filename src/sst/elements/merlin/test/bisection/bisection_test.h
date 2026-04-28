@@ -60,6 +60,8 @@ public:
         {"networkIF", "Network interface", "SST::Interfaces::SimpleNetwork" }
     )
 
+    SST_ELI_IS_CHECKPOINTABLE()
+
 private:
     int id;
     int partner_id;
@@ -80,11 +82,14 @@ private:
 
 public:
     bisection_test(ComponentId_t cid, Params& params);
-    ~bisection_test() {}
+    ~bisection_test();
+    bisection_test();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::Merlin::bisection_test)
 
-    void init(unsigned int phase);
-    void setup();
-    void finish();
+    void init(unsigned int phase) override;
+    void setup() override;
+    void finish() override;
 
 
 private:

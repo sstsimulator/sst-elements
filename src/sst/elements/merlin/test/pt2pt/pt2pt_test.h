@@ -61,6 +61,8 @@ public:
         {"networkIF", "Network interface", "SST::Interfaces::SimpleNetwork" }
     )
 
+    SST_ELI_IS_CHECKPOINTABLE()
+
 private:
 
     Output out;
@@ -74,6 +76,12 @@ private:
             first_arrival(0),
             end_arrival(0),
             packets_recd(0) {}
+
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(first_arrival);
+            SST_SER(end_arrival);
+            SST_SER(packets_recd);
+        }
     };
 
     int id;
@@ -116,11 +124,14 @@ private:
 
 public:
     pt2pt_test(ComponentId_t cid, Params& params);
-    ~pt2pt_test() {}
+    ~pt2pt_test();
+    pt2pt_test();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::Merlin::pt2pt_test)
 
-    void init(unsigned int phase);
-    void setup();
-    void finish();
+    void init(unsigned int phase) override;
+    void setup() override;
+    void finish() override;
 
 
 private:

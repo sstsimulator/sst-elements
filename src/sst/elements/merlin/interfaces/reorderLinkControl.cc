@@ -247,22 +247,19 @@ bool ReorderLinkControl::handle_event(int vn) {
     return true;
 }
 
-// bool ReorderLinkControl::handle_send(int vn) {
-//     if ( sendFunctor != NULL ) {
-//         bool keep = (*sendFunctor)(vn);
-//         if ( !keep ) {
-//             sendFunctor = NULL;
-//             return false;
-//         }
-//         else {
-//             return true;
-//         }
-//     }
-//     else {
-//         return false;
-//     }
-// }
 
+void ReorderLinkControl::serialize_order(SST::Core::Serialization::serializer& ser) {
+    SST::Interfaces::SimpleNetwork::serialize_order(ser);
+
+    SST_SER(vns);
+    SST_SER(link_control);
+    SST_SER(link_bw);
+    SST_SER(id);
+
+    SST_SER(input_buf);
+    SST_SER(reorder_info);
+    SST_SER(receiveFunctor);
+}
 
 } // namespace Merlin
 } // namespace SST

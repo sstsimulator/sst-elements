@@ -94,9 +94,48 @@ BackgroundTraffic::BackgroundTraffic(ComponentId_t cid, Params& params) :
 }
 
 
+BackgroundTraffic::BackgroundTraffic() :
+    Component(),
+    offered_load(0.0),
+    next_time(0),
+    send_interval(0),
+    link_if(nullptr),
+    send_notify_functor(nullptr),
+    recv_notify_functor(nullptr),
+    packetDestGen(nullptr),
+    id(-1),
+    num_peers(0),
+    packet_size(0),
+    packets_sent(0),
+    packets_recd(0),
+    timing_link(nullptr),
+    pattern_params(nullptr)
+{}
+
+void BackgroundTraffic::serialize_order(SST::Core::Serialization::serializer& ser) {
+    Component::serialize_order(ser);
+
+    SST_SER(offered_load);
+    SST_SER(link_bw);
+    SST_SER(serialization_time);
+    SST_SER(next_time);
+    SST_SER(send_interval);
+    SST_SER(base_tc);
+    SST_SER(link_if);
+    SST_SER(send_notify_functor);
+    SST_SER(recv_notify_functor);
+    SST_SER(packetDestGen);
+    SST_SER(id);
+    SST_SER(num_peers);
+    SST_SER(packet_size);
+    SST_SER(packets_sent);
+    SST_SER(packets_recd);
+    SST_SER(timing_link);
+}
+
 BackgroundTraffic::~BackgroundTraffic()
 {
-    delete link_if;
+    // SST framework manages SubComponent lifecycle — do not delete link_if
 }
 
 

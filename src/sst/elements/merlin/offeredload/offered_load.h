@@ -193,14 +193,17 @@ private:
 
     std::vector<offered_load_complete_event*> complete_event;
 
+    SST_ELI_IS_CHECKPOINTABLE()
+
 public:
     OfferedLoad(ComponentId_t cid, Params& params);
+    OfferedLoad();
     ~OfferedLoad();
 
-    void init(unsigned int phase);
-    void setup();
-    void complete(unsigned int phase);
-    void finish();
+    void init(unsigned int phase) override;
+    void setup() override ;
+    void complete(unsigned int phase) override;
+    void finish() override;
 
 
 private:
@@ -212,6 +215,9 @@ private:
 
     void end_handler(Event* ev);
 
+public:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::Merlin::OfferedLoad)
 };
 
 } //namespace Merlin

@@ -74,7 +74,8 @@ public:
         delete gen;
     }
 
-    void initialize(int id, int num_peers) {
+    void initialize(int id, int num_peers) override
+    {
         gen = new SST::RNG::MersenneRNG(id);
 
         if ( min == -1 ) min = 0;
@@ -84,17 +85,30 @@ public:
         dist = new SSTUniformDistribution(dist_size, gen);
     }
 
-    int getNextValue(void) {
-        // TraceFunction trace(CALL_INFO);
+    int getNextValue(void) override
+    {
         return (int)dist->getNextDouble() + min;
     }
 
-    void seed(uint32_t val) {
+    void seed(uint32_t val) override
+    {
         delete dist;
         delete gen;
         gen = new SST::RNG::MersenneRNG((unsigned int) val);
         dist = new SSTUniformDistribution(std::max(1, max-min+1),gen);
     }
+
+    UniformDist() : TargetGenerator(), gen(nullptr), dist(nullptr), min(0), max(0) {}
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        TargetGenerator::serialize_order(ser);
+        SST_SER(gen);
+        SST_SER(dist);
+        SST_SER(min);
+        SST_SER(max);
+    }
+
+    ImplementSerializable(SST::Merlin::UniformDist)
 };
 
 } //namespace Merlin

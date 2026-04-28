@@ -96,6 +96,14 @@ private:
             vn(-1),
             credits(0)
             {}
+
+        void serialize_order(SST::Core::Serialization::serializer& ser)
+        {
+            SST_SER(queue);
+            SST_SER(vn);
+            SST_SER(credits);
+        }
+
     };
 
     // Link to router
@@ -193,6 +201,12 @@ private:
         // Need to be able to have an argument so we can emplace into
         // maps
         CongestionState(int backoff = 1) : backoff(backoff), throttle_time(0), count(0) {}
+
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(backoff);
+            SST_SER(throttle_time);
+            SST_SER(count);
+        }
     };
 
     std::map<int,CongestionState> congestion_state;
@@ -217,40 +231,45 @@ private:
     Output& output;
 
 public:
+    LinkControl();
     LinkControl(ComponentId_t cid, Params &params, int vns);
 
     ~LinkControl();
 
-    void setup();
-    void init(unsigned int phase);
-    void complete(unsigned int phase);
-    void finish();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::Merlin::LinkControl)
+
+    void setup() override;
+    void init(unsigned int phase) override;
+    void complete(unsigned int phase) override;
+    void finish() override;
 
     // Returns true if there is space in the output buffer and false
     // otherwise.
-    bool send(SST::Interfaces::SimpleNetwork::Request* req, int vn);
+    bool send(SST::Interfaces::SimpleNetwork::Request* req, int vn) override;
 
     // Returns true if there is space in the output buffer and false
     // otherwise.
-    bool spaceToSend(int vn, int flits);
+    bool spaceToSend(int vn, int flits) override;
 
     // Returns NULL if no event in input_buf[vn]. Otherwise, returns
     // the next event.
-    SST::Interfaces::SimpleNetwork::Request* recv(int vn);
+    SST::Interfaces::SimpleNetwork::Request* recv(int vn) override;
 
     // Returns true if there is an event in the input buffer and false
     // otherwise.
-    bool requestToReceive( int vn ) { return ! input_queues[vn].empty(); }
+    bool requestToReceive( int vn ) override { return ! input_queues[vn].empty(); }
 
-    void sendUntimedData(SST::Interfaces::SimpleNetwork::Request* ev);
-    SST::Interfaces::SimpleNetwork::Request* recvUntimedData();
+    void sendUntimedData(SST::Interfaces::SimpleNetwork::Request* ev) override;
+    SST::Interfaces::SimpleNetwork::Request* recvUntimedData() override;
 
-    inline void setNotifyOnReceive(HandlerBase* functor) { receiveFunctor = functor; }
-    inline void setNotifyOnSend(HandlerBase* functor) { sendFunctor = functor; }
+    inline void setNotifyOnReceive(HandlerBase* functor) override { receiveFunctor = functor; }
+    inline void setNotifyOnSend(HandlerBase* functor) override { sendFunctor = functor; }
 
-    inline bool isNetworkInitialized() const { return network_initialized; }
+    inline bool isNetworkInitialized() const  override{ return network_initialized; }
     // inline nid_t getEndpointID() const { return id; }
-    inline nid_t getEndpointID() const {
+    inline nid_t getEndpointID() const  override
+    {
         if ( use_nid_map ) {
             return logical_nid;
         }
@@ -258,8 +277,7 @@ public:
             return id;
         }
     }
-    inline const UnitAlgebra& getLinkBW() const { return link_bw; }
-
+    inline const UnitAlgebra& getLinkBW() const override { return link_bw; }
 
 private:
     bool network_initialized;
