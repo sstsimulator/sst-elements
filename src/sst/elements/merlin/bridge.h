@@ -96,7 +96,7 @@ public:
         delete translator;
     }
 
-    void init(unsigned int phase)
+    void init(unsigned int phase) override
     {
 
         bool ready = true;
@@ -127,7 +127,7 @@ public:
         }
     }
 
-    void setup(void)
+    void setup(void) override
     {
         interfaces[0].nic->setup();
         interfaces[1].nic->setup();
@@ -135,7 +135,7 @@ public:
         translator->setup();
     }
 
-    void finish(void)
+    void finish(void) override
     {
         interfaces[0].nic->finish();
         interfaces[1].nic->finish();
@@ -152,9 +152,9 @@ public:
         SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::Bridge::Translator, Bridge*)
 
         Translator(SST::ComponentId_t cid, Params &params, Bridge* bridge) : SubComponent(cid), bridge(bridge) { }
-        virtual void init(unsigned int) { }
-        virtual void setup(void) { }
-        virtual void finish(void) { }
+        void init(unsigned int) override { }
+        void setup(void) override { }
+        void finish(void) override { }
 
         /**
          * Called when a network request is recieved.  Should return the corresponding

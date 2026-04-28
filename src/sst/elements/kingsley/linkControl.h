@@ -138,40 +138,40 @@ public:
     bool initialize(const std::string& port_name, const UnitAlgebra& link_bw_in,
                     int vns, const UnitAlgebra& in_buf_size,
                     const UnitAlgebra& out_buf_size);
-    void setup();
-    void init(unsigned int phase);
-    void complete(unsigned int phase);
-    void finish();
+    void setup() override;
+    void init(unsigned int phase) override;
+    void complete(unsigned int phase) override;
+    void finish() override;
 
     // Returns true if there is space in the output buffer and false
     // otherwise.
-    bool send(SST::Interfaces::SimpleNetwork::Request* req, int vn);
+    bool send(SST::Interfaces::SimpleNetwork::Request* req, int vn) override;
 
     // Returns true if there is space in the output buffer and false
     // otherwise.
-    bool spaceToSend(int vn, int flits);
+    bool spaceToSend(int vn, int flits) override;
 
     // Returns NULL if no event in input_buf[vn]. Otherwise, returns
     // the next event.
-    SST::Interfaces::SimpleNetwork::Request* recv(int vn);
+    SST::Interfaces::SimpleNetwork::Request* recv(int vn) override;
 
     // Returns true if there is an event in the input buffer and false
     // otherwise.
-    bool requestToReceive( int vn ) { return ! input_buf[vn].empty(); }
+    bool requestToReceive( int vn ) override { return ! input_buf[vn].empty(); }
 
-    void sendUntimedData(SST::Interfaces::SimpleNetwork::Request* ev);
-    SST::Interfaces::SimpleNetwork::Request* recvUntimedData();
+    void sendUntimedData(SST::Interfaces::SimpleNetwork::Request* ev) override;
+    SST::Interfaces::SimpleNetwork::Request* recvUntimedData() override;
 
     // const PacketStats& getPacketStats(void) const { return stats; }
 
-    inline void setNotifyOnReceive(HandlerBase* functor) { receiveFunctor = functor; }
-    inline void setNotifyOnSend(HandlerBase* functor) { sendFunctor = functor; }
+    inline void setNotifyOnReceive(HandlerBase* functor) override { receiveFunctor = functor; }
+    inline void setNotifyOnSend(HandlerBase* functor) override { sendFunctor = functor; }
 
-    inline bool isNetworkInitialized() const { return network_initialized; }
-    inline nid_t getEndpointID() const { return id; }
-    inline const UnitAlgebra& getLinkBW() const { return link_bw; }
+    inline bool isNetworkInitialized() const override { return network_initialized; }
+    inline nid_t getEndpointID() const override { return id; }
+    inline const UnitAlgebra& getLinkBW() const override { return link_bw; }
 
-    void printStatus(Output& out);
+    void printStatus(Output& out) override;
 
 private:
     bool network_initialized;

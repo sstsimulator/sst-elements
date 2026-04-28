@@ -73,7 +73,7 @@ public:
 		delete out;
 	}
 
-	void generate(MirandaRequestQueue<GeneratorRequest*>* q) {
+	void generate(MirandaRequestQueue<GeneratorRequest*>* q) override {
 		if(i == n) {
 			return;
 		}
@@ -109,11 +109,11 @@ public:
 		i += block_per_call;
 	}
 
-	bool isFinished() {
+	bool isFinished() override {
 		return i == n;
 	}
 
-	void completed() {}
+	void completed() override {}
 
     virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
         SST::Miranda::RequestGenerator::serialize_order(ser);

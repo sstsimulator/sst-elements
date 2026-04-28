@@ -78,9 +78,9 @@ public:
     BalarMMIO(ComponentId_t id, Params &params);
     ~BalarMMIO() {}
 
-    virtual void init(unsigned int);
-    virtual void setup();
-    void finish() {};
+    void init(unsigned int) override;
+    void setup() override;
+    void finish() override {};
 
     // Copy from original balar
     bool is_SST_buffer_full(unsigned core_id);

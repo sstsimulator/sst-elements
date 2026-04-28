@@ -183,12 +183,12 @@ public:
     VanadisCore(SST::ComponentId_t id, SST::Params& params);
     ~VanadisCore();
 
-    virtual void init(unsigned int phase);
+    void init(unsigned int phase) override;
 
-    void setup();
-    void finish();
+    void setup() override;
+    void finish() override;
 
-    void printStatus(SST::Output& output);
+    void printStatus(SST::Output& output) override;
 
     //    void handleIncomingDataCacheEvent( StandardMem::Request* ev );
     void handleIncomingInstCacheEvent(StandardMem::Request* ev);

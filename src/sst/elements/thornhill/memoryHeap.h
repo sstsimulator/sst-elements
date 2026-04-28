@@ -44,18 +44,18 @@ class MemoryHeap : public Component {
     MemoryHeap( ComponentId_t id, Params& params );
     ~MemoryHeap(){};
 
-	void setup() {}
-    void finish() {}
-    void init( unsigned int phase ) {}
+    void setup() override {}
+    void finish() override {}
+    void init( unsigned int phase ) override {}
 
   private:
     void eventHandler( SST::Event* ev, int src );
 
-    std::vector<Link*>  		m_links;
-	uint64_t                    m_currentVaddr;
-	Output						m_output;
+    std::vector<Link*>  m_links;
+    uint64_t            m_currentVaddr;
+    Output              m_output;
 
-	MemoryHeap() : Component(-1) {}
+    MemoryHeap() : Component(-1) {}
 
 };
 

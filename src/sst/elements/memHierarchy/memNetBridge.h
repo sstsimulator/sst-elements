@@ -51,12 +51,12 @@ public:
 /* Begin class definition */
     MemNetBridge(SST::ComponentId_t id, SST::Params &params, Merlin::Bridge*  bridge);
     ~MemNetBridge();
-    void init(unsigned int);
-    void setup(void);
-    void finish(void);
+    void init(unsigned int) override;
+    void setup(void) override;
+    void finish(void) override;
 
-    SimpleNetwork::Request* translate(SimpleNetwork::Request* req, uint8_t fromNetwork);
-    SimpleNetwork::Request* initTranslate(SimpleNetwork::Request* req, uint8_t fromNetwork);
+    SimpleNetwork::Request* translate(SimpleNetwork::Request* req, uint8_t fromNetwork) override;
+    SimpleNetwork::Request* initTranslate(SimpleNetwork::Request* req, uint8_t fromNetwork) override;
 
 private:
     // Debug

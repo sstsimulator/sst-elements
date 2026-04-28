@@ -44,9 +44,9 @@ public:
   ProsperoComponent(ComponentId_t id, Params& params);
   ~ProsperoComponent();
 
-  void setup() { }
-  void init(unsigned int phase);
-  void finish();
+  void setup() override { }
+  void init(unsigned int phase) override;
+  void finish() override;
 
   SST_ELI_REGISTER_COMPONENT(
         ProsperoComponent,

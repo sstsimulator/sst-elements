@@ -88,10 +88,10 @@ public:
     LlyrComponent(SST::ComponentId_t id, SST::Params& params);
     ~LlyrComponent();
 
-    void setup();
-    void finish();
+    void setup() override;
+    void finish() override;
 
-    void init( uint32_t phase );
+    void init( uint32_t phase ) override;
 
 protected:
 

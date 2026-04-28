@@ -71,9 +71,9 @@ public:
     typedef uint64_t ReqId;
 
     MemCacheController(ComponentId_t id, Params &params);
-    virtual void init(unsigned int);
-    virtual void setup();
-    void finish();
+    void init(unsigned int) override;
+    void setup() override;
+    void finish() override;
 
     virtual void handleLocalMemResponse(SST::Event::id_type id, uint32_t flags);
 
@@ -181,8 +181,8 @@ protected:
     CustomCmdMemHandler * customCommandHandler_;
 
     /* Debug -triggered by output.fatal() and/or SIGUSR2 */
-    virtual void printStatus(Output &out);
-    virtual void emergencyShutdown();
+    void printStatus(Output &out) override;
+    void emergencyShutdown() override;
 
     Statistic<uint64_t>* statReadHit;
     Statistic<uint64_t>* statReadMiss;

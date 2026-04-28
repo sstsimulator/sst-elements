@@ -42,11 +42,11 @@ class Rtlmodel : public SST::Component {
 
 public:
 	Rtlmodel( SST::ComponentId_t id, SST::Params& params );
-    ~Rtlmodel();
+        ~Rtlmodel();
 
-	void setup();
-	void init(unsigned);
-	void finish();
+	void setup() override;
+	void init(unsigned) override;
+	void finish() override;
 
 	bool clockTick( SST::Cycle_t currentCycle );
 

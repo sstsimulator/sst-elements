@@ -71,10 +71,10 @@ public:
     ShogunComponent(SST::ComponentId_t id, SST::Params& params);
     ~ShogunComponent();
 
-    virtual void init(unsigned int phase);
+    void init(unsigned int phase) override;
 
-    void setup() { }
-    void finish() { }
+    void setup() override { }
+    void finish() override { }
 
     void printStatus();
 

@@ -111,7 +111,7 @@ class SimpleMMU : public MMU {
         PageTable( SST::Output* output, FILE* fp ) {
             size_t size;
 
-            assert( 1 == fscanf( fp, "pte_map_.size() zu\n", &size ) );
+            assert( 1 == fscanf( fp, "pte_map_.size() %zu\n", &size ) );
             output->debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"pte_map_.size() %zu\n",size);
             for ( auto i = 0; i < size; i++ ) {
                 uint32_t vpn;
@@ -172,8 +172,8 @@ class SimpleMMU : public MMU {
         }
     }
 
-    void handleTlbEvent( Event* ev, int link );
-    void handleNicTlbEvent( Event* ev );
+    void handleTlbEvent( Event* ev, int link ) override;
+    void handleNicTlbEvent( Event* ev ) override;
 
 
     uint32_t getPid( uint32_t core, uint32_t hw_thread ) {

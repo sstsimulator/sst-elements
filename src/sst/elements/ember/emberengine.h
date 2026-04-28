@@ -74,9 +74,9 @@ public:
 public:
 	EmberEngine( SST::ComponentId_t id, SST::Params& params );
 	~EmberEngine();
-	void setup();
-	void finish();
-	void init( unsigned int phase );
+	void setup() override;
+	void finish() override;
+	void init( unsigned int phase ) override;
 
 	Output* getOutput() { return &output; }
 	Hermes::Interface* getAPI(std::string name) {

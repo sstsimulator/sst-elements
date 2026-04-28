@@ -71,11 +71,11 @@ class RdmaNic : public SST::Component {
 
     RdmaNic(ComponentId_t id, Params &params);
 
-    virtual void init(unsigned int);
-    virtual void setup();
-    void finish();
+    void init(unsigned int) override;
+    void setup() override;
+    void finish() override;
 
-	typedef RdmaNicNetworkEvent::StreamId StreamId;
+    typedef RdmaNicNetworkEvent::StreamId StreamId;
   protected:
     RdmaNic();  // for serialization only
     ~RdmaNic() {}

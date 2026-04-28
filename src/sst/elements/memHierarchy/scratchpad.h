@@ -80,8 +80,8 @@ public:
 
 /* Begin class defintion */
     Scratchpad(ComponentId_t id, Params &params);
-    void init(unsigned int);
-    void setup();
+    void init(unsigned int) override;
+    void setup() override;
 
     // Output for debug info
     Output dbg;

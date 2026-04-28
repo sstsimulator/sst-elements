@@ -69,9 +69,9 @@ public:
     Stake() = default;
 	~Stake();
     void build(Params& params); // Temporary while legacy constructor is getting deprecated
-	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
-	bool isFinished();
-	void completed();
+	void generate(MirandaRequestQueue<GeneratorRequest*>* q) override;
+	bool isFinished() override;
+	void completed() override;
 
     void StakeRequest(uint64_t addr, uint32_t RegLen,
             bool Read, bool Write, bool Atomic, bool Custom,
