@@ -129,7 +129,7 @@ void SimpleTLB::handleMMUEvent( Event* ev ) {
         }
     }
 
-    dbg_.debug(CALL_INFO,1,0,"req_id=%#" PRIx64 " ppn=%" PRIu32 " perms=%#" PRIx32 "\n", req->getReqId(), req->getPPN(), req->getPerms() );
+    dbg_.debug(CALL_INFO,1,0,"req_id=%#" PRI_REQUESTID " ppn=%" PRIu32 " perms=%#" PRIx32 "\n", req->getReqId(), req->getPPN(), req->getPerms() );
 
     auto record = reinterpret_cast<TlbRecord*>(req->getReqId());
     uint32_t vpn = record->virt_addr >> page_shift_;
@@ -182,7 +182,7 @@ void SimpleTLB::handleMMUEvent( Event* ev ) {
 
 void SimpleTLB::getVirtToPhys( RequestID req_id, uint32_t hw_thread_id, uint64_t virt_addr, uint32_t perms, uint64_t inst_ptr ) {
     uint32_t vpn = virt_addr >> page_shift_;
-    dbg_.debug(CALL_INFO,1,0,"req_id=%#" PRIx64 ", hw_thread_id=%" PRIu32 " virt_addr=%#" PRIx64 " vpn=%" PRIu32" perms=%#" PRIx32 "\n", req_id, hw_thread_id, virt_addr, vpn, perms);
+    dbg_.debug(CALL_INFO,1,0,"req_id=%#" PRI_REQUESTID ", hw_thread_id=%" PRIu32 " virt_addr=%#" PRIx64 " vpn=%" PRIu32" perms=%#" PRIx32 "\n", req_id, hw_thread_id, virt_addr, vpn, perms);
 
     if ( virt_addr < min_virt_addr_ || virt_addr > max_virt_addr_ ) {
         dbg_.debug(CALL_INFO,1,0,"virt_addr=%#" PRIx64 " is out of virtual memory range, flag error\n", virt_addr);
@@ -204,10 +204,10 @@ void SimpleTLB::getVirtToPhys( RequestID req_id, uint32_t hw_thread_id, uint64_t
         auto record = new TlbRecord( req_id, hw_thread_id, virt_addr, perms, inst_ptr );
         auto id = reinterpret_cast<RequestID>( record );
 
-        dbg_.debug(CALL_INFO,1,0,"miss id=%#" PRIx64 "\n", id );
+        dbg_.debug(CALL_INFO,1,0,"miss id=%#" PRI_REQUESTID "\n", id );
 
         if ( waiting.find( vpn ) == waiting.end() ) {
-            dbg_.debug(CALL_INFO,1,0,"miss id=%#" PRIx64 " send to MMU\n", id );
+            dbg_.debug(CALL_INFO,1,0,"miss id=%#" PRI_REQUESTID " send to MMU\n", id );
             // we are passing the virt_addr as well as the vpn because we use it for debug with inst_ptr
             // this addition happened after the initial design and it makes VPN uneeded becuse VPN can be deduced at the MMU with virt_addr
             mmu_link_->send( new TlbMissEvent( id, hw_thread_id, vpn, perms, inst_ptr, virt_addr) );

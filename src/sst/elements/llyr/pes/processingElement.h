@@ -194,7 +194,7 @@ public:
     void setOutputQueueRoute(uint32_t queueID, std::string* routing_arg)
     {
         if( output_queues_->size() < queueID ) {
-            output_->fatal(CALL_INFO, -1, "Error: Output Size %" PRIu64 " Smaller Than ID(%" PRIu32 "\n",
+            output_->fatal(CALL_INFO, -1, "Error: Output Size %zu Smaller Than ID(%" PRIu32 "\n",
                            output_queues_->size(), queueID);
         }
 
