@@ -156,7 +156,7 @@ public:
             uint64_t addr = llyr_config_->starting_addr_ + ( (processor_id_ - 1) * (Bit_Length / 8) );
             if( input_queues_->size() > 0 ) {
                 LlyrData temp = LlyrData(addr);
-                output_->verbose(CALL_INFO, 8, 0, "Init(%" PRIu32 ")::%" PRIx64 "::%" PRIu64 "\n", 0, addr, temp.to_ulong());
+                output_->verbose(CALL_INFO, 8, 0, "Init(%" PRIu32 ")::%" PRIx64 "::%lu\n", 0, addr, temp.to_ulong());
                 input_queues_->at(0)->data_queue_->push(temp);
 
                 addr = addr + (Bit_Length / 8);
