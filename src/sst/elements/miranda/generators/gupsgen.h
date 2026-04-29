@@ -31,18 +31,18 @@ namespace Miranda {
 class GUPSGenerator : public RequestGenerator {
 
 public:
-	SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         GUPSGenerator,
         "miranda",
         "GUPSGenerator",
         SST_ELI_ELEMENT_VERSION(1,0,0),
-		"Creates a random stream of accesses to read-modify-write",
+        "Creates a random stream of accesses to read-modify-write",
         SST::Miranda::RequestGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-		{ "verbose",          "Sets the verbosity output of the generator", "0" },
-   	 	{ "seed_a",           "Sets the seed-a for the random generator", "11" },
+        { "verbose",          "Sets the verbosity output of the generator", "0" },
+            { "seed_a",           "Sets the seed-a for the random generator", "11" },
         { "seed_b",           "Sets the seed-b for the random generator", "31" },
         { "count",            "Count for number of items being requested", "1024" },
         { "length",           "Length of requests", "8" },
@@ -51,41 +51,41 @@ public:
         { "issue_op_fences",  "Issue operation fences, \"yes\" or \"no\", default is yes", "yes" }
     )
 
-	GUPSGenerator( ComponentId_t id, Params& params );
-	GUPSGenerator() = default;
-	~GUPSGenerator();
-	void build(Params &params);
-	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
-	bool isFinished();
-	void completed();
+    GUPSGenerator( ComponentId_t id, Params& params );
+    GUPSGenerator() = default;
+    ~GUPSGenerator();
+    void build(Params &params);
+    void generate(MirandaRequestQueue<GeneratorRequest*>* q) override;
+    bool isFinished() override;
+    void completed() override;
 
     virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
         SST::Miranda::RequestGenerator::serialize_order(ser);
-		SST_SER(reqLength);
-		SST_SER(memLength);
-		SST_SER(memStart);
-		SST_SER(issueCount);
-		SST_SER(iterations);
-		SST_SER(seed_a);
-		SST_SER(seed_b);
-		SST_SER(rng);
-		SST_SER(out);
-		SST_SER(issueOpFences);
+        SST_SER(reqLength);
+        SST_SER(memLength);
+        SST_SER(memStart);
+        SST_SER(issueCount);
+        SST_SER(iterations);
+        SST_SER(seed_a);
+        SST_SER(seed_b);
+        SST_SER(rng);
+        SST_SER(out);
+        SST_SER(issueOpFences);
     }
 
     ImplementSerializable(SST::Miranda::GUPSGenerator)
 
 private:
-	uint64_t reqLength;
-	uint64_t memLength;
-	uint64_t memStart;
-	uint64_t issueCount;
-	uint64_t iterations;
-	uint64_t seed_a;
-	uint64_t seed_b;
-	Random* rng;
-	Output*  out;
-	bool issueOpFences;
+    uint64_t reqLength;
+    uint64_t memLength;
+    uint64_t memStart;
+    uint64_t issueCount;
+    uint64_t iterations;
+    uint64_t seed_a;
+    uint64_t seed_b;
+    Random* rng;
+    Output*  out;
+    bool issueOpFences;
 };
 
 }

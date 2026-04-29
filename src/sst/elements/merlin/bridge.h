@@ -154,9 +154,9 @@ public:
 
         Translator() : SubComponent(), bridge(nullptr) { }
         Translator(SST::ComponentId_t cid, Params &params, Bridge* bridge) : SubComponent(cid), bridge(bridge) { }
-        virtual void init(unsigned int) override { }
-        virtual void setup(void) override { }
-        virtual void finish(void) override { }
+        void init(unsigned int) override { }
+        void setup(void) override { }
+        void finish(void) override { }
 
         /**
          * Called when a network request is recieved.  Should return the corresponding

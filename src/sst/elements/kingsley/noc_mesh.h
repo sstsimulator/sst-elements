@@ -156,16 +156,16 @@ public:
     noc_mesh(ComponentId_t cid, Params& params);
     ~noc_mesh();
 
-    void init(unsigned int phase);
-    void complete(unsigned int phase);
-    void setup();
-    void finish();
+    void init(unsigned int phase) override;
+    void complete(unsigned int phase) override;
+    void setup() override;
+    void finish() override;
 
     // void sendTopologyEvent(int port, TopologyEvent* ev);
     // void recvTopologyEvent(int port, TopologyEvent* ev);
 
     // void dumpState(std::ostream& stream);
-    void printStatus(Output& out);
+    void printStatus(Output& out) override;
 
 
 };

@@ -60,8 +60,8 @@ class RequestGenCPU : public SST::Component {
 public:
 
     RequestGenCPU(SST::ComponentId_t id, SST::Params& params);
-    void finish();
-    void init(unsigned int phase);
+    void finish() override;
+    void init(unsigned int phase) override;
 
     /* Handler class for StandardMem responses */
     class StdMemHandler : public SST::Interfaces::StandardMem::RequestHandler {

@@ -44,8 +44,8 @@ class cacheTracer : public SST::Component {
 public:
     cacheTracer(SST::ComponentId_t id, Params& params);
     ~cacheTracer();
-    void finish();
-    void init(unsigned int phase);
+    void finish() override;
+    void init(unsigned int phase) override;
 
     SST_ELI_REGISTER_COMPONENT(
        	cacheTracer,

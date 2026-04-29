@@ -72,12 +72,12 @@ class ArielFrontendCommon : public ArielFrontend {
         ~ArielFrontendCommon() {}
 
         // Common Functions
-        virtual void finish();
+        void finish() override;
         virtual ArielTunnel* getTunnel();
-        virtual void init(unsigned int phase);
+        void init(unsigned int phase) override;
 
         // Functions that should be implemented by derived classes
-        virtual void emergencyShutdown();
+        void emergencyShutdown() override;
 
     protected:
         // Common data members

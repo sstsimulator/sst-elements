@@ -53,18 +53,18 @@ public:
     CoherentMemController(ComponentId_t id, Params &params);
 
     /* Event handling */
-    void handleMemResponse(SST::Event::id_type id, uint32_t flags);
+    void handleMemResponse(SST::Event::id_type id, uint32_t flags) override;
 
     /* Component API */
-    virtual void init(unsigned int phase);
-    virtual void setup();
+    void init(unsigned int phase) override;
+    void setup() override;
 
 protected:
-    virtual void processInitEvent(MemEventInit* ev);
+    void processInitEvent(MemEventInit* ev) override;
 
-    virtual void handleEvent(SST::Event * event);
+    void handleEvent(SST::Event * event) override;
 
-    virtual bool clock(Cycle_t cycle);
+    bool clock(Cycle_t cycle) override;
 
 private:
 

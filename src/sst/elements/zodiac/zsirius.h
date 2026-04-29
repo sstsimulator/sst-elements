@@ -43,9 +43,9 @@ class ZodiacSiriusTraceReader : public SST::Component {
 public:
 
   ZodiacSiriusTraceReader(SST::ComponentId_t id, SST::Params& params);
-  void setup();
-  void finish();
-  void init(unsigned int phase);
+  void setup() override;
+  void finish() override;
+  void init(unsigned int phase) override;
 
   SST_ELI_REGISTER_COMPONENT(
         ZodiacSiriusTraceReader,

@@ -101,7 +101,7 @@ public:
 		delete out;
 	}
 
-	void generate(MirandaRequestQueue<GeneratorRequest*>* q) {
+	void generate(MirandaRequestQueue<GeneratorRequest*>* q) override {
 		for(uint64_t row = localRowStart; row < localRowEnd; row++) {
 			out->verbose(CALL_INFO, 2, 0, "Generating access for row %" PRIu64 "\n", row);
 
@@ -157,13 +157,13 @@ public:
 		iterations--;
 	}
 
-	bool isFinished() {
+	bool isFinished() override{
 		return (0 == iterations);
 	}
 
-	void completed() {}
+	void completed() override {}
 
-    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
         SST::Miranda::RequestGenerator::serialize_order(ser);
 		SST_SER(iterations);
 		SST_SER(matrixNx);

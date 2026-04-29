@@ -57,9 +57,9 @@ public:
     ~MultiThreadL1();
 
     /** SST component basic functions */
-    void setup(void);
-    void init(unsigned int phase);
-    void finish(void);
+    void setup(void) override;
+    void init(unsigned int phase) override;
+    void finish(void) override;
 
     /** Handles response from memory hierarchy, passes to correct thread's CPU */
     void handleResponse(SST::Event *event);
