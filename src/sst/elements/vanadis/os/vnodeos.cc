@@ -720,7 +720,7 @@ void VanadisNodeOSComponent::pageFaultHandler2( MMU_Lib::RequestID req_id, uint3
                 uint32_t pid,  uint32_t vpn, uint32_t fault_perms, uint64_t inst_ptr, uint64_t mem_virt_addr, VanadisSyscall* syscall )
 {
     #ifdef VANADIS_BUILD_DEBUG
-    output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "RequestID=%#" PRIxPTR " link=%" PRIu32 " pid=%" PRIu32 " vpn=%" PRIu32 " perms=%#" PRIu32 " inst_ptr=%#" PRIx64 " syscall=%p\n",
+    output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "RequestID=%#" PRIxPTR " link=%" PRIu32 " pid=%" PRIu32 " vpn=%" PRIu32 " perms=%" PRIu32 " inst_ptr=%#" PRIx64 " syscall=%p\n",
             req_id, link, pid, vpn, fault_perms, inst_ptr, syscall );
     #endif
 
