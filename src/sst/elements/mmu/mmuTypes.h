@@ -21,6 +21,7 @@ namespace SST {
 namespace MMU_Lib {
 
 typedef uintptr_t RequestID;
+#define PRI_REQUESTID PRIxPTR
 
 namespace page_perms {
     const uint32_t read = 0x4;
