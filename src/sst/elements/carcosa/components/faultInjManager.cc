@@ -14,8 +14,8 @@
 // distribution.
 
 #include "sst_config.h"
-#include "sst/elements/carcosa/Components/FaultInjManager.h"
-#include "sst/elements/carcosa/Components/PMDataRegistry.h"
+#include "sst/elements/carcosa/components/faultInjManager.h"
+#include "sst/elements/carcosa/components/pmDataRegistry.h"
 #include <limits>
 #include <sst/elements/memHierarchy/memEvent.h>
 

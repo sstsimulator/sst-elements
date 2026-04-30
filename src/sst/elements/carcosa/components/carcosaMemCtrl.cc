@@ -16,8 +16,8 @@
 #include <sst_config.h>
 #include <sst/core/params.h>
 
-#include "sst/elements/carcosa/Components/CarcosaMemCtrl.h"
-#include "sst/elements/carcosa/Components/CpuEvent.h"
+#include "sst/elements/carcosa/components/carcosaMemCtrl.h"
+#include "sst/elements/carcosa/components/cpuEvent.h"
 
 #include "sst/elements/memHierarchy/util.h"
 #include "sst/elements/memHierarchy/membackend/memBackendConvertor.h"

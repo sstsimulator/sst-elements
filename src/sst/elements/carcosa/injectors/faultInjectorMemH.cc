@@ -10,7 +10,7 @@
 // distribution.
 
 #include "sst/elements/carcosa/injectors/faultInjectorMemH.h"
-#include "sst/elements/carcosa/Components/PMDataRegistry.h"
+#include "sst/elements/carcosa/components/pmDataRegistry.h"
 #include "sst/elements/carcosa/faultlogic/randomFlipMemHFault.h"
 #include "sst/elements/carcosa/faultlogic/randomDropFault.h"
 #include "sst/elements/carcosa/faultlogic/stuckAtFault.h"

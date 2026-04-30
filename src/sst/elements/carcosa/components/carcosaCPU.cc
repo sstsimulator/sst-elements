@@ -10,4 +10,4 @@
 // distribution.
 
 #include <sst_config.h>
-#include "sst/elements/carcosa/Components/CarcosaCPU.h"
+#include "sst/elements/carcosa/components/carcosaCPU.h"
