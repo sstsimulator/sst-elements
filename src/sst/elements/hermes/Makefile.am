@@ -19,7 +19,8 @@ nobase_sst_HEADERS = \
 	miscapi.h \
 	hermes.h \
 	functor.h \
-	shmemapi.h
+	shmemapi.h \
+	networkIOapi.h
 
 libhermes_la_LDFLAGS = -module -avoid-version
 

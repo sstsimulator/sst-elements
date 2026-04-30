@@ -253,6 +253,14 @@ libember_la_SOURCES = \
 	shmem/motifs/emberShmemFAM_Gatherv.h \
 	shmem/motifs/emberShmemFAM_AtomicInc.h \
 	shmem/motifs/emberShmemFAM_Cswap.h \
+	libs/networkIOEvents/emberNetworkIOEvents.h \
+	libs/networkIOEvents/emberNetworkIOReadEvent.h \
+	libs/networkIOEvents/emberNetworkIOWriteEvent.h \
+	libs/emberNetworkIOLib.h \
+	networkIO/emberNetworkIOGen.h \
+	networkIO/emberNetworkIOGen.cc \
+	networkIO/motifs/emberTestNetworkIO.h \
+	networkIO/motifs/emberTestNetworkIO.cc \
 	sirius/include/sirius/siriusglobals.h \
 	pyember.py
 

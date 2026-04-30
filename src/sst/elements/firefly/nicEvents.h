@@ -9,6 +9,10 @@
 // See the file CONTRIBUTORS.TXT in the top level directory
 // of the distribution for more information.
 //
+// Portions copyright (c) 2026, Hewlett Packard Enterprise Development LP
+// SPDX-FileCopyrightText: Copyright Hewlett Packard Enterprise Development LP
+// SPDX-License-Identifier: BSD-3-Clause
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -50,7 +54,7 @@ public:
 class NicCmdBaseEvent : public Event {
 
   public:
-    enum Type { Shmem, Msg } base_type;
+    enum Type { Shmem, Msg, NetworkIO } base_type;
 
     NicCmdBaseEvent( Type type ) : Event(), base_type(type) {}
 
@@ -400,7 +404,7 @@ class NicCmdEvent : public NicCmdBaseEvent {
 
 class NicRespBaseEvent : public Event {
   public:
-    enum Type { Shmem, Msg } base_type;
+    enum Type { Shmem, Msg, NetworkIO } base_type;
     NicRespBaseEvent( Type type ) : Event(), base_type(type) {}
 
     NotSerializable(NicCmdEvent)
@@ -451,6 +455,35 @@ class NicShmemValueRespEvent : public NicShmemRespBaseEvent {
     NotSerializable(NicShmemValueRespEvent)
 };
 
+class NicNetworkIORespBaseEvent : public NicRespBaseEvent {
+  public:
+
+    NicNetworkIORespBaseEvent( ) :
+        NicRespBaseEvent( NetworkIO ) {}
+
+    virtual ~NicNetworkIORespBaseEvent() {}
+
+    virtual void callback() = 0;
+    NotSerializable(NicNetworkIORespBaseEvent)
+};
+
+class NicNetworkIORespEvent : public NicNetworkIORespBaseEvent {
+
+  public:
+    typedef std::function<void(int)> Callback;
+
+    NicNetworkIORespEvent( Callback callback, int retval ) :
+        NicNetworkIORespBaseEvent( ), m_callback(callback), m_retval(retval) {}
+
+    void callback() override { m_callback(m_retval); }
+
+  private:
+    Callback m_callback;
+    int m_retval;
+
+    NotSerializable(NicNetworkIORespEvent)
+};
+
 class NicRespEvent : public NicRespBaseEvent {
 
   public:
@@ -492,6 +525,81 @@ class NicRespEvent : public NicRespBaseEvent {
     }
 
     NotSerializable(NicRespEvent)
+};
+
+//=============================================================================
+// NetworkIO Command Events 
+//=============================================================================
+
+class NicNetworkIOCmdEvent : public NicCmdBaseEvent {
+public:
+    enum Type {
+        NetworkIORead,
+        NetworkIOWrite
+    };
+    
+    NicNetworkIOCmdEvent(Type type, std::function<void(int)> callback)
+        : NicCmdBaseEvent(NetworkIO), type(type), m_callback(callback) {}
+    
+    virtual ~NicNetworkIOCmdEvent() {}
+    
+    Type type;
+    
+    std::string getTypeStr() {
+        switch(type) {
+            case NetworkIORead: return "NetworkIORead";
+            case NetworkIOWrite: return "NetworkIOWrite";
+            default: return "Unknown";
+        }
+    }
+    
+    std::function<void(int)> getCallback() { return m_callback; }
+    
+private:
+    std::function<void(int)> m_callback;
+    
+    NotSerializable(NicNetworkIOCmdEvent)
+};
+
+
+
+class NicNetworkIOReadCmdEvent : public NicNetworkIOCmdEvent {
+public:
+  NicNetworkIOReadCmdEvent(int targetNid, Hermes::Vaddr dest, size_t len, std::function<void(int)> callback)
+    : NicNetworkIOCmdEvent(NetworkIORead, callback), m_targetNid(targetNid), m_dest(dest), m_len(len) {}
+
+  ~NicNetworkIOReadCmdEvent() {}
+
+  int getTargetNid() const { return m_targetNid; }
+  Hermes::Vaddr getDest() const { return m_dest; }
+  size_t getLen() const { return m_len; }
+
+private:
+  int m_targetNid;
+  Hermes::Vaddr m_dest;
+  size_t m_len;
+
+  NotSerializable(NicNetworkIOReadCmdEvent)
+};
+
+
+class NicNetworkIOWriteCmdEvent : public NicNetworkIOCmdEvent {
+public:
+  NicNetworkIOWriteCmdEvent(int targetNid, Hermes::Vaddr src, size_t len, std::function<void(int)> callback)
+    : NicNetworkIOCmdEvent(NetworkIOWrite, callback), m_targetNid(targetNid), m_src(src), m_len(len) {}
+
+  ~NicNetworkIOWriteCmdEvent() {}
+
+  int getTargetNid() const { return m_targetNid; }
+  Hermes::Vaddr getSrc() const { return m_src; }
+  size_t getLen() const { return m_len; }
+
+private:
+  int m_targetNid;
+  Hermes::Vaddr m_src;
+  size_t m_len;
+
+  NotSerializable(NicNetworkIOWriteCmdEvent)
 };
 
 #if defined(__clang__)

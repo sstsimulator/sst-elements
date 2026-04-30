@@ -9,6 +9,10 @@
 // See the file CONTRIBUTORS.TXT in the top level directory
 // of the distribution for more information.
 //
+// Portions copyright (c) 2026, Hewlett Packard Enterprise Development LP
+// SPDX-FileCopyrightText: Copyright Hewlett Packard Enterprise Development LP
+// SPDX-License-Identifier: BSD-3-Clause
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -98,7 +102,7 @@ class SendMachine {
                 return m_numPending == m_maxQsize;
             }
 
-            void  enque( int unit, int pid, std::vector< MemOp >* vec, FireflyNetworkEvent* ev, int vn, int dest, Callback callback = NULL );
+            void  enque( int unit, int pid, std::vector< MemOp >* vec, FireflyNetworkEvent* ev, int vn, int dest, Callback callback = NULL, SendEntryBase* entry=NULL );
 
             void wakeMeUp( Callback  callback) {
                 assert(!m_callback);
