@@ -12,8 +12,8 @@
 // see the LICENSE file in the top level directory of the distribution.
 
 #include "sst_config.h"
-#include "sst/elements/carcosa/Components/PingPongAgent.h"
-#include "sst/elements/carcosa/Components/HaliEvent.h"
+#include "sst/elements/carcosa/components/pingPongAgent.h"
+#include "sst/elements/carcosa/components/haliEvent.h"
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/memHierarchy/memTypes.h"
 #include <cstring>

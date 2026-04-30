@@ -17,7 +17,7 @@
 #include "sst/core/statapi/statbase.h"
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/carcosa/injectors/faultInjectorBase.h"
-#include "sst/elements/carcosa/Components/PMDataRegistry.h"
+#include "sst/elements/carcosa/components/pmDataRegistry.h"
 #include <vector>
 
 namespace SST::Carcosa {

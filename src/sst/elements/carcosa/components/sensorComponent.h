@@ -33,7 +33,7 @@ public:
 
     SST_ELI_REGISTER_COMPONENT(
         SensorComponent,
-        "Carcosa",
+        "carcosa",
         "SensorComponent",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Mimic sensor behavior in vehicle simulations",
@@ -46,7 +46,7 @@ public:
     )
 
     SST_ELI_DOCUMENT_PORTS(
-        {"ifl",  "Link from sensor to Hali (IFL)", { "Carcosa.SensorEvent" } },
+        {"ifl",  "Link from sensor to Hali (IFL)", { "carcosa.SensorEvent" } },
     )
 
 // SSTSnippet::component-header::start

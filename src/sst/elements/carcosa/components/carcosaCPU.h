@@ -13,21 +13,21 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef CARCOSA_FAULTINJCPU_H
-#define CARCOSA_FAULTINJCPU_H
+#ifndef CARCOSA_CARCOSACPU_H
+#define CARCOSA_CARCOSACPU_H
 
-#include "sst/elements/carcosa/Components/CarcosaCPUBase.h"
+#include "sst/elements/carcosa/components/carcosaCPUBase.h"
 
 namespace SST {
 namespace MemHierarchy {
 
-class FaultInjCPU : public CarcosaCPUBase {
+class CarcosaCPU : public CarcosaCPUBase {
 public:
-    SST_ELI_REGISTER_COMPONENT(FaultInjCPU, "Carcosa", "FaultInjCPU", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Simple demo CPU for testing with dynamic fault injection", COMPONENT_CATEGORY_PROCESSOR)
+    SST_ELI_REGISTER_COMPONENT(CarcosaCPU, "carcosa", "CarcosaCPU", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Simple demo CPU for testing", COMPONENT_CATEGORY_PROCESSOR)
 
     SST_ELI_DOCUMENT_PORTS(
-        {"haliToCPU", "Link from Hali to CPU", { "Carcosa.CpuEvent", "Carcosa.FaultInjEvent" } }
+        {"haliToCPU", "Link from Hali to CPU", { "carcosa.CpuEvent" } }
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -68,16 +68,11 @@ public:
         { "memory", "Interface to memory hierarchy", "SST::Interfaces::StandardMem" }
     )
 
-    FaultInjCPU(SST::ComponentId_t id, SST::Params& params);
-
-protected:
-    bool clockTic(SST::Cycle_t) override;
-
-private:
-    double currentFaultRate;
+    CarcosaCPU(SST::ComponentId_t id, SST::Params& params)
+        : CarcosaCPUBase(id, params) {}
 };
 
 } // namespace MemHierarchy
 } // namespace SST
 
-#endif // CARCOSA_FAULTINJCPU_H
+#endif // CARCOSA_CARCOSACPU_H

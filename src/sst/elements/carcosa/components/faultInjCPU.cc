@@ -14,8 +14,8 @@
 // distribution.
 
 #include <sst_config.h>
-#include "sst/elements/carcosa/Components/FaultInjCPU.h"
-#include "sst/elements/carcosa/Components/FaultInjEvent.h"
+#include "sst/elements/carcosa/components/faultInjCPU.h"
+#include "sst/elements/carcosa/components/faultInjEvent.h"
 
 #include "sst/elements/memHierarchy/util.h"
 

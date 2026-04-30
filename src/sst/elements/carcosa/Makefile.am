@@ -9,10 +9,10 @@ AM_CPPFLAGS += \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libcarcosa.la
 libcarcosa_la_SOURCES =                     \
-    Components/Hali.cc                      \
-    Components/Hali.h                       \
-    Components/FaultInjManager.cc           \
-    Components/FaultInjManager.h            \
+    components/hali.cc                      \
+    components/hali.h                       \
+    components/faultInjManager.cc           \
+    components/faultInjManager.h            \
     injectors/faultInjectorBase.cc          \
     injectors/faultInjectorBase.h           \
     injectors/stuckAtFaultInjector.cc       \
@@ -39,30 +39,30 @@ libcarcosa_la_SOURCES =                     \
     faultlogic/randomFlipFault.h            \
     faultlogic/randomFlipMemHFault.cc       \
     faultlogic/randomFlipMemHFault.h        \
-    Components/PMDataRegistry.h             \
-    Components/CarcosaCPUBase.cc            \
-    Components/CarcosaCPUBase.h             \
-    Components/CarcosaCPU.cc                \
-    Components/CarcosaCPU.h                 \
-    Components/FaultInjCPU.cc               \
-    Components/FaultInjCPU.h                \
-    Components/CpuEvent.h                   \
-    Components/FaultInjEvent.h              \
-    Components/FaultInjManagerAPI.h         \
-    Components/InterceptionAgentAPI.h       \
-    Components/PingPongAgent.cc             \
-    Components/PingPongAgent.h              \
-    Components/CarcosaMemCtrl.cc            \
-    Components/CarcosaMemCtrl.h             \
-    Components/SensorComponent.cc           \
-    Components/SensorComponent.h           \
-    Components/SensorEvent.h                \
-    Components/HaliEvent.h
+    components/pmDataRegistry.h             \
+    components/carcosaCPUBase.cc            \
+    components/carcosaCPUBase.h             \
+    components/carcosaCPU.cc                \
+    components/carcosaCPU.h                 \
+    components/faultInjCPU.cc               \
+    components/faultInjCPU.h                \
+    components/cpuEvent.h                   \
+    components/faultInjEvent.h              \
+    components/faultInjManagerAPI.h         \
+    components/interceptionAgentAPI.h       \
+    components/pingPongAgent.cc             \
+    components/pingPongAgent.h              \
+    components/carcosaMemCtrl.cc            \
+    components/carcosaMemCtrl.h             \
+    components/sensorComponent.cc           \
+    components/sensorComponent.h           \
+    components/sensorEvent.h                \
+    components/haliEvent.h
 
 EXTRA_DIST = \
     hyades.h                                      \
     tests/pingpong.c                              \
-    tests/testCarcosaPingPong.py                  \
+    tests/testcarcosaPingPong.py                  \
     tests/testCorruptMemBasic.py                  \
     tests/testCorruptMemDouble.py                 \
     tests/testCorruptMemDoubleOverlap.py          \
@@ -73,11 +73,11 @@ EXTRA_DIST = \
     tests/testStuckAtOverlap.py                   \
     tests/testStuckAtSameByte.py                  \
     tests/mhlib.py                                \
-    tests/testDynamicPM.py                        \
-    tests/testHaliBacking.py                      \
-    tests/testHaliMemH.py                         \
-    tests/testHaliPM.py                           \
-    tests/testManagerLogic.py
+    tests/testdynamicPM.py                        \
+    tests/testhaliBacking.py                      \
+    tests/testhaliMemH.py                         \
+    tests/testhaliPM.py                           \
+    tests/testmanagerLogic.py
 
 sstdir = $(includedir)/sst/elements/carcosa
 nobase_sst_HEADERS =                        \
@@ -94,10 +94,10 @@ nobase_sst_HEADERS =                        \
     faultlogic/randomDropFault.h            \
     faultlogic/randomFlipFault.h            \
     faultlogic/randomFlipMemHFault.h        \
-    Components/PMDataRegistry.h             \
-    Components/FaultInjManagerAPI.h        \
-    Components/InterceptionAgentAPI.h      \
-    Components/PingPongAgent.h
+    components/pmDataRegistry.h             \
+    components/faultInjManagerAPI.h        \
+    components/interceptionAgentAPI.h      \
+    components/pingPongAgent.h
 
 libcarcosa_la_LDFLAGS = -module -avoid-version
 libcarcosa_la_LIBADD =

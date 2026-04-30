@@ -16,7 +16,7 @@
 
 #include <sst/core/link.h>
 #include <sst/core/output.h>
-#include <sst/elements/carcosa/Components/InterceptionAgentAPI.h>
+#include <sst/elements/carcosa/components/interceptionAgentAPI.h>
 #include <sst/elements/memHierarchy/memEvent.h>
 #include <climits>
 #include <cstdint>
@@ -35,7 +35,7 @@ class PingPongAgent : public InterceptionAgentAPI
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         PingPongAgent,
-        "Carcosa",
+        "carcosa",
         "PingPongAgent",
         SST_ELI_ELEMENT_VERSION(1, 0, 0),
         "MMIO ping-pong coordination agent for Vanadis (command/status registers)",

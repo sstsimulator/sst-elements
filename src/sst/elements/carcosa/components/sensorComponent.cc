@@ -16,8 +16,8 @@
 
 #include "sst_config.h"
 
-#include "sst/elements/carcosa/Components/SensorEvent.h"
-#include "sst/elements/carcosa/Components/SensorComponent.h"
+#include "sst/elements/carcosa/components/sensorEvent.h"
+#include "sst/elements/carcosa/components/sensorComponent.h"
 
 
 using namespace SST;
