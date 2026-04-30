@@ -305,14 +305,12 @@ static ssize_t sstmaci_ep_recv(struct fid_ep* ep, void* buf, size_t len, fi_addr
                                uint64_t tag, uint64_t tag_ignore, uint64_t flags)
 {
   sumi_fid_ep* ep_impl = (sumi_fid_ep*) ep;
-  FabricTransport* tport = (FabricTransport*) ep_impl->domain->fabric->tport;
-
-  if (src_addr != FI_ADDR_UNSPEC){
-    return -FI_EINVAL;
-  }
 
   RecvQueue* rq = (RecvQueue*) ep_impl->recv_cq->queue;
-  rq->postRecv(len, buf, tag, tag_ignore, bool(flags & FI_TAGGED));
+  uint32_t src_rank = (src_addr == FI_ADDR_UNSPEC)
+      ? RecvQueue::ANY_SRC
+      : ADDR_RANK(src_addr);
+  rq->postRecv(len, buf, tag, tag_ignore, bool(flags & FI_TAGGED), src_rank);
 
   return 0;
 }
@@ -355,14 +353,17 @@ static ssize_t sstmaci_ep_send(struct fid_ep* ep, const void* buf, size_t len,
 
   uint32_t dest_rank = ADDR_RANK(dest_addr);
   uint16_t remote_cq = ADDR_CQ(dest_addr);
-  //uint16_t recv_queue = ADDR_QUEUE(dest_addr);
 
   flags |= FI_SEND;
 
+  int local_cq = (flags & FI_INJECT)
+      ? SST::Iris::sumi::Message::no_ack
+      : ep_impl->send_cq->id;
+
   tport->postSend<FabricMessage>(dest_rank, len, const_cast<void*>(buf),
-                                 ep_impl->send_cq->id, // rma operations go to the tx
+                                 local_cq,
                                  remote_cq, SST::Iris::sumi::Message::pt2pt, ep_impl->qos,
-                                 tag, FabricMessage::no_imm_data, flags, context);
+                                 tag, flags, data, context);
   return 0;
 }
 
@@ -566,7 +567,16 @@ DIRECT_FN STATIC ssize_t sumi_ep_trecvmsg(struct fid_ep *ep,
 					  const struct fi_msg_tagged *msg,
 					  uint64_t flags)
 {
-  return -FI_ENOSYS;
+  if (!msg || msg->iov_count < 1)
+    return -FI_EINVAL;
+  return sstmaci_ep_recv(ep,
+                         msg->msg_iov[0].iov_base,
+                         msg->msg_iov[0].iov_len,
+                         msg->addr,
+                         msg->context,
+                         msg->tag,
+                         msg->ignore,
+                         FI_TAGGED | flags);
 }
 
 DIRECT_FN STATIC ssize_t sumi_ep_tsend(struct fid_ep *ep, const void *buf,
@@ -613,14 +623,16 @@ DIRECT_FN STATIC ssize_t sumi_ep_tinject(struct fid_ep *ep, const void *buf,
 					 size_t len, fi_addr_t dest_addr,
 					 uint64_t tag)
 {
-  return -FI_ENOSYS;
+  return sstmaci_ep_send(ep, buf, len, dest_addr, nullptr, tag,
+                         FabricMessage::no_imm_data, FI_TAGGED | FI_INJECT);
 }
 
 DIRECT_FN STATIC ssize_t sumi_ep_tinjectdata(struct fid_ep *ep, const void *buf,
 					     size_t len, uint64_t data,
 					     fi_addr_t dest_addr, uint64_t tag)
 {
-  return -FI_ENOSYS;
+  return sstmaci_ep_send(ep, buf, len, dest_addr, nullptr, tag,
+                         data, FI_TAGGED | FI_INJECT | FI_REMOTE_CQ_DATA);
 }
 
 extern "C" DIRECT_FN  int sumi_ep_atomic_valid(struct fid_ep *ep,
@@ -750,7 +762,14 @@ DIRECT_FN STATIC ssize_t sumi_ep_atomic_compwritemsg(struct fid_ep *ep,
 
 EXTERN_C DIRECT_FN STATIC  int sumi_ep_control(fid_t fid, int command, void *arg)
 {
-  return -FI_ENOSYS;
+  switch (command) {
+  case FI_ENABLE:
+    return FI_SUCCESS;
+  case FI_GETOPSFLAG:
+  case FI_SETOPSFLAG:
+  default:
+    return -FI_ENOSYS;
+  }
 }
 
 extern "C" int sumi_ep_close(fid_t fid)
@@ -808,9 +827,17 @@ extern "C" DIRECT_FN  int sumi_ep_bind(fid_t fid, struct fid *bfid, uint64_t fla
         }
       }
 
-      RecvQueue* rq = new RecvQueue(SST::Hg::OperatingSystem::currentOs());
-      cq->queue = (sumi_progress_queue*) rq;
-      tport->allocateCq(cq->id, std::bind(&RecvQueue::incoming, rq, std::placeholders::_1));
+      // NOTE: this provider is not configured / tested for the case where
+      // multiple endpoints share a single CQ. We reuse the existing RecvQueue
+      // if one is already attached, but a second ep binding the same CQ would
+      // also need to register its own allocateCq() callback path. If support
+      // for 2-EP-1-CQ is ever required, revisit RecvQueue allocation and the
+      // tport->allocateCq() callback registration below.
+      if (!cq->queue) {
+        RecvQueue* rq = new RecvQueue(SST::Hg::OperatingSystem::currentOs());
+        cq->queue = (sumi_progress_queue*) rq;
+        tport->allocateCq(cq->id, std::bind(&RecvQueue::incoming, rq, std::placeholders::_1));
+      }
       break;
     }
     case FI_CLASS_AV: {
@@ -847,6 +874,7 @@ extern "C" DIRECT_FN  int sumi_ep_open(struct fid_domain *domain, struct fi_info
   ep_impl->ep_fid.fid.context = context;
   ep_impl->ep_fid.fid.ops = &sumi_ep_fi_ops;
   ep_impl->ep_fid.ops = &sumi_ep_ops;
+  ep_impl->ep_fid.cm = &sumi_ep_ops_cm;
   ep_impl->ep_fid.msg = &sumi_ep_msg_ops;
   ep_impl->ep_fid.rma = &sumi_ep_rma_ops;
   ep_impl->ep_fid.tagged = &sumi_ep_tagged_ops;

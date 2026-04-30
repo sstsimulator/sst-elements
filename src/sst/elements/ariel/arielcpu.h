@@ -120,10 +120,10 @@ class ArielCPU : public SST::Component {
         /* Ariel class */
         ArielCPU(ComponentId_t id, Params& params);
         ~ArielCPU();
-        virtual void emergencyShutdown();
-        virtual void init(unsigned int phase);
-        virtual void setup() {}
-        virtual void finish();
+        void emergencyShutdown() override;
+        void init(unsigned int phase) override;
+        void setup() override {}
+        void finish() override;
         virtual bool tick( SST::Cycle_t );
 
     private:

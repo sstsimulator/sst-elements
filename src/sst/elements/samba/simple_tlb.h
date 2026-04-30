@@ -105,7 +105,7 @@ class SimpleTLB : public SST::Component {
         virtual bool clockTick(SST::Cycle_t);
 
         // Init?? Called by someone?? Used to pass mem/cache init events back and forth
-        void init(unsigned int phase);
+        void init(unsigned int phase) override;
 
         // Statistic
         //Statistic<uint64_t>* bytesReceived;

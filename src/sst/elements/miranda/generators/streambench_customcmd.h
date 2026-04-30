@@ -53,9 +53,9 @@ public:
 	STREAMBenchGenerator_CustomCmd() = default;
 	~STREAMBenchGenerator_CustomCmd();
 	void build(Params& params);
-	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
-	bool isFinished();
-	void completed();
+	void generate(MirandaRequestQueue<GeneratorRequest*>* q) override;
+	bool isFinished() override;
+	void completed() override;
 
     virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
         SST::Miranda::RequestGenerator::serialize_order(ser);

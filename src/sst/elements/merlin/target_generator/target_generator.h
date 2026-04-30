@@ -37,6 +37,15 @@ public:
     virtual void initialize(int id, int num_peers) {}
     virtual int getNextValue(void) = 0;
     virtual void seed(uint32_t val) {}
+
+protected:
+    TargetGenerator() : SubComponent() {}
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SubComponent::serialize_order(ser);
+    }
+
+    ImplementVirtualSerializable(SST::Merlin::TargetGenerator)
 };
 
 } //namespace Merlin

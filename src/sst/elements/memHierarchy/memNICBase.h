@@ -163,7 +163,7 @@ class MemNICBase : public MemLinkBase {
             }
         }
 
-        virtual MemEventInit* recvUntimedData() {
+        MemEventInit* recvUntimedData() override {
             if (untimed_receive_queue_.size()) {
                 MemRtrEvent * mre = untimed_receive_queue_.front();
                 untimed_receive_queue_.pop();
@@ -174,41 +174,41 @@ class MemNICBase : public MemLinkBase {
             return nullptr;
         }
 
-        virtual bool isSource(std::string str) { /* Note this is only used during init so doesn't need to be fast */
+        bool isSource(std::string str) override { /* Note this is only used during init so doesn't need to be fast */
             for (std::set<EndpointInfo>::iterator it = sourceEndpointInfo.begin(); it != sourceEndpointInfo.end(); it++) {
                 if (it->name == str) return true;
             }
             return false;
         }
 
-        virtual bool isDest(std::string str) { /* Note this is only used during init so doesn't need to be fast */
+        bool isDest(std::string str) override { /* Note this is only used during init so doesn't need to be fast */
             for (std::set<EndpointInfo>::iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
                 if (it->name == str) return true;
             }
             return false;
         }
 
-        virtual bool isPeer(std::string str) {
+        bool isPeer(std::string str) override {
             for (std::set<EndpointInfo>::iterator it = peerEndpointInfo.begin(); it != peerEndpointInfo.end(); it++) {
                 if (it->name == str) return true;
             }
             return false;
         }
 
-        virtual bool isClocked() { return true; } // Tell parent to trigger our clock
+        bool isClocked() override { return true; } // Tell parent to trigger our clock
 
-        virtual std::set<EndpointInfo>* getSources() { return &sourceEndpointInfo; }
-        virtual std::set<EndpointInfo>* getDests() { return &destEndpointInfo; }
-        virtual std::set<EndpointInfo>* getPeers() { return &peerEndpointInfo; }
+        std::set<EndpointInfo>* getSources() override { return &sourceEndpointInfo; }
+        std::set<EndpointInfo>* getDests() override { return &destEndpointInfo; }
+        std::set<EndpointInfo>* getPeers() override { return &peerEndpointInfo; }
 
-        virtual std::string findTargetDestination(Addr addr) {
+        std::string findTargetDestination(Addr addr) override {
             for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
                 if (it->region.contains(addr)) return it->name;
             }
             return "";
         }
 
-        virtual std::string getTargetDestination(Addr addr) {
+        std::string getTargetDestination(Addr addr) override {
             std::string dst = findTargetDestination(addr);
             if (dst != "") {
                 return dst;
@@ -224,11 +224,11 @@ class MemNICBase : public MemLinkBase {
             return "";
         }
 
-        virtual bool isReachable(std::string dst) {
+        bool isReachable(std::string dst) override {
             return reachableNames.find(dst) != reachableNames.end();
         }
 
-        virtual std::string getAvailableDestinationsAsString() {
+        std::string getAvailableDestinationsAsString() override {
             stringstream str;
             for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
                 str << it->name << " " << it->region.toString() << endl;
@@ -424,7 +424,7 @@ class MemNICBase : public MemLinkBase {
 
         // Setup
         // Clean up state generated during init() and perform some sanity checks
-        virtual void setup() {
+        void setup() override {
             /* Limit destinations to the memory regions reported by endpoint messages that came through them */
 
             std::set<EndpointInfo> newDests;

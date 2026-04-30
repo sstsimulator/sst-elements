@@ -100,6 +100,41 @@ bisection_test::bisection_test(ComponentId_t cid, Params& params) :
 
 }
 
+bisection_test::~bisection_test() {}
+
+bisection_test::bisection_test() :
+    Component(),
+    id(0),
+    partner_id(0),
+    num_vns(0),
+    num_peers(0),
+    packets_sent(0),
+    packets_recd(0),
+    start_time(0),
+    packets_to_send(0),
+    packet_size(0),
+    link_control(nullptr),
+    self_link(nullptr)
+{}
+
+void
+bisection_test::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Component::serialize_order(ser);
+    SST_SER(id);
+    SST_SER(partner_id);
+    SST_SER(num_vns);
+    SST_SER(num_peers);
+    SST_SER(packets_sent);
+    SST_SER(packets_recd);
+    SST_SER(start_time);
+    SST_SER(packets_to_send);
+    SST_SER(packet_size);
+    SST_SER(buffer_size);
+    SST_SER(link_control);
+    SST_SER(self_link);
+}
+
 void bisection_test::setup()
 {
     id = link_control->getEndpointID();

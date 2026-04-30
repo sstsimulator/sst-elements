@@ -25,11 +25,11 @@ CorruptMemFault::CorruptMemFault(Params& params, FaultInjectorBase* injector) : 
 
     // process entries into region
     for (std::string region: regionVec) {
-        std::pair<uint64_t,uint64_t> region_pair = convertString(region);
+        std::pair<Addr,Addr> region_pair = convertString(region);
 
         // check validity
         if (region_pair.first > region_pair.second) {
-            getSimulationOutput()->fatal(CALL_INFO_LONG, -1, "Invalid corruption region: [0x%zx, 0x%zx].\n",
+            getSimulationOutput()->fatal(CALL_INFO_LONG, -1, "Invalid corruption region: [0x%" PRI_ADDR ", 0x%" PRI_ADDR "].\n",
                                         region_pair.first, region_pair.second);
         }
 

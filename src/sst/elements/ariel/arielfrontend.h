@@ -48,10 +48,10 @@ public:
 
     virtual ArielTunnel* getTunnel() = 0;
 
-    virtual void init(unsigned int phase) = 0;
-    virtual void setup() { }
-    virtual void finish() { }
-    virtual void emergencyShutdown() { }
+    void init(unsigned int phase) override = 0;
+    void setup() override { }
+    void finish() override { }
+    void emergencyShutdown() override { }
 
 
 };

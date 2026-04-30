@@ -69,7 +69,7 @@ public: // functions
 
   logicLayer( ComponentId_t id, Params& params );
   int Finish();
-  void init(unsigned int phase);
+  void init(unsigned int phase) override;
 
 private: // types
 

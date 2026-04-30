@@ -129,6 +129,58 @@ pt2pt_test::pt2pt_test(ComponentId_t cid, Params& params) :
     interval_start_bw = "0b/s";
 }
 
+pt2pt_test::~pt2pt_test() {}
+
+pt2pt_test::pt2pt_test() :
+    Component(),
+    id(-1),
+    my_dest(-1),
+    packets_sent(0),
+    packets_recd(0),
+    start_time(0),
+    latency(0),
+    packets_to_send(0),
+    packet_size(0),
+    link_control(nullptr),
+    self_link(nullptr),
+    report_timing(nullptr),
+    last_pkt_recd(0),
+    pkt_ser_cycles(0),
+    pkts_in_interval(0)
+{}
+
+void
+pt2pt_test::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Component::serialize_order(ser);
+    SST_SER(out);
+    SST_SER(id);
+    SST_SER(src);
+    SST_SER(dest);
+    SST_SER(delays);
+    SST_SER(my_dest);
+    SST_SER(my_delay);
+    SST_SER(my_recvs);
+    SST_SER(packets_sent);
+    SST_SER(packets_recd);
+    SST_SER(start_time);
+    SST_SER(latency);
+    SST_SER(packets_to_send);
+    SST_SER(packet_size);
+    SST_SER(buffer_size);
+    SST_SER(link_control);
+    SST_SER(self_link);
+    SST_SER(report_timing);
+    SST_SER(bw_multiplier);
+    SST_SER(bw_multiplier_partial);
+    SST_SER(report_interval);
+    SST_SER(interval_start_bw);
+    SST_SER(last_pkt_recd);
+    SST_SER(pkt_ser_cycles);
+    SST_SER(pkts_in_interval);
+}
+
+
 void pt2pt_test::finish()
 {
     link_control->finish();

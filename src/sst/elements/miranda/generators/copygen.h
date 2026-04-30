@@ -80,7 +80,7 @@ public:
         delete out;
     }
 
-    void generate(MirandaRequestQueue<GeneratorRequest*>* q) {
+    void generate(MirandaRequestQueue<GeneratorRequest*>* q) override {
         for ( int i = 0; i < n_per_call; i++ ) {
             if(nextItem == itemCount) {
                 return;
@@ -96,13 +96,13 @@ public:
         }
     }
 
-    bool isFinished() {
+    bool isFinished() override {
         return (nextItem == itemCount);
     }
 
-    void completed() {}
+    void completed() override {}
 
-    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
         SST::Miranda::RequestGenerator::serialize_order(ser);
         SST_SER(nextItem);
         SST_SER(readAddr);

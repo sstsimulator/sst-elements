@@ -37,6 +37,9 @@ public:
     virtual int next() = 0;
     virtual void satisfied() = 0;
     // virtual void print() {}
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {}
+    ImplementVirtualSerializable(SST::Merlin::SingleArbitration)
 };
 
 

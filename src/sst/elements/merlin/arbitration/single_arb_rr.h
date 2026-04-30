@@ -43,6 +43,8 @@ private:
 
 
 public:
+    single_arb_rr() : SingleArbitration(), size(0), current(-1) {}
+
     single_arb_rr(Params& params, int16_t size) :
         SingleArbitration(),
         size(size),
@@ -51,13 +53,22 @@ public:
 
     ~single_arb_rr() { }
 
-    int next() {
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SingleArbitration::serialize_order(ser);
+        SST_SER(size);
+        SST_SER(current);
+    }
+    ImplementSerializable(SST::Merlin::single_arb_rr)
+
+    int next() override
+    {
         current++;
         if ( current == size ) current = 0;
         return current;
     }
 
-    void satisfied() {}
+    void satisfied() override
+    {}
 };
 
 

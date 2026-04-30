@@ -117,14 +117,17 @@ private:
 
     Link* timing_link;
 
+    SST_ELI_IS_CHECKPOINTABLE()
+
 public:
     BackgroundTraffic(ComponentId_t cid, Params& params);
+    BackgroundTraffic();
     ~BackgroundTraffic();
 
-    void init(unsigned int phase);
-    void setup();
-    void complete(unsigned int phase);
-    void finish();
+    void init(unsigned int phase) override;
+    void setup() override;
+    void complete(unsigned int phase) override;
+    void finish() override;
 
 
 private:
@@ -134,6 +137,9 @@ private:
     void output_timing(Event* ev);
     void progress_messages(SimTime_t current_time);
 
+public:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::Merlin::BackgroundTraffic)
 };
 
 } //namespace Merlin

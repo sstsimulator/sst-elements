@@ -80,7 +80,40 @@ incast_nic::incast_nic(ComponentId_t cid, Params& params) :
 
 incast_nic::~incast_nic()
 {
-    delete link_control;
+    // SST framework manages SubComponent lifecycle — do not delete link_control
+}
+
+incast_nic::incast_nic() :
+    Component(),
+    id(-1),
+    num_peers(0),
+    target(false),
+    packet_size_in_bits(0),
+    curr_packets(0),
+    total_packets(0),
+    link_control(nullptr),
+    self_link(nullptr),
+    start_time(0),
+    end_time(0),
+    output(getSimulationOutput())
+{}
+
+void
+incast_nic::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Component::serialize_order(ser);
+    SST_SER(id);
+    SST_SER(num_peers);
+    SST_SER(targets);
+    SST_SER(target);
+    SST_SER(packet_size_in_bits);
+    SST_SER(curr_packets);
+    SST_SER(total_packets);
+    SST_SER(link_control);
+    SST_SER(self_link);
+    SST_SER(start_time);
+    SST_SER(end_time);
+    SST_SER(delay_start);
 }
 
 void

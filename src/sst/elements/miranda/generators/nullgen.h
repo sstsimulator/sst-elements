@@ -39,15 +39,15 @@ public:
         SST::Miranda::RequestGenerator
     )
 
-	SST_ELI_DOCUMENT_PARAMS(
+    SST_ELI_DOCUMENT_PARAMS(
     )
 
-	EmptyGenerator( ComponentId_t id, Params& params ) : RequestGenerator(id, params) {}
+    EmptyGenerator( ComponentId_t id, Params& params ) : RequestGenerator(id, params) {}
     EmptyGenerator() = default;
-	~EmptyGenerator() { }
-	void generate(MirandaRequestQueue<GeneratorRequest*>* q) { }
-	bool isFinished() { return true; }
-	void completed() { }
+    ~EmptyGenerator() { }
+    void generate(MirandaRequestQueue<GeneratorRequest*>* q) override { }
+    bool isFinished() override { return true; }
+    void completed() override { }
 
     virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
         SST::Miranda::RequestGenerator::serialize_order(ser);

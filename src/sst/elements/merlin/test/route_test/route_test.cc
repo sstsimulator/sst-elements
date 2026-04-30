@@ -76,7 +76,29 @@ route_test::route_test(ComponentId_t cid, Params& params) :
 
 route_test::~route_test()
 {
-    delete link_control;
+    // SST framework manages SubComponent lifecycle — do not delete link_control
+}
+
+route_test::route_test() :
+    Component(),
+    id(0),
+    num_peers(0),
+    sending(false),
+    done(false),
+    initialized(false),
+    link_control(nullptr)
+{}
+
+void
+route_test::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Component::serialize_order(ser);
+    SST_SER(id);
+    SST_SER(num_peers);
+    SST_SER(sending);
+    SST_SER(done);
+    SST_SER(initialized);
+    SST_SER(link_control);
 }
 
 void route_test::finish()

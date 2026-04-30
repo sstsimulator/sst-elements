@@ -49,8 +49,16 @@ private:
 public:
     TestNetworkInspector(ComponentId_t id, Params& params, const std::string& sub_id);
 
-    void inspectNetworkData(SimpleNetwork::Request* req);
+    void inspectNetworkData(SimpleNetwork::Request* req) override;
 
+    TestNetworkInspector() : test_count(nullptr) {}
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SimpleNetwork::NetworkInspector::serialize_order(ser);
+        SST_SER(test_count);
+    }
+
+    ImplementSerializable(SST::Merlin::TestNetworkInspector)
 };
 } // namespace Merlin
 } // namespace SST

@@ -33,7 +33,7 @@ StuckAtFault::StuckAtFault(Params& params, FaultInjectorBase* injector) : FaultB
         uint8_t zeroMask = param->zeroMask;
         uint8_t oneMask = param->oneMask;
         if ((int)(zeroMask & oneMask) > 0) {
-            getSimulationOutput()->fatal(CALL_INFO_LONG, -1, "Masks contain overlapping values. Addr: 0x%zx, "
+            getSimulationOutput()->fatal(CALL_INFO_LONG, -1, "Masks contain overlapping values. Addr: 0x%" PRI_ADDR ", "
                                         "byte: %d\n", addr, byte);
         }
         // check for vector in each map before creating it

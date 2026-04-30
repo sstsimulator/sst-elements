@@ -124,6 +124,8 @@ void VanadisClone3Syscall::memReqIsDone(bool)
         case State::ChildSetTid:
             finish(event);
             break;
+        default:
+            break;
     }
 }
 

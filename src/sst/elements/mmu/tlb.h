@@ -38,7 +38,7 @@ public:
     TLB(SST::ComponentId_t id, SST::Params& params) : SubComponent(id) {}
     virtual ~TLB() {}
 
-    virtual void init(unsigned int phase) {};
+    void init(unsigned int phase) override {};
 
     virtual void registerCallback( Callback& callback ) = 0;
     virtual void getVirtToPhys( RequestID req_id, uint32_t hw_thread_id, uint64_t virt_addr, uint32_t perms, uint64_t inst_ptr ) = 0;
