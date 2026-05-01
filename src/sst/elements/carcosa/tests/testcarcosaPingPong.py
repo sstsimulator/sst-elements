@@ -195,12 +195,12 @@ class CPU_Builder:
         itlb.addParams(tlbParams)
 
         # Hali in data path: CPU -> Hali -> dTLB -> L1D
-        hali = sst.Component(prefix + ".hali", "Carcosa.Hali")
+        hali = sst.Component(prefix + ".hali", "carcosa.Hali")
         hali.addParams({
             "intercept_ranges": "0xBEEF0000,4096",
             "verbose": "true",
         })
-        agent = hali.setSubComponent("interceptionAgent", "Carcosa.PingPongAgent")
+        agent = hali.setSubComponent("interceptionAgent", "carcosa.PingPongAgent")
         agent.addParams({
             "initial_command": "0",
             "max_iterations": "6",

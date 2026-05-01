@@ -1,8 +1,8 @@
-// Copyright 2009-2024 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2024, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -24,9 +24,9 @@
 #include <cstdint>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
-#include "sst/elements/carcosa/Components/CarcosaMemCtrl.h"
-#include "sst/elements/carcosa/Components/FaultInjManagerAPI.h"
-#include "sst/elements/carcosa/Components/InterceptionAgentAPI.h"
+#include "sst/elements/carcosa/components/carcosaMemCtrl.h"
+#include "sst/elements/carcosa/components/faultInjManagerAPI.h"
+#include "sst/elements/carcosa/components/interceptionAgentAPI.h"
 #include <utility>
 #include <vector>
 
@@ -41,7 +41,7 @@ class Hali : public SST::Component {
 public:
     SST_ELI_REGISTER_COMPONENT(
         Hali,
-        "Carcosa",
+        "carcosa",
         "Hali",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Interface layer for sensor data in vehicle simulations",
@@ -56,15 +56,15 @@ public:
     )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-        {"interceptionAgent", "Optional agent for intercepted memory accesses (e.g. Carcosa.PingPongAgent). If unset, no interception.", "SST::Carcosa::InterceptionAgentAPI"}
+        {"interceptionAgent", "Optional agent for intercepted memory accesses (e.g. carcosa.PingPongAgent). If unset, no interception.", "SST::Carcosa::InterceptionAgentAPI"}
     )
 
     SST_ELI_DOCUMENT_PORTS(
-        {"sensor", "Link to SensorComponent", {"Carcosa.SensorEvent"}},
-        {"left", "Link to left Hali in ring", {"Carcosa.HaliEvent"}},
-        {"right", "Link to right Hali in ring", {"Carcosa.HaliEvent"}},
-        {"cpu", "Link to compute Component", {"Carcosa.CpuEvent", "Carcosa.FaultInjEvent"}},
-        {"memCtrl", "Link to memory controller", {"Carcosa.CpuEvent"}},
+        {"sensor", "Link to SensorComponent", {"carcosa.SensorEvent"}},
+        {"left", "Link to left Hali in ring", {"carcosa.HaliEvent"}},
+        {"right", "Link to right Hali in ring", {"carcosa.HaliEvent"}},
+        {"cpu", "Link to compute Component", {"carcosa.CpuEvent", "carcosa.FaultInjEvent"}},
+        {"memCtrl", "Link to memory controller", {"carcosa.CpuEvent"}},
         {"highlink", "Link to memoryHierarchy (CPU/standardInterface side)", {}},
         {"lowlink", "Link to memoryHierarchy (Cache side)", {}}
     )

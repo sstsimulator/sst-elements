@@ -1,8 +1,8 @@
-// Copyright 2009-2024 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2024, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -16,18 +16,18 @@
 #ifndef CARCOSA_CARCOSACPU_H
 #define CARCOSA_CARCOSACPU_H
 
-#include "sst/elements/carcosa/Components/CarcosaCPUBase.h"
+#include "sst/elements/carcosa/components/carcosaCPUBase.h"
 
 namespace SST {
 namespace MemHierarchy {
 
 class CarcosaCPU : public CarcosaCPUBase {
 public:
-    SST_ELI_REGISTER_COMPONENT(CarcosaCPU, "Carcosa", "CarcosaCPU", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_COMPONENT(CarcosaCPU, "carcosa", "CarcosaCPU", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Simple demo CPU for testing", COMPONENT_CATEGORY_PROCESSOR)
 
     SST_ELI_DOCUMENT_PORTS(
-        {"haliToCPU", "Link from Hali to CPU", { "Carcosa.CpuEvent" } }
+        {"haliToCPU", "Link from Hali to CPU", { "carcosa.CpuEvent" } }
     )
 
     SST_ELI_DOCUMENT_PARAMS(

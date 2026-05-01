@@ -1,8 +1,8 @@
-// Copyright 2009-2024 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2024, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -18,13 +18,13 @@
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/memHierarchy/memLink.h"
 #include "sst/elements/memHierarchy/memTypes.h"
-#include "sst/elements/carcosa/Components/CarcosaMemCtrl.h"
-#include "sst/elements/carcosa/Components/Hali.h"
-#include "sst/elements/carcosa/Components/HaliEvent.h"
-#include "sst/elements/carcosa/Components/CpuEvent.h"
-#include "sst/elements/carcosa/Components/FaultInjEvent.h"
-#include "sst/elements/carcosa/Components/InterceptionAgentAPI.h"
-#include "sst/elements/carcosa/Components/SensorEvent.h"
+#include "sst/elements/carcosa/components/carcosaMemCtrl.h"
+#include "sst/elements/carcosa/components/hali.h"
+#include "sst/elements/carcosa/components/haliEvent.h"
+#include "sst/elements/carcosa/components/cpuEvent.h"
+#include "sst/elements/carcosa/components/faultInjEvent.h"
+#include "sst/elements/carcosa/components/interceptionAgentAPI.h"
+#include "sst/elements/carcosa/components/sensorEvent.h"
 #include <limits>
 #include <sstream>
 #include <typeinfo>
@@ -104,7 +104,7 @@ Hali::Hali(ComponentId_t id, Params& params) : Component(id) {
     faultInjParams.insert("pmRegistryId", params.find<std::string>("pmRegistryId", "default"));
     faultInjParams.insert("debugManagerLogic", params.find<bool>("debugManagerLogic", false) ? "1" : "0");
     faultInjManager_ = loadAnonymousSubComponent<FaultInjManagerAPI>(
-        "Carcosa.FaultInjManager", "faultInjManager", 0,
+        "carcosa.FaultInjManager", "faultInjManager", 0,
         ComponentInfo::SHARE_NONE, faultInjParams);
 
     // Parse intercept_ranges: semicolon-separated "base,size" pairs (base hex, size dec).

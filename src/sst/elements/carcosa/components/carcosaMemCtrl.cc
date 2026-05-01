@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -16,8 +16,8 @@
 #include <sst_config.h>
 #include <sst/core/params.h>
 
-#include "sst/elements/carcosa/Components/CarcosaMemCtrl.h"
-#include "sst/elements/carcosa/Components/CpuEvent.h"
+#include "sst/elements/carcosa/components/carcosaMemCtrl.h"
+#include "sst/elements/carcosa/components/cpuEvent.h"
 
 #include "sst/elements/memHierarchy/util.h"
 #include "sst/elements/memHierarchy/membackend/memBackendConvertor.h"

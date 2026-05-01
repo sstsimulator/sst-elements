@@ -1,9 +1,3 @@
-# testManagerLogic.py
-# Puts a faultInjectorMemH on each L1 cache and assigns each Hali to manage exactly one
-# injector via separate PM registries: hali_0 -> l1_0 (c0_l1cache), hali_1 -> l1_1, etc.
-# Run with: sst testManagerLogic.py
-# Look for "[ManagerLogic]" debug lines to verify each manager only sees its own PM.
-
 import sst
 from mhlib import componentlist
 
@@ -16,10 +10,10 @@ DEBUG_LEVEL = 0
 
 # Define the simulation components
 c0_l1cache = sst.Component("l1cache0.mesi", "memHierarchy.Cache")
-hali_0 = sst.Component("hali_0", "Carcosa.Hali")
-hali_1 = sst.Component("hali_1", "Carcosa.Hali")
-hali_2 = sst.Component("hali_2", "Carcosa.Hali")
-hali_3 = sst.Component("hali_3", "Carcosa.Hali")
+hali_0 = sst.Component("hali_0", "carcosa.Hali")
+hali_1 = sst.Component("hali_1", "carcosa.Hali")
+hali_2 = sst.Component("hali_2", "carcosa.Hali")
+hali_3 = sst.Component("hali_3", "carcosa.Hali")
 hali_link0 = sst.Link("hali_link0")
 hali_link1 = sst.Link("hali_link1")
 hali_link2 = sst.Link("hali_link2")
@@ -33,12 +27,6 @@ halitoCPULink1 = sst.Link("CpuLink1")
 halitoCPULink2 = sst.Link("CpuLink2")
 halitoCPULink3 = sst.Link("CpuLink3")
 
-# Each Hali has its own PM registry; its FaultInjManager will only see PMs that register with that id.
-# debugManagerLogic=True enables [ManagerLogic] and PM-read debug prints.
-hali_0.addParams({"verbose": True, "pmRegistryId": "hali_0", "debugManagerLogic": True})
-hali_1.addParams({"verbose": True, "pmRegistryId": "hali_1", "debugManagerLogic": True})
-hali_2.addParams({"verbose": True, "pmRegistryId": "hali_2", "debugManagerLogic": True})
-hali_3.addParams({"verbose": True, "pmRegistryId": "hali_3", "debugManagerLogic": True})
 
 hali_0.addLink(haliCtrl0, "memCtrl", "10ns")
 hali_1.addLink(haliCtrl1, "memCtrl", "10ns")
@@ -58,7 +46,7 @@ hali_2.addLink(hali_link3, "right", "10ns")
 hali_3.addLink(hali_link3, "left", "10ns")
 hali_3.addLink(hali_link0, "right", "10ns")
 
-cpu0 = sst.Component("core0", "Carcosa.FaultInjCPU")
+cpu0 = sst.Component("core0", "carcosa.CarcosaCPU")
 cpu0.addParams({
     "clock" : "2.2GHz",
     "memFreq" : "4",
@@ -69,8 +57,8 @@ cpu0.addParams({
     "maxOutstanding" : 16,
     "opCount" : 5000,
     "reqsPerIssue" : 4,
-    "write_freq" : 40,
-    "read_freq" : 60,
+    "write_freq" : 40, # 40% writes
+    "read_freq" : 60,  # 60% reads
 })
 cpu0.addLink(halitoCPULink0, "haliToCPU", "10ns")
 iface0 = cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
@@ -87,7 +75,7 @@ c0_l1cache.addParams({
       "debug" : DEBUG_L1,
       "debug_level" : DEBUG_LEVEL
 })
-cpu1 = sst.Component("core1", "Carcosa.FaultInjCPU")
+cpu1 = sst.Component("core1", "carcosa.CarcosaCPU")
 cpu1.addParams({
     "clock" : "2.2GHz",
     "memFreq" : "4",
@@ -97,8 +85,8 @@ cpu1.addParams({
     "maxOutstanding" : 16,
     "opCount" : 5000,
     "reqsPerIssue" : 4,
-    "write_freq" : 40,
-    "read_freq" : 60,
+    "write_freq" : 40, # 40% writes
+    "read_freq" : 60,  # 60% reads
 })
 cpu1.addLink(halitoCPULink1, "haliToCPU", "10ns")
 iface1 = cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
@@ -131,7 +119,7 @@ n0_l2cache.addParams({
       "debug" : DEBUG_L2,
       "debug_level" : DEBUG_LEVEL
 })
-cpu2 = sst.Component("core2", "Carcosa.FaultInjCPU")
+cpu2 = sst.Component("core2", "carcosa.CarcosaCPU")
 cpu2.addParams({
     "clock" : "2.2GHz",
     "memFreq" : "4",
@@ -141,8 +129,8 @@ cpu2.addParams({
     "maxOutstanding" : 16,
     "opCount" : 5000,
     "reqsPerIssue" : 4,
-    "write_freq" : 40,
-    "read_freq" : 60,
+    "write_freq" : 40, # 40% writes
+    "read_freq" : 60,  # 60% reads
 })
 cpu2.addLink(halitoCPULink2, "haliToCPU", "10ns")
 iface2 = cpu2.setSubComponent("memory", "memHierarchy.standardInterface")
@@ -159,7 +147,7 @@ c2_l1cache.addParams({
       "debug" : DEBUG_L1,
       "debug_level" : DEBUG_LEVEL
 })
-cpu3 = sst.Component("core3", "Carcosa.FaultInjCPU")
+cpu3 = sst.Component("core3", "carcosa.CarcosaCPU")
 cpu3.addParams({
     "clock" : "2.2GHz",
     "memFreq" : "4",
@@ -169,8 +157,8 @@ cpu3.addParams({
     "maxOutstanding" : 16,
     "opCount" : 5000,
     "reqsPerIssue" : 4,
-    "write_freq" : 40,
-    "read_freq" : 60,
+    "write_freq" : 40, # 40% writes
+    "read_freq" : 60,  # 60% reads
 })
 cpu3.addLink(halitoCPULink3, "haliToCPU", "10ns")
 iface3 = cpu3.setSubComponent("memory", "memHierarchy.standardInterface")
@@ -257,7 +245,7 @@ dirNIC.addParams({
     "output_buffer_size" : "2KiB",
     "group" : 2,
 })
-memctrl = sst.Component("memory", "Carcosa.CarcosaMemCtrl")
+memctrl = sst.Component("memory", "carcosa.CarcosaMemCtrl")
 memctrl.addParams({
     "clock" : "500MHz",
     "backing" : "hybrid",
@@ -266,6 +254,7 @@ memctrl.addParams({
     "debug_level" : DEBUG_LEVEL,
     "numHaliLinks" : 4
 })
+# Backends: delay -> reorder -> simpleDRAM
 
 memctrl.addLink(haliCtrl0, "haliLinks_0", "10ns")
 memctrl.addLink(haliCtrl1, "haliLinks_1", "10ns")
@@ -284,7 +273,7 @@ memreorder.addParams({
 })
 memory.addParams({
     "mem_size" : "512MiB",
-    "tCAS" : 3,
+    "tCAS" : 3, # 11@800MHz roughly coverted to 200MHz
     "tRCD" : 3,
     "tRP" : 3,
     "cycle_time" : "5ns",
@@ -298,21 +287,25 @@ sst.setStatisticOutput("sst.statOutputConsole")
 for a in componentlist:
     sst.enableAllStatisticsForComponentType(a)
 
-# Links: CPU <-> Hali <-> L1
+
+# Define the simulation links
 link_c0_hali = sst.Link("link_c0_hali")
 link_hali0_l1cache = sst.Link("link_hali0_l1cache")
 link_c0_hali.connect( (iface0, "lowlink", "100ps"), (hali_0, "highlink", "100ps") )
 link_hali0_l1cache.connect( (hali_0, "lowlink", "100ps"), (c0_l1cache, "highlink", "100ps") )
+
 
 link_c1_hali = sst.Link("link_c1_hali")
 link_hali1_l1cache = sst.Link("link_hali1_l1cache")
 link_c1_hali.connect( (iface1, "lowlink", "100ps"), (hali_1, "highlink", "100ps") )
 link_hali1_l1cache.connect( (hali_1, "lowlink", "100ps"), (c1_l1cache, "highlink", "100ps") )
 
+
 link_c2_hali = sst.Link("link_c2_hali")
 link_hali2_l1cache = sst.Link("link_hali2_l1cache")
 link_c2_hali.connect( (iface2, "lowlink", "100ps"), (hali_2, "highlink", "100ps") )
 link_hali2_l1cache.connect( (hali_2, "lowlink", "100ps"), (c2_l1cache, "highlink", "100ps") )
+
 
 link_c3_hali = sst.Link("link_c3_hali")
 link_hali3_l1cache = sst.Link("link_hali3_l1cache")
@@ -342,39 +335,25 @@ link_cache_net_0 = sst.Link("link_cache_net_0")
 link_cache_net_0.connect( (l3NIC, "port", "200ps"), (network, "port1", "150ps") )
 link_dir_net_0 = sst.Link("link_dir_net_0")
 
-# Fault injector on each L1: each registers with exactly one registry so that Hali N manages only L1 N.
-# debugManagerLogic=True enables [ManagerLogic] and PM-read debug prints.
 c0_l1cache.addPortModule("lowlink", "carcosa.faultInjectorMemH", {
-        "pmId": "l1_0",
-        "pmRegistryIds": "hali_0",
         "faultType": "randomFlip",
         "injectionProbability": 0.5,
-        "installDirection": "Send",
-        "debugManagerLogic": True
+        "installDirection": "Send"
 })
 c1_l1cache.addPortModule("lowlink", "carcosa.faultInjectorMemH", {
-        "pmId": "l1_1",
-        "pmRegistryIds": "hali_1",
         "faultType": "randomFlip",
         "injectionProbability": 0.5,
-        "installDirection": "Send",
-        "debugManagerLogic": True
+        "installDirection": "Send"
 })
 c2_l1cache.addPortModule("lowlink", "carcosa.faultInjectorMemH", {
-        "pmId": "l1_2",
-        "pmRegistryIds": "hali_2",
         "faultType": "randomFlip",
         "injectionProbability": 0.5,
-        "installDirection": "Send",
-        "debugManagerLogic": True
+        "installDirection": "Send"
 })
 c3_l1cache.addPortModule("lowlink", "carcosa.faultInjectorMemH", {
-        "pmId": "l1_3",
-        "pmRegistryIds": "hali_3",
         "faultType": "randomFlip",
         "injectionProbability": 0.5,
-        "installDirection": "Send",
-        "debugManagerLogic": True
+        "installDirection": "Send"
 })
 
 link_dir_net_0.connect( (network, "port0", "150ps"), (dirNIC, "port", "150ps") )

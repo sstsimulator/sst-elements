@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -35,7 +35,7 @@ class MemBackendConvertor;
 class CarcosaMemCtrl : public SST::Component {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_COMPONENT(CarcosaMemCtrl, "Carcosa", "CarcosaMemCtrl", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_COMPONENT(CarcosaMemCtrl, "carcosa", "CarcosaMemCtrl", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Memory controller, interfaces to a main memory model for timing", COMPONENT_CATEGORY_MEMORY)
 
 #define MEMCONTROLLER_ELI_PARAMS {"backend.mem_size",    "(string) Size of physical memory. Must include units in 'B' (SI prefixes ok).", NULL},\
@@ -66,7 +66,7 @@ public:
     SST_ELI_DOCUMENT_PARAMS( MEMCONTROLLER_ELI_PARAMS )
 
 #define MEMCONTROLLER_ELI_PORTS {"highlink", "Direct connection to another memHierarchy component or subcomponent. If a network port is needed, fill the 'highlink' subcomponent slot instead.", {"memHierarchy.MemEventBase"} },\
-            {"haliLinks", "Link the the vto ifl links", {"Carcosa.CpuEvent"} },\
+            {"haliLinks", "Link the the vto ifl links", {"carcosa.CpuEvent"} },\
             {"direct_link", "DEPRECATED: Use 'highlink' subcomponent or port instead. Direct connection to a cache/directory controller", {"memHierarchy.MemEventBase"} },\
             {"network",     "DEPRECATED: Set 'highlink' subcomponent slot to memHierarchy.MemNIC or memHierarchy.MemNICFour instead. Network connection to a cache/directory controller; also request network for split networks", {"memHierarchy.MemRtrEvent"} },\
             {"network_ack", "DEPRECATED: Set 'highlink' subcomponent slot to memHierarchy.MemNICFour instead. For split networks, ack/response network connection to a cache/directory controller", {"memHierarchy.MemRtrEvent"} },\
@@ -75,7 +75,7 @@ public:
             {"cube_link",   "DEPRECATED. Use named subcomponents and their links instead.", {"sst.Event"} }
 
     SST_ELI_DOCUMENT_PORTS( MEMCONTROLLER_ELI_PORTS,
-	{"haliLinks_%d", "link to the vto interface", {"Carcosa.CpuEvent"}}
+	{"haliLinks_%d", "link to the vto interface", {"carcosa.CpuEvent"}}
 )
 
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2024 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2024, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -16,8 +16,8 @@
 #ifndef CARCOSA_FAULTINJMANAGER_H
 #define CARCOSA_FAULTINJMANAGER_H
 
-#include "sst/elements/carcosa/Components/FaultInjManagerAPI.h"
-#include "sst/elements/carcosa/Components/PMDataRegistry.h"
+#include "sst/elements/carcosa/components/faultInjManagerAPI.h"
+#include "sst/elements/carcosa/components/pmDataRegistry.h"
 #include <vector>
 #include <string>
 #include <set>
@@ -31,10 +31,10 @@ public:
 
     SST_ELI_REGISTER_SUBCOMPONENT(
             FaultInjManager,
-            "Carcosa",
+            "carcosa",
             "FaultInjManager",
             SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Manages fault injection for Carcosa components",
+            "Manages fault injection for carcosa components",
             SST::Carcosa::FaultInjManagerAPI
             )
 

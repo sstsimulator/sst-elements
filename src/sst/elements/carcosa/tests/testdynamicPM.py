@@ -1,19 +1,19 @@
 import sst
 from mhlib import componentlist
 
-DEBUG_L1 = 0
-DEBUG_L2 = 0
-DEBUG_L3 = 0
-DEBUG_DIR = 0
-DEBUG_MEM = 0
-DEBUG_LEVEL = 0
+DEBUG_L1 = 1
+DEBUG_L2 = 1
+DEBUG_L3 = 1
+DEBUG_DIR = 1
+DEBUG_MEM = 1
+DEBUG_LEVEL = 2
 
 # Define the simulation components
 c0_l1cache = sst.Component("l1cache0.mesi", "memHierarchy.Cache")
-hali_0 = sst.Component("hali_0", "Carcosa.Hali")
-hali_1 = sst.Component("hali_1", "Carcosa.Hali")
-hali_2 = sst.Component("hali_2", "Carcosa.Hali")
-hali_3 = sst.Component("hali_3", "Carcosa.Hali")
+hali_0 = sst.Component("hali_0", "carcosa.Hali")
+hali_1 = sst.Component("hali_1", "carcosa.Hali")
+hali_2 = sst.Component("hali_2", "carcosa.Hali")
+hali_3 = sst.Component("hali_3", "carcosa.Hali")
 hali_link0 = sst.Link("hali_link0")
 hali_link1 = sst.Link("hali_link1")
 hali_link2 = sst.Link("hali_link2")
@@ -28,6 +28,9 @@ halitoCPULink2 = sst.Link("CpuLink2")
 halitoCPULink3 = sst.Link("CpuLink3")
 
 
+# Debug: set verbose=True on Hali to see Hali event/cpu/fault messages
+for h in (hali_0, hali_1, hali_2, hali_3):
+    h.addParams({"verbose": True})
 hali_0.addLink(haliCtrl0, "memCtrl", "10ns")
 hali_1.addLink(haliCtrl1, "memCtrl", "10ns")
 hali_2.addLink(haliCtrl2, "memCtrl", "10ns")
@@ -46,7 +49,7 @@ hali_2.addLink(hali_link3, "right", "10ns")
 hali_3.addLink(hali_link3, "left", "10ns")
 hali_3.addLink(hali_link0, "right", "10ns")
 
-cpu0 = sst.Component("core0", "Carcosa.CarcosaCPU")
+cpu0 = sst.Component("core0", "carcosa.FaultInjCPU")
 cpu0.addParams({
     "clock" : "2.2GHz",
     "memFreq" : "4",
@@ -75,7 +78,7 @@ c0_l1cache.addParams({
       "debug" : DEBUG_L1,
       "debug_level" : DEBUG_LEVEL
 })
-cpu1 = sst.Component("core1", "Carcosa.CarcosaCPU")
+cpu1 = sst.Component("core1", "carcosa.FaultInjCPU")
 cpu1.addParams({
     "clock" : "2.2GHz",
     "memFreq" : "4",
@@ -119,7 +122,7 @@ n0_l2cache.addParams({
       "debug" : DEBUG_L2,
       "debug_level" : DEBUG_LEVEL
 })
-cpu2 = sst.Component("core2", "Carcosa.CarcosaCPU")
+cpu2 = sst.Component("core2", "carcosa.FaultInjCPU")
 cpu2.addParams({
     "clock" : "2.2GHz",
     "memFreq" : "4",
@@ -147,7 +150,7 @@ c2_l1cache.addParams({
       "debug" : DEBUG_L1,
       "debug_level" : DEBUG_LEVEL
 })
-cpu3 = sst.Component("core3", "Carcosa.CarcosaCPU")
+cpu3 = sst.Component("core3", "carcosa.FaultInjCPU")
 cpu3.addParams({
     "clock" : "2.2GHz",
     "memFreq" : "4",
@@ -245,7 +248,7 @@ dirNIC.addParams({
     "output_buffer_size" : "2KiB",
     "group" : 2,
 })
-memctrl = sst.Component("memory", "Carcosa.CarcosaMemCtrl")
+memctrl = sst.Component("memory", "carcosa.CarcosaMemCtrl")
 memctrl.addParams({
     "clock" : "500MHz",
     "backing" : "hybrid",
@@ -289,24 +292,40 @@ for a in componentlist:
 
 
 # Define the simulation links
-link_c0_l1cache = sst.Link("link_c0_l1cache")
-link_c0_l1cache.connect( (iface0, "lowlink", "100ps"), (c0_l1cache, "highlink", "100ps") )
+link_c0_hali = sst.Link("link_c0_hali")
+link_hali0_l1cache = sst.Link("link_hali0_l1cache")
+link_c0_hali.connect( (iface0, "lowlink", "100ps"), (hali_0, "highlink", "100ps") )
+link_hali0_l1cache.connect( (hali_0, "lowlink", "100ps"), (c0_l1cache, "highlink", "100ps") )
+
+
+link_c1_hali = sst.Link("link_c1_hali")
+link_hali1_l1cache = sst.Link("link_hali1_l1cache")
+link_c1_hali.connect( (iface1, "lowlink", "100ps"), (hali_1, "highlink", "100ps") )
+link_hali1_l1cache.connect( (hali_1, "lowlink", "100ps"), (c1_l1cache, "highlink", "100ps") )
+
+
+link_c2_hali = sst.Link("link_c2_hali")
+link_hali2_l1cache = sst.Link("link_hali2_l1cache")
+link_c2_hali.connect( (iface2, "lowlink", "100ps"), (hali_2, "highlink", "100ps") )
+link_hali2_l1cache.connect( (hali_2, "lowlink", "100ps"), (c2_l1cache, "highlink", "100ps") )
+
+
+link_c3_hali = sst.Link("link_c3_hali")
+link_hali3_l1cache = sst.Link("link_hali3_l1cache")
+link_c3_hali.connect( (iface3, "lowlink", "100ps"), (hali_3, "highlink", "100ps") )
+link_hali3_l1cache.connect( (hali_3, "lowlink", "100ps"), (c3_l1cache, "highlink", "100ps") )
+
 link_c0L1cache_bus = sst.Link("link_c0L1cache_bus")
 link_c0L1cache_bus.connect( (c0_l1cache, "lowlink", "200ps"), (n0_bus, "highlink0", "200ps") )
-link_c1_l1cache = sst.Link("link_c1_l1cache")
-link_c1_l1cache.connect( (iface1, "lowlink", "100ps"), (c1_l1cache, "highlink", "100ps") )
+
 link_c1L1cache_bus = sst.Link("link_c1L1cache_bus")
 link_c1L1cache_bus.connect( (c1_l1cache, "lowlink", "100ps"), (n0_bus, "highlink1", "200ps") )
 link_bus_n0L2cache = sst.Link("link_bus_n0L2cache")
 link_bus_n0L2cache.connect( (n0_bus, "lowlink0", "200ps"), (n0_l2cache, "highlink", "200ps") )
 link_n0L2cache_bus = sst.Link("link_n0L2cache_bus")
 link_n0L2cache_bus.connect( (n0_l2cache, "lowlink", "200ps"), (n2_bus, "highlink0", "200ps") )
-link_c2_l1cache = sst.Link("link_c2_l1cache")
-link_c2_l1cache.connect( (iface2, "lowlink", "100ps"), (c2_l1cache, "highlink", "100ps") )
 link_c2L1cache_bus = sst.Link("link_c2L1cache_bus")
 link_c2L1cache_bus.connect( (c2_l1cache, "lowlink", "200ps"), (n1_bus, "highlink0", "200ps") )
-link_c3_l1cache = sst.Link("link_c3_l1cache")
-link_c3_l1cache.connect( (iface3, "lowlink", "100ps"), (c3_l1cache, "highlink", "100ps") )
 link_c3L1cache_bus = sst.Link("link_c3L1cache_bus")
 link_c3L1cache_bus.connect( (c3_l1cache, "lowlink", "200ps"), (n1_bus, "highlink1", "200ps") )
 link_bus_n1L2cache = sst.Link("link_bus_n1L2cache")
@@ -318,7 +337,6 @@ link_bus_l3cache.connect( (n2_bus, "lowlink0", "200ps"), (l3cache, "highlink", "
 link_cache_net_0 = sst.Link("link_cache_net_0")
 link_cache_net_0.connect( (l3NIC, "port", "200ps"), (network, "port1", "150ps") )
 link_dir_net_0 = sst.Link("link_dir_net_0")
-
 
 c0_l1cache.addPortModule("lowlink", "carcosa.faultInjectorMemH", {
         "faultType": "randomFlip",

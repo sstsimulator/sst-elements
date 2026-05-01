@@ -1,22 +1,24 @@
-// Copyright 2009-2024 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2024, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
-// See the file CONTRIBUTORS.TXT in the top level directory of the distribution.
+// See the file CONTRIBUTORS.TXT in the top level directory
+// of the distribution for more information.
 //
-// This file is part of the SST software package. For license information,
-// see the LICENSE file in the top level directory of the distribution.
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #ifndef CARCOSA_PINGPONGAGENT_H
 #define CARCOSA_PINGPONGAGENT_H
 
 #include <sst/core/link.h>
 #include <sst/core/output.h>
-#include <sst/elements/carcosa/Components/InterceptionAgentAPI.h>
+#include <sst/elements/carcosa/components/interceptionAgentAPI.h>
 #include <sst/elements/memHierarchy/memEvent.h>
 #include <climits>
 #include <cstdint>
@@ -35,7 +37,7 @@ class PingPongAgent : public InterceptionAgentAPI
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         PingPongAgent,
-        "Carcosa",
+        "carcosa",
         "PingPongAgent",
         SST_ELI_ELEMENT_VERSION(1, 0, 0),
         "MMIO ping-pong coordination agent for Vanadis (command/status registers)",
