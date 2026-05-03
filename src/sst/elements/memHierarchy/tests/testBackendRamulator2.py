@@ -111,6 +111,6 @@ link_c0_l1_l2_link.connect( (c0_l1cache, "lowlink0", "1000ps"), (bus, "highlink0
 link_c1_l1_l2_link = sst.Link("link_c1_l1_l2_link")
 link_c1_l1_l2_link.connect( (c1_l1cache, "lowlink", "1000ps"), (bus, "highlink1", "10000ps") )
 link_bus_l2cache = sst.Link("link_bus_l2cache")
-link_bus_l2cache.connect( (bus, "lowlink_0", "10000ps"), (l2cache, "highlink", "1000ps") )
+link_bus_l2cache.connect( (bus, "lowlink0", "10000ps"), (l2cache, "highlink", "1000ps") )
 link_mem_bus_link = sst.Link("link_mem_bus_link")
 link_mem_bus_link.connect( (l2cache, "lowlink", "10000ps"), (memctrl, "highlink", "10000ps") )
