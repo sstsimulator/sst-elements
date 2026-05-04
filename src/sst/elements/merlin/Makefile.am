@@ -80,8 +80,8 @@ libmerlin_la_SOURCES = \
     interfaces/endpointNIC/endpointNIC.h \
     interfaces/endpointNIC/endpointNIC.cc \
     interfaces/endpointNIC/NICPlugin.h \
-    interfaces/endpointNIC/SourceRouting.h \
-    interfaces/endpointNIC/SourceRouting.cc \
+    interfaces/endpointNIC/sourceRouting.h \
+    interfaces/endpointNIC/sourceRouting.cc \
 	arbitration/single_arb.h \
 	arbitration/single_arb_lru.h \
 	arbitration/single_arb_rr.h \

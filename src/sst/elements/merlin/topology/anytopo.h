@@ -31,7 +31,7 @@
 #include <vector>
 
 #include "sst/elements/merlin/router.h"
-#include "../interfaces/endpointNIC/SourceRouting.h"
+#include "../interfaces/endpointNIC/sourceRouting.h"
 
 namespace SST {
 namespace Merlin {

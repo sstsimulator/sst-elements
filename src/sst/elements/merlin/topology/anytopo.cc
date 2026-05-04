@@ -9,7 +9,6 @@
 #include "sst/core/rng/xorshift.h"
 #include "sst/core/output.h"
 #include "../interfaces/ExtendedRequest.h"
-// #include "../interfaces/endpointNIC/SourceRouting.h"
 
 namespace SST {
 namespace Merlin {

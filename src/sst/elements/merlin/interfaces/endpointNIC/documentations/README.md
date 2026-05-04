@@ -55,7 +55,7 @@ The main NIC component that:
 - Processes outgoing packets through the pipeline in forward order
 - Processes incoming packets through the pipeline in reverse order
 
-### 3. PlugIn Implementations (e.g., `SourceRouting.h/cc`)
+### 3. PlugIn Implementations (e.g., `sourceRouting.h/cc`)
 Individual plugin modules that implement specific NIC functionality.
   - **SourceRoutingPlugin** (implemented) : Adds source routing headers to packets
   - ECMP entropy manipulation

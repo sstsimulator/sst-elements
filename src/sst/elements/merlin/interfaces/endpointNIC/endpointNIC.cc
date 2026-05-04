@@ -19,7 +19,7 @@
 namespace SST {
 namespace Merlin {
 
-endpointNIC::endpointNIC(ComponentId_t cid, Params& params, int vns) :
+EndpointNIC::EndpointNIC(ComponentId_t cid, Params& params, int vns) :
     SST::Interfaces::SimpleNetwork(cid),
     link_control(nullptr),
     vns(vns)
@@ -30,7 +30,7 @@ endpointNIC::endpointNIC(ComponentId_t cid, Params& params, int vns) :
     bool found = false;
     EP_id = params.find<int>("EP_id",-1,found);
     if ( !found ) {
-        out.fatal(CALL_INFO, -1, "endpointNIC requires 'EP_id' parameter to be set\n");
+        out.fatal(CALL_INFO, -1, "EndpointNIC requires 'EP_id' parameter to be set\n");
     }
 
     loadPlugins(params);
@@ -52,11 +52,11 @@ endpointNIC::endpointNIC(ComponentId_t cid, Params& params, int vns) :
 }
 
 // Pure virtual destructor must have implementation even though class is abstract
-endpointNIC::~endpointNIC()
+EndpointNIC::~EndpointNIC()
 {
 }
 
-void endpointNIC::loadPlugins(Params& params)
+void EndpointNIC::loadPlugins(Params& params)
 {
     std::vector<std::string> plugin_names;
     params.find_array<std::string>("plugin_names",plugin_names);
@@ -85,7 +85,7 @@ void endpointNIC::loadPlugins(Params& params)
     }
 }
 
-void endpointNIC::init(unsigned int phase)
+void EndpointNIC::init(unsigned int phase)
 {
     for (auto* plugin : plugin_pipeline) {
         plugin->plugin_init(phase);
@@ -93,7 +93,7 @@ void endpointNIC::init(unsigned int phase)
     link_control->init(phase);
 }
 
-void endpointNIC::setup()
+void EndpointNIC::setup()
 {
     for (auto* plugin : plugin_pipeline) {
         plugin->plugin_setup();
@@ -101,7 +101,7 @@ void endpointNIC::setup()
     link_control->setup();
 }
 
-void endpointNIC::complete(unsigned int phase)
+void EndpointNIC::complete(unsigned int phase)
 {
     for (auto* plugin : plugin_pipeline) {
         plugin->plugin_complete();
@@ -109,7 +109,7 @@ void endpointNIC::complete(unsigned int phase)
     link_control->complete(phase);
 }
 
-void endpointNIC::finish()
+void EndpointNIC::finish()
 {
     for (auto* plugin : plugin_pipeline) {
         plugin->plugin_finish();
@@ -117,7 +117,7 @@ void endpointNIC::finish()
     link_control->finish();
 }
 
-bool endpointNIC::send(Request* req, int vn)
+bool EndpointNIC::send(Request* req, int vn)
 {
     // Process through outgoing pipeline
     Request* processed_req = processThroughPipeline(req, vn, true);
@@ -128,12 +128,12 @@ bool endpointNIC::send(Request* req, int vn)
     return link_control->send(processed_req, vn);
 }
 
-bool endpointNIC::spaceToSend(int vn, int num_bits)
+bool EndpointNIC::spaceToSend(int vn, int num_bits)
 {
     return link_control->spaceToSend(vn, num_bits);
 }
 
-SST::Interfaces::SimpleNetwork::Request* endpointNIC::recv(int vn)
+SST::Interfaces::SimpleNetwork::Request* EndpointNIC::recv(int vn)
 {
     Request* req = link_control->recv(vn);
     if (!req) {
@@ -144,61 +144,61 @@ SST::Interfaces::SimpleNetwork::Request* endpointNIC::recv(int vn)
     return processThroughPipeline(req, vn, false);
 }
 
-bool endpointNIC::requestToReceive(int vn)
+bool EndpointNIC::requestToReceive(int vn)
 {
     return link_control->requestToReceive(vn);
 }
 
-void endpointNIC::sendUntimedData(Request* req)
+void EndpointNIC::sendUntimedData(Request* req)
 {
     // For untimed data, we typically don't process it through NIC logic
     link_control->sendUntimedData(req);
 }
 
-SST::Interfaces::SimpleNetwork::Request* endpointNIC::recvUntimedData()
+SST::Interfaces::SimpleNetwork::Request* EndpointNIC::recvUntimedData()
 {
     return link_control->recvUntimedData();
 }
 
-void endpointNIC::setNotifyOnReceive(HandlerBase* functor)
+void EndpointNIC::setNotifyOnReceive(HandlerBase* functor)
 {
     link_control->setNotifyOnReceive(functor);
 }
 
-void endpointNIC::setNotifyOnSend(HandlerBase* functor)
+void EndpointNIC::setNotifyOnSend(HandlerBase* functor)
 {
     link_control->setNotifyOnSend(functor);
 }
 
-bool endpointNIC::isNetworkInitialized() const
+bool EndpointNIC::isNetworkInitialized() const
 {
     return link_control->isNetworkInitialized();
 }
 
-SST::Interfaces::SimpleNetwork::nid_t endpointNIC::getEndpointID() const
+SST::Interfaces::SimpleNetwork::nid_t EndpointNIC::getEndpointID() const
 {
     return link_control->getEndpointID();
 }
 
-const UnitAlgebra& endpointNIC::getLinkBW() const
+const UnitAlgebra& EndpointNIC::getLinkBW() const
 {
     return link_control->getLinkBW();
 }
 
 // Base implementations for child classes to override
-SST::Interfaces::SimpleNetwork::Request* endpointNIC::processOutgoingRequest(Request* req, int vn)
+SST::Interfaces::SimpleNetwork::Request* EndpointNIC::processOutgoingRequest(Request* req, int vn)
 {
     // Base implementation just passes through
     return req;
 }
 
-SST::Interfaces::SimpleNetwork::Request* endpointNIC::processIncomingRequest(Request* req, int vn)
+SST::Interfaces::SimpleNetwork::Request* EndpointNIC::processIncomingRequest(Request* req, int vn)
 {
     // Base implementation just passes through
     return req;
 }
 
-SST::Interfaces::SimpleNetwork::Request* endpointNIC::processThroughPipeline(
+SST::Interfaces::SimpleNetwork::Request* EndpointNIC::processThroughPipeline(
     Request* req, int vn, bool outgoing)
 {
     if (!req) return nullptr;
