@@ -393,79 +393,65 @@ void topo_any::route_packet_SR(topo_any_event* ev) {
         fatal(CALL_INFO, -1, "ERROR: Source routing event missing encapsulated request\n");
     }
 
-    // Try to get the request as ExtendedRequest and extract path from metadata
-    ExtendedRequest* ext_req = dynamic_cast<ExtendedRequest*>(req);
+    // static_cast should be safe here.
+    assert(dynamic_cast<ExtendedRequest*>(req) != nullptr);
+    ExtendedRequest* ext_req = static_cast<ExtendedRequest*>(req);
 
-    if (ext_req) {
+    // Get pointer to metadata without copying
+    SourceRoutingMetadata* sr_meta_ptr = ext_req->getMetadataPtr<SourceRoutingMetadata>("SourceRouting");
+    std::deque<int>* sr_path;
 
-        // Try to get pointer to metadata without copying
-        SourceRoutingMetadata* sr_meta_ptr = ext_req->getMetadataPtr<SourceRoutingMetadata>("SourceRouting");
-        std::deque<int>* sr_path;
-
-        if (sr_meta_ptr) {
-                sr_path = &(sr_meta_ptr->path);
-        } else {
-            fatal(CALL_INFO, -1, "DEBUG anytopo: No SourceRouting metadata found?");
-        }
-
-        // Route the packet based on the path
-        int fwd_port = -1;
-        if (sr_path->empty() || sr_path->back() == router_id) {
-            // Arriving at destination router, forward to endpoint
-
-            int dest_EP_id = ev->getDest();
-            if (dest_EP_id == -1){
-                fatal(CALL_INFO, -1, "ERROR: Source routing packet missing destination endpoint ID\n");
-            }
-
-            if (get_router_id(dest_EP_id) != router_id) {
-                fatal(CALL_INFO, -1, "ERROR: destination endpoint %d is not contained within this router %d\n",
-                    dest_EP_id, router_id);
-            }
-            ev->next_router_id = -1; // no next router
-            fwd_port = get_dest_local_port(dest_EP_id);
-
-            output.verbose(CALL_INFO, 2, 0, "destination router %d forwarding packet to dest EP %d via port %d\n",
-                router_id, dest_EP_id, fwd_port);
-        } else {
-            // Intermediate hop - determine the next router and forward to the corresponding port
-            if (sr_path->empty()) {
-                fatal(CALL_INFO, -1, "ERROR: Source routing path is empty at intermediate hop\n");
-            }
-            ev->next_router_id = sr_path->front(); // update next router id
-            sr_path->pop_front(); // remove the current router from the path
-            ev->num_hops++;
-            if (ev->num_hops > tot_num_vcs) {
-                fatal(CALL_INFO, -1, "ERROR: Number of hops exceeded the total number of VCs %d \n", tot_num_vcs);
-            }
-            ev->setVC(ev->num_hops);
-            fwd_port = getPortToRouter(ev->next_router_id);
-
-            output.verbose(CALL_INFO, 2, 0, "Intermediate router %d routing packet to next router %d via port %d\n",
-                router_id, ev->next_router_id, fwd_port);
-        }
-
-        if (fwd_port == -1) {
-            fatal(CALL_INFO, -1, "ERROR: No port found to forward to router %d\n", ev->next_router_id);
-        }
-
-        // // Print path information
-        // std::string path_str = "[";
-        // for (size_t i = 0; i < sr_path->size(); ++i) {
-        //     if (i > 0) path_str += ", ";
-        //     path_str += std::to_string((*sr_path)[i]);
-        // }
-        // path_str += "]";
-
-        // output.verbose(CALL_INFO, 3, 0, "Router %d forwarding packet (src EP %d, dst EP %d) to port %d, remaining path: %s\n",
-        //               router_id, ev->getSrc(), ev->getDest(), fwd_port, path_str.c_str());
-        output.verbose(CALL_INFO, 3, 0, "Router %d forwarding packet (src EP %d, dst EP %d) to port %d",
-                      router_id, ev->getSrc(), ev->getDest(), fwd_port);
-
-        ev->setNextPort(fwd_port);
+    if (sr_meta_ptr) {
+            sr_path = &(sr_meta_ptr->path);
     } else {
-        fatal(CALL_INFO, -1, "timed packet should always have source routing metadata");
+        fatal(CALL_INFO, -1, "DEBUG anytopo: No SourceRouting metadata found?");
     }
+
+    // Route the packet based on the path
+    int fwd_port = -1;
+    if (sr_path->empty() || sr_path->back() == router_id) {
+        // Arriving at destination router, forward to endpoint
+
+        int dest_EP_id = ev->getDest();
+        if (dest_EP_id == -1){
+            fatal(CALL_INFO, -1, "ERROR: Source routing packet missing destination endpoint ID\n");
+        }
+
+        if (get_router_id(dest_EP_id) != router_id) {
+            fatal(CALL_INFO, -1, "ERROR: destination endpoint %d is not contained within this router %d\n",
+                dest_EP_id, router_id);
+        }
+        ev->next_router_id = -1; // no next router
+        fwd_port = get_dest_local_port(dest_EP_id);
+
+        output.verbose(CALL_INFO, 2, 0, "destination router %d forwarding packet to dest EP %d via port %d\n",
+            router_id, dest_EP_id, fwd_port);
+    } else {
+        // Intermediate hop - determine the next router and forward to the corresponding port
+        if (sr_path->empty()) {
+            fatal(CALL_INFO, -1, "ERROR: Source routing path is empty at intermediate hop\n");
+        }
+        ev->next_router_id = sr_path->front(); // update next router id
+        sr_path->pop_front(); // remove the current router from the path
+        ev->num_hops++;
+        if (ev->num_hops > tot_num_vcs) {
+            fatal(CALL_INFO, -1, "ERROR: Number of hops exceeded the total number of VCs %d \n", tot_num_vcs);
+        }
+        ev->setVC(ev->num_hops);
+        fwd_port = getPortToRouter(ev->next_router_id);
+
+        output.verbose(CALL_INFO, 2, 0, "Intermediate router %d routing packet to next router %d via port %d\n",
+            router_id, ev->next_router_id, fwd_port);
+    }
+
+    if (fwd_port == -1) {
+        fatal(CALL_INFO, -1, "ERROR: No port found to forward to router %d\n", ev->next_router_id);
+    }
+
+    output.verbose(CALL_INFO, 3, 0, "Router %d forwarding packet (src EP %d, dst EP %d) to port %d",
+                    router_id, ev->getSrc(), ev->getDest(), fwd_port);
+
+    ev->setNextPort(fwd_port);
 
 }
 
@@ -490,10 +476,8 @@ void topo_any::route_packet_SR_UGAL(int input_port, int vc, topo_any_event* ev) 
         fatal(CALL_INFO, -1, "ERROR: UGAL routing event missing encapsulated request\n");
     }
 
-    ExtendedRequest* ext_req = dynamic_cast<ExtendedRequest*>(req);
-    if (!ext_req) {
-        fatal(CALL_INFO, -1, "ERROR: UGAL routing requires ExtendedRequest\n");
-    }
+    assert(dynamic_cast<ExtendedRequest*>(req) != nullptr);
+    ExtendedRequest* ext_req = static_cast<ExtendedRequest*>(req);
 
     if (ev->num_hops == 0) {
         // First hop: make UGAL decision with weight calculation
@@ -622,10 +606,8 @@ void topo_any::route_packet_SR_UGAL_THRESHOLD(int input_port, int vc, topo_any_e
         fatal(CALL_INFO, -1, "ERROR: UGAL_THRESHOLD routing event missing encapsulated request\n");
     }
 
-    ExtendedRequest* ext_req = dynamic_cast<ExtendedRequest*>(req);
-    if (!ext_req) {
-        fatal(CALL_INFO, -1, "ERROR: UGAL_THRESHOLD routing requires ExtendedRequest\n");
-    }
+    assert(dynamic_cast<ExtendedRequest*>(req) != nullptr);
+    ExtendedRequest* ext_req = static_cast<ExtendedRequest*>(req);
 
     if (ev->num_hops == 0) {
         // First hop: make UGAL decision using threshold-based comparison

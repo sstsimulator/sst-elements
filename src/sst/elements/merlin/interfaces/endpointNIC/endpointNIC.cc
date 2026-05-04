@@ -15,6 +15,7 @@
 
 #include <sst_config.h>
 #include "endpointNIC.h"
+#include "../ExtendedRequest.h"
 
 namespace SST {
 namespace Merlin {
@@ -198,6 +199,13 @@ SST::Interfaces::SimpleNetwork::Request* EndpointNIC::processThroughPipeline(
     Request* current_req = req;
 
     if (outgoing) {
+        // Wrap to ExtendedRequest once here so all plugins receive ExtendedRequest
+        if (!dynamic_cast<ExtendedRequest*>(current_req)) {
+            ExtendedRequest* ext = new ExtendedRequest(current_req);
+            delete current_req;
+            current_req = ext;
+        }
+        
         // Process through pipeline in forward order
         for (auto* plugin : plugin_pipeline) {
             current_req = plugin->processOutgoing(current_req, vn);

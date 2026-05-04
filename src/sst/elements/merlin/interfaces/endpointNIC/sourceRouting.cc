@@ -192,12 +192,9 @@ SST::Interfaces::SimpleNetwork::Request* SourceRoutingPlugin::processOutgoing(
 {
     if (!req) return nullptr;
 
-    // Convert to ExtendedRequest if not already
-    ExtendedRequest* ext_req = dynamic_cast<ExtendedRequest*>(req);
-    if (!ext_req) {
-        ext_req = new ExtendedRequest(req);
-        delete req;
-    }
+    // Guaranteed ExtendedRequest by EndpointNIC::processThroughPipeline before the plugin loop.
+    assert(dynamic_cast<ExtendedRequest*>(req) != nullptr);
+    ExtendedRequest* ext_req = static_cast<ExtendedRequest*>(req);
 
     // Check if path metadata already exists
     SourceRoutingMetadata sr_meta;
