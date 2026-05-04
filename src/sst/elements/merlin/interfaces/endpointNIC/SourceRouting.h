@@ -38,7 +38,7 @@ typedef std::vector<std::vector<path_with_weight>> routing_entries;
 class PathSelectionAlgorithm {
 public:
     virtual ~PathSelectionAlgorithm() {}
-    virtual std::deque<int> selectPath(int dest_router, const std::vector<path_with_weight>& paths) = 0;
+    virtual const std::deque<int> selectPath(int dest_router, const std::vector<path_with_weight>& paths) = 0;
     virtual void reset() {}
 };
 
@@ -50,7 +50,7 @@ private:
 public:
     RandomWeightedSelection(ComponentId_t cid);
     ~RandomWeightedSelection();
-    std::deque<int> selectPath(int dest_router, const std::vector<path_with_weight>& paths) override;
+    const std::deque<int> selectPath(int dest_router, const std::vector<path_with_weight>& paths) override;
 };
 
 // Weighted round-robin path selection algorithm
@@ -62,7 +62,7 @@ private:
 public:
     WeightedRoundRobinSelection();
     ~WeightedRoundRobinSelection();
-    std::deque<int> selectPath(int dest_router, const std::vector<path_with_weight>& paths) override;
+    const std::deque<int> selectPath(int dest_router, const std::vector<path_with_weight>& paths) override;
     void reset() override;
 };
 
@@ -125,7 +125,7 @@ public:
 private:
     void parseRoutingEntry(Params& params);
     void initializePathSelectionAlgorithm(const std::string& algorithm_name);
-    std::deque<int> selectPath(int dest_router);
+    const std::deque<int> selectPath(int dest_router);
     inline size_t lookupRtrForEndpoint(SST::Interfaces::SimpleNetwork::nid_t endpoint) {
         return endpoint_to_router_shared[endpoint];
     }
