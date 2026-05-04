@@ -35,16 +35,8 @@ EndpointNIC::EndpointNIC(ComponentId_t cid, Params& params, int vns) :
 
     loadPlugins(params);
 
-    std::string networkIF = params.find<std::string>("networkIF");
-
     link_control = loadUserSubComponent<SST::Interfaces::SimpleNetwork>
     ("networkIF", ComponentInfo::SHARE_NONE, 1 /* vns */);
-
-    // // Load LinkControl or reorderLinkControl
-    // link_control = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>(
-    //     networkIF, "networkIF", 0,
-    //     ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
-    //     params, vns);
 
     if (!link_control) {
         out.fatal(CALL_INFO, -1, "Failed to load LinkControl subcomponent\n");
