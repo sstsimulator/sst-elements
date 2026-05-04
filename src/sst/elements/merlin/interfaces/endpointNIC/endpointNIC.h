@@ -49,7 +49,8 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {"plugins", "Comma-separated list of plugin names to load in order", ""}
+        {"EP_id",        "Endpoint ID assigned to this NIC. Required.", ""},
+        {"plugin_names", "Array of subcomponent slot names for NIC plugins to load in pipeline order.", ""},
     )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(

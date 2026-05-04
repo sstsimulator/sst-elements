@@ -86,6 +86,23 @@ public:
 
 
     SST_ELI_DOCUMENT_PARAMS(
+        {"num_routers",                "Total number of routers in the network.", "1"},
+        {"num_R2N_ports",              "Number of ports on this router connecting to endpoints.", "1"},
+        {"num_R2R_ports",              "Number of ports on this router connecting to other routers.", "1"},
+        {"connectivity",              "Router-to-router connectivity, serialized in python. Semicolon-separated entries of 'dest_router_id,port_id1,port_id2,...'.", ""},
+        {"endpoint_to_port_map",       "Map from endpoint ID to local port ID, serialized in python. e.g. {0:4, 1:5, ...}.", ""},
+        {"port_to_endpoint_map",       "Map from local port ID to endpoint ID, serialized in python. e.g. {4:0, 5:1, ...}.", ""},
+        {"routing_mode",              "Per-VN routing mode: 'source_routing' or 'dest_tag_routing'. Scalar applied to all VNs or array of length num_vns.", "source_routing"},
+        {"vcs_per_vn",                "Number of virtual channels per virtual network. Scalar or array of length num_vns.", "8"},
+        {"source_routing_algo",        "Source routing algorithm per VN: 'weighted', 'UGAL', or 'UGAL_THRESHOLD'. Scalar or array of length num_vns.", "weighted"},
+        {"vn_ugal_num_valiant",        "Number of valiant intermediate routers to consider for UGAL routing, per VN. Scalar or array of length num_vns.", "3"},
+        {"adaptive_threshold",         "Threshold multiplier for UGAL_THRESHOLD routing: use valiant path if minimal_queue > valiant_queue * threshold.", "2.0"},
+        {"simple_routing_entry_string", "Compact source routing table used for untimed (init-phase) packets. Created automatically with shortest paths.", ""},
+        {"routing_table",              "Destination-tag routing table. Semicolon-separated entries of 'dest_router_id,next_hop1,next_hop2,...'.", ""},
+        {"verbose_level",              "Verbosity level for output messages (higher value = more output).", "0"},
+
+        // Currently only source routing is implemented
+        // {"dest_tag_routing_algo",      "Destination-tag routing algorithm per VN: 'nonadaptive', 'adaptive', 'ECMP', or 'UGAL'. Scalar or array of length num_vns.", "none"},
     )
 
     int router_id;
