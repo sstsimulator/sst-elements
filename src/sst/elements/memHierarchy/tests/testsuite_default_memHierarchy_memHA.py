@@ -104,6 +104,7 @@ class testcase_memHierarchy_memHA(SSTTestCase):
         self.memHA_Template("BackendRamulator_2")
 
     @skip_on_sstsimulator_conf_empty_str("RAMULATOR2", "LIBDIR", "RAMULATOR2 is not included as part of this build")
+    @unittest.skipIf(host_os_get_distribution_type() == OS_DIST_OSX, "Ramulator2 is not supported on OSX.")
     def test_memHierarchy_BackendRamulator2(self):
         self.memHA_Template("BackendRamulator2")
 
