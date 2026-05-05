@@ -103,8 +103,6 @@ link_cpu0_l1cache.connect( (iface0, "port", "1000ps"), (c0_l1cache, "highlink", 
 link_cpu1_l1cache = sst.Link("link_cpu1_l1cache")
 link_cpu1_l1cache.connect( (iface1, "port", "1000ps"), (c1_l1cache, "highlink", "1000ps") )
 
-link_c0_l1_bus = sst.Link("link_c0_l1_bus")
-
 link_c0_l1_l2_link = sst.Link("link_c0_l1_l2_link")
 link_c0_l1_l2_link.connect( (c0_l1cache, "lowlink", "1000ps"), (bus, "highlink0", "10000ps") )
 
