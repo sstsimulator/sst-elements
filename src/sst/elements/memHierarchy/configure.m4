@@ -20,9 +20,6 @@ AC_DEFUN([SST_memHierarchy_CONFIG], [
   # Use global HBMDRAMSim check
   SST_CHECK_HBMDRAMSIM([],[],[AC_MSG_ERROR([HBM DRAMSim requested but could not be found])])
 
-  # Use global HybridSim check
-  SST_CHECK_HYBRIDSIM([],[],[AC_MSG_ERROR([HybridSim requested but could not be found])])
-
   # Use GOBLIN HMC Sim
   SST_CHECK_GOBLIN_HMCSIM([],[],[AC_MSG_ERROR([GOBLIN HMC Sim requested but could not be found])])
 

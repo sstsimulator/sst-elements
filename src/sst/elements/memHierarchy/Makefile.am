@@ -130,7 +130,6 @@ libmemHierarchy_la_SOURCES = \
 EXTRA_DIST = \
 	membackend/ramulator2/Instructions.md \
 	membackend/ramulator2/sst_frontend.cpp \
-	tests/testsuite_default_memHierarchy_hybridsim.py \
 	tests/testsuite_default_memHierarchy_memHA.py \
 	tests/testsuite_default_memHierarchy_sdl.py \
 	tests/testsuite_default_memHierarchy_memory.py \
@@ -168,7 +167,6 @@ EXTRA_DIST = \
 	tests/sdl8-4.py \
 	tests/sdl9-1.py \
 	tests/sdl9-2.py \
-	tests/test_hybridsim.py \
 	tests/test_coherence_1core.py \
 	tests/test_coherence_2core_3level.py \
 	tests/test_coherence_4core_5level.py \
@@ -232,7 +230,6 @@ EXTRA_DIST = \
 	tests/hbm_system.ini \
 	tests/utils.py \
 	tests/mhlib.py \
-	tests/refFiles/test_hybridsim.out \
 	tests/refFiles/test_memHA_BackendChaining.out \
 	tests/refFiles/test_memHA_BackendDelayBuffer.out \
 	tests/refFiles/test_memHA_BackendDramsim3.out \
@@ -488,15 +485,6 @@ nobase_sst_HEADERS += membackend/HBMpagedMultiBackend.h
 
 endif
 
-if HAVE_HYBRIDSIM
-libmemHierarchy_la_LDFLAGS += $(HYBRIDSIM_LDFLAGS)
-libmemHierarchy_la_LIBADD += $(HYBRIDSIM_LIB)
-libmemHierarchy_la_SOURCES += membackend/hybridSimBackend.cc \
-	membackend/hybridSimBackend.h
-nobase_sst_HEADERS += membackend/hybridSimBackend.h
-AM_CPPFLAGS += $(HYBRIDSIM_CPPFLAGS) -DHAVE_LIBHYBRIDSIM
-endif
-
 if USE_LIBZ
 libmemHierarchy_la_LDFLAGS += $(LIBZ_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(LIBZ_LIB)
@@ -528,7 +516,6 @@ install-exec-hook:
 	$(SST_REGISTER_TOOL) DRAMSIM LIBDIR=$(DRAMSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) DRAMSIM3 LIBDIR=$(DRAMSIM3_LIBDIR)
 	$(SST_REGISTER_TOOL) HBMDRAMSIM LIBDIR=$(HBMDRAMSIM_LIBDIR)
-	$(SST_REGISTER_TOOL) HYBRIDSIM LIBDIR=$(HYBRIDSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) FDSIM LIBDIR=$(FDSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) GOBLIN_HMCSIM LIBDIR=$(GOBLIN_HMCSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) RAMULATOR LIBDIR=$(RAMULATOR_LIBDIR)
