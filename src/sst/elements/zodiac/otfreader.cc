@@ -32,7 +32,7 @@ int handleOTFSendMsg(void *userData, uint64_t time, uint32_t sender, uint32_t re
 	OTFReader* reader = (OTFReader*) userData;
 	std::cout << "OTF: Send message from " << sender << " to " << receiver << " qSize=" << reader->getCurrentQueueSize() << std::endl;
 
-	ZodiacSendEvent* sendEv = new ZodiacSendEvent(receiver, length, HERMES_DOUBLE, 0, group);
+	ZodiacSendEvent* sendEv = new ZodiacSendEvent(receiver, length, DOUBLE, 0, group);
 	reader->enqueueEvent(sendEv);
 
 	return OTF_RETURN_OK;
@@ -44,7 +44,7 @@ int handleOTFRecvMsg(void *userData, uint64_t time, uint32_t recvProc, uint32_t 
 	OTFReader* reader = (OTFReader*) userData;
 	std::cout << "OTF: Recv message from " << sendProc << " to " << recvProc << " qSize=" << reader->getCurrentQueueSize() << std::endl;
 
-	ZodiacRecvEvent* recvEv = new ZodiacRecvEvent(recvProc, length, HERMES_DOUBLE, 0, group);
+	ZodiacRecvEvent* recvEv = new ZodiacRecvEvent(recvProc, length, DOUBLE, 0, group);
 	reader->enqueueEvent(recvEv);
 
 	return OTF_RETURN_OK;
