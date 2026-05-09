@@ -26,9 +26,6 @@ AC_DEFUN([SST_memHierarchy_CONFIG], [
   # Use GOBLIN HMC Sim
   SST_CHECK_GOBLIN_HMCSIM([],[],[AC_MSG_ERROR([GOBLIN HMC Sim requested but could not be found])])
 
-  # Use NVDIMM Sim
-  SST_CHECK_NVDIMMSIM([],[],[AC_MSG_ERROR([NVDIMMSim requested but could not be found])])
-
   # Use FlashDIMMSim
   SST_CHECK_FDSIM([],[],[AC_MSG_ERROR([FlashDIMMSim requested but could not be found])])
 
