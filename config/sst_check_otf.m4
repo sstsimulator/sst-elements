@@ -8,28 +8,25 @@ AC_DEFUN([SST_CHECK_OTF],
 
   AS_IF([test "$with_otf" = "no"], [sst_check_otf_happy="no"])
 
-  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"
 
   AS_IF([test "$sst_check_otf_happy" = "yes"], [
     AS_IF([test ! -z "$with_otf" -a "$with_otf" != "yes"],
-      [OTF_PATH="$with_otf/bin/:$PATH"
-       OTF_CPPFLAGS="-I$with_otf/include"
-       CPPFLAGS="$OTF_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
-       CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
-       OTF_LDFLAGS="-L$with_otf/lib"
-       LDFLAGS="$OTF_LDFLAGS $AM_LDFLAGS $LDFLAGS"],
-      [OTF_CPPFLAGS=
-       OTF_LDFLAGS=])])
+      [OTF_PATH="$with_otf/bin/:$PATH"])])
 
   AC_PATH_PROG([OTF_CONFIG_TOOL],[otfconfig],[],[$OTF_PATH])
 
   AS_IF([test "x$OTF_CONFIG_TOOL" = "x"],
-		[sst_check_otf_happy="no"])
+		[sst_check_otf_happy="no"
+         OTF_CPPFLAGS=
+         OTF_LDFLAGS=]
+        [OTF_CPPFLAGS=`$OTF_CONFIG_TOOL --includes`
+         CPPFLAGS="$OTF_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
+         OTF_LDFLAGS=`$OTF_CONFIG_TOOL --libs`
+         LDFLAGS="$OTF_LDFLAGS $AM_LDFLAGS $LDFLAGS"])
 
-  CXXFLAGS="$CXXFLAGS_saved"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
   LIBS="$LIBS_saved"
@@ -40,7 +37,7 @@ AC_DEFUN([SST_CHECK_OTF],
   AC_SUBST([OTF_PATH])
 
   AM_CONDITIONAL([USE_OTF], [test "x$sst_check_otf_happy" = "xyes"])
-  AS_IF([test "$sst_check_otf_happy" = "yes"], [AC_DEFINE([HAVE_OTF],[1],[Defines whether we have the OFT library])])
+  AS_IF([test "$sst_check_otf_happy" = "yes"], [AC_DEFINE([HAVE_OTF],[1],[Defines whether we have the OTF library])])
 
   AC_MSG_CHECKING([for OTF library])
   AC_MSG_RESULT([$sst_check_otf_happy])

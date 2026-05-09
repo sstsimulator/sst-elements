@@ -30,16 +30,12 @@ ZodiacOTFTraceReader::ZodiacOTFTraceReader(ComponentId_t id, Params& params) :
     std::cout << "Creating a new ZOTFTrace Reader..." << std::endl;
     string msgiface = params.find<std::string>("msgapi");
 
-    if ( msgiface == "" ) {
-        msgapi = new MessageInterface();
-    } else {
-	msgapi = dynamic_cast<MessageInterface*>(loadSubComponent(msgiface, this, params));
+    msgapi = loadUserSubComponent<Hermes::MP::Interface>(msgiface);
 
         if(NULL == msgapi) {
 		std::cerr << "Message API: " << msgiface << " could not be loaded." << std::endl;
 		exit(-1);
         }
-    }
 
     string trace_file = params.find<std::string>("trace");
     if("" == trace_file) {
