@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -12,6 +12,8 @@
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
+
+// UNUSED class
 
 #ifndef _H_VANADIS_MEMORY_WRITTEN_RECORD
 #define _H_VANADIS_MEMORY_WRITTEN_RECORD
@@ -28,8 +30,6 @@ public:
     VanadisMemoryWrittenRecord(int verbosity, uint64_t memory_size) {
         // Round up the next highest number of lines unless we evenly divide
         uint64_t lines = (memory_size / 64) + ((memory_size % 64) == 0 ? 0 : 1);
-
-        printf("creating a memory record with size: %" PRIu64 " = %" PRIu64 " lines.\n", memory_size, lines);
 
         // Zero out the memory - nothing written at start
         for (uint64_t i = 0; i < lines; ++i) {

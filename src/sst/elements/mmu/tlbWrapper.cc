@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -29,16 +29,31 @@ TLB_Wrapper::TLB_Wrapper(SST::ComponentId_t id, SST::Params& params): Component(
         0, // Mask
         Output::STDOUT );
 
-    exe_ = params.find<bool>("exe", 0 );
-
-    cpu_if_ = configureLink("cpu_if", new Event::Handler2<TLB_Wrapper,&TLB_Wrapper::handleCpuEvent>(this));
-    if ( nullptr == cpu_if_ ) {
-        dbg_.fatal(CALL_INFO, -1, "Error: was unable to configure link `cpu_if`\n");
+    exe_ = 0;
+    if ( params.find<bool>("exe", false ) ) {
+        exe_ = page_perms::exe;
     }
 
-    cache_if_ = configureLink("cache_if", new Event::Handler2<TLB_Wrapper,&TLB_Wrapper::handleCacheEvent>(this));
+    cpu_if_ = configureLink("highlink", new Event::Handler<TLB_Wrapper,&TLB_Wrapper::handleCpuEvent>(this));
+
+    if ( nullptr == cpu_if_ ) {
+        cpu_if_ = configureLink("cpu_if", new Event::Handler<TLB_Wrapper,&TLB_Wrapper::handleCpuEvent>(this));
+        if ( nullptr == cpu_if_ ) {
+            dbg_.fatal(CALL_INFO, -1, "Error: was unable to configure link `highlink` (previously `cpu_if`)\n");
+        } else {
+            dbg_.output("Warning: %s, The port 'cpu_if' has been renamed to 'highlink' to match other memory system components. Update your input file to eliminate this warning.\n", getName().c_str() );
+        }
+    }
+
+    cache_if_ = configureLink("lowlink", new Event::Handler<TLB_Wrapper,&TLB_Wrapper::handleCacheEvent>(this));
+
     if ( nullptr == cache_if_ ) {
-        dbg_.fatal(CALL_INFO, -1, "Error: was unable to configure link `cache_if`\n");
+        cache_if_ = configureLink("cache_if", new Event::Handler<TLB_Wrapper,&TLB_Wrapper::handleCacheEvent>(this));
+        if ( nullptr == cache_if_ ) {
+            dbg_.fatal(CALL_INFO, -1, "Error: was unable to configure link `lowlink` (previously `cache_if`)\n");
+        } else {
+            dbg_.output("Warning: %s, The port 'cache_if' has been renamed to 'lowlink' to match other memory system components. Update your input file to eliminate this warning.\n", getName().c_str() );
+        }
     }
 
     tlb_ = loadUserSubComponent<SST::MMU_Lib::TLB>("tlb");
@@ -109,7 +124,7 @@ void TLB_Wrapper::tlbCallback( RequestID req_id, uint64_t phys_addr )
     dbg_.debug(CALL_INFO_LONG,1,0,"reqId=%#" PRIx64 " virtAddr=%#" PRIx64 "  physAddr=%#" PRIx64 "\n", req_id, addr, phys_addr);
 #endif
 
-    if( phys_addr == -1 ) {
+    if( phys_addr == std::numeric_limits<uint64_t>::max() ) {
         auto resp = mem_event->makeResponse();
         static_cast<MemHierarchy::MemEvent*>(resp)->setFail();
         cpu_if_->send( resp );
@@ -133,7 +148,7 @@ void TLB_Wrapper::tlbCallback( RequestID req_id, uint64_t phys_addr )
         }
 
 #ifdef __SST_DEBUG_OUTPUT__
-        dbg_.debug(CALL_INFO_LONG,1,0,"memEvent thread=%d  addr=%#" PRIx64 " -> %#" PRIx64 "\n",
+        dbg_.debug(CALL_INFO_LONG,1,0,"memEvent thread=%" PRIu32 "  addr=%#" PRIx64 " -> %#" PRIx64 "\n",
                 mem_event->getThreadID(), addr, mem_event->getAddr() );
 #endif
         cache_if_->send( mem_event );
@@ -146,11 +161,11 @@ void TLB_Wrapper::handleCpuEvent( Event* ev )
     ++pending_;
     MemHierarchy::MemEvent* mem_event = static_cast<MemHierarchy::MemEvent*>(ev);
 #ifdef __SST_DEBUG_OUTPUT__
-    dbg_.debug(CALL_INFO_LONG,1,0,"memEvent thread=%d baseAddr=%#" PRIx64  " addr=%#"  PRIx64  "\n",  mem_event->getThreadID(), mem_event->getBaseAddr(), mem_event->getAddr() );
+    dbg_.debug(CALL_INFO_LONG,1,0,"memEvent thread=%" PRIu32 " baseAddr=%#" PRIx64  " addr=%#"  PRIx64  "\n",  mem_event->getThreadID(), mem_event->getBaseAddr(), mem_event->getAddr() );
     dbg_.debug(CALL_INFO_LONG,1,0," %s \n", mem_event->getVerboseString(16).c_str() );
 #endif
     auto req_id = reinterpret_cast<RequestID>(mem_event);
-    int hw_thread = mem_event->getThreadID();
+    uint32_t hw_thread = mem_event->getThreadID();
     uint64_t virt_addr = mem_event->getAddr(); // getVirtualAddress()
     uint64_t inst_ptr = mem_event->getInstructionPointer();
     uint32_t perms = getPerms( mem_event );

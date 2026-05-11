@@ -14,7 +14,7 @@ debugPython=False
 
 tlbParams = {
     "debug_level": 0,
-    "hitLatency": 10,
+    "hit_latency": 10,
     "num_hardware_threads": 1,
     "num_tlb_entries_per_thread": 64,
     "tlb_set_size": 4,
@@ -97,11 +97,11 @@ class Builder:
 
         # NIC DMA -> TLB
         link = sst.Link(prefix+".link_cpu_dtlb")
-        link.connect( (dmaIf, "lowlink", "1ns"), (tlbWrapper, "cpu_if", "1ns") )
+        link.connect( (dmaIf, "lowlink", "1ns"), (tlbWrapper, "highlink", "1ns") )
 
         # NIC DMA TLB -> cache
         link = sst.Link(prefix+".link_cpu_l1dcache")
-        link.connect( (tlbWrapper, "cache_if", "1ns"), (dmaCache, "highlink", "1ns") )
+        link.connect( (tlbWrapper, "lowlink", "1ns"), (dmaCache, "highlink", "1ns") )
 
         # NIC internode interface
         netLink = nic.setSubComponent( "rtrLink", "merlin.linkcontrol" )

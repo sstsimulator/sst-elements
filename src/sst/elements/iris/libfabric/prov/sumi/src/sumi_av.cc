@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -106,9 +106,12 @@ static struct fi_ops sumi_fi_av_ops = {
   .ops_open = fi_no_ops_open
 };
 
-#define SUMI_MAX_ADDR_CHARS 7
-#define SUMI_ADDR_FORMAT_STR "%7" PRIu64
-#define SUMI_MAX_ADDR_LEN SUMI_MAX_ADDR_CHARS+1
+// FI_ADDR_STR format: "<rank10>.<cq5>" with zero-padding, exactly 16 chars
+// plus a trailing NUL = 17 bytes. Round-trips (rank, cq) through the string
+// form so av_insert(getname()) == binary-encoded fi_addr_t.
+#define SUMI_MAX_ADDR_CHARS 16
+#define SUMI_ADDR_FORMAT_STR "%010" PRIu32 ".%05" PRIu16
+#define SUMI_MAX_ADDR_LEN (SUMI_MAX_ADDR_CHARS+1)
 
 /*
  * Note: this function (according to WG), is not intended to
@@ -129,8 +132,9 @@ EXTERN_C DIRECT_FN STATIC  int sumi_av_lookup(struct fid_av *av, fi_addr_t fi_ad
     if (*addrlen < SUMI_MAX_ADDR_LEN){
       return -FI_EINVAL;
     }
-    //all addresses are just strings of the rank
-    snprintf((char*)addr, SUMI_MAX_ADDR_LEN, SUMI_ADDR_FORMAT_STR, fi_addr);
+    uint32_t rank = ADDR_RANK(fi_addr);
+    uint16_t cq   = ADDR_CQ(fi_addr);
+    snprintf((char*)addr, SUMI_MAX_ADDR_LEN, SUMI_ADDR_FORMAT_STR, rank, cq);
     *addrlen = SUMI_MAX_ADDR_LEN;
   } else {
     sst_hg_abort_printf("internal error: got addr format that isn't SSTMAC or STR");
@@ -144,10 +148,26 @@ EXTERN_C DIRECT_FN STATIC  int sumi_av_insert(struct fid_av *av, const void *add
 {
   sumi_fid_av* av_impl = (sumi_fid_av*) av;
   if (av_impl->domain->addr_format == FI_ADDR_STR){
+    static bool warned_legacy_addr = false;
     char* addr_str = (char*) addr;
     for (int i=0; i < count; ++i){
-      long long rank = std::atoll(addr_str);
-      fi_addr[i] = rank;
+      // Each slot must be NUL-terminated inside SUMI_MAX_ADDR_LEN bytes.
+      if (strnlen(addr_str, SUMI_MAX_ADDR_LEN) == (size_t)SUMI_MAX_ADDR_LEN){
+        return -FI_EINVAL;
+      }
+      // Parse "<rank>.<cq>"; accept legacy "<rank>" by defaulting cq to 0.
+      char* end = nullptr;
+      uint32_t rank = (uint32_t) std::strtoul(addr_str, &end, 10);
+      uint16_t cq = 0;
+      if (end && *end == '.'){
+        cq = (uint16_t) std::strtoul(end + 1, nullptr, 10);
+      } else if (!warned_legacy_addr){
+        fprintf(stderr,
+                "WARNING: sumi av_insert accepted legacy \"<rank>\" "
+                "FI_ADDR_STR form; expected \"<rank10>.<cq5>\" (cq=0)\n");
+        warned_legacy_addr = true;
+      }
+      fi_addr[i] = ADDR_RANK_BITS((uint64_t)rank) | ADDR_CQ_BITS((uint64_t)cq);
       addr_str += SUMI_MAX_ADDR_LEN;
     }
   } else if (av_impl->domain->addr_format == FI_ADDR_SSTMAC) {
@@ -223,6 +243,10 @@ extern "C" DIRECT_FN  int sumi_av_open(struct fid_domain *domain, struct fi_av_a
 {
   sumi_fid_av* av_impl = (sumi_fid_av*) calloc(1, sizeof(sumi_fid_av));
   av_impl->av_fid.fid.fclass = FI_CLASS_AV;
+  av_impl->av_fid.fid.context = context;
+  av_impl->av_fid.fid.ops = const_cast<fi_ops*>(&sumi_fi_av_ops);
+  av_impl->av_fid.ops = const_cast<fi_ops_av*>(&sumi_av_ops);
+  av_impl->domain = (sumi_fid_domain*) domain;
   *av = (fid_av*) av_impl;
   return FI_SUCCESS;
 }

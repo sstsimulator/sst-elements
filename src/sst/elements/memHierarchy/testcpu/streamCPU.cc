@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -59,17 +59,17 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
 
     //set our clock
     std::string clockFreq = params.find<std::string>("clock", "1GHz");
-    clockHandler = new Clock::Handler2<streamCPU, &streamCPU::clockTic>(this);
+    clockHandler = new Clock::Handler<streamCPU, &streamCPU::clockTic>(this);
     clockTC = registerClock(clockFreq, clockHandler);
     num_reads_issued = num_reads_returned = 0;
 
-    memory = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::StandardMem::Handler2<streamCPU, &streamCPU::handleEvent>(this));
+    memory = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::StandardMem::Handler<streamCPU, &streamCPU::handleEvent>(this));
 
     if (!memory) {
         Params interfaceParams;
         interfaceParams.insert("port", "mem_link");
         memory = loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
-                interfaceParams, clockTC, new Interfaces::StandardMem::Handler2<streamCPU, &streamCPU::handleEvent>(this));
+                interfaceParams, clockTC, new Interfaces::StandardMem::Handler<streamCPU, &streamCPU::handleEvent>(this));
         //out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.memInterface subcomponent\n");
     }
 
@@ -81,7 +81,7 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
 }
 
 streamCPU::streamCPU() :
-	Component(-1)
+	Component()
 {
 	// for serialization only
 }
@@ -98,7 +98,7 @@ void streamCPU::handleEvent(Interfaces::StandardMem::Request * req)
 	//out.output("recv\n");
     std::map<uint64_t, SimTime_t>::iterator i = requests.find(req->getID());
     if (i == requests.end()) {
-	out.fatal(CALL_INFO, -1, "Request ID (%" PRIx64 ") not found in outstanding requests!\n", req->getID());
+	    out.fatal(CALL_INFO, -1, "Request ID (%" PRIx64 ") not found in outstanding requests!\n", req->getID());
     } else {
         SimTime_t et = getCurrentSimTime() - i->second;
         requests.erase(i);
@@ -134,7 +134,7 @@ bool streamCPU::clockTic( Cycle_t )
                 data.push_back((nextAddr >> 16) & 0xff);
                 data.push_back((nextAddr >>  8) & 0xff);
                 data.push_back((nextAddr >>  0) & 0xff);
-	        req = new Interfaces::StandardMem::Write(nextAddr, 4, data);
+                req = new Interfaces::StandardMem::Write(nextAddr, 4, data);
             } else {
                 req = new Interfaces::StandardMem::Read(nextAddr, 4);
             }
@@ -142,13 +142,13 @@ bool streamCPU::clockTic( Cycle_t )
             memory->send(req);
             requests.insert(std::make_pair(req->getID(), getCurrentSimTime()));
 
-	    out.verbose(CALL_INFO, 1, 0, "Issued request %10d: %5s for address %20d.\n", numLS, (doWrite ? "write" : "read"), nextAddr);
+            out.verbose(CALL_INFO, 1, 0, "Issued request %10d: %5s for address %20d.\n", numLS, (doWrite ? "write" : "read"), nextAddr);
 
-	    num_reads_issued++;
+            num_reads_issued++;
             nextAddr = (nextAddr + 8);
 
             if (nextAddr > (maxAddr - 4)) {
-		nextAddr = addrOffset;
+                nextAddr = addrOffset;
 	    }
 
 	    numLS--;
@@ -164,4 +164,25 @@ bool streamCPU::clockTic( Cycle_t )
     return false;
 }
 
+void streamCPU::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Component::serialize_order(ser);
+
+    SST_SER(out);
+    SST_SER(numLS);
+    SST_SER(commFreq);
+    SST_SER(do_write);
+    SST_SER(maxAddr);
+    SST_SER(maxOutstanding);
+    SST_SER(maxReqsPerIssue);
+    SST_SER(nextAddr);
+    SST_SER(num_reads_issued);
+    SST_SER(num_reads_returned);
+    SST_SER(addrOffset);
+    SST_SER(requests);
+    SST_SER(memory);
+    SST_SER(rng);
+    SST_SER(clockTC);
+    SST_SER(clockHandler);
+}
 

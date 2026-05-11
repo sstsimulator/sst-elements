@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -80,7 +80,40 @@ incast_nic::incast_nic(ComponentId_t cid, Params& params) :
 
 incast_nic::~incast_nic()
 {
-    delete link_control;
+    // SST framework manages SubComponent lifecycle — do not delete link_control
+}
+
+incast_nic::incast_nic() :
+    Component(),
+    id(-1),
+    num_peers(0),
+    target(false),
+    packet_size_in_bits(0),
+    curr_packets(0),
+    total_packets(0),
+    link_control(nullptr),
+    self_link(nullptr),
+    start_time(0),
+    end_time(0),
+    output(getSimulationOutput())
+{}
+
+void
+incast_nic::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Component::serialize_order(ser);
+    SST_SER(id);
+    SST_SER(num_peers);
+    SST_SER(targets);
+    SST_SER(target);
+    SST_SER(packet_size_in_bits);
+    SST_SER(curr_packets);
+    SST_SER(total_packets);
+    SST_SER(link_control);
+    SST_SER(self_link);
+    SST_SER(start_time);
+    SST_SER(end_time);
+    SST_SER(delay_start);
 }
 
 void
@@ -105,12 +138,12 @@ incast_nic::init(unsigned int phase) {
             UnitAlgebra size = UnitAlgebra("1 b") * packet_size_in_bits;
             UnitAlgebra ser_time = size / bw;
 
-            self_link = configureSelfLink("complete_link", ser_time.toString(), new Event::Handler2<incast_nic,&incast_nic::handle_complete>(this));
-            link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler2<incast_nic,&incast_nic::handle_event>(this));
+            self_link = configureSelfLink("complete_link", ser_time.toString(), new Event::Handler<incast_nic,&incast_nic::handle_complete>(this));
+            link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler<incast_nic,&incast_nic::handle_event>(this));
         }
         else {
-            link_control->setNotifyOnSend(new SST::Interfaces::SimpleNetwork::Handler2<incast_nic,&incast_nic::handle_sends>(this));
-            self_link = configureSelfLink("start_link", delay_start.toString(), new Event::Handler2<incast_nic,&incast_nic::handle_start>(this));
+            link_control->setNotifyOnSend(new SST::Interfaces::SimpleNetwork::Handler<incast_nic,&incast_nic::handle_sends>(this));
+            self_link = configureSelfLink("start_link", delay_start.toString(), new Event::Handler<incast_nic,&incast_nic::handle_start>(this));
         }
     }
 }

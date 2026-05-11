@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -54,9 +54,9 @@ VanadisForkSyscall::VanadisForkSyscall( VanadisNodeOSComponent* os, SST::Link* c
     // create a page table for the child that is a copy of the parents
     m_os->getMMU()->dup( process->getpid(), m_child->getpid() );
 
-    m_os->getMMU()->setCoreToPageTable( m_threadID->core, m_threadID->hwThread, m_child->getpid() );
+    m_os->getMMU()->setCoreToPageTable( m_threadID->core, m_threadID->hw_thread, m_child->getpid() );
 
-    m_os->setProcess( m_threadID->core, m_threadID->hwThread, m_child );
+    m_os->setProcess( m_threadID->core, m_threadID->hw_thread, m_child );
 
     m_child->printRegions("child");
 
@@ -72,7 +72,7 @@ void VanadisForkSyscall::handleEvent( VanadisCoreEvent* ev )
     m_output->verbose(CALL_INFO, 16, 0, "[syscall-fork] got thread state response\n");
     #endif
 
-    VanadisStartThreadForkReq* req = new VanadisStartThreadForkReq( m_threadID->hwThread, resp->getInstPtr(), resp->getTlsPtr() );
+    VanadisStartThreadForkReq* req = new VanadisStartThreadForkReq( m_threadID->hw_thread, resp->getInstPtr(), resp->getTlsPtr() );
     req->setIntRegs( resp->intRegs );
     req->setFpRegs( resp->fpRegs );
 

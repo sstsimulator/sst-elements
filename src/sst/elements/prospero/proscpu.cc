@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -58,7 +58,7 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 
 	std::string prosClock = params.find<std::string>("clock", "2GHz");
 	// Register the clock
-	TimeConverter time = registerClock(prosClock, new Clock::Handler2<ProsperoComponent,&ProsperoComponent::tick>(this));
+	TimeConverter time = registerClock(prosClock, new Clock::Handler<ProsperoComponent,&ProsperoComponent::tick>(this));
 
 	output->verbose(CALL_INFO, 1, 0, "Configured Prospero clock for %s\n", prosClock.c_str());
 
@@ -75,13 +75,13 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	output->verbose(CALL_INFO, 1, 0, "Configuring Prospero cache connection...\n");
 
     // Check for interface in the input config; if not, load an anonymous interface (must use our port instead of its own)
-    cache_link = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, &time,
-            new StandardMem::Handler2<ProsperoComponent,&ProsperoComponent::handleResponse>(this));
+    cache_link = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, time,
+            new StandardMem::Handler<ProsperoComponent,&ProsperoComponent::handleResponse>(this));
     if (!cache_link) {
         Params par;
         par.insert("port", "cache_link");
         cache_link = loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "memory", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, par,
-                    &time, new StandardMem::Handler2<ProsperoComponent,&ProsperoComponent::handleResponse>(this));
+                    time, new StandardMem::Handler<ProsperoComponent,&ProsperoComponent::handleResponse>(this));
     }
 	output->verbose(CALL_INFO, 1, 0, "Configuration of memory interface completed.\n");
 

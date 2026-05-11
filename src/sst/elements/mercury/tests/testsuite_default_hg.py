@@ -19,26 +19,14 @@ class testcase_hg(SSTTestCase):
 
 #####
 
+    @unittest.skipIf(testing_check_get_num_threads() > 1, "ostest skipped if threads > 1 - single component in config")
+    @unittest.skipIf(testing_check_get_num_ranks() > 1, "ostest skipped if ranks > 1 - single component in config")
     def test_os(self):
-        testdir = self.get_testsuite_dir()
-        libdir = sstsimulator_conf_get_value("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR", str)
-        path = os.environ.get("SST_LIB_PATH")
-        if path is None or path == "":
-            os.environ["SST_LIB_PATH"] = libdir + "/ext"
-        else:
-            os.environ["SST_LIB_PATH"] = path + ":" + libdir + "/ext"
-        print(os.environ["SST_LIB_PATH"])
         self.simple_components_template("ostest")
 
+    @unittest.skipIf(testing_check_get_num_threads() > 1, "ostest-nano skipped if threads > 1 - single component in config")
+    @unittest.skipIf(testing_check_get_num_ranks() > 1, "ostest-nano skipped if ranks > 1 - single component in config")
     def test_os_nano(self):
-        testdir = self.get_testsuite_dir()
-        libdir = sstsimulator_conf_get_value("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR", str)
-        path = os.environ.get("SST_LIB_PATH")
-        if path is None or path == "":
-            os.environ["SST_LIB_PATH"] = libdir + "/ext"
-        else:
-            os.environ["SST_LIB_PATH"] = path + ":" + libdir + "/ext"
-        print(os.environ["SST_LIB_PATH"])
         self.simple_components_template("ostest-nano")
 
 #####

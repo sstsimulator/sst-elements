@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -74,9 +74,9 @@ void VanadisClone3Syscall::handleEvent( VanadisCoreEvent* ev )
     _VanadisStartThreadBaseReq* req;
 
     if ( exit_signal_ == VANADIS_LINUX_SIGCHLD ) {
-        req = new VanadisStartThreadForkReq( hw_thread_id_->hwThread, resp->getInstPtr(), resp->getTlsPtr() );
+        req = new VanadisStartThreadForkReq( hw_thread_id_->hw_thread, resp->getInstPtr(), resp->getTlsPtr() );
     } else {
-        req = new VanadisStartThreadClone3Req( hw_thread_id_->hwThread, resp->getInstPtr(), stack_, tls_);
+        req = new VanadisStartThreadClone3Req( hw_thread_id_->hw_thread, resp->getInstPtr(), stack_, tls_);
     }
 
     req->setIntRegs( resp->intRegs );
@@ -84,7 +84,7 @@ void VanadisClone3Syscall::handleEvent( VanadisCoreEvent* ev )
 
     #ifdef VANADIS_BUILD_DEBUG
     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-clone3] core=%d thread=%d tid=%d instPtr=%" PRI_ADDR "\n",
-                hw_thread_id_->core, hw_thread_id_->hwThread, new_thread_->gettid(), resp->getInstPtr() );
+                hw_thread_id_->core, hw_thread_id_->hw_thread, new_thread_->gettid(), resp->getInstPtr() );
     #endif
 
     m_os->sendEvent( hw_thread_id_->core, req );
@@ -123,6 +123,8 @@ void VanadisClone3Syscall::memReqIsDone(bool)
 
         case State::ChildSetTid:
             finish(event);
+            break;
+        default:
             break;
     }
 }
@@ -173,8 +175,8 @@ void VanadisClone3Syscall::parseCloneArgs(VanadisSyscallClone3Event* event)
             new_thread_->getpid(), new_thread_->gettid(), new_thread_->getppid(), new_thread_->numThreads() );
     #endif
 
-    m_os->setProcess( hw_thread_id_->core, hw_thread_id_->hwThread, new_thread_ );
-    m_os->getMMU()->setCoreToPageTable( hw_thread_id_->core, hw_thread_id_->hwThread, new_thread_->getpid() );
+    m_os->setProcess( hw_thread_id_->core, hw_thread_id_->hw_thread, new_thread_ );
+    m_os->getMMU()->setCoreToPageTable( hw_thread_id_->core, hw_thread_id_->hw_thread, new_thread_->getpid() );
 
     setTidAtParent(event);
 }

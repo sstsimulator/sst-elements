@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -48,22 +48,24 @@ public:
 private:
 
     static const int window = 100;
-    int num_vns;
-    int num_counters;
-    int* vcs_per_vn;
-    int* vn_offset;
+    int num_vns = 0;
+    int num_counters = 0;
+    int* vcs_per_vn = nullptr;
+    int* vn_offset = nullptr;
     std::string arb_vns_name;
     std::string arb_vcs_name;
-    SingleArbitration* arb;
-    SingleArbitration** vn_arb;
+    SingleArbitration* arb = nullptr;
+    SingleArbitration** vn_arb = nullptr;
 
-    int16_t* qos_settings;
-    int16_t* counters;
-    int16_t* which_counter;
+    int16_t* qos_settings = nullptr;
+    int16_t* counters = nullptr;
+    int16_t* which_counter = nullptr;
 
-    Cycle_t last_cycle;
+    Cycle_t last_cycle = 0;
 
 public:
+
+    output_arb_qos_multi() = default;
 
     output_arb_qos_multi(ComponentId_t cid, Params& params) :
         OutputArbitration(cid),
@@ -136,7 +138,37 @@ public:
         delete[] vn_offset;
     }
 
-    void setVCs(int n_vns, int* vcs_per_vn_in) {
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        OutputArbitration::serialize_order(ser);
+        SST_SER(num_vns);
+        SST_SER(num_counters);
+        SST_SER(arb_vns_name);
+        SST_SER(arb_vcs_name);
+        SST_SER(last_cycle);
+        SST_SER(arb);
+        if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+            vcs_per_vn = new int[num_vns];
+            vn_offset = new int[num_vns];
+            vn_arb = new SingleArbitration*[num_vns];
+            qos_settings = new int16_t[num_counters];
+            counters = new int16_t[num_counters];
+            which_counter = new int16_t[num_vns];
+        }
+        for ( int i = 0; i < num_vns; ++i ) {
+            SST_SER(vcs_per_vn[i]);
+            SST_SER(vn_offset[i]);
+            SST_SER(vn_arb[i]);
+            SST_SER(which_counter[i]);
+        }
+        for ( int i = 0; i < num_counters; ++i ) {
+            SST_SER(qos_settings[i]);
+            SST_SER(counters[i]);
+        }
+    }
+    ImplementSerializable(SST::Merlin::output_arb_qos_multi)
+
+    void setVCs(int n_vns, int* vcs_per_vn_in) override
+    {
         if ( n_vns != num_vns ) {
             // Error, this means the original qos_settings were wrong
             merlin_abort.fatal(CALL_INFO_LONG,1,"output_arb_qos_multi: size of qos_settings does not match number of vns in network\n");
@@ -155,7 +187,8 @@ public:
         }
     }
 
-    int arbitrate(Cycle_t cycle, PortInterface::port_queue_t* out_q, int* port_out_credits, bool isHostPort, bool& have_packets) {
+    int arbitrate(Cycle_t cycle, PortInterface::port_queue_t* out_q, int* port_out_credits, bool isHostPort, bool& have_packets) override
+    {
         // First see if we need to see if we need to reest the
         // counters. We reset if we cross over a boundary of window
         // cycles
@@ -238,8 +271,8 @@ public:
         return vc_to_send;
     }
 
-    void dumpState(std::ostream& stream) {
-    }
+    void dumpState(std::ostream& stream) override
+    {}
 
 };
 

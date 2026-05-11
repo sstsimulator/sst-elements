@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -77,7 +77,7 @@ pt2pt_test::pt2pt_test(ComponentId_t cid, Params& params) :
 
 
     // // Register a clock
-    // registerClock( "1GHz", new Clock::Handler2<pt2pt_test,&pt2pt_test::clock_handler>(this), false);
+    // registerClock( "1GHz", new Clock::Handler<pt2pt_test,&pt2pt_test::clock_handler>(this), false);
 
     params.find_array<int>("src",src);
 
@@ -100,21 +100,21 @@ pt2pt_test::pt2pt_test(ComponentId_t cid, Params& params) :
     }
 
     self_link = configureSelfLink("start_timing", "1ns",
-                                  new Event::Handler2<pt2pt_test,&pt2pt_test::start>(this));
+                                  new Event::Handler<pt2pt_test,&pt2pt_test::start>(this));
 
     report_timing = configureSelfLink("report_timing", "1ns",
-                                  new Event::Handler2<pt2pt_test,&pt2pt_test::report_bw>(this));
+                                  new Event::Handler<pt2pt_test,&pt2pt_test::report_bw>(this));
 
     // if ( id == 1 ) {
     //     // self_link = configureSelfLink("complete_link", link_bw_s,
-	// 	// 		      new Event::Handler2<pt2pt_test,&pt2pt_test::handle_complete>(this));
+	// 	// 		      new Event::Handler<pt2pt_test,&pt2pt_test::handle_complete>(this));
 
     //     // Configure a new self link to be used to time the
     //     // serialization latency of the last packet.  We won't know
     //     // the final BW until the network is intialized, so we'll put
     //     // in a dummy value, then change it later.
     //     self_link = configureSelfLink("complete_link", "2GHz",
-	// 			      new Event::Handler2<pt2pt_test,&pt2pt_test::handle_complete>(this));
+	// 			      new Event::Handler<pt2pt_test,&pt2pt_test::handle_complete>(this));
     // }
 
     my_dest = -1;
@@ -128,6 +128,58 @@ pt2pt_test::pt2pt_test(ComponentId_t cid, Params& params) :
     last_pkt_recd = 0;
     interval_start_bw = "0b/s";
 }
+
+pt2pt_test::~pt2pt_test() {}
+
+pt2pt_test::pt2pt_test() :
+    Component(),
+    id(-1),
+    my_dest(-1),
+    packets_sent(0),
+    packets_recd(0),
+    start_time(0),
+    latency(0),
+    packets_to_send(0),
+    packet_size(0),
+    link_control(nullptr),
+    self_link(nullptr),
+    report_timing(nullptr),
+    last_pkt_recd(0),
+    pkt_ser_cycles(0),
+    pkts_in_interval(0)
+{}
+
+void
+pt2pt_test::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Component::serialize_order(ser);
+    SST_SER(out);
+    SST_SER(id);
+    SST_SER(src);
+    SST_SER(dest);
+    SST_SER(delays);
+    SST_SER(my_dest);
+    SST_SER(my_delay);
+    SST_SER(my_recvs);
+    SST_SER(packets_sent);
+    SST_SER(packets_recd);
+    SST_SER(start_time);
+    SST_SER(latency);
+    SST_SER(packets_to_send);
+    SST_SER(packet_size);
+    SST_SER(buffer_size);
+    SST_SER(link_control);
+    SST_SER(self_link);
+    SST_SER(report_timing);
+    SST_SER(bw_multiplier);
+    SST_SER(bw_multiplier_partial);
+    SST_SER(report_interval);
+    SST_SER(interval_start_bw);
+    SST_SER(last_pkt_recd);
+    SST_SER(pkt_ser_cycles);
+    SST_SER(pkts_in_interval);
+}
+
 
 void pt2pt_test::finish()
 {
@@ -184,7 +236,7 @@ void pt2pt_test::setup()
 
     if ( my_dest != -1 ) {
         trace.output("I'm a sender\n");
-        link_control->setNotifyOnSend(new SimpleNetwork::Handler2<pt2pt_test,&pt2pt_test::send_handler>(this));
+        link_control->setNotifyOnSend(new SimpleNetwork::Handler<pt2pt_test,&pt2pt_test::send_handler>(this));
         // Compute delay in nanoseconds
         UnitAlgebra delay_in_ns = my_delay / UnitAlgebra("1ns");
         self_link->send(delay_in_ns.getRoundedValue(),NULL);
@@ -192,7 +244,7 @@ void pt2pt_test::setup()
 
     if ( !my_recvs.empty() ) {
         trace.output("I'm a receiver\n");
-        link_control->setNotifyOnReceive(new SimpleNetwork::Handler2<pt2pt_test,&pt2pt_test::recv_handler>(this));
+        link_control->setNotifyOnReceive(new SimpleNetwork::Handler<pt2pt_test,&pt2pt_test::recv_handler>(this));
     }
 
     // If I am a receiver and report_interval is not zero, set up

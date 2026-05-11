@@ -1,5 +1,109 @@
 import os
 import sst
+import argparse
+
+############### Testing for ROCC interface in Vanadis ####################
+#
+## Env Variables
+#   Variable                     | Default                                          | Description/Options
+#  ------------------------------|--------------------------------------------------|---------------------------
+#   VANADIS_EXE                  | ./small/basic-io/hello-world/<ISA>/hello-world   | Which application to run
+#   VANADIS_EXE_ARGS             | ""                                               | Any arguments for the application
+#   VANADIS_ISA                  | RISCV64                                          | Which ISA to use (MIPS or RISCV64)
+#   VANADIS_LOADER_MODE          | 0                                                | Instruction uOp cache configuration. 0=LRU, 1=infinite
+#   VANADIS_VERBOSE              | 0                                                | Verbosity level for core components.
+#   VANADIS_OS_VERBOSE           | 0                                                | Verbosity level for the OS component. Defaults to 'VANADIS_VERBOSE' if not set.
+#   VANADIS_PIPE_TRACE           | ""                                               | Filename to send a trace to or "" for none
+#   VANADIS_LSQ_LD_ENTRIES       | 16                                               | Number of load entries in the load-store queue
+#   VANADIS_LSQ_ST_ENTRIES       | 8                                                | Number of store entries in the load-store queue
+#   VANADIS_ROB_SLOTS            | 64                                               | Number of entries in the reorder buffer
+#   VANADIS_RETIRES_PER_CYCLE    | 4                                                | Maximum number of instructions to retire per cycle
+#   VANADIS_ISSUES_PER_CYCLE     | 4                                                | Maximum number of instructions to issue per cycle
+#   VANADIS_DECODES_PER_CYCLE    | 4                                                | Maximum number of instructions to decode per cycle
+#   VANADIS_INTEGER_ARITH_CYCLES | 2                                                | Cycles per integer operation
+#   VANADIS_INTEGER_ARITH_UNITS  | 2                                                | Number of integer ALUs
+#   VANADIS_FP_ARITH_CYCLES      | 8                                                | Cycles per floating point operation
+#   VANADIS_FP_ARITH_UNITS       | 2                                                | Number of floating point units
+#   VANADIS_BRANCH_ARITH_CYCLES  | 2                                                | Cycles per branch operation
+#   VANADIS_CPU_CLOCK            | 2.3GHz                                           | Core clock frequency
+#   VANADIS_NUM_CORES            | 1                                                | Number of cores
+#   VANADIS_NUM_HW_THREADS       | 1                                                | Number of hardware threads per core
+#   VANADIS_LIBRARY              | vanadis                                          | Which vanadis library to use (vanadis or vanadisdbg)
+#   VANADIS_HALT_AT_ADDRESS      | 0                                                | If not 0, an instruction address to halt at
+#   VANADIS_TLB_IFACE            | 0                                                | Whether to put TLBs in the core's memory interface (1) or place them between the interface and L1 (0)
+#
+#
+
+# Parse arguments. If not found, defer to environment variables.
+parser = argparse.ArgumentParser()
+parser.add_argument("-e", "--exe", help="Executable to run on vanadis. Default is './small/basic-io/hello-world/<ISA>/hello-world'")
+parser.add_argument("-a", "--exe_args", help="Arguments for the executable in '--exe'. Default is ''.")
+parser.add_argument("-i", "--isa", help="ISA to simulation, 'mipsel' or 'riscv64' (default)")
+parser.add_argument("-v", "--verbose", help="Verbosity level for vanadis core components and subcomponents. Default is 0.")
+parser.add_argument("-o", "--os-verbose", help="Verbosity level for the OS component. Defaults to --verbose if not set.")
+parser.add_argument("-c", "--num-cores", help="Number of cores. Default is 1.")
+parser.add_argument("-t", "--num-hw-threads", help="Number of hardware threads per core. Default is 1.")
+parser.add_argument("--loader-mode", help="Instruction micro-op cache setting '0'=LRU (default) or '1'=infinite")
+parser.add_argument("--pipe-trace", help="Filename to send a trace to or "" for none (default).")
+parser.add_argument("--lsq-ld-entries", help="Number of load entries in the load-store queue. Default is 16.")
+parser.add_argument("--lsq-st-entries", help="Number of store entries in the load-store queue. Default is 8.")
+parser.add_argument("--rob-entries", help="Number of entries per hw thread in the reorder buffer. Default is 64.")
+parser.add_argument("--retires-per-cycle", help="Maximum number of instructions to retire per cycle. Default is 4.")
+parser.add_argument("--issues-per-cycle", help="Maximum number of instructions to issue per cycle. Default is 4.")
+parser.add_argument("--decodes-per-cycle", help="Maximum number of instructions to decode per cycle. Default is 4.")
+parser.add_argument("--int-arith-cycles", help="Cycles per integer operation. Default is 2.")
+parser.add_argument("--int-arith-units", help="Number of integer ALUs. Default is 2.")
+parser.add_argument("--fp-arith-cycles", help="Cycles per floating point operation. Default is 8.")
+parser.add_argument("--fp-arith-units", help="Number of floating point units. Default is 2.")
+parser.add_argument("--branch-arith-cycles", help="Cycles per branch operation. Default is 2.")
+parser.add_argument("--cpu-clock", help="Core clock frequency. Default is 2.3GHz.")
+parser.add_argument("--library", help="Which vanadis library to use, 'vanadis' or 'vanadisdbg'. Default is vanadis.")
+parser.add_argument("--halt-at-address", help="An optional instruction address at which to end simulation. 0 indicates none (default).")
+parser.add_argument("--tlb-iface", help="Whether to put TLBs in the core's memory interface (1) or place them between the interface and L1 (0, default).")
+args = parser.parse_args()
+
+
+# Defaults needed in parsing
+testDir="basic-io"
+exe = "hello-world"
+
+# Popoulate argument vars from parser and/or environment variables
+vanadis_isa = os.getenv("VANADIS_ISA", "riscv64") if args.isa == None else args.isa
+if vanadis_isa in ["rv", "riscv", "riscv64", "RISCV64", "RV", "RISCV"]:
+    vanadis_isa = "RISCV64"
+    isa="riscv64"
+elif vanadis_isa in ["mips", "mipsel", "MIPS"]:
+    vanadis_isa = "MIPS"
+    isa = "mipsel"
+
+full_exe_name = os.getenv("VANADIS_EXE", "./small/" + testDir + "/" + exe +  "/" + isa + "/" + exe ) if args.exe == None else args.exe
+app_args = os.getenv("VANADIS_EXE_ARGS", "") if args.exe_args == None else args.exe_args
+verbosity = int(os.getenv("VANADIS_VERBOSE",0)) if args.verbose == None else int(args.verbose)
+os_verbosity = int(os.getenv("VANADIS_OS_VERBOSE", verbosity)) if args.os_verbose == None else int(args.os_verbose)
+pipe_trace_file = os.getenv("VANADIS_PIPE_TRACE", "") if args.pipe_trace == None else args.pipe_trace
+lsq_ld_entries = os.getenv("VANADIS_LSQ_LD_ENTRIES", "16") if args.lsq_ld_entries == None else args.lsq_ld_entries
+lsq_st_entries = os.getenv("VANADIS_LSQ_ST_ENTRIES", "8") if args.lsq_st_entries == None else args.lsq_st_entries
+rob_slots = os.getenv("VANADIS_ROB_SLOTS", 64) if args.rob_entries == None else args.rob_entries
+retires_per_cycle = os.getenv("VANADIS_RETIRES_PER_CYCLE", 4) if args.retires_per_cycle == None else args.retires_per_cycle
+issues_per_cycle = os.getenv("VANADIS_ISSUES_PER_CYCLE", 4) if args.issues_per_cycle == None else args.issues_per_cycle
+decodes_per_cycle = os.getenv("VANADIS_DECODES_PER_CYCLE", 4) if args.decodes_per_cycle == None else args.decodes_per_cycle
+integer_arith_cycles = int(os.getenv("VANADIS_INTEGER_ARITH_CYCLES", 2)) if args.int_arith_cycles == None else int(args.int_arith_cycles)
+integer_arith_units = int(os.getenv("VANADIS_INTEGER_ARITH_UNITS", 2)) if args.int_arith_units == None else int(args.int_arith_units)
+fp_arith_cycles = int(os.getenv("VANADIS_FP_ARITH_CYCLES", 8)) if args.fp_arith_cycles == None else int(args.fp_arith_cycles)
+fp_arith_units = int(os.getenv("VANADIS_FP_ARITH_UNITS", 2)) if args.fp_arith_units == None else int(args.fp_aright_units)
+branch_arith_cycles = int(os.getenv("VANADIS_BRANCH_ARITH_CYCLES", 2)) if args.branch_arith_cycles == None else int(args.branch_arith_cycles)
+env_tlb_config = int(os.getenv("VANADIS_TLB_IFACE", "0")) if args.tlb_iface == None else int(args.tlb_iface)
+lib = os.getenv("VANADIS_LIBRARY", "vanadis") if args.library == None else args.library
+loader_mode = os.getenv("VANADIS_LOADER_MODE", 0) if args.loader_mode == None else args.loader_mode
+cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz") if args.cpu_clock == None else args.cpu_clock
+num_cpus = int(os.getenv("VANADIS_NUM_CORES", 1)) if args.num_cores == None else int(args.num_cores)
+num_threads = int(os.getenv("VANADIS_NUM_HW_THREADS", 1)) if args.num_hw_threads == None else int(args.num_hw_threads)
+halt_address = os.getenv("VANADIS_HALT_AT_ADDRESS", 0) if args.halt_at_address == None else args.halt_at_address
+
+# For convenience later
+exe_name= full_exe_name.split("/")[-1]
+
+
 mh_debug_level=10
 mh_debug=0
 # this has to be a string
@@ -15,15 +119,6 @@ checkpoint = ""
 
 pythonDebug=False
 
-vanadis_isa = os.getenv("VANADIS_ISA", "MIPS")
-isa="mipsel"
-vanadis_isa = os.getenv("VANADIS_ISA", "RISCV64")
-isa="riscv64"
-
-loader_mode = os.getenv("VANADIS_LOADER_MODE", "0")
-
-testDir="basic-io"
-exe = "hello-world"
 #exe = "hello-world-cpp"
 #exe = "openat"
 #exe = "printf-check"
@@ -69,40 +164,10 @@ sst.setProgramOption("stop-at", "0 ns")
 sst.setStatisticLoadLevel(4)
 sst.setStatisticOutput("sst.statOutputConsole")
 
-full_exe_name = os.getenv("VANADIS_EXE", "./small/" + testDir + "/" + exe +  "/" + isa + "/" + exe )
-exe_name= full_exe_name.split("/")[-1]
-
-verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
-os_verbosity = os.getenv("VANADIS_OS_VERBOSE", verbosity)
-pipe_trace_file = os.getenv("VANADIS_PIPE_TRACE", "")
-lsq_ld_entries = os.getenv("VANADIS_LSQ_LD_ENTRIES", 16)
-lsq_st_entries = os.getenv("VANADIS_LSQ_ST_ENTRIES", 8)
-
-rob_slots = os.getenv("VANADIS_ROB_SLOTS", 64)
-retires_per_cycle = os.getenv("VANADIS_RETIRES_PER_CYCLE", 4)
-issues_per_cycle = os.getenv("VANADIS_ISSUES_PER_CYCLE", 4)
-decodes_per_cycle = os.getenv("VANADIS_DECODES_PER_CYCLE", 4)
-
-integer_arith_cycles = int(os.getenv("VANADIS_INTEGER_ARITH_CYCLES", 2))
-integer_arith_units = int(os.getenv("VANADIS_INTEGER_ARITH_UNITS", 2))
-fp_arith_cycles = int(os.getenv("VANADIS_FP_ARITH_CYCLES", 8))
-fp_arith_units = int(os.getenv("VANADIS_FP_ARITH_UNITS", 2))
-branch_arith_cycles = int(os.getenv("VANADIS_BRANCH_ARITH_CYCLES", 2))
-
-cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
-
-numCpus = int(os.getenv("VANADIS_NUM_CORES", 1))
-numThreads = int(os.getenv("VANADIS_NUM_HW_THREADS", 1))
-
-vanadis_cpu_type = "vanadis."
-vanadis_cpu_type += os.getenv("VANADIS_CPU_ELEMENT_NAME","dbg_VanadisCPU")
+vanadis_cpu_type = lib + ".core"
 
 if (verbosity > 0):
     print("Verbosity: " + str(verbosity) + " -> loading Vanadis CPU type: " + vanadis_cpu_type)
-    print("Auto-clock syscalls: " + str(auto_clock_sys))
-# vanadis_cpu_type = "vanadisdbg.VanadisCPU"
-
-app_args = os.getenv("VANADIS_EXE_ARGS", "")
 
 app_params = {}
 if app_args != "":
@@ -125,8 +190,8 @@ else:
     if (verbosity > 0):
         print("No application arguments found, continuing with argc=1")
 
-vanadis_decoder = "vanadis.Vanadis" + vanadis_isa + "Decoder"
-vanadis_os_hdlr = "vanadis.Vanadis" + vanadis_isa + "OSHandler"
+vanadis_decoder = lib + ".Vanadis" + vanadis_isa + "Decoder"
+vanadis_os_hdlr = lib + ".Vanadis" + vanadis_isa + "OSHandler"
 
 
 protocol="MESI"
@@ -136,8 +201,8 @@ osParams = {
     "processDebugLevel" : 0,
     "dbgLevel" : os_verbosity,
     "dbgMask" : 8,
-    "cores" : numCpus,
-    "hardwareThreadCount" : numThreads,
+    "cores" : num_cpus,
+    "hardwareThreadCount" : num_threads,
     "page_size"  : 4096,
     "physMemSize" : physMemSize,
     "useMMU" : True,
@@ -148,7 +213,7 @@ osParams = {
 processList = (
     ( 1, {
         "env_count" : 1,
-        "env0" : "OMP_NUM_THREADS={}".format(numCpus*numThreads),
+        "env0" : "OMP_NUM_THREADS={}".format(num_cpus*num_threads),
         "exe" : full_exe_name,
         "arg0" : exe_name,
     } ),
@@ -171,8 +236,8 @@ osl1cacheParams = {
 
 mmuParams = {
     "debug_level": 0,
-    "num_cores": numCpus,
-    "num_threads": numThreads,
+    "num_cores": num_cpus,
+    "num_threads": num_threads,
     "page_size": 4096,
 }
 
@@ -180,7 +245,7 @@ memRtrParams ={
       "xbar_bw" : "1GB/s",
       "link_bw" : "1GB/s",
       "input_buf_size" : "2KB",
-      "num_ports" : str(numCpus+2),
+      "num_ports" : str(num_cpus+2),
       "flit_size" : "72B",
       "output_buf_size" : "2KB",
       "id" : "0",
@@ -222,8 +287,8 @@ memParams = {
 # CPU related params
 tlbParams = {
     "debug_level": 0,
-    "hitLatency": 1,
-    "num_hardware_threads": numThreads,
+    "hit_latency": 1,
+    "num_hardware_threads": num_threads,
     "num_tlb_entries_per_thread": 64,
     "tlb_set_size": 4,
 }
@@ -247,9 +312,9 @@ branchPredParams = {
 cpuParams = {
     "clock" : cpu_clock,
     "verbose" : verbosity,
-    "hardware_threads": numThreads,
-    "physical_fp_registers" : 168 * numThreads,
-    "physical_integer_registers" : 180 * numThreads,
+    "hardware_threads": num_threads,
+    "physical_fp_registers" : 168 * num_threads,
+    "physical_integer_registers" : 180 * num_threads,
     "integer_arith_cycles" : integer_arith_cycles,
     "integer_arith_units" : integer_arith_units,
     "fp_arith_cycles" : fp_arith_cycles,
@@ -262,7 +327,7 @@ cpuParams = {
     "decodes_per_cycle" : decodes_per_cycle,
     "issues_per_cycle" :  issues_per_cycle,
     "retires_per_cycle" : retires_per_cycle,
-    "pause_when_retire_address" : os.getenv("VANADIS_HALT_AT_ADDRESS", 0),
+    "pause_when_retire_address" : halt_address,
     "start_verbose_when_issue_address": dbgAddr,
     "stop_verbose_when_retire_address": stopDbg,
     "print_rob" : False,
@@ -349,7 +414,7 @@ class CPU_Builder:
         cpu.enableAllStatistics()
 
         # CPU.decoder
-        for n in range(numThreads):
+        for n in range(num_threads):
             decode     = cpu.setSubComponent( "decoder"+str(n), vanadis_decoder )
             decode.addParams( decoderParams )
 
@@ -462,22 +527,22 @@ class CPU_Builder:
 
         # processor_bus -> L1 cache
         link_bus_l1cache_link = sst.Link(prefix+".link_bus_l1cache_link")
-        link_bus_l1cache_link.connect( (processor_bus, "lowlink0", "1ns"), (dtlbWrapper, "cpu_if", "1ns") )
+        link_bus_l1cache_link.connect( (processor_bus, "lowlink0", "1ns"), (dtlbWrapper, "highlink", "1ns") )
         link_bus_l1cache_link.setNoCut()
 
         # data TLB -> data L1
         link_cpu_l1dcache_link = sst.Link(prefix+".link_cpu_l1dcache_link")
-        link_cpu_l1dcache_link.connect( (dtlbWrapper, "cache_if", "1ns"), (l1dcache_2_cpu, "port", "1ns") )
+        link_cpu_l1dcache_link.connect( (dtlbWrapper, "lowlink", "1ns"), (l1dcache_2_cpu, "port", "1ns") )
         link_cpu_l1dcache_link.setNoCut()
 
         # CPU (instruction) -> TLB -> Cache
         link_cpu_itlb_link = sst.Link(prefix+".link_cpu_itlb_link")
-        link_cpu_itlb_link.connect( (cpuIcacheIf, "lowlink", "1ns"), (itlbWrapper, "cpu_if", "1ns") )
+        link_cpu_itlb_link.connect( (cpuIcacheIf, "lowlink", "1ns"), (itlbWrapper, "highlink", "1ns") )
         link_cpu_itlb_link.setNoCut()
 
         # instruction TLB -> instruction L1
         link_cpu_l1icache_link = sst.Link(prefix+".link_cpu_l1icache_link")
-        link_cpu_l1icache_link.connect( (itlbWrapper, "cache_if", "1ns"), (l1icache_2_cpu, "port", "1ns") )
+        link_cpu_l1icache_link.connect( (itlbWrapper, "lowlink", "1ns"), (l1icache_2_cpu, "port", "1ns") )
         link_cpu_l1icache_link.setNoCut()
 
         # data L1 -> bus
@@ -576,7 +641,7 @@ memory.addParams(memParams)
 
 # Directory controller to memory router
 link_dir_2_rtr = sst.Link("link_dir_2_rtr")
-link_dir_2_rtr.connect( (comp_chiprtr, "port"+str(numCpus), "1ns"), (dirNIC, "port", "1ns") )
+link_dir_2_rtr.connect( (comp_chiprtr, "port"+str(num_cpus), "1ns"), (dirNIC, "port", "1ns") )
 link_dir_2_rtr.setNoCut()
 
 # Directory controller to memory controller
@@ -596,14 +661,14 @@ link_os_cache_link.connect( (node_os_mem_if, "lowlink", "1ns"), (os_cache_2_cpu,
 link_os_cache_link.setNoCut()
 
 os_cache_2_rtr = sst.Link("os_cache_2_rtr")
-os_cache_2_rtr.connect( (os_cache_2_mem, "port", "1ns"), (comp_chiprtr, "port"+str(numCpus+1), "1ns") )
+os_cache_2_rtr.connect( (os_cache_2_mem, "port", "1ns"), (comp_chiprtr, "port"+str(num_cpus+1), "1ns") )
 os_cache_2_rtr.setNoCut()
 
 cpuBuilder = CPU_Builder()
 
 # build all CPUs
 nodeId = 0
-for cpu in range(numCpus):
+for cpu in range(num_cpus):
 
     prefix="node" + str(nodeId) + ".cpu" + str(cpu)
     os_hdlr, l2cache, dtlb, itlb = cpuBuilder.build(prefix, nodeId, cpu)

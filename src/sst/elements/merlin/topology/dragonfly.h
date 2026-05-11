@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -44,32 +44,42 @@ class topo_dragonfly_event;
  * ports [p + (a-1)m, k - 1]:  Inter-group
  */
 
-struct dgnflyParams {
-    uint32_t p;  /* # of hosts / router */
-    uint32_t a;  /* # of routers / group */
-    uint32_t k;  /* Router Radix */
-    uint32_t h;  /* # of ports / router to connect to other groups */
-    uint32_t g;  /* # of Groups */
-    uint32_t n;  /* # of links between groups in a pair */
-    uint32_t m;  /* # of links between each pair of routers in a group */
+struct dgnflyParams
+{
+    uint32_t p = 0;  /* # of hosts / router */
+    uint32_t a = 0;  /* # of routers / group */
+    uint32_t k = 0;  /* Router Radix */
+    uint32_t h = 0;  /* # of ports / router to connect to other groups */
+    uint32_t g = 0;  /* # of Groups */
+    uint32_t n = 0;  /* # of links between groups in a pair */
+    uint32_t m = 0;  /* # of links between each pair of routers in a group */
+
+    void serialize_order(SST::Core::Serialization::serializer& ser)
+    {
+        SST_SER(p);
+        SST_SER(a);
+        SST_SER(k);
+        SST_SER(h);
+        SST_SER(g);
+        SST_SER(n);
+        SST_SER(m);
+    }
 };
 
 enum global_route_mode_t { ABSOLUTE, RELATIVE };
 
 
-struct RouterPortPair : public SST::Core::Serialization::serializable {
-    uint16_t router;
-    uint16_t port;
+struct RouterPortPair
+{
+    uint16_t router = 0;
+    uint16_t port = 0;
 
     RouterPortPair(int router, int port) :
         router(router),
         port(port)
         {}
 
-    RouterPortPair() :
-        router(0),
-        port(0)
-        {}
+    RouterPortPair() = default;
 
     bool operator==(const RouterPortPair& rhs) {
         if ( router != rhs.router || port != rhs.port ) return false;
@@ -81,23 +91,21 @@ struct RouterPortPair : public SST::Core::Serialization::serializable {
         return true;
     }
 
-    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
+    void serialize_order(SST::Core::Serialization::serializer &ser)
+    {
         SST_SER(router);
         SST_SER(port);
     }
-
-private:
-    ImplementSerializable(SST::Merlin::RouterPortPair)
-
 };
 
 
 // Class to parse the failed link format.  Designed to be used with
 // Paras::find_array<FailedLink>().
-struct FailedLink {
-    uint16_t low_group;
-    uint16_t high_group;
-    uint16_t slice;
+struct FailedLink
+{
+    uint16_t low_group = 0;
+    uint16_t high_group = 0;
+    uint16_t slice = 0;
 
     // Format for string is group1:group2:slice
     FailedLink(const std::string& format) {
@@ -116,29 +124,51 @@ struct FailedLink {
 
         slice = SST::Core::from_string<uint16_t>(format.substr(start,std::string::npos));
     }
+
+    void serialize_order(SST::Core::Serialization::serializer& ser)
+    {
+        SST_SER(low_group);
+        SST_SER(high_group);
+        SST_SER(slice);
+    }
 };
 
 
 
-class RouteToGroup {
+class RouteToGroup : public SST::Core::Serialization::serializable {
 private:
     Shared::SharedArray<RouterPortPair> data;
-    //const RouterPortPair* data;
     Shared::SharedArray<bool> failed_links;
-    // const uint8_t* link_counts;
     Shared::SharedArray<uint8_t> link_counts;
-    size_t groups;  // Number of groups
-    size_t routers; // Number of routers per group
-    size_t slices;  // number of links between each pair of groups
-    size_t links;   // number global links per router
-    int gid;        // group id
-    int global_start;  // start of global ports
-    global_route_mode_t mode;   // routing mode
-    bool consider_failed_links; // whether or not we are simulating failed links
+    size_t groups = 0;  // Number of groups
+    size_t routers = 0; // Number of routers per group
+    size_t slices = 0;  // number of links between each pair of groups
+    size_t links = 0;   // number global links per router
+    int gid = 0;        // group id
+    int global_start = 0;  // start of global ports
+    global_route_mode_t mode = ABSOLUTE;   // routing mode
+    bool consider_failed_links = false; // whether or not we are simulating failed links
 
 public:
-    RouteToGroup() {}
+    RouteToGroup() = default;
 
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST_SER(data);
+        SST_SER(failed_links);
+        SST_SER(link_counts);
+        SST_SER(groups);
+        SST_SER(routers);
+        SST_SER(slices);
+        SST_SER(links);
+        SST_SER(gid);
+        SST_SER(global_start);
+        SST_SER(mode);
+        SST_SER(consider_failed_links);
+    }
+
+    ImplementSerializable(SST::Merlin::RouteToGroup)
+
+public:
     void init_write(std::string basename, int group_id, global_route_mode_t route_mode,
                     const dgnflyParams& params, const std::vector<int64_t>& global_link_map,
                     bool config_failed_links, const std::vector<FailedLink>& failed_links);
@@ -225,59 +255,76 @@ public:
     RouteToGroup group_to_global_port;
 
 
-    struct dgnflyParams params;
-    double adaptive_threshold;
-    uint32_t group_id;
+    dgnflyParams params;
+    double adaptive_threshold = 0.0;
+    uint32_t group_id = 0;
     // Router id within group
-    uint32_t router_id;
+    uint32_t router_id = 0;
 
     // Actual id of router
-    uint32_t rtr_id;
+    uint32_t rtr_id = 0;
 
-    RNG::Random* rng;
+    RNG::Random* rng = nullptr;
 
     int const* output_credits;
     int const* output_queue_lengths;
-    int num_vcs;
-    int num_vns;
-    uint32_t global_start;
+    int num_vcs = 0;
+    int num_vns = 0;
+    uint32_t global_start = 0;
 
-    global_route_mode_t global_route_mode;
+    global_route_mode_t global_route_mode = ABSOLUTE;
 
 public:
-    struct dgnflyAddr {
+    struct dgnflyAddr
+    {
         uint32_t group;
         uint32_t mid_group;
         uint32_t mid_group_shadow;
         uint32_t router;
         uint32_t host;
+
+        void serialize_order(SST::Core::Serialization::serializer& ser)
+        {
+            SST_SER(group);
+            SST_SER(mid_group);
+            SST_SER(mid_group_shadow);
+            SST_SER(router);
+            SST_SER(host);
+        }
     };
 
     topo_dragonfly(ComponentId_t cid, Params& p, int num_ports, int rtr_id, int num_vns);
     ~topo_dragonfly();
 
-    virtual void route_packet(int port, int vc, internal_router_event* ev);
-    virtual internal_router_event* process_input(RtrEvent* ev);
+    topo_dragonfly() = default;
 
-    virtual std::pair<int,int> getDeliveryPortForEndpointID(int ep_id);
-    virtual int routeControlPacket(CtrlRtrEvent* ev);
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
 
-    virtual PortState getPortState(int port) const;
-    virtual std::string getPortLogicalGroup(int port) const;
+    ImplementSerializable(SST::Merlin::topo_dragonfly)
 
-    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts);
-    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev);
+    virtual void route_packet(int port, int vc, internal_router_event* ev) override;
+    virtual internal_router_event* process_input(RtrEvent* ev) override;
 
-    virtual void getVCsPerVN(std::vector<int>& vcs_per_vn) {
+    virtual std::pair<int,int> getDeliveryPortForEndpointID(int ep_id) override;
+    virtual int routeControlPacket(CtrlRtrEvent* ev) override;
+
+    virtual PortState getPortState(int port) const override;
+    virtual std::string getPortLogicalGroup(int port) const override;
+
+    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts) override;
+    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev) override;
+
+    virtual void getVCsPerVN(std::vector<int>& vcs_per_vn)  override
+    {
         for ( int i = 0; i < num_vns; ++i ) {
             vcs_per_vn[i] = vns[i].num_vcs;
         }
     }
 
-    virtual int getEndpointID(int port);
+    virtual int getEndpointID(int port) override;
 
-    virtual void setOutputBufferCreditArray(int const* array, int vcs);
-    virtual void setOutputQueueLengthsArray(int const* array, int vcs);
+    virtual void setOutputBufferCreditArray(int const* array, int vcs) override;
+    virtual void setOutputQueueLengthsArray(int const* array, int vcs) override;
 
 private:
     void idToLocation(int id, dgnflyAddr *location);
@@ -291,11 +338,21 @@ private:
     inline bool is_port_local_group(uint32_t port) const { return (port >= params.p && port < (params.p + params.a -1 )); }
     inline bool is_port_global(uint32_t port) const { return ( port >= params.p + params.a - 1 ); }
 
-    struct vn_info {
+    struct vn_info
+    {
         int start_vc;
         int num_vcs;
         int bias;
         RouteAlgo algorithm;
+
+        void serialize_order(SST::Core::Serialization::serializer& ser)
+        {
+            SST_SER(start_vc);
+            SST_SER(num_vcs);
+            SST_SER(bias);
+            SST_SER(algorithm);
+        }
+
     };
 
     vn_info* vns;
@@ -313,14 +370,14 @@ private:
 class topo_dragonfly_event : public internal_router_event {
 
 public:
-    uint32_t src_group;
+    uint32_t src_group = 0;
     topo_dragonfly::dgnflyAddr dest;
-    uint16_t global_slice;
-    uint16_t global_slice_shadow;
-    uint16_t local_slice;
+    uint16_t global_slice = 0;
+    uint16_t global_slice_shadow = 0;
+    uint16_t local_slice = 0;
 
     topo_dragonfly_event() { }
-    topo_dragonfly_event(const topo_dragonfly::dgnflyAddr &dest) :
+    topo_dragonfly_event(const topo_dragonfly::dgnflyAddr& dest) :
         dest(dest), global_slice(0), local_slice(0)
         {}
     ~topo_dragonfly_event() { }
@@ -333,11 +390,7 @@ public:
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         internal_router_event::serialize_order(ser);
         SST_SER(src_group);
-        SST_SER(dest.group);
-        SST_SER(dest.mid_group);
-        SST_SER(dest.mid_group_shadow);
-        SST_SER(dest.router);
-        SST_SER(dest.host);
+        SST_SER(dest);
         SST_SER(global_slice);
         SST_SER(global_slice_shadow);
         SST_SER(local_slice);

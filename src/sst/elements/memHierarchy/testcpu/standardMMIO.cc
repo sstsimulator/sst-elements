@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -44,8 +44,8 @@ StandardMMIO::StandardMMIO(ComponentId_t id, Params &params) : SST::Component(id
     }
     TimeConverter tc = getTimeConverter(clockfreq);
 
-    iface = loadUserSubComponent<SST::Interfaces::StandardMem>("iface", ComponentInfo::SHARE_NONE, &tc,
-            new StandardMem::Handler2<StandardMMIO, &StandardMMIO::handleEvent>(this));
+    iface = loadUserSubComponent<SST::Interfaces::StandardMem>("iface", ComponentInfo::SHARE_NONE, tc,
+            new StandardMem::Handler<StandardMMIO, &StandardMMIO::handleEvent>(this));
 
     if (!iface) {
         out.fatal(CALL_INFO, -1, "%s, Error: No interface found loaded into 'iface' subcomponent slot. Please check input file\n", getName().c_str());
@@ -64,7 +64,7 @@ StandardMMIO::StandardMMIO(ComponentId_t id, Params &params) : SST::Component(id
         rng = *(new SST::RNG::MarsagliaRNG(21, 101));
 
         // Need a clock so that we can decide whether to issue requests on each clock
-        registerClock(tc, new Clock::Handler2<StandardMMIO, &StandardMMIO::clockTic>(this));
+        registerClock(tc, new Clock::Handler<StandardMMIO, &StandardMMIO::clockTic>(this));
 
         // Don't end simulation until we've finished sending requests & receiving responses
         primaryComponentDoNotEndSim();

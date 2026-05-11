@@ -1,8 +1,8 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,7 +21,7 @@ using namespace SST::Opal;
 
 /* Constructor */
 
-OpalMemNIC::OpalMemNIC(ComponentId_t id, Params &params, TimeConverter* tc) : SST::MemHierarchy::MemNICBase(id, params, tc) {
+OpalMemNIC::OpalMemNIC(ComponentId_t id, Params &params, TimeConverter tc) : SST::MemHierarchy::MemNICBase(id, params, tc) {
 
     node = params.find<uint32_t>("node", 0);
     enable = params.find<bool>("shared_memory", true);
@@ -38,7 +38,7 @@ OpalMemNIC::OpalMemNIC(ComponentId_t id, Params &params, TimeConverter* tc) : SS
         std::string lcSub = params.find<std::string>("linkcontrol", "merlin.linkcontrol");
         link_control = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>(lcSub, "linkcontrol", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, lcparams, 1);
     }
-    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler2<OpalMemNIC,&OpalMemNIC::recvNotify>(this));
+    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler<OpalMemNIC,&OpalMemNIC::recvNotify>(this));
 
     packetHeaderBytes = extractPacketHeaderSize(params, "min_packet_size");
 }

@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -517,6 +517,14 @@ public:
         Backing* backing = getBacking(addr);
         return backing->get(addr);
     }
+
+    void get( Addr addr, size_t size, std::vector<uint8_t> &data ) override {
+        data.resize(size);
+        for (size_t i = 0; i < size; i++) {
+            data[i] = getBacking(addr + i)->get(addr + i);
+        }
+    }
+
     void printToFile(std::string outfile) override
     {
         for ( hybridStruct* item : mmapList ) {

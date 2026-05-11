@@ -228,14 +228,14 @@ class testcase_Ariel(SSTTestCase):
 
         # Now build the Ariel stream example
         cmd = f"make LDFLAGS=-L{libdir}"
-        rtn1 = OSCommand(cmd, set_cwd=self.ArielElementStreamDir).run()
+        rtn1 = os_command(cmd, set_cwd=self.ArielElementStreamDir).run()
         log_debug("Ariel stream Make result = {0}; output =\n{1}".format(rtn1.result(), rtn1.output()))
         if rtn1.result() != 0:
             log_debug("Ariel {0} Make returned non-zero exit code. Error:\n{1}".format(self.ArielElementStreamDir, rtn1.error()))
 
         # Now build the ompmybarrier binary
         cmd = "make"
-        rtn2 = OSCommand(cmd, set_cwd=self.ArielElementompmybarrierDir).run()
+        rtn2 = os_command(cmd, set_cwd=self.ArielElementompmybarrierDir).run()
         log_debug("Ariel ompmybarrier Make result = {0}; output =\n{1}".format(rtn2.result(), rtn2.output()))
         if rtn2.result() != 0:
             log_debug("Ariel {0} Make returned non-zero exit code. Error:\n{1}".format(self.ArielElementompmybarrierDir, rtn2.error()))
@@ -260,7 +260,7 @@ class testcase_Ariel(SSTTestCase):
             # Instrument with pebil
             if (pebil_loaded):
                 cmd = "pebil --tool ArielIntercept --app stream --inp +"
-                rtn3 = OSCommand(cmd, set_cwd=self.ArielElementStreamDir).run()
+                rtn3 = os_command(cmd, set_cwd=self.ArielElementStreamDir).run()
                 log_debug("Ariel stream pebil result = {0}; output =\n{1}".format(rtn3.result(), rtn3.output()))
                 if rtn3.result() != 0:
                     log_debug("Ariel {0} pebil returned non-zero exit code. Error:\n{1}".format(self.ArielElementStreamDir, rtn3.error()))
@@ -276,7 +276,7 @@ class testcase_Ariel(SSTTestCase):
             # Instrument with pebil
             if (pebil_loaded):
                 cmd = "pebil --tool ArielIntercept --app stream_mlm --inp +"
-                rtn4 = OSCommand(cmd, set_cwd=self.ArielElementStreamDir).run()
+                rtn4 = os_command(cmd, set_cwd=self.ArielElementStreamDir).run()
                 log_debug("Ariel stream pebil result = {0}; output =\n{1}".format(rtn4.result(), rtn4.output()))
                 if rtn4.result() != 0:
                     log_debug("Ariel {0} pebil returned non-zero exit code. Error:\n{1}".format(self.ArielElementStreamDir, rtn4.error()))
@@ -292,7 +292,7 @@ class testcase_Ariel(SSTTestCase):
             # Instrument with pebil
             if (pebil_loaded):
                 cmd = "pebil --tool ArielIntercept --app ompmybarrier --inp + --threaded"
-                rtn5 = OSCommand(cmd, set_cwd=self.ArielElementompmybarrierDir).run()
+                rtn5 = os_command(cmd, set_cwd=self.ArielElementompmybarrierDir).run()
                 log_debug("Ariel stream pebil result = {0}; output =\n{1}".format(rtn5.result(), rtn5.output()))
                 if rtn5.result() != 0:
                     log_debug("Ariel {0} pebil returned non-zero exit code. Error:\n{1}".format(self.ArielElementompmybarrierDir, rtnr.error()))

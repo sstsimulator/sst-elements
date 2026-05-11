@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,12 +28,16 @@
 #endif
 
 
+#ifdef __cplusplus
 extern "C" {
+#endif
 extern char* static_init_glbls_segment;
 extern char* static_init_tls_segment;
 void allocate_static_init_glbls_segment();
 void allocate_static_init_tls_segment();
+#ifdef __cplusplus
 }
+#endif
 
 SST_HG_MAYBE_UNUSED
 static SST_HG_INLINE char* get_sst_hg_global_data(){

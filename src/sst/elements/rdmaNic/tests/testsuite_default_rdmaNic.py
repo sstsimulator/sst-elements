@@ -208,7 +208,7 @@ class testcase_rdmaNic(SSTTestCase):
 
         # Now build the array application
         cmd = "which mipsel-linux-musl-gcc"
-        rtn = OSCommand(cmd).run()
+        rtn = os_command(cmd).run()
         log_debug("RdmaNic detecting musl compiler [mipsel-linux-musl-gcc] - result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
         return rtn.result() == 0
 
@@ -237,6 +237,6 @@ class testcase_rdmaNic(SSTTestCase):
 
                 # Now build the array application
                 cmd = "make"
-                rtn = OSCommand(cmd, set_cwd=sourcedirpath).run()
+                rtn = os_command(cmd, set_cwd=sourcedirpath).run()
                 log_debug("RdmaNic tests source - Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
                 self.assertTrue(rtn.result() == 0, "{0} failed to build properly".format(makefilepath))

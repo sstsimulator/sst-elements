@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -72,7 +72,7 @@ class ArielCore : public ComponentExtension {
             uint32_t thisCoreID, uint32_t maxPendTans, Output* out,
             uint32_t maxIssuePerCyc, uint32_t maxQLen, uint64_t cacheLineSz,
             ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params,
-            TimeConverter *timeconverter);
+            TimeConverter timeconverter);
         ~ArielCore();
 
         bool isCoreHalted() const;

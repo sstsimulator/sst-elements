@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -48,7 +48,7 @@ MemoryHeap::MemoryHeap(ComponentId_t id, Params& params ) :
         m_output.verbose(CALL_INFO,1,1,"connect port %s\n",
 										linkName.str().c_str());
        	Link* link = configureLink( linkName.str(), "0ps",
-            new Event::Handler2<MemoryHeap,&MemoryHeap::eventHandler,int>(
+            new Event::Handler<MemoryHeap,&MemoryHeap::eventHandler,int>(
                     this, num ) );
         assert(link);
 		m_links.push_back(link);

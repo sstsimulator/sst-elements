@@ -1,8 +1,8 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -73,7 +73,7 @@ void API::setVars( Info* info, VirtNic* nic, Thornhill::MemoryHeapLink* mem, Lin
                                 this, &API::notifyRecvDmaDone )
     );
     nic->setNotifyNeedRecv(
-        new VirtNic::Handler2Args<API,int,size_t>(
+        new VirtNic::HandlerArgs<API,int,size_t>(
                                 this, &API::notifyNeedRecv )
     );
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -71,11 +71,11 @@ class RdmaNic : public SST::Component {
 
     RdmaNic(ComponentId_t id, Params &params);
 
-    virtual void init(unsigned int);
-    virtual void setup();
-    void finish();
+    void init(unsigned int) override;
+    void setup() override;
+    void finish() override;
 
-	typedef RdmaNicNetworkEvent::StreamId StreamId;
+    typedef RdmaNicNetworkEvent::StreamId StreamId;
   protected:
     RdmaNic();  // for serialization only
     ~RdmaNic() {}
@@ -287,7 +287,7 @@ class RdmaNic : public SST::Component {
 	void writeCompletionToHost(int thread, int cqId, RdmaCompletion& comp );
 
 
-    TimeConverter *m_clockTC;
+    TimeConverter m_clockTC;
     Clock::HandlerBase *m_clockHandler;
 
     Interfaces::SimpleNetwork*     m_linkControl;

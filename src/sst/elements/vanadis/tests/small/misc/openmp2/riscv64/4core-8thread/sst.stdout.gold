@@ -436,7 +436,7 @@ all processes have exited
  node0.cpu3:lsq.bytes_stored.1 : Accumulator : Sum.u64 = 19518; SumSQ.u64 = 145570; Count.u64 = 2824; Min.u64 = 1; Max.u64 = 8; 
  node0.cpu3:lsq.store_buffer_entries.1 : Accumulator : Sum.u64 = 848543; SumSQ.u64 = 6197951; Count.u64 = 3143478; Min.u64 = 0; Max.u64 = 8; 
  node0.cpu3:lsq.stores_in_flight.1 : Accumulator : Sum.u64 = 916000; SumSQ.u64 = 7989056; Count.u64 = 3143478; Min.u64 = 0; Max.u64 = 25; 
- node0.cpu3:lsq.loads_in_flight.1 : Accumulator : Sum.u64 = 3394227; SumSQ.u64 = 17128393; Count.u64 = 3143478; Min.u64 = 0; Max.u64 = 15; 
+ node0.cpu3:lsq.loads_in_flight.1 : Accumulator : Sum.u64 = 3394228; SumSQ.u64 = 17128402; Count.u64 = 3143478; Min.u64 = 0; Max.u64 = 15; 
  node0.cpu3:lsq.operations_pending : Accumulator : Sum.u64 = 8862989; SumSQ.u64 = 89201089; Count.u64 = 3143478; Min.u64 = 0; Max.u64 = 30; 
  node0.cpu3.instructions_retired.1 : Accumulator : Sum.u64 = 23234; SumSQ.u64 = 27334; Count.u64 = 3143478; Min.u64 = 0; Max.u64 = 4; 
  node0.cpu3.instructions_decoded.1 : Accumulator : Sum.u64 = 174164; SumSQ.u64 = 785676; Count.u64 = 3143478; Min.u64 = 0; Max.u64 = 24; 

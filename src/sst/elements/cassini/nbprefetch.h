@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -70,11 +70,11 @@ public:
 
 private:
     std::vector<Event::HandlerBase*> registeredCallbacks;
-    uint64_t blockSize;
+    uint64_t blockSize = 64;
 
-    Statistic<uint64_t>* statPrefetchEventsIssued;
-    Statistic<uint64_t>* statMissEventsProcessed;
-    Statistic<uint64_t>* statHitEventsProcessed;
+    Statistic<uint64_t>* statPrefetchEventsIssued = nullptr;
+    Statistic<uint64_t>* statMissEventsProcessed = nullptr;
+    Statistic<uint64_t>* statHitEventsProcessed = nullptr;
 
 };
 

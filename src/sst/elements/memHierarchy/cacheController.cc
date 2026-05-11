@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -439,7 +439,8 @@ void Cache::checkTimeout() {
 
     if (entry) {
         SimTime_t curTime = getCurrentSimTimeNano();
-        SimTime_t startTime = getTimeConverter("1ns")->convertFromCoreTime(entry->getStartTime());
+        TimeConverter tc = getTimeConverter("1ns");
+        SimTime_t startTime = tc.convertFromCoreTime(entry->getStartTime());
         SimTime_t waitTime = curTime - startTime;
         if (waitTime > timeout_) {
             out_->fatal(CALL_INFO, -1, "%s, Error: Maximum cache timeout reached - potential deadlock or other error. Event: %s. Current time: %" PRIu64 "ns. Event start time: %" PRIu64 "ns.\n",

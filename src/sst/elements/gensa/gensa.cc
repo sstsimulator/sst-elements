@@ -1,8 +1,8 @@
-// Copyright 2018-2025 NTESS. Under the terms
+// Copyright 2018-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2018-2025, NTESS
+// Copyright (c) 2018-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -50,7 +50,7 @@ gensa::gensa (ComponentId_t id, Params & params)
 
     //set our clock
     string clockFreq = params.find<string> ("clock", "1GHz");
-    clockTC = registerClock (clockFreq, new Clock::Handler2<gensa,&gensa::clockTic>(this));
+    clockTC = registerClock (clockFreq, new Clock::Handler<gensa,&gensa::clockTic>(this));
 
     // tell the simulator not to end without us
     registerAsPrimaryComponent ();
@@ -60,7 +60,7 @@ gensa::gensa (ComponentId_t id, Params & params)
     memory = loadUserSubComponent<Interfaces::StandardMem> (
         "memory",
         ComponentInfo::SHARE_NONE, clockTC,
-        new Interfaces::StandardMem::Handler2<gensa,&gensa::handleMemory>(this)
+        new Interfaces::StandardMem::Handler<gensa,&gensa::handleMemory>(this)
     );
     if (!memory)
     {
@@ -68,14 +68,14 @@ gensa::gensa (ComponentId_t id, Params & params)
         memory = loadAnonymousSubComponent<Interfaces::StandardMem> (
             "memHierarchy.standardInterface", "memory", 0,
             ComponentInfo::SHARE_PORTS, params, clockTC,
-            new Interfaces::StandardMem::Handler2<gensa,&gensa::handleMemory>(this)
+            new Interfaces::StandardMem::Handler<gensa,&gensa::handleMemory>(this)
         );
     }
     if (!memory) out.fatal (CALL_INFO, -1, "Unable to load memHierarchy.standardInterface subcomponent\n");
 
     link = loadUserSubComponent<Interfaces::SimpleNetwork> ("networkIF", ComponentInfo::SHARE_NONE, 1);
     if (!link) out.fatal (CALL_INFO, 1, "No networkIF subcomponent\n");
-    link->setNotifyOnReceive (new Interfaces::SimpleNetwork::Handler2<gensa,&gensa::handleNetwork>(this));
+    link->setNotifyOnReceive (new Interfaces::SimpleNetwork::Handler<gensa,&gensa::handleNetwork>(this));
 }
 
 gensa::gensa ()

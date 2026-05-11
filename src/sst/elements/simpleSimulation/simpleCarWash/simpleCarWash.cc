@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -43,7 +43,7 @@ simpleCarWash::simpleCarWash(ComponentId_t id, Params& params) :
     out_.output("Random seed used is: %" PRId64 "\n", random_seed);
     out_.output("The car wash will operate for %" PRId64 " minutes\n\n", simulation_time_);
 
-	registerClock("60s", new SST::Clock::Handler2<simpleCarWash, &simpleCarWash::tick>(this));
+	registerClock("60s", new SST::Clock::Handler<simpleCarWash, &simpleCarWash::tick>(this));
 
     // Tell the simulator that this component will tell it when to end the simulation
     registerAsPrimaryComponent();

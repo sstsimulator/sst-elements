@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -55,8 +55,8 @@ public:
 
     StandardMMIO(ComponentId_t id, Params &params);
 
-    virtual void init(unsigned int);
-    virtual void setup();
+    void init(unsigned int) override;
+    void setup() override;
 
 protected:
     ~StandardMMIO() {}
@@ -84,7 +84,7 @@ protected:
     };
 
     /* Debug -triggered by output.fatal() and/or SIGUSR2 */
-    virtual void printStatus(Output &out);
+    void printStatus(Output &out) override;
     //virtual void emergencyShutdown();
 
     /* Output */
@@ -94,7 +94,7 @@ protected:
     mmioHandlers* handlers;
 
     /* Debug -triggered by output.fatal() and/or SIGUSR2 */
-    virtual void emergencyShutdown() {};
+    void emergencyShutdown() override {};
 
 private:
 

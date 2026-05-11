@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -65,7 +65,7 @@ basicClocks::basicClocks(ComponentId_t id, Params& params) : Component(id) {
 
     // Main clock (clock 0)
     // Clock can be registered with a string or UnitAlgebra, here we use the string
-    registerClock(clock0Freq, new Clock::Handler2<basicClocks, &basicClocks::mainTick>(this));
+    registerClock(clock0Freq, new Clock::Handler<basicClocks, &basicClocks::mainTick>(this));
 
     out->output("Registering clock0 at %s\n", clock0Freq.c_str());
 
@@ -74,13 +74,13 @@ basicClocks::basicClocks(ComponentId_t id, Params& params) : Component(id) {
     // pass unique IDs in to it to differentiate
     // We also save the registerClock return value (a TimeConverter) so that we can use it later (see mainTick)
     clock1converter = registerClock(clock1Freq_ua,
-            new Clock::Handler2<basicClocks, &basicClocks::otherTick, uint32_t>(this, 1));
+            new Clock::Handler<basicClocks, &basicClocks::otherTick, uint32_t>(this, 1));
 
     out->output("Registering clock1 at %s (that's %s or %s if we convert the UnitAlgebra to string)\n",
             clock1Freq.c_str(), clock1Freq_ua.toString().c_str(), clock1Freq_ua.toStringBestSI().c_str());
 
     // Last clock, as with clock1, the handler has an extra parameter and we save the registerClock return parameter
-    Clock::HandlerBase* handler = new Clock::Handler2<basicClocks, &basicClocks::otherTick, uint32_t>(this, 2);
+    Clock::HandlerBase* handler = new Clock::Handler<basicClocks, &basicClocks::otherTick, uint32_t>(this, 2);
     clock2converter = registerClock(clock2Freq, handler);
 
     out->output("Registering clock2 at %s\n", clock2Freq.c_str());

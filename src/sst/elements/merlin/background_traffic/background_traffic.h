@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -117,14 +117,17 @@ private:
 
     Link* timing_link;
 
+    SST_ELI_IS_CHECKPOINTABLE()
+
 public:
     BackgroundTraffic(ComponentId_t cid, Params& params);
+    BackgroundTraffic();
     ~BackgroundTraffic();
 
-    void init(unsigned int phase);
-    void setup();
-    void complete(unsigned int phase);
-    void finish();
+    void init(unsigned int phase) override;
+    void setup() override;
+    void complete(unsigned int phase) override;
+    void finish() override;
 
 
 private:
@@ -134,6 +137,9 @@ private:
     void output_timing(Event* ev);
     void progress_messages(SimTime_t current_time);
 
+public:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::Merlin::BackgroundTraffic)
 };
 
 } //namespace Merlin

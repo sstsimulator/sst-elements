@@ -33,23 +33,21 @@ class topo_polarstar_event : public internal_router_event {
 public:
 
 
-    int hop_count; //Count no of hops this packet has taken so far
+    int hop_count = 0; //Count no of hops this packet has taken so far
 
-    bool non_minimal;
-    int valiant;
+    bool non_minimal = false;
+    int valiant = 0;
 
-    topo_polarstar_event() {}
+    topo_polarstar_event() = default;
     topo_polarstar_event(int hcount) : non_minimal(false) {
-
         hop_count = hcount;
+    }
 
-     }
     virtual ~topo_polarstar_event() {}
 
     virtual internal_router_event* clone(void) override
     {
         return new topo_polarstar_event(*this);
-
     }
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
@@ -71,13 +69,13 @@ private:
 class topo_polarstar_init_event : public topo_polarstar_event {
 public:
     //Insert code
-    int phase;
+    int phase = 0;
 
     //track what is covered
-    int total_routers;
+    int total_routers = 0;
     std::vector<int> covered;
 
-    topo_polarstar_init_event() {}
+    topo_polarstar_init_event() = default;
     topo_polarstar_init_event(int p, int N) : topo_polarstar_event(0), phase(p), total_routers(N) { covered.resize(N, 0);}
     virtual ~topo_polarstar_init_event() { }
     virtual internal_router_event* clone(void) override
@@ -138,41 +136,41 @@ public:
         UGAL
     };
 
-    int router_id;
-    int d;
-    int pfq;
-    int snq;
+    int router_id = -1;
+    int d = 0;
+    int pfq = 0;
+    int snq = 0;
     std::string sn_type;
 
-    int hosts_per_router;
-    int network_radix;
-    int total_radix;
-    int total_routers;
-    int total_endnodes;
-    RouteAlgo routing_algo;
+    int hosts_per_router = 0;
+    int network_radix = 0;
+    int total_radix = 0;
+    int total_routers = 0;
+    int total_endnodes = 0;
+    RouteAlgo routing_algo = MINIMAL;
 
-    int node_links;
+    int node_links = 0;
     std::vector<int> route_table;
     std::vector<int> neighbor_list;
 
-    int num_vns;
-    int num_vcs;
-    RNG::Random* rng;
+    int num_vns = 0;
+    int num_vcs = 0;
+    RNG::Random* rng = nullptr;
 
     int const* output_credits;
     int const* output_queue_lengths;
-    int output_buffer_size;
-    int adaptive_bias;
+    int output_buffer_size = 0;
+    int adaptive_bias = 0;
 
     std::vector<std::vector<int>> polar;
 
     //For now, doing this in a very dumb way, need to figure out a right way to do it with an vector array of statistics
-    Statistic<uint32_t>* hopcount1;
-    Statistic<uint32_t>* hopcount2;
-    Statistic<uint32_t>* hopcount3;
-    Statistic<uint32_t>* hopcount4;
-    Statistic<uint32_t>* hopcount5;
-    Statistic<uint32_t>* hopcount6;
+    Statistic<uint32_t>* hopcount1 = nullptr;
+    Statistic<uint32_t>* hopcount2 = nullptr;
+    Statistic<uint32_t>* hopcount3 = nullptr;
+    Statistic<uint32_t>* hopcount4 = nullptr;
+    Statistic<uint32_t>* hopcount5 = nullptr;
+    Statistic<uint32_t>* hopcount6 = nullptr;
 
 
 
@@ -180,23 +178,30 @@ public:
     topo_polarstar(ComponentId_t cid, Params& params, int num_ports, int rtr_id, int num_vns);
     ~topo_polarstar();
 
-    virtual void route_packet(int port, int vc, internal_router_event* ev);
+    topo_polarstar() = default;
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+
+    ImplementSerializable(SST::Merlin::topo_polarstar)
+
+    virtual void route_packet(int port, int vc, internal_router_event* ev) override;
     //called at injection, add metadata about packet
-    virtual internal_router_event* process_input(RtrEvent* ev);
+    virtual internal_router_event* process_input(RtrEvent* ev) override;
 
     ////called during topology initilaization for sanity checks
     //virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts);
     ////process_input for initilaization packets
     //virtual internal_router_event* process_InitData_input(RtrEvent* ev);
 
-    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts);
+    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts) override;
     //process_input for initilaization packets
-    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev);
+    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev) override;
 
-    virtual PortState getPortState(int port) const;
-    virtual int getEndpointID(int port);
+    virtual PortState getPortState(int port) const override;
+    virtual int getEndpointID(int port) override;
 
-    virtual void getVCsPerVN(std::vector<int>& vcs_per_vn) {
+    virtual void getVCsPerVN(std::vector<int>& vcs_per_vn)  override
+    {
         for ( int i = 0; i < num_vns; ++i ) {
             vcs_per_vn[i] = num_vcs;
         }
@@ -218,8 +223,8 @@ private:
    int getDestLocalPort(int node);
    void dumpHopCount(topo_polarstar_event* ev);
 
-   void setOutputQueueLengthsArray(int const* array, int vcs);
-   void setOutputBufferCreditArray(int const* array, int vcs);
+   void setOutputQueueLengthsArray(int const* array, int vcs) override;
+   void setOutputBufferCreditArray(int const* array, int vcs) override;
 
 };
 

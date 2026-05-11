@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -46,11 +46,13 @@ public:
 private:
 
 
-    int num_vcs;
+    int num_vcs = 0;
     std::string arb_name;
-    SingleArbitration* arb;
+    SingleArbitration* arb = nullptr;
 
 public:
+
+    output_arb_basic() = default;
 
     output_arb_basic(ComponentId_t cid, Params& params) :
         OutputArbitration(cid)
@@ -62,7 +64,16 @@ public:
         delete arb;
     }
 
-    void setVCs(int n_vns, int* vcs_per_vn) {
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        OutputArbitration::serialize_order(ser);
+        SST_SER(num_vcs);
+        SST_SER(arb_name);
+        SST_SER(arb);
+    }
+    ImplementSerializable(SST::Merlin::output_arb_basic)
+
+    void setVCs(int n_vns, int* vcs_per_vn) override
+    {
         num_vcs = 0;
         for ( int i = 0; i < n_vns; ++i ) {
             num_vcs += vcs_per_vn[i];
@@ -72,7 +83,8 @@ public:
 
     }
 
-    int arbitrate(Cycle_t UNUSED(cycle), PortInterface::port_queue_t* out_q, int* port_out_credits, bool isHostPort, bool& have_packets) {
+    int arbitrate(Cycle_t UNUSED(cycle), PortInterface::port_queue_t* out_q, int* port_out_credits, bool isHostPort, bool& have_packets) override
+    {
         int vc_to_send = -1;
         bool found = false;
         internal_router_event* send_event = NULL;
@@ -92,8 +104,8 @@ public:
         return vc_to_send;
     }
 
-    void dumpState(std::ostream& stream) {
-    }
+    void dumpState(std::ostream& stream) override
+    {}
 
 };
 

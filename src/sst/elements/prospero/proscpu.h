@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -44,9 +44,9 @@ public:
   ProsperoComponent(ComponentId_t id, Params& params);
   ~ProsperoComponent();
 
-  void setup() { }
-  void init(unsigned int phase);
-  void finish();
+  void setup() override { }
+  void init(unsigned int phase) override;
+  void finish() override;
 
   SST_ELI_REGISTER_COMPONENT(
         ProsperoComponent,

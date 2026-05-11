@@ -33,14 +33,14 @@ def build_vanadis_test_matrix():
     tests = ["lseek"]
     for test in tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 0, 300])
 
     arch_list = ["mipsel","riscv64"]
     tests = ["hello-world","hello-world-cpp","printf-check","openat","read-write","unlink","unlinkat","fread-fwrite"]
     #tests = []
     for test in tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 0, 300])
 
 
     # basic-math
@@ -49,7 +49,7 @@ def build_vanadis_test_matrix():
     #tests = []
     for test in tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 0, 300])
 
     # basic-ops
     location="small/basic-ops"
@@ -57,7 +57,7 @@ def build_vanadis_test_matrix():
     #tests = []
     for test in tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 0, 300])
 
     # misc
     location="small/misc"
@@ -65,45 +65,51 @@ def build_vanadis_test_matrix():
     #tests = []
     for test in tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 0, 300])
 
     tests = ["fork","clone","pthread"]
     #tests = []
     for test in tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test, arch, 2,1, "gold1", 300])
-            testlist.append(["basic_vanadis.py", location, test, arch, 1,2, "gold2", 300])
+            testlist.append(["basic_vanadis.py", location, test, arch, 2,1, "gold1", 0, 300])
+            testlist.append(["basic_vanadis.py", location, test, arch, 1,2, "gold2", 0, 300])
 
     tests = ["openmp"]
     #tests = []
     for test in tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 4,1, "4core", 300])
-            testlist.append(["basic_vanadis.py", location, test,arch, 1,4, "4thread", 300])
-            testlist.append(["basic_vanadis.py", location, test,arch, 2,2, "2core-2thread", 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 4,1, "4core", 0, 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1,4, "4thread", 0, 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 2,2, "2core-2thread", 0, 300])
+            # Also test TLBs embedded in interfaces
+            testlist.append(["basic_vanadis.py", location, test,arch, 4,1, "4core-tlbif", 1, 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1,4, "4thread-tlbif", 1, 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 2,2, "2core-2thread-tlbif", 1, 300])
+
 
     tests = ["openmp2"]
     #tests = []
     arch_list = ["riscv64"]
     for test in tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 16,1, "16core", 300])
-            testlist.append(["basic_vanadis.py", location, test,arch, 1,32, "32thread", 300])
-            testlist.append(["basic_vanadis.py", location, test,arch, 4,8, "4core-8thread", 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 16,1, "16core", 0, 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1,32, "32thread", 0, 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 4,8, "4core-8thread", 0, 300])
+
 
     location="small/rocc"
     tests = ['basic-rocc']
     arch_list = ["riscv64"]
     for test in tests:
         for arch in arch_list:
-            testlist.append(["rocc_vanadis.py", location, test,arch, 1,1, "2rocc", 300])
+            testlist.append(["rocc_vanadis.py", location, test,arch, 1,1, "2rocc", 0, 300])
 
     location="small/multicore"
     tests = ["openmp"]
     arch_list = ["riscv64"]
     for test in tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 3,1, "3core", 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 3,1, "3core", 0, 300])
 
 
     # Process each line and crack up into an index, hash, options and sdl file
@@ -117,11 +123,12 @@ def build_vanadis_test_matrix():
         numCores = test_info[4]
         numHwThreads = test_info[5]
         goldfiledir = test_info[6]
-        timeout_sec = test_info[7]
+        tlbconfig = test_info[7]
+        timeout_sec = test_info[8]
         testname = "{0}_{1}_{2}_{3}".format(elftestdir.replace("/", "_"), elffile,isa,goldfiledir)
 
         # Build the test_data structure
-        test_data = (testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, goldfiledir, timeout_sec )
+        test_data = (testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, tlbconfig, goldfiledir, timeout_sec )
         vanadis_test_matrix.append(test_data)
 
 ################################################################################
@@ -154,7 +161,7 @@ class testcase_vanadis(SSTTestCase):
 #####
 
     @parameterized.expand(vanadis_test_matrix, name_func=gen_custom_name)
-    def test_vanadis_short_tests(self, testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, goldfiledir, timeout_sec):
+    def test_vanadis_short_tests(self, testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, tlbconfig, goldfiledir, timeout_sec):
         self._checkSkipConditions( isa )
 
         if MakeTests:
@@ -163,11 +170,11 @@ class testcase_vanadis(SSTTestCase):
         if not testing_check_is_nightly() and testnum > 15:
             self.skipTest("Complete vanadis_short_tests only runs on Nightly builds.")
         log_debug("Running Vanadis test #{0} ({1}): elffile={4} in dir {3}, isa {5}; using sdl={2}".format(testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec))
-        self.vanadis_test_template(testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, goldfiledir, timeout_sec )
+        self.vanadis_test_template(testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, tlbconfig, goldfiledir, timeout_sec )
 
 #####
 
-    def vanadis_test_template(self, testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, goldfiledir, testtimeout=120):
+    def vanadis_test_template(self, testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, tlbconfig, goldfiledir, testtimeout=120):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = "{0}/vanadis_tests/{1}/{2}/{3}/{4}".format(self.get_test_output_run_dir(), elftestdir,elffile,isa,goldfiledir)
@@ -194,19 +201,14 @@ class testcase_vanadis(SSTTestCase):
 
         # Set the Vanadis EXE path
         testfilepath = "{0}/{1}/{2}/{3}/{2}".format(test_path, elftestdir, elffile, isa )
-        os.environ['VANADIS_EXE'] = testfilepath
-        if isa == "mipsel":
-            os.environ['VANADIS_ISA'] = "MIPS"
-        else:
-            os.environ['VANADIS_ISA'] = "RISCV64"
 
-        os.environ['VANADIS_NUM_CORES'] = str(numCores)
-        os.environ['VANADIS_NUM_HW_THREADS'] = str(numHwThreads)
+        # Create test arguments
+        args = '--model-options="--exe={0} --isa={1} -c {2} -t {3} --tlb-iface={4}"'.format(testfilepath,isa,numCores,numHwThreads,tlbconfig)
 
         testfile_exists = os.path.exists(testfilepath) and os.path.isfile(testfilepath)
         self.assertTrue(testfile_exists, "Vanadis test {0} does not exist".format(testfilepath))
 
-        oscmd = self.run_sst(sdlfile, sst_outfile, sst_errfile, mpi_out_files=mpioutfiles, set_cwd=outdir, timeout_sec=testtimeout)
+        oscmd = self.run_sst(sdlfile, sst_outfile, sst_errfile, other_args=args, mpi_out_files=mpioutfiles, set_cwd=outdir, timeout_sec=testtimeout)
 
         # Perform the tests
         # Verify that the errfile from SST is empty
@@ -280,7 +282,7 @@ class testcase_vanadis(SSTTestCase):
 
         # Now build the array application
         cmd = "which " + isa + "-linux-musl-gcc"
-        rtn = OSCommand(cmd).run()
+        rtn = os_command(cmd).run()
         log_debug("Vanadis detecting musl compiler [mipsel-linux-musl-gcc] - result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
         return rtn.result() == 0
 
@@ -294,7 +296,7 @@ class testcase_vanadis(SSTTestCase):
         makefilepath = "{0}/Makefile".format(sourcedirpath)
 
         cmd = "make ARCH=" + isa
-        rtn = OSCommand(cmd, set_cwd=sourcedirpath).run()
+        rtn = os_command(cmd, set_cwd=sourcedirpath).run()
         log_debug("Vanadis tests source - Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
         self.assertTrue(rtn.result() == 0, "{0} failed to build properly".format(makefilepath))
 

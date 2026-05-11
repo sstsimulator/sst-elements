@@ -5,8 +5,8 @@
 # Set Version of SST Elements Library
 AC_INIT([SST Elements Library],[-dev],[sst@sandia.gov])
 
-AC_PREREQ([2.59])
-AC_COPYRIGHT([Copyright National Technology and Engineering Solutions of Sandia (NTESS), 2004-2025])
+AC_PREREQ([2.69])
+AC_COPYRIGHT([Copyright National Technology and Engineering Solutions of Sandia (NTESS), 2004-2026])
 
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([config])
@@ -30,7 +30,7 @@ AM_PROG_AS
 
 AC_PROG_CC
 AM_PROG_CC_C_O
-m4_if(m4_defn([AC_AUTOCONF_VERSION]), 2.71,, m4_defn([AC_AUTOCONF_VERSION]), 2.70,, [AC_PROG_CC_C99])
+m4_if(m4_defn([AC_AUTOCONF_VERSION]), 2.69, [AC_PROG_CC_C99], )
 AC_C_INLINE
 AC_PROG_MAKE_SET
 

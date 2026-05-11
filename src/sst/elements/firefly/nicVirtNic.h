@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,7 +23,7 @@ public:
         tmp <<  id;
 
         m_toCoreLink = m_nic->configureLink( portName + tmp.str(), "1 ns",
-                                          new Event::Handler2<Nic::VirtNic,&Nic::VirtNic::handleCoreEvent>(this) );
+                                          new Event::Handler<Nic::VirtNic,&Nic::VirtNic::handleCoreEvent>(this) );
         assert( m_toCoreLink );
     }
     ~VirtNic() {}

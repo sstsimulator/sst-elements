@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -69,6 +69,10 @@ public:
          "SST::Interfaces::SimpleNetwork" }
     )
 
+    SST_ELI_IS_CHECKPOINTABLE()
+
+    Bridge() : SST::Component() {}
+
     Bridge(SST::ComponentId_t id, SST::Params &params) :
         SST::Component(id)
     {
@@ -90,13 +94,10 @@ public:
 
     ~Bridge()
     {
-        for ( int i = 0 ; i < 2 ; i++ ) {
-            delete interfaces[i].nic;
-        }
-        delete translator;
+        // SST framework manages SubComponent lifecycle — do not delete interfaces[i].nic or translator
     }
 
-    void init(unsigned int phase)
+    void init(unsigned int phase) override
     {
 
         bool ready = true;
@@ -127,7 +128,7 @@ public:
         }
     }
 
-    void setup(void)
+    void setup(void) override
     {
         interfaces[0].nic->setup();
         interfaces[1].nic->setup();
@@ -135,7 +136,7 @@ public:
         translator->setup();
     }
 
-    void finish(void)
+    void finish(void) override
     {
         interfaces[0].nic->finish();
         interfaces[1].nic->finish();
@@ -151,10 +152,11 @@ public:
 
         SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::Bridge::Translator, Bridge*)
 
+        Translator() : SubComponent(), bridge(nullptr) { }
         Translator(SST::ComponentId_t cid, Params &params, Bridge* bridge) : SubComponent(cid), bridge(bridge) { }
-        virtual void init(unsigned int) { }
-        virtual void setup(void) { }
-        virtual void finish(void) { }
+        void init(unsigned int) override { }
+        void setup(void) override { }
+        void finish(void) override { }
 
         /**
          * Called when a network request is recieved.  Should return the corresponding
@@ -176,6 +178,12 @@ public:
         SimpleNetwork::nid_t getAddrForNetwork(uint8_t netID) {
             return bridge->getAddrForNetwork(netID);
         }
+
+        void serialize_order(SST::Core::Serialization::serializer& ser) override {
+            SubComponent::serialize_order(ser);
+            SST_SER(bridge);
+        }
+        ImplementVirtualSerializable(SST::Merlin::Bridge::Translator)
     };
 
 private:
@@ -183,7 +191,8 @@ private:
 
     typedef std::map<std::string, SimpleNetwork::nid_t> addrMap_t;
     typedef std::map<std::string, uint64_t> imreMap_t;
-    struct Nic_t {
+    struct Nic_t
+    {
         SimpleNetwork *nic;
         std::deque<SimpleNetwork::Request*> sendQueue;
 
@@ -191,6 +200,15 @@ private:
         Statistic<uint64_t> *stat_send;
 
         SimpleNetwork::nid_t getAddr() const { return nic->getEndpointID(); }
+
+        void serialize_order(SST::Core::Serialization::serializer& ser)
+        {
+            SST_SER(nic);
+            SST_SER(sendQueue);
+            SST_SER(stat_recv);
+            SST_SER(stat_send);
+        }
+
     };
 
     Nic_t interfaces[2];
@@ -227,8 +245,8 @@ private:
             nic.nic = info->create<SimpleNetwork>(id, ComponentInfo::SHARE_PORTS, 1 /* vns */);
         }
 
-        nic.nic->setNotifyOnReceive(new SimpleNetwork::Handler2<Bridge,&Bridge::handleIncoming,uint8_t>(this,id));
-        sendNotify[id] = new SimpleNetwork::Handler2<Bridge,&Bridge::spaceAvailable,uint8_t>(this,id);
+        nic.nic->setNotifyOnReceive(new SimpleNetwork::Handler<Bridge,&Bridge::handleIncoming,uint8_t>(this,id));
+        sendNotify[id] = new SimpleNetwork::Handler<Bridge,&Bridge::spaceAvailable,uint8_t>(this,id);
 
         nic.stat_recv = registerStatistic<uint64_t>("pkts_received_net" + std::to_string(id));
         nic.stat_send = registerStatistic<uint64_t>("pkts_sent_net" + std::to_string(id));
@@ -274,6 +292,15 @@ private:
         return false;
     }
 
+public:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::Component::serialize_order(ser);
+        SST_SER(dbg);
+        SST_SER(interfaces);
+        SST_SER(translator);
+        SST_SER(sendNotify);
+    }
+    ImplementSerializable(SST::Merlin::Bridge)
 };
 
 }}

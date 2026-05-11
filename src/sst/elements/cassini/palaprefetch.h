@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -46,6 +46,14 @@ struct StrideFilter
     int32_t lastStride;
     int32_t stride;
     PrefetcherState state;
+
+    void serialize_order(SST::Core::Serialization::serializer& ser)
+    {
+        SST_SER(lastAddress);
+        SST_SER(lastStride);
+        SST_SER(stride);
+        SST_SER(state);
+    }
 };
 
 
@@ -53,11 +61,13 @@ class PalaPrefetcher : public SST::MemHierarchy::CacheListener
 {
 public:
     PalaPrefetcher(ComponentId_t id, Params& params);
+    PalaPrefetcher() {}
     ~PalaPrefetcher();
 
     void notifyAccess(const CacheListenerNotification& notify) override;
     void registerResponseCallback(Event::HandlerBase *handler) override;
     void printStats(Output& out) override;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
 
     SST_ELI_REGISTER_SUBCOMPONENT(
         PalaPrefetcher,
@@ -88,15 +98,16 @@ public:
         { "prefetch_opportunities",               "Counts the number of prefetch opportunities", "prefetches", 1 }
     )
 
+    ImplementSerializable(SST::Cassini::PalaPrefetcher)
+
 private:
     void     DispatchRequest(Addr targetAddress);
 
-    Output* output;
+    Output* output = nullptr;
     std::vector<Event::HandlerBase*> registeredCallbacks;
-    std::deque<uint64_t>* prefetchHistory;
-    std::unordered_map< uint64_t, StrideFilter >* recentAddrList;
-    std::deque< std::unordered_map< uint64_t, StrideFilter >::iterator >* recentAddrListQueue;
-    std::deque< std::unordered_map< uint64_t, StrideFilter >::iterator >::iterator it;
+    std::deque<uint64_t> prefetchHistory;
+    std::unordered_map< uint64_t, StrideFilter > recentAddrList;
+    std::deque< std::unordered_map< uint64_t, StrideFilter >::iterator > recentAddrListQueue;
 
     uint64_t pageSize;
     uint64_t blockSize;
@@ -114,10 +125,10 @@ private:
     uint64_t hitEventsProcessed;
     uint32_t verbosity;
 
-    Statistic<uint64_t>* statPrefetchOpportunities;
-    Statistic<uint64_t>* statPrefetchEventsIssued;
-    Statistic<uint64_t>* statPrefetchIssueCanceledByPageBoundary;
-    Statistic<uint64_t>* statPrefetchIssueCanceledByHistory;
+    Statistic<uint64_t>* statPrefetchOpportunities = nullptr;
+    Statistic<uint64_t>* statPrefetchEventsIssued = nullptr;
+    Statistic<uint64_t>* statPrefetchIssueCanceledByPageBoundary = nullptr;
+    Statistic<uint64_t>* statPrefetchIssueCanceledByHistory = nullptr;
 };
 
 } //namespace Cassini

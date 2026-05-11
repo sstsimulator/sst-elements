@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,13 +26,11 @@
 #include <signal.h>
 
 #include "merlin.h"
+#include "interfaces/portControl.h"
 
 using namespace SST::Merlin;
 using namespace SST::Interfaces;
 using namespace std;
-
-int hr_router::num_routers = 0;
-int hr_router::print_debug = 0;
 
 // Helper functions used only in this file
 static string trim(string str)
@@ -102,20 +100,113 @@ static UnitAlgebra getLogicalGroupParamUA(const Params& params, Topology* topo, 
 }
 
 
-// Start class functions
+hr_router::hr_router() :
+    Router(),
+    id(0),
+    num_ports(0),
+    num_vns(0),
+    vn_remap_shm_size(0),
+    num_vcs(0),
+    topo(nullptr),
+    arb(nullptr),
+    ports(nullptr),
+    vc_heads(nullptr),
+    xbar_in_credits(nullptr),
+    output_queue_lengths(nullptr),
+#if VERIFY_DECLOCKING
+    clocking(false),
+#endif
+    in_port_busy(nullptr),
+    out_port_busy(nullptr),
+    progress_vcs(nullptr),
+    unclocked_cycle(0),
+    my_clock_handler(nullptr),
+    xbar_stalls(nullptr),
+    output(getSimulationOutput())
+{}
+
+void hr_router::serialize_order(SST::Core::Serialization::serializer& ser) {
+    Router::serialize_order(ser);
+
+    SST_SER(id);
+    SST_SER(num_ports);
+    SST_SER(num_vns);
+    SST_SER(vn_remap_shm);
+    SST_SER(vn_remap_shm_size);
+    SST_SER(num_vcs);
+    SST_SER(vcs_per_vn);
+
+    SST_SER(topo);
+    SST_SER(arb);
+
+    size_t total_vcs = num_ports * num_vcs;
+    SST_SER(SST::Core::Serialization::array(xbar_in_credits, total_vcs));
+    SST_SER(SST::Core::Serialization::array(output_queue_lengths, total_vcs));
+
+    SST_SER(SST::Core::Serialization::array(ports, num_ports));
+
+    // vc_heads has duplicate data from the PortControls.  The actual data is checkpointed in the PortControl objects
+    // and is restored below, just need to recreate the array.
+    if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+        vc_heads = new internal_router_event*[num_ports * num_vcs];
+        for ( int i = 0; i < num_ports * num_vcs; i++ ) {
+            vc_heads[i] = nullptr;
+        }
+    }
+
+#if VERIFY_DECLOCKING
+    SST_SER(clocking);
+#endif
+
+    SST_SER(SST::Core::Serialization::array(in_port_busy, num_ports));
+    SST_SER(SST::Core::Serialization::array(out_port_busy, num_ports));
+    SST_SER(SST::Core::Serialization::array(progress_vcs, num_ports));
+
+    SST_SER(input_buf_size);
+    SST_SER(output_buf_size);
+    SST_SER(unclocked_cycle);
+    SST_SER(xbar_bw);
+    SST_SER(xbar_tc);
+    SST_SER(my_clock_handler);
+    SST_SER(inspector_names);
+
+    SST_SER(SST::Core::Serialization::array(xbar_stalls, num_ports));
+
+    SST_SER(shared_array);
+
+    if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+        output = getSimulationOutput();
+
+        // Re-establish non-owning pointers in each PortControl.
+        // Must NOT call initVCs() here — it unconditionally allocates
+        // new buffers and credits, overwriting the deserialized state
+        // from PortControl::serialize_order(). Instead, only reconnect
+        // the shared array slices (vc_heads, xbar_in_credits,
+        // output_queue_lengths) and the topo/parent pointers.
+        for ( int i = 0; i < num_ports; i++ ) {
+            PortControl* pc = dynamic_cast<PortControl*>(ports[i]);
+            if ( pc ) {
+                pc->restoreSharedArrays(
+                    &vc_heads[i * num_vcs],
+                    &xbar_in_credits[i * num_vcs],
+                    &output_queue_lengths[i * num_vcs]);
+                pc->repopulateVCHeads();
+            }
+        }
+
+        topo->setOutputBufferCreditArray(xbar_in_credits, num_vcs);
+        topo->setOutputQueueLengthsArray(output_queue_lengths, num_vcs);
+    }
+}
+
 hr_router::~hr_router()
 {
     delete [] in_port_busy;
     delete [] out_port_busy;
     delete [] progress_vcs;
 
-    for ( int i = 0 ; i < num_ports ; i++ ) {
-        delete ports[i];
-    }
+    // SST framework manages SubComponent lifecycle — do not delete ports[i], topo, or arb
     delete [] ports;
-
-    delete topo;
-    delete arb;
 }
 
 hr_router::hr_router(ComponentId_t cid, Params& params) :
@@ -283,9 +374,8 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     arb =
         loadAnonymousSubComponent<XbarArbitration>(xbar_arb, "XbarArb", 0, ComponentInfo::INSERT_STATS, empty_params);
 
-    my_clock_handler = new Clock::Handler2<hr_router,&hr_router::clock_handler>(this);
+    my_clock_handler = new Clock::Handler<hr_router,&hr_router::clock_handler>(this);
     xbar_tc = registerClock( xbar_clock, my_clock_handler);
-    num_routers++;
 
 #if VERIFY_DECLOCKING
     clocking = true;
@@ -341,12 +431,6 @@ hr_router::notifyEvent()
 #endif
     // Report skipped cycles to arbitration unit.
     arb->reportSkippedCycles(elapsed_cycles);
-}
-
-void
-hr_router::sigHandler(int signal)
-{
-    print_debug = num_routers * 5;
 }
 
 void

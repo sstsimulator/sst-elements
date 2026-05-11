@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -66,8 +66,8 @@ NIC::sendManagerMsg(NetworkMessage *msg) {
 void
 NIC::init(unsigned int phase) {
   if (phase == 0) {
-    auto recv_notify = new SST::Interfaces::SimpleNetwork::Handler2<SST::Hg::NIC,&SST::Hg::NIC::incomingPacket>(this);
-    auto send_notify = new SST::Interfaces::SimpleNetwork::Handler2<SST::Hg::NIC,&SST::Hg::NIC::incomingCredit>(this);
+    auto recv_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC,&SST::Hg::NIC::incomingPacket>(this);
+    auto send_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC,&SST::Hg::NIC::incomingCredit>(this);
     link_control_->setNotifyOnReceive(recv_notify);
     link_control_->setNotifyOnSend(send_notify);
 

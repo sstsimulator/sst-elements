@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -64,6 +64,8 @@ private:
 
 public:
 
+    xbar_arb_lru() : XbarArbitration() {}
+
     xbar_arb_lru(ComponentId_t cid, Params& param) :
         XbarArbitration(cid)
     {
@@ -72,7 +74,33 @@ public:
     ~xbar_arb_lru() {
     }
 
-    void setPorts(int num_ports_s, int num_vcs_s) {
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        XbarArbitration::serialize_order(ser);
+        SST_SER(num_ports);
+        SST_SER(num_vcs);
+        SST_SER(total_entries);
+
+        // Need to serialize each of the priority arrays separately as there is no way to pass the fact that that the
+        // data in the array are c-style arrays
+        SST_SER(SST::Core::Serialization::array(priority[0], total_entries));
+        SST_SER(SST::Core::Serialization::array(priority[1], total_entries));
+
+        // Serialize which buffer is current vs next (as index 0 or 1)
+        int cur_idx = (cur_list == priority[0]) ? 0 : 1;
+        SST_SER(cur_idx);
+        if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+            cur_list = priority[cur_idx];
+            next_list = priority[1 - cur_idx];
+        }
+        // vc_heads is a non-owning scratch buffer, re-allocated on UNPACK
+        if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+            vc_heads = new internal_router_event*[num_vcs];
+        }
+    }
+    ImplementSerializable(SST::Merlin::xbar_arb_lru)
+
+    void setPorts(int num_ports_s, int num_vcs_s) override
+    {
         num_ports = num_ports_s;
         num_vcs = num_vcs_s;
 
@@ -103,7 +131,7 @@ public:
 #else
                    PortInterface** ports, int* in_port_busy, int* out_port_busy, int* progress_vc
 #endif
-                   )
+                   ) override
     {
 
         for ( int i = 0; i < num_ports; i++ ) progress_vc[i] = -1;
@@ -194,10 +222,11 @@ public:
         return;
     }
 
-    void reportSkippedCycles(Cycle_t cycles) {
-    }
+    void reportSkippedCycles(Cycle_t cycles) override
+    {}
 
-    void dumpState(std::ostream& stream) {
+    void dumpState(std::ostream& stream) override
+    {
         /* stream << "Current round robin port: " << rr_port << std::endl; */
         /* stream << "  Current round robin VC by port:" << std::endl; */
         /* for ( int i = 0; i < num_ports; i++ ) { */

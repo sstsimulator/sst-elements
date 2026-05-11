@@ -1,8 +1,8 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,13 +26,13 @@ using namespace SST::Interfaces;
 
 /* Constructor */
 
-MemNICFour::MemNICFour(ComponentId_t id, Params &params, TimeConverter* tc) : MemNICBase(id, params, tc) {
+MemNICFour::MemNICFour(ComponentId_t id, Params &params, TimeConverter tc) : MemNICBase(id, params, tc) {
     bool found;
     std::array<std::string,4> pref = {"req", "ack", "fwd", "data"};
 
     clockOn = true;
-    clockHandler = new Clock::Handler2<MemNICFour, &MemNICFour::clock>(this);
-    clockTC = registerClock(*tc, clockHandler);
+    clockHandler = new Clock::Handler<MemNICFour, &MemNICFour::clock>(this);
+    clockTC = registerClock(tc, clockHandler);
 
     for (int i = 0; i < 4; i++) {
         link_control[i] = loadUserSubComponent<SST::Interfaces::SimpleNetwork>(pref[i], ComponentInfo::SHARE_NONE, 1);
@@ -53,10 +53,10 @@ MemNICFour::MemNICFour(ComponentId_t id, Params &params, TimeConverter* tc) : Me
 
     // Set link control to call recvNotify on event receive
 
-    link_control[REQ]->setNotifyOnReceive(new SimpleNetwork::Handler2<MemNICFour, &MemNICFour::recvNotifyReq>(this));
-    link_control[ACK]->setNotifyOnReceive(new SimpleNetwork::Handler2<MemNICFour, &MemNICFour::recvNotifyAck>(this));
-    link_control[FWD]->setNotifyOnReceive(new SimpleNetwork::Handler2<MemNICFour, &MemNICFour::recvNotifyFwd>(this));
-    link_control[DATA]->setNotifyOnReceive(new SimpleNetwork::Handler2<MemNICFour, &MemNICFour::recvNotifyData>(this));
+    link_control[REQ]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour, &MemNICFour::recvNotifyReq>(this));
+    link_control[ACK]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour, &MemNICFour::recvNotifyAck>(this));
+    link_control[FWD]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour, &MemNICFour::recvNotifyFwd>(this));
+    link_control[DATA]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour, &MemNICFour::recvNotifyData>(this));
 
     // Register statistics
     stat_oooEvent[REQ] = registerStatistic<uint64_t>("outoforder_req_events");

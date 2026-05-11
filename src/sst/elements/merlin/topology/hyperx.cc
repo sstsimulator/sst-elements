@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -148,6 +148,27 @@ topo_hyperx::~topo_hyperx()
     delete [] dim_size;
     delete [] dim_width;
     delete [] port_start;
+}
+
+void
+topo_hyperx::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Topology::serialize_order(ser);
+    SST_SER(router_id);
+    SST_SER(dimensions);
+    SST_SER(total_routers);
+    SST_SER(num_local_ports);
+    SST_SER(local_port_start);
+    SST_SER(num_vcs);
+    SST_SER(num_vns);
+    SST_SER(rng);
+    SST_SER(rng_func);
+
+    SST_SER(SST::Core::Serialization::array(id_loc, dimensions));
+    SST_SER(SST::Core::Serialization::array(dim_size, dimensions));
+    SST_SER(SST::Core::Serialization::array(dim_width, dimensions));
+    SST_SER(SST::Core::Serialization::array(port_start, dimensions));
+    SST_SER(SST::Core::Serialization::array(vns, num_vns));
 }
 
 void

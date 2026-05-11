@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -44,24 +44,35 @@ public:
 
 
 private:
-    int num_ports;
-    int num_vns;
+    int num_ports = 0;
+    int num_vns = 0;
 
 public:
     topo_singlerouter(ComponentId_t cid, Params& params, int num_ports, int rtr_id, int nm_vns);
     ~topo_singlerouter();
 
-    virtual void route_packet(int port, int vc, internal_router_event* ev);
-    virtual internal_router_event* process_input(RtrEvent* ev);
+    topo_singlerouter() = default;
 
-    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts);
-    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev);
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        Topology::serialize_order(ser);
+        SST_SER(num_ports);
+        SST_SER(num_vns);
+    }
 
-    virtual PortState getPortState(int port) const;
+    ImplementSerializable(SST::Merlin::topo_singlerouter)
 
-    virtual int getEndpointID(int port) { return port; }
+    virtual void route_packet(int port, int vc, internal_router_event* ev) override;
+    virtual internal_router_event* process_input(RtrEvent* ev) override;
 
-    virtual void getVCsPerVN(std::vector<int>& vcs_per_vn) {
+    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts) override;
+    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev) override;
+
+    virtual PortState getPortState(int port) const override;
+
+    virtual int getEndpointID(int port)  override { return port; }
+
+    virtual void getVCsPerVN(std::vector<int>& vcs_per_vn)  override
+    {
         for ( int i = 0; i < num_vns; ++i ) {
             vcs_per_vn[i] = 1;
         }

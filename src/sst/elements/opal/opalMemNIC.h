@@ -1,8 +1,8 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -51,7 +51,7 @@ public:
 /* Begin class definition */
 
     /* Constructor */
-    OpalMemNIC(ComponentId_t id, Params &params, TimeConverter* tc);
+    OpalMemNIC(ComponentId_t id, Params &params, TimeConverter tc);
 
     /* Destructor */
     virtual ~OpalMemNIC() { }
@@ -64,7 +64,7 @@ public:
             OpalInitMemRtrEvent() {}
             OpalInitMemRtrEvent(EndpointInfo info, uint32_t node) : InitMemRtrEvent(info), node(node) { }
 
-            virtual Event* clone(void) override {
+            Event* clone(void) override {
                 OpalInitMemRtrEvent * imre = new OpalInitMemRtrEvent(*this);
                 if (this->event != nullptr)
                     imre->event = this->event->clone();
@@ -73,7 +73,7 @@ public:
                 return imre;
             }
 
-            virtual bool hasClientData() const override { return false; }
+            bool hasClientData() const override { return false; }
 
             void serialize_order(SST::Core::Serialization::serializer &ser) override {
                 InitMemRtrEvent::serialize_order(ser);
@@ -83,22 +83,22 @@ public:
             ImplementSerializable(SST::Opal::OpalMemNIC::OpalInitMemRtrEvent);
     };
 
-    bool clock();
-    void send(MemHierarchy::MemEventBase *ev);
+    bool clock() override;
+    void send(MemHierarchy::MemEventBase *ev) override;
 
     bool recvNotify(int);
 
-    void init(unsigned int phase);
-    void finish() { link_control->finish(); }
-    void setup() { link_control->setup(); MemLinkBase::setup(); }
+    void init(unsigned int phase) override;
+    void finish() override { link_control->finish(); }
+    void setup() override { link_control->setup(); MemLinkBase::setup(); }
 
-    virtual std::string findTargetDestination(MemHierarchy::Addr addr);
+    std::string findTargetDestination(MemHierarchy::Addr addr) override;
 
-    virtual void sendUntimedData(MemHierarchy::MemEventInit* ev, bool broadcast, bool lookup_dst);
+    void sendUntimedData(MemHierarchy::MemEventInit* ev, bool broadcast, bool lookup_dst) override;
 
 protected:
-    virtual MemHierarchy::MemNICBase::InitMemRtrEvent* createInitMemRtrEvent();
-    virtual void processInitMemRtrEvent(MemHierarchy::MemNICBase::InitMemRtrEvent* ev);
+    MemHierarchy::MemNICBase::InitMemRtrEvent* createInitMemRtrEvent() override;
+    void processInitMemRtrEvent(MemHierarchy::MemNICBase::InitMemRtrEvent* ev) override;
 
 private:
     bool enable;

@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,7 +27,7 @@ using namespace SST::VaultSim;
 VaultSimMemory::VaultSimMemory(ComponentId_t id, Params &params) : FlagMemBackend(id, params){
     std::string access_time = params.find<std::string>("access_time", "100 ns");
     cube_link = configureLink( "cube_link", access_time,
-            new Event::Handler2<VaultSimMemory, &VaultSimMemory::handleCubeEvent>(this));
+            new Event::Handler<VaultSimMemory, &VaultSimMemory::handleCubeEvent>(this));
 
     output->init("VaultSimMemory[@p:@l]: ", 10, 0, Output::STDOUT);
 }

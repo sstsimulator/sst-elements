@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -56,7 +56,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
     // DIMM <-> Controller Links
     //// DIMM <-> CmdUnit (Req) (Cmd)
     m_ctrlLink = configureLink("ctrlLink",
-            new Event::Handler2<c_Dimm,&c_Dimm::handleInCmdUnitReqPtrEvent>(this));
+            new Event::Handler<c_Dimm,&c_Dimm::handleInCmdUnitReqPtrEvent>(this));
 
         output = new Output("", 1, 0, SST::Output::STDOUT);
 
@@ -202,7 +202,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
     std::string l_clockFreqStr = (std::string)x_params.find<std::string>("strControllerClockFrequency", "1GHz", l_found);
 
     //set our clock
-    m_clockHandler=new Clock::Handler2<c_Dimm,&c_Dimm::clockTic>(this);
+    m_clockHandler=new Clock::Handler<c_Dimm,&c_Dimm::clockTic>(this);
     registerClock(l_clockFreqStr, m_clockHandler);
 
     // Statistics setup

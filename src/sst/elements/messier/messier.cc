@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -129,12 +129,12 @@ Messier::Messier(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
     DIMM = loadComponentExtension<NVM_DIMM>(*nvm_params);
 
-        m_memChan = configureLink(link_buffer, "1ns", new Event::Handler2<NVM_DIMM,&NVM_DIMM::handleRequest>(DIMM));
+        m_memChan = configureLink(link_buffer, "1ns", new Event::Handler<NVM_DIMM,&NVM_DIMM::handleRequest>(DIMM));
 
 
     snprintf(link_buffer, buffer_size, "event_bus");
 
-        event_link = configureSelfLink(link_buffer, "1ns", new Event::Handler2<NVM_DIMM,&NVM_DIMM::handleEvent>(DIMM));
+        event_link = configureSelfLink(link_buffer, "1ns", new Event::Handler<NVM_DIMM,&NVM_DIMM::handleEvent>(DIMM));
 
 
     DIMM->setMemChannel(m_memChan);
@@ -149,7 +149,7 @@ Messier::Messier(SST::ComponentId_t id, SST::Params& params): Component(id) {
         event_link->setDefaultTimeBase(tc);
 
 
-    registerClock( cpu_clock, new Clock::Handler2<Messier,&Messier::tick>(this) );
+    registerClock( cpu_clock, new Clock::Handler<Messier,&Messier::tick>(this) );
 
 }
 

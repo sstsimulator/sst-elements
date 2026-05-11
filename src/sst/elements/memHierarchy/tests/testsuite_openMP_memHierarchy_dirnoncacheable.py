@@ -105,13 +105,13 @@ class testcase_memH_openMP_dirnoncacheable(SSTTestCase):
                     refcount = 0
                     # Grep the ref file for the count of this line occuring
                     cmd = 'grep -c "{0}" {1}'.format(testline, reffile)
-                    rtn = OSCommand(cmd).run()
+                    rtn = os_command(cmd).run()
                     self.assertEqual(rtn.result(), 0, "openMP dirnoncacheable Test failed running cmdline {0} - grepping reffile {1}".format(cmd, reffile))
                     refcount = int(rtn.output())
 
                     # Grep the out file for the count of this line occuring
                     cmd = 'grep -c "{0}" {1}'.format(testline, outfile)
-                    rtn = OSCommand(cmd).run()
+                    rtn = os_command(cmd).run()
                     if rtn.result() == 0:
                         outcount = int(rtn.output())
                     else:

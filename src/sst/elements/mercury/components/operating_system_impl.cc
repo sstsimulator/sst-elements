@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -191,21 +191,13 @@ OperatingSystemImpl::startThread(Thread* t)
 void
 OperatingSystemImpl::joinThread(Thread* t)
 {
-  sst_hg_abort_printf("OperatingSystem::joinThread not fully implemented");
-  if (t->getState() != Thread::DONE) {
-    // key* k = key::construct();
-    //       os_debug("joining thread %ld - thread not done so blocking on
-    //       thread %p",
-    //           t->threadId(), active_thread_);
-    t->joiners_.push(active_thread_);
-    //      int ncores = active_thread_->numActiveCcores();
-    //      //when joining - release all cores
-    //      compute_sched_->releaseCores(ncores, active_thread_);
-    //      block();
-    //      compute_sched_->reserveCores(ncores, active_thread_);
-  } else {
-    //      os_debug("joining completed thread %ld", t->threadId());
+  if (t->getState() == Thread::DONE) {
+    running_threads_.erase(t->tid());
+    delete t;
+    return;
   }
+  t->joiners_.push(active_thread_);
+  block();
   running_threads_.erase(t->tid());
   delete t;
 }

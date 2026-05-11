@@ -205,7 +205,7 @@ memParams = {
 # CPU related params
 tlbParams = {
     "debug_level": 0,
-    "hitLatency": 1,
+    "hit_latency": 1,
     "num_hardware_threads": numThreads,
     "num_tlb_entries_per_thread": 64,
     "tlb_set_size": 4,
@@ -457,22 +457,22 @@ class CPU_Builder:
 
         # processor_bus -> L1 cache
         link_bus_l1cache_link = sst.Link(prefix+".link_bus_l1cache_link")
-        link_bus_l1cache_link.connect( (processor_bus, "lowlink0", "1ns"), (dtlbWrapper, "cpu_if", "1ns") )
+        link_bus_l1cache_link.connect( (processor_bus, "lowlink0", "1ns"), (dtlbWrapper, "highlink", "1ns") )
         link_bus_l1cache_link.setNoCut()
 
         # data TLB -> data L1
         link_cpu_l1dcache_link = sst.Link(prefix+".link_cpu_l1dcache_link")
-        link_cpu_l1dcache_link.connect( (dtlbWrapper, "cache_if", "1ns"), (l1dcache_2_cpu, "port", "1ns") )
+        link_cpu_l1dcache_link.connect( (dtlbWrapper, "lowlink", "1ns"), (l1dcache_2_cpu, "port", "1ns") )
         link_cpu_l1dcache_link.setNoCut()
 
         # CPU (instruction) -> TLB -> Cache
         link_cpu_itlb_link = sst.Link(prefix+".link_cpu_itlb_link")
-        link_cpu_itlb_link.connect( (cpuIcacheIf, "lowlink", "1ns"), (itlbWrapper, "cpu_if", "1ns") )
+        link_cpu_itlb_link.connect( (cpuIcacheIf, "lowlink", "1ns"), (itlbWrapper, "highlink", "1ns") )
         link_cpu_itlb_link.setNoCut()
 
         # instruction TLB -> instruction L1
         link_cpu_l1icache_link = sst.Link(prefix+".link_cpu_l1icache_link")
-        link_cpu_l1icache_link.connect( (itlbWrapper, "cache_if", "1ns"), (l1icache_2_cpu, "port", "1ns") )
+        link_cpu_l1icache_link.connect( (itlbWrapper, "lowlink", "1ns"), (l1icache_2_cpu, "port", "1ns") )
         link_cpu_l1icache_link.setNoCut()
 
         # data L1 -> bus

@@ -7,13 +7,14 @@ SUBDIRS = libfabric
 AM_CPPFLAGS += \
 	$(MPI_CPPFLAGS) \
         -I$(top_srcdir)/src/sst/elements/iris \
+        -I$(top_srcdir)/src/sst/elements/iris/pmi \
         -I$(top_srcdir)/src/sst/elements/mercury \
         -I$(top_srcdir)/src/sst/elements
 
 # unpleasant hack to make vintage automake (e.g. 1.13.4) work
 AM_LIBTOOLFLAGS = --tag=CXX
 
-ext_LTLIBRARIES = libsumi.la
+ext_LTLIBRARIES = libsumi.la libpmi.la
 extdir = $(pkglibdir)/ext
 
 libsumi_la_SOURCES = \
@@ -79,7 +80,8 @@ nobase_library_include_HEADERS = \
   sumi/sumi_thread.h \
   sumi/timeout.h \
   sumi/transport.h \
-  sumi/transport_fwd.h
+  sumi/transport_fwd.h \
+  pmi/pmi.h
 
 if !SST_ENABLE_PREVIEW_BUILD
 libsumi_la_SOURCES += $(deprecated_libsumi_sources)
@@ -94,8 +96,19 @@ endif
 
 libsumi_la_LDFLAGS = -module -avoid-version
 
+libpmi_la_SOURCES = pmi/libpmi.cc
+libpmi_la_LDFLAGS = -avoid-version
+
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     iris=$(abs_srcdir)
+
+install-data-hook:
+	@$(MKDIR_P) $(DESTDIR)$(includedir)/iris
+	$(INSTALL_DATA) $(srcdir)/pmi/pmi.h $(DESTDIR)$(includedir)/iris/pmi.h
+
+uninstall-hook:
+	rm -f $(DESTDIR)$(includedir)/iris/pmi.h
+	-rmdir $(DESTDIR)$(includedir)/iris 2>/dev/null || true
 
 # This sed script converts 'od' output to a comma-separated list of byte-
 # values, suitable for #include'ing into an array definition.

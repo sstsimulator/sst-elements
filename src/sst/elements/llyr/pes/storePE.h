@@ -1,8 +1,8 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -156,7 +156,7 @@ public:
             uint64_t addr = llyr_config_->starting_addr_ + ( (processor_id_ - 1) * (Bit_Length / 8) );
             if( input_queues_->size() > 0 ) {
                 LlyrData temp = LlyrData(addr);
-                output_->verbose(CALL_INFO, 8, 0, "Init(%" PRIu32 ")::%" PRIx64 "::%" PRIu64 "\n", 0, addr, temp.to_ulong());
+                output_->verbose(CALL_INFO, 8, 0, "Init(%" PRIu32 ")::%" PRIx64 "::%lu\n", 0, addr, temp.to_ulong());
                 input_queues_->at(0)->data_queue_->push(temp);
 
                 addr = addr + (Bit_Length / 8);

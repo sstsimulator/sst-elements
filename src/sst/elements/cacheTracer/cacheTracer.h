@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -44,8 +44,8 @@ class cacheTracer : public SST::Component {
 public:
     cacheTracer(SST::ComponentId_t id, Params& params);
     ~cacheTracer();
-    void finish();
-    void init(unsigned int phase);
+    void finish() override;
+    void init(unsigned int phase) override;
 
     SST_ELI_REGISTER_COMPONENT(
        	cacheTracer,

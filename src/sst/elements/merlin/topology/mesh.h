@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -32,11 +32,11 @@ namespace Merlin {
 
 class topo_mesh_event : public internal_router_event {
 public:
-    int dimensions;
-    int routing_dim;
-    int* dest_loc;
+    int dimensions = 0;
+    int routing_dim = 0;
+    int* dest_loc = nullptr;
 
-    topo_mesh_event() {}
+    topo_mesh_event() = default;
     topo_mesh_event(int dim) {	dimensions = dim; routing_dim = 0; dest_loc = new int[dim]; }
     virtual ~topo_mesh_event() { delete[] dest_loc; }
     virtual internal_router_event* clone(void) override
@@ -52,13 +52,7 @@ public:
         SST_SER(dimensions);
         SST_SER(routing_dim);
 
-        if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
-            dest_loc = new int[dimensions];
-        }
-
-        for ( int i = 0 ; i < dimensions ; i++ ) {
-            SST_SER(dest_loc[i]);
-        }
+        SST_SER(SST::Core::Serialization::array(dest_loc, dimensions));
     }
 
 protected:
@@ -71,9 +65,9 @@ private:
 
 class topo_mesh_init_event : public topo_mesh_event {
 public:
-    int phase;
+    int phase = 0;
 
-    topo_mesh_init_event() {}
+    topo_mesh_init_event() = default;
     topo_mesh_init_event(int dim) : topo_mesh_event(dim), phase(0) { }
     virtual ~topo_mesh_init_event() { }
     virtual internal_router_event* clone(void) override
@@ -126,41 +120,60 @@ public:
 
 
 private:
-    int router_id;
-    int* id_loc;
+    int router_id = -1;
+    int* id_loc = nullptr;
 
-    int dimensions;
-    int* dim_size;
-    int* dim_width;
+    int dimensions = 0;
+    int* dim_size = nullptr;
+    int* dim_width = nullptr;
 
     int (* port_start)[2]; // port_start[dim][direction: 0=pos, 1=neg]
 
-    int num_local_ports;
-    int local_port_start;
+    int num_local_ports = 0;
+    int local_port_start = 0;
 
-    int num_vns;
+    int num_vns = 0;
 
 public:
     topo_mesh(ComponentId_t cid, Params& params, int num_ports, int rtr_id, int num_vns);
     ~topo_mesh();
 
-    virtual void route_packet(int port, int vc, internal_router_event* ev);
-    virtual internal_router_event* process_input(RtrEvent* ev);
+    topo_mesh() = default;
 
-    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts);
-    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev);
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        Topology::serialize_order(ser);
+        SST_SER(router_id);
+        SST_SER(dimensions);
+        SST_SER(num_local_ports);
+        SST_SER(local_port_start);
+        SST_SER(num_vns);
 
-    virtual PortState getPortState(int port) const;
-    virtual int getEndpointID(int port);
+        SST_SER(SST::Core::Serialization::array(id_loc, dimensions));
+        SST_SER(SST::Core::Serialization::array(dim_size, dimensions));
+        SST_SER(SST::Core::Serialization::array(dim_width, dimensions));
+        SST_SER(SST::Core::Serialization::array(port_start, dimensions));
+    }
 
-    virtual void getVCsPerVN(std::vector<int>& vcs_per_vn) {
+    ImplementSerializable(SST::Merlin::topo_mesh)
+
+    void route_packet(int port, int vc, internal_router_event* ev) override;
+    internal_router_event* process_input(RtrEvent* ev) override;
+
+    void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts) override;
+    internal_router_event* process_UntimedData_input(RtrEvent* ev) override;
+
+    PortState getPortState(int port) const override;
+    int getEndpointID(int port) override;
+
+    void getVCsPerVN(std::vector<int>& vcs_per_vn) override
+    {
         for ( int i = 0; i < num_vns; ++i ) {
             vcs_per_vn[i] = 1;
         }
     }
 
 protected:
-    virtual int choose_multipath(int start_port, int num_ports, int dest_dist);
+    int choose_multipath(int start_port, int num_ports, int dest_dist);
 
 private:
     void idToLocation(int id, int *location) const;

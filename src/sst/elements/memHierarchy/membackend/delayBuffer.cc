@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -48,7 +48,7 @@ DelayBuffer::DelayBuffer(ComponentId_t id, Params &params) : SimpleMemBackend(id
 
     // Set up self links
     if (delay.getValue() != 0) {
-        delay_self_link = configureSelfLink("DelaySelfLink", delay.toString(), new Event::Handler2<DelayBuffer, &DelayBuffer::handleNextRequest>(this));
+        delay_self_link = configureSelfLink("DelaySelfLink", delay.toString(), new Event::Handler<DelayBuffer, &DelayBuffer::handleNextRequest>(this));
     } else {
         delay_self_link = NULL;
     }

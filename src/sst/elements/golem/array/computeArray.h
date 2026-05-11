@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -48,7 +48,7 @@ class ComputeArray : public SST::SubComponent {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT_API(
         SST::Golem::ComputeArray,
-        TimeConverter*,
+        TimeConverter,
         Event::HandlerBase*
     )
 
@@ -63,7 +63,7 @@ public:
     )
 
     ComputeArray(ComponentId_t id, Params& params,
-                 TimeConverter* tc,
+                 TimeConverter tc,
                  Event::HandlerBase* handler)
         : SubComponent(id), out("", params.find<int>("verbose", 1), 0, Output::STDOUT),
           tileHandler(handler) {
@@ -100,7 +100,7 @@ protected:
     SST::Link* selfLink = nullptr;
     SST::Event::HandlerBase* tileHandler = nullptr;
     UnitAlgebra arrayLatency;
-    TimeConverter* latencyTC = nullptr;
+    TimeConverter latencyTC;
 
     uint64_t numArrays;
     uint64_t inputArraySize;

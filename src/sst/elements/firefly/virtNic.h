@@ -1,9 +1,9 @@
 
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -103,14 +103,14 @@ class VirtNic : public SST::SubComponent {
     };
 
     template <typename classT, typename T1, typename T2 >
-    class Handler2Args : public HandlerBase2Args< T1, T2 > {
+    class HandlerArgs : public HandlerBase2Args< T1, T2 > {
       private:
         typedef bool (classT::*PtrMember)( T1, T2 );
         classT* object;
         const PtrMember member;
 
       public:
-        Handler2Args( classT* const object, PtrMember member ) :
+        HandlerArgs( classT* const object, PtrMember member ) :
             object(object),
             member(member)
         {}

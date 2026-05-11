@@ -43,8 +43,8 @@ Access Latency Distribution (ns):
 Min-Latency(ns): 3  Max-Latency(ns): 175  #Bins: 10
 -----------------------------------------------------------------
 Latency Range(ns): Count
-- [0-17]: 259
-- [18-35]: 2
+- [0-17]: 258
+- [18-35]: 3
 - [36-53]: 1
 - [54-71]: 0
 - [72-89]: 1
@@ -57,4 +57,4 @@ Latency Range(ns): Count
 - Total_Events_Latency: 1000
 -----------------------------------------------------------------
 
-Simulation is complete, simulated time: 6.17 us
+Simulation is complete, simulated time: 6.173 us

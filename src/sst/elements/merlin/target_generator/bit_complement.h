@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -54,16 +54,27 @@ public:
     ~BitComplementDist() {
     }
 
-    void initialize(int id, int num_peers) {
+    void initialize(int id, int num_peers) override
+    {
         dest = num_peers - 1 - id;
     }
 
-    int getNextValue(void) {
+    int getNextValue(void) override
+    {
         return dest;
     }
 
-    void seed(uint32_t val) {
+    void seed(uint32_t val) override
+    {}
+
+    BitComplementDist() : TargetGenerator(), dest(0) {}
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        TargetGenerator::serialize_order(ser);
+        SST_SER(dest);
     }
+
+    ImplementSerializable(SST::Merlin::BitComplementDist)
 };
 
 } //namespace Merlin

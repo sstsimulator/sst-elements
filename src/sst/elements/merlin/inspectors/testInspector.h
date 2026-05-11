@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -49,8 +49,16 @@ private:
 public:
     TestNetworkInspector(ComponentId_t id, Params& params, const std::string& sub_id);
 
-    void inspectNetworkData(SimpleNetwork::Request* req);
+    void inspectNetworkData(SimpleNetwork::Request* req) override;
 
+    TestNetworkInspector() : test_count(nullptr) {}
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SimpleNetwork::NetworkInspector::serialize_order(ser);
+        SST_SER(test_count);
+    }
+
+    ImplementSerializable(SST::Merlin::TestNetworkInspector)
 };
 } // namespace Merlin
 } // namespace SST

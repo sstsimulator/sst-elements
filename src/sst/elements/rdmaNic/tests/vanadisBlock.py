@@ -50,7 +50,7 @@ if (verbosity > 0):
 
 tlbParams = {
     "debug_level": 0,
-    "hitLatency": 10,
+    "hit_latency": 10,
     "num_hardware_threads": 1,
     "num_tlb_entries_per_thread": 64,
     "tlb_set_size": 4,
@@ -224,19 +224,19 @@ class Vanadis_Builder:
 
         # CPU (data) -> D-TLB
         link = sst.Link(prefix+".link_cpu_dtlb")
-        link.connect( (dcache_if, "lowlink", "1ns"), (dtlbWrapper, "cpu_if", "1ns") )
+        link.connect( (dcache_if, "lowlink", "1ns"), (dtlbWrapper, "highlink", "1ns") )
 
         # CPU (instruction) -> I-TLB
         link = sst.Link(prefix+".link_cpu_itlb")
-        link.connect( (icache_if, "lowlink", "1ns"), (itlbWrapper, "cpu_if", "1ns") )
+        link.connect( (icache_if, "lowlink", "1ns"), (itlbWrapper, "highlink", "1ns") )
 
         # D-TLB -> D-L1
         link = sst.Link(prefix+".link_l1cache")
-        link.connect( (dtlbWrapper, "cache_if", "1ns"), (l1dcache, "highlink", "1ns") )
+        link.connect( (dtlbWrapper, "lowlink", "1ns"), (l1dcache, "highlink", "1ns") )
 
         # I-TLB -> I-L1
         link = sst.Link(prefix+".link_l1icache")
-        link.connect( (itlbWrapper, "cache_if", "1ns"), (l1icache, "highlink", "1ns") )
+        link.connect( (itlbWrapper, "lowlink", "1ns"), (l1icache, "highlink", "1ns") )
 
         # L1 I-Cache to bus
         link = sst.Link(prefix + ".link_l1dcache_l2cache")

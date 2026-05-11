@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,7 +26,7 @@ namespace MMU_Lib {
 
 class TLB : public SubComponent {
 
-  public:
+public:
 
     typedef std::function<void(uint64_t,uint64_t)> Callback;
 
@@ -38,14 +38,22 @@ class TLB : public SubComponent {
     TLB(SST::ComponentId_t id, SST::Params& params) : SubComponent(id) {}
     virtual ~TLB() {}
 
-    virtual void init(unsigned int phase) {};
+    void init(unsigned int phase) override {};
 
-    virtual void registerCallback( Callback& callback  ) = 0;
-    virtual void getVirtToPhys( RequestID reqId, int hwThreadId, uint64_t virtAddr, uint32_t perms, uint64_t instPtr ) = 0;
+    virtual void registerCallback( Callback& callback ) = 0;
+    virtual void getVirtToPhys( RequestID req_id, uint32_t hw_thread_id, uint64_t virt_addr, uint32_t perms, uint64_t inst_ptr ) = 0;
 
-  protected:
-    Callback m_callback;
-    Output m_dbg;
+    TLB() = default;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::SubComponent::serialize_order(ser);
+        SST_SER(dbg_);
+        // callback_ must be re-registered on restart
+    }
+    ImplementVirtualSerializable(SST::MMU_Lib::TLB);
+
+protected:
+    Callback callback_;
+    Output dbg_;
 };
 
 class PassThroughTLB : public TLB {
@@ -55,19 +63,25 @@ class PassThroughTLB : public TLB {
         "mmu",
         "passThroughTLB",
         SST_ELI_ELEMENT_VERSION(1, 0, 0),
-        "Pass-through TLB, allways hits and returns virtAddr as physAddr",
+        "Pass-through TLB, allways hits and returns virtual address as physical address",
         SST::MMU_Lib::PassThroughTLB
     )
 
     PassThroughTLB(SST::ComponentId_t id, SST::Params& params) : TLB(id,params) {}
 
-    void registerCallback( Callback& callback ) {
-        m_callback = callback;
+    void registerCallback( Callback& callback ) override {
+        callback_ = callback;
     }
 
-    void getVirtToPhys( RequestID reqId, int hwThreadId, uint64_t virtAddr, uint32_t perms, uint64_t instPtr  ) {
-        m_callback( reqId, virtAddr );
+    void getVirtToPhys( RequestID req_id, uint32_t hw_thread_id, uint64_t virt_addr, uint32_t perms, uint64_t inst_ptr  ) override {
+        callback_( req_id, virt_addr );
     }
+
+    PassThroughTLB() = default;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        TLB::serialize_order(ser);
+    }
+    ImplementSerializable(SST::MMU_Lib::PassThroughTLB);
 };
 
 } //namespace MMU_Lib

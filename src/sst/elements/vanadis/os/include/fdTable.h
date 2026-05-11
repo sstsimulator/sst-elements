@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -69,7 +69,7 @@ public:
         if ( ! lazy ) {
             fd = open(file_path.c_str(), flags, mode );
             if ( -1 == fd ) {
-                printf("%s() FAILED: %s flags=%#x mode=%#x\n",__func__,path.c_str(),flags,mode);
+                printf("%s() FAILED: %s flags=%#x mode=0x%" PRIxMAX "\n",__func__,path.c_str(),flags, (uintmax_t)mode);
                 throw errno;
             }
         } else {
@@ -96,10 +96,10 @@ public:
     int openLate() {
         fd = open(path.c_str(), flags, mode );
         if ( -1 == fd ) {
-            printf("%s() FAILED: %s flags=%#x mode=%#x\n",__func__,path.c_str(),flags,mode);
+            printf("%s() FAILED: %s flags=%#x mode=0x%" PRIxMAX "\n",__func__,path.c_str(),flags, (uintmax_t)mode);
             throw errno;
         } else {
-            printf("%s() %s flags=%#x mode=%#x\n",__func__,path.c_str(),flags,mode);
+            printf("%s() %s flags=%#x mode=%" PRIxMAX "\n",__func__,path.c_str(),flags, (uintmax_t)mode);
         }
         return fd;
     }
@@ -127,16 +127,16 @@ public:
         assert( 1 == f );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"flags: %d\n", flags );
 
-        f = fscanf(fp,"mode: %d\n", &mode);
+        f = fscanf(fp,"mode: %" PRIuMAX "\n", (uintmax_t*)&mode);
         assert( 1 == f );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"mode: %d\n", mode);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"mode: %" PRIuMAX "\n", (uintmax_t)mode);
     }
 
     void checkpoint( FILE* fp) {
         fprintf(fp, "path: %s\n", path.c_str() );
         fprintf(fp, "fd: %d\n", fd );
         fprintf(fp, "flags: %d\n", flags );
-        fprintf(fp, "mode: %d\n", mode );
+        fprintf(fp, "mode: %" PRIuMAX "\n", (uintmax_t)mode );
     }
 
 protected:

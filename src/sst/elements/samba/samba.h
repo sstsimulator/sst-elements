@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -94,9 +94,9 @@ class Samba : public SST::Component {
         )
 
         Samba(SST::ComponentId_t id, SST::Params& params);
-        void init(unsigned int phase);
-                        void setup()  { };
-        void finish() {for(int i=0; i<(int) core_count; i++) TLB[i]->finish();};
+        void init(unsigned int phase) override;
+        void setup()  override { };
+        void finish() override {for(int i=0; i<(int) core_count; i++) TLB[i]->finish();};
         void handleEvent(SST::Event* event) {};
         bool tick(SST::Cycle_t x);
 

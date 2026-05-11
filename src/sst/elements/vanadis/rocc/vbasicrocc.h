@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -83,7 +83,7 @@ public:
 
         memInterface = loadUserSubComponent<Interfaces::StandardMem>(
             "memory_interface", ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, getTimeConverter("1ps"),
-            new StandardMem::Handler2<SST::Vanadis::VanadisRoCCBasic,&VanadisRoCCBasic::processIncomingDataCacheEvent>(this));
+            new StandardMem::Handler<SST::Vanadis::VanadisRoCCBasic,&VanadisRoCCBasic::processIncomingDataCacheEvent>(this));
 
         if ( nullptr == memInterface ) {
             output->fatal(

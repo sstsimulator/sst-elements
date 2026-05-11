@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -33,7 +33,7 @@ MemoryManagerOpal::MemoryManagerOpal(ComponentId_t id, Params& params) :
     std::string latency = params.find<std::string>("opal_latency", "32ps");
 
     while (isPortConnected(linkname)) {
-        SST::Link* link = configureLink(linkname, latency, new Event::Handler2<MemoryManagerOpal,&MemoryManagerOpal::handleInterrupt>(this));
+        SST::Link* link = configureLink(linkname, latency, new Event::Handler<MemoryManagerOpal,&MemoryManagerOpal::handleInterrupt>(this));
         opalLink.push_back(link);
         numPorts++;
         linkname = linkprefix + std::to_string(numPorts);

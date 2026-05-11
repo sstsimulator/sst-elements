@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -53,11 +53,11 @@ BalarTestCPU::BalarTestCPU(ComponentId_t id, Params& params) :
 
     //set our clock
     std::string clockFreq = params.find<std::string>("clock", "1GHz");
-    clockHandler = new Clock::Handler2<BalarTestCPU,&BalarTestCPU::clockTic>(this);
+    clockHandler = new Clock::Handler<BalarTestCPU,&BalarTestCPU::clockTic>(this);
     clockTC = registerClock( clockFreq, clockHandler );
 
     /* Find the interface the user provided in the Python and load it*/
-    memory = loadUserSubComponent<StandardMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new StandardMem::Handler2<BalarTestCPU,&BalarTestCPU::handleEvent>(this));
+    memory = loadUserSubComponent<StandardMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new StandardMem::Handler<BalarTestCPU,&BalarTestCPU::handleEvent>(this));
 
     if (!memory) {
         out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.standardInterface subcomponent; check that 'memory' slot is filled in input.\n");

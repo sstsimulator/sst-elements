@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -45,7 +45,7 @@ using namespace SST::MemHierarchy;
  */
 
 /*************************** Memory Controller ********************/
-MemController::MemController(ComponentId_t id, Params &params) : Component(id), backing_(NULL) {
+MemController::MemController(ComponentId_t id, Params &params) : Component(id), backing_(nullptr) {
 
     dlevel = params.find<int>("debug_level", 0);
 
@@ -96,7 +96,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         out.fatal(CALL_INFO, -1, "%s, ERROR - Invalid parameter: 'clock'. Must have units of Hz or s and be > 0. (SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
     }
 
-    clockHandler_ = new Clock::Handler2<MemController, &MemController::clock>(this);
+    clockHandler_ = new Clock::Handler<MemController, &MemController::clock>(this);
     clockTimeBase_ = registerClock(clockfreq, clockHandler_);
     clockOn_ = true;
 
@@ -205,9 +205,9 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     region_.interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
     region_.interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
 
-    link_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, &clockTimeBase_);
+    link_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, clockTimeBase_);
     if (!link_) {
-        link_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, &clockTimeBase_);
+        link_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, clockTimeBase_);
         if (link_) {
             out.output("%s, WARNING - Deprecation: The 'cpulink' subcomponent slot has been renamed to 'highlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
         }
@@ -217,13 +217,13 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         Params linkParams = params.get_scoped_params("cpulink");
         linkParams.insert("port", "direct_link");
         linkParams.insert("latency", link_lat, false);
-        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, &clockTimeBase_);
+        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, clockTimeBase_);
         out.output("%s, WARNING - Deprecation: To standardize port names across memHierarchy elements, the MemController's port 'direct_link' has been renamed to 'highlink'. The 'direct_link' port will be removed in SST 16.\n", getName().c_str());
     } else if (!link_ && isPortConnected("highlink")) {
         Params linkParams = params.get_scoped_params("highlink");
         linkParams.insert("port", "highlink");
         linkParams.insert("latency", link_lat, false);
-        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, &clockTimeBase_);
+        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, clockTimeBase_);
     } else if (!link_) {
 
         if (!isPortConnected("network")) {
@@ -240,15 +240,15 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
             nicParams.insert("ack.port", "network_ack");
             nicParams.insert("fwd.port", "network_fwd");
             nicParams.insert("data.port", "network_data");
-            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, &clockTimeBase_);
+            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, clockTimeBase_);
         } else {
             nicParams.insert("port", "network");
-            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, &clockTimeBase_);
+            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, clockTimeBase_);
         }
     }
 
     clockLink_ = link_->isClocked();
-    link_->setRecvHandler( new Event::Handler2<MemController, &MemController::handleEvent>(this));
+    link_->setRecvHandler( new Event::Handler<MemController, &MemController::handleEvent>(this));
 
     link_->setRegion(region_);
 
@@ -447,7 +447,7 @@ void MemController::handleEvent(SST::Event* event) {
         case Command::FlushLine:
         case Command::FlushLineInv:
             {
-                MemEvent* put = NULL;
+                MemEvent* put = nullptr;
                 if ( ev->getPayloadSize() != 0 ) {
                     put = new MemEvent(getName(), ev->getBaseAddr(), ev->getBaseAddr(), Command::PutM, ev->getPayload());
                     put->setFlag(MemEvent::F_NORESPONSE);
@@ -627,7 +627,7 @@ void MemController::complete(unsigned int phase) {
     link_->complete(phase);
 
     // Initiate flush here if configured to do so
-    if (!phase && (backing_outfile_ != "" || backing_outscreen_)) {
+    if (!phase && backing_ && (backing_outfile_ != "" || backing_outscreen_)) {
         MemEventUntimedFlush* flush = new MemEventUntimedFlush(getName());
         mem_h_debug_output(_L10_, "U: %-20s   Event:Untimed   (%s)\n", getName().c_str(), flush->getVerboseString().c_str());
         link_->sendUntimedData(flush, true); /* Broadcast to all sources */
@@ -643,14 +643,14 @@ void MemController::finish(void) {
     cycle--;
     memBackendConvertor_->finish(cycle);
     link_->finish();
-    if ( backing_outfile_ != "" ) {
+    if ( backing_ && backing_outfile_ != "" ) {
         try {
             backing_->printToFile(backing_outfile_);
         } catch (int e) { // Don't fatal so late in simulation
             out.output("%s, WARNING: Unable to open file '%s' provided by parameter 'backing_out_file' to write memory contents. Memory contents will not be written.\n", getName().c_str(), backing_outfile_.c_str());
         }
     }
-    if (backing_outscreen_) {
+    if (backing_ && backing_outscreen_) {
         backing_->printToScreen(privateMemOffset_, region_.start, region_.interleaveSize, region_.interleaveStep);
     }
 }

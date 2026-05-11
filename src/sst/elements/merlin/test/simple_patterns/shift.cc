@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -106,9 +106,9 @@ shift_nic::shift_nic(ComponentId_t cid, Params& params) :
 
 
     // Register a clock
-    registerClock( "1GHz", new Clock::Handler2<shift_nic,&shift_nic::clock_handler>(this), false);
+    registerClock( "1GHz", new Clock::Handler<shift_nic,&shift_nic::clock_handler>(this), false);
 
-    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler2<shift_nic,&shift_nic::handle_event>(this));
+    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler<shift_nic,&shift_nic::handle_event>(this));
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
@@ -119,7 +119,54 @@ shift_nic::shift_nic(ComponentId_t cid, Params& params) :
 
 shift_nic::~shift_nic()
 {
-    delete link_control;
+    // SST framework manages SubComponent lifecycle — do not delete link_control
+}
+
+shift_nic::shift_nic() :
+    Component(),
+    id(0),
+    net_id(0),
+    num_peers(0),
+    shift(0),
+    target(0),
+    send_seq(0),
+    recv_seq(0),
+    num_ooo(0),
+    num_msg(0),
+    size_in_bits(0),
+    packets_sent(0),
+    packets_recd(0),
+    stalled_cycles(0),
+    send_done(false),
+    recv_done(false),
+    initialized(false),
+    link_control(nullptr),
+    remap(0),
+    output(getSimulationOutput())
+{}
+
+void
+shift_nic::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Component::serialize_order(ser);
+    SST_SER(id);
+    SST_SER(net_id);
+    SST_SER(num_peers);
+    SST_SER(shift);
+    SST_SER(target);
+    SST_SER(send_seq);
+    SST_SER(recv_seq);
+    SST_SER(num_ooo);
+    SST_SER(num_msg);
+    SST_SER(size_in_bits);
+    SST_SER(packets_sent);
+    SST_SER(packets_recd);
+    SST_SER(stalled_cycles);
+    SST_SER(send_done);
+    SST_SER(recv_done);
+    SST_SER(initialized);
+    SST_SER(link_control);
+    SST_SER(remap);
 }
 
 void shift_nic::finish()

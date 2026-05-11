@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -53,18 +53,18 @@ public:
     CoherentMemController(ComponentId_t id, Params &params);
 
     /* Event handling */
-    void handleMemResponse(SST::Event::id_type id, uint32_t flags);
+    void handleMemResponse(SST::Event::id_type id, uint32_t flags) override;
 
     /* Component API */
-    virtual void init(unsigned int phase);
-    virtual void setup();
+    void init(unsigned int phase) override;
+    void setup() override;
 
 protected:
-    virtual void processInitEvent(MemEventInit* ev);
+    void processInitEvent(MemEventInit* ev) override;
 
-    virtual void handleEvent(SST::Event * event);
+    void handleEvent(SST::Event * event) override;
 
-    virtual bool clock(Cycle_t cycle);
+    bool clock(Cycle_t cycle) override;
 
 private:
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -335,6 +335,25 @@ topo_dragonfly::topo_dragonfly(ComponentId_t cid, Params &p, int num_ports, int 
 topo_dragonfly::~topo_dragonfly()
 {
     delete[] vns;
+}
+
+void
+topo_dragonfly::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Topology::serialize_order(ser);
+    SST_SER(group_to_global_port);
+    SST_SER(params);
+    SST_SER(adaptive_threshold);
+    SST_SER(group_id);
+    SST_SER(router_id);
+    SST_SER(rtr_id);
+    SST_SER(rng);
+    SST_SER(num_vcs);
+    SST_SER(num_vns);
+    SST_SER(global_start);
+    SST_SER(global_route_mode);
+
+    SST_SER(SST::Core::Serialization::array(vns, num_vns));
 }
 
 
@@ -1012,9 +1031,8 @@ void topo_dragonfly::routeUntimedData(int port, internal_router_event* ev, std::
         if ( broadcast_to_groups ) {
             for ( int p = 0; p < (int)(params.g); p++ ) {
                 auto dst_group = p;
-                if ( dst_group >= (int)group_id && global_route_mode==global_route_mode_t::ABSOLUTE) dst_group++;
                 const RouterPortPair& pair = group_to_global_port.getRouterPortPair(dst_group,0);
-                if ( pair.router == router_id && p != td_ev->src_group) outPorts.push_back((int)(pair.port));
+                if ( pair.router == router_id && dst_group != td_ev->src_group) outPorts.push_back((int)(pair.port));
             }
         }
     } else {

@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -36,7 +36,7 @@ pagedMultiMemory::pagedMultiMemory(ComponentId_t id, Params &params) : DRAMSimMe
 
     string access = params.find<std::string>("access_time", "35ns");
     self_link = configureSelfLink("Self", access,
-                                        new Event::Handler2<pagedMultiMemory, &pagedMultiMemory::handleSelfEvent>(this));
+                                        new Event::Handler<pagedMultiMemory, &pagedMultiMemory::handleSelfEvent>(this));
 
     maxFastPages = params.find<unsigned int>("max_fast_pages", 256);
     pageShift = params.find<unsigned int>("page_shift", 12);
@@ -46,7 +46,7 @@ pagedMultiMemory::pagedMultiMemory(ComponentId_t id, Params &params) : DRAMSimMe
 
     string clock_freq = params.find<std::string>("quantum", "5ms");
     registerClock(clock_freq,
-                        new Clock::Handler2<pagedMultiMemory, &pagedMultiMemory::quantaClock>(this));
+                        new Clock::Handler<pagedMultiMemory, &pagedMultiMemory::quantaClock>(this));
 
     // determine page replacement / addition strategy
     std::string stratStr = params.find<std::string>("page_replace_strategy", "FIFO");

@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -35,6 +35,7 @@ class CPURequest {
 public:
     CPURequest(const uint64_t origID) :
         originalID(origID), issueTime(0), outstandingParts(0) {}
+    CPURequest() = default;
     void incPartCount() { outstandingParts++; }
     void decPartCount() { outstandingParts--; }
     bool completed() const { return 0 == outstandingParts; }
@@ -42,6 +43,13 @@ public:
     uint64_t getIssueTime() const { return issueTime; }
     uint64_t getOriginalReqID() const { return originalID; }
     uint32_t countParts() const { return outstandingParts; }
+
+	void serialize_order(SST::Core::Serialization::serializer& ser) {
+        SST_SER(originalID);
+        SST_SER(issueTime);
+        SST_SER(outstandingParts);
+	}
+
 protected:
     uint64_t originalID;
     uint64_t issueTime;
@@ -52,20 +60,28 @@ class RequestGenCPU : public SST::Component {
 public:
 
     RequestGenCPU(SST::ComponentId_t id, SST::Params& params);
-    void finish();
-    void init(unsigned int phase);
+    void finish() override;
+    void init(unsigned int phase) override;
 
     /* Handler class for StandardMem responses */
     class StdMemHandler : public SST::Interfaces::StandardMem::RequestHandler {
     public:
         friend class RequestGenCPU;
         StdMemHandler(RequestGenCPU* cpuInst, SST::Output* out) : SST::Interfaces::StandardMem::RequestHandler(out), cpu(cpuInst) {}
+        StdMemHandler() = default;
         virtual ~StdMemHandler() {}
         virtual void handle(SST::Interfaces::StandardMem::ReadResp* rsp) override;
         virtual void handle(SST::Interfaces::StandardMem::WriteResp* rsp) override;
         virtual void handle(SST::Interfaces::StandardMem::CustomResp* rsp) override;
 
-        RequestGenCPU* cpu;
+        virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+            SST::Interfaces::StandardMem::RequestHandler::serialize_order(ser);
+            SST_SER(cpu);
+        }
+
+        ImplementSerializable(SST::Miranda::RequestGenCPU::StdMemHandler)
+
+        RequestGenCPU* cpu = nullptr;
     };
 
 	SST_ELI_REGISTER_COMPONENT(
@@ -122,8 +138,47 @@ public:
         { "memory",     "The memory interface to use (e.g., interface to caches)", "SST::Interfaces::StandardMem" }
     )
 
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::Component::serialize_order(ser);
+        SST_SER(out);
+
+        SST_SER(timeConverter);
+        SST_SER(clockHandler);
+        SST_SER(reqGen);
+        SST_SER(requestsInFlight);
+        SST_SER(cache_link);
+        SST_SER(srcLink);
+        SST_SER(srcReqEvent );
+        SST_SER(stdMemHandlers);
+
+        SST_SER(pendingRequests);
+        SST_SER(memMgr);
+
+        SST_SER(maxRequestsPending);
+        SST_SER(requestsPending);
+        SST_SER(reqMaxPerCycle);
+        SST_SER(cacheLine);
+        SST_SER(maxOpLookup);
+
+        SST_SER(statReqs);
+        SST_SER(statSplitReqs);
+        SST_SER(statCyclesWithIssue);
+        SST_SER(statMaxIssuePerCycle);
+        SST_SER(statCyclesWithoutIssue);
+        SST_SER(statBytes);
+        SST_SER(statReqLatency);
+        SST_SER(statTime);
+        SST_SER(statCyclesHitFence);
+        SST_SER(statCyclesHitReorderLimit);
+        SST_SER(statCycles);
+
+    }
+
+    ImplementSerializable(SST::Miranda::RequestGenCPU)
+
+
 private:
-    RequestGenCPU();  // for serialization only
+    RequestGenCPU() = default;  // for serialization only
     RequestGenCPU(const RequestGenCPU&); // do not implement
     void operator=(const RequestGenCPU&); // do not implement
     ~RequestGenCPU();
@@ -136,19 +191,19 @@ private:
     void issueCustomRequest(CustomOpRequest* req);
     void handleSrcEvent( SST::Event* );
 
-    Output* out;
+    Output* out = nullptr;
 
     TimeConverter timeConverter;
-    Clock::HandlerBase* clockHandler;
-    RequestGenerator* reqGen;
+    Clock::HandlerBase* clockHandler = nullptr;
+    RequestGenerator* reqGen = nullptr;
     std::map<StandardMem::Request::id_t, CPURequest*> requestsInFlight;
-    StandardMem* cache_link;
-    Link* srcLink;
-    MirandaReqEvent* srcReqEvent;
-    StdMemHandler* stdMemHandlers;
+    StandardMem* cache_link = nullptr;
+    Link* srcLink = nullptr;
+    MirandaReqEvent* srcReqEvent = nullptr;
+    StdMemHandler* stdMemHandlers = nullptr;
 
     MirandaRequestQueue<GeneratorRequest*> pendingRequests;
-    MirandaMemoryManager* memMgr;
+    MirandaMemoryManager* memMgr = nullptr;
 
     uint32_t maxRequestsPending[OPCOUNT];
 	uint32_t requestsPending[OPCOUNT];
@@ -156,17 +211,17 @@ private:
 	uint64_t cacheLine;
 	uint32_t maxOpLookup;
 
-    Statistic<uint64_t>* statReqs[OPCOUNT];
-	Statistic<uint64_t>* statSplitReqs[OPCOUNT];
-	Statistic<uint64_t>* statCyclesWithIssue;
-	Statistic<uint64_t>* statMaxIssuePerCycle;
-	Statistic<uint64_t>* statCyclesWithoutIssue;
-	Statistic<uint64_t>* statBytes[OPCOUNT];
-	Statistic<uint64_t>* statReqLatency;
-	Statistic<uint64_t>* statTime;
-	Statistic<uint64_t>* statCyclesHitFence;
-	Statistic<uint64_t>* statCyclesHitReorderLimit;
-	Statistic<uint64_t>* statCycles;
+    Statistic<uint64_t>* statReqs[OPCOUNT] = {nullptr, nullptr, nullptr, nullptr};
+	Statistic<uint64_t>* statSplitReqs[OPCOUNT] = {nullptr, nullptr, nullptr, nullptr};
+	Statistic<uint64_t>* statCyclesWithIssue = nullptr;
+	Statistic<uint64_t>* statMaxIssuePerCycle = nullptr;
+	Statistic<uint64_t>* statCyclesWithoutIssue = nullptr;
+	Statistic<uint64_t>* statBytes[OPCOUNT] = {nullptr, nullptr, nullptr, nullptr};
+	Statistic<uint64_t>* statReqLatency = nullptr;
+	Statistic<uint64_t>* statTime = nullptr;
+	Statistic<uint64_t>* statCyclesHitFence = nullptr;
+	Statistic<uint64_t>* statCyclesHitReorderLimit = nullptr;
+	Statistic<uint64_t>* statCycles = nullptr;
 };
 
 }

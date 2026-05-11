@@ -248,4 +248,10 @@ HOOK_DEBUG_INI ;
 #  define HOOK_NOOP_INIT fi_hook_noop_ini()
 HOOK_NOOP_INI ;
 
+#ifdef __cplusplus
+extern "C"
+#endif
+struct fi_provider* fi_prov_ini(void);
+#define SUMI_INIT fi_prov_ini()
+
 #endif /* _OFI_PROV_H_ */

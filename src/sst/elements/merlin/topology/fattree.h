@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -54,34 +54,42 @@ public:
 
 
 private:
-    int rtr_level;
-    int level_id;
-    int level_group;
+    int rtr_level = 0;
+    int level_id = 0;
+    int level_group = 0;
 
-    int high_host;
-    int low_host;
+    int high_host = 0;
+    int low_host = 0;
 
-    int down_route_factor;
+    int down_route_factor = 0;
 
 //    int levels;
-    int id;
-    int up_ports;
-    int down_ports;
-    int num_ports;
-    int num_vns;
-    int num_vcs;
+    int id = -1;
+    int up_ports = 0;
+    int down_ports = 0;
+    int num_ports = 0;
+    int num_vns = 0;
+    int num_vcs = 0;
 
     int const* outputCredits;
-    int* thresholds;
-    double adaptive_threshold;
+    int* thresholds = nullptr;
+    double adaptive_threshold = 0.0;
 
-    struct vn_info {
-        int start_vc;
-        int num_vcs;
-        bool allow_adaptive;
+    struct vn_info
+    {
+        int start_vc = 0;
+        int num_vcs = 0;
+        bool allow_adaptive = false;
+
+        void serialize_order(SST::Core::Serialization::serializer& ser)
+        {
+            SST_SER(start_vc);
+            SST_SER(num_vcs);
+            SST_SER(allow_adaptive);
+        }
     };
 
-    vn_info* vns;
+    vn_info* vns = nullptr;
 
     void parseShape(const std::string &shape, int *downs, int *ups) const;
 
@@ -90,19 +98,26 @@ public:
     topo_fattree(ComponentId_t cid, Params& params, int num_ports, int rtr_id, int num_vns);
     ~topo_fattree();
 
-    virtual void route_packet(int port, int vc, internal_router_event* ev);
-    virtual internal_router_event* process_input(RtrEvent* ev);
+    topo_fattree() : Topology() {}
 
-    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts);
-    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev);
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
 
-    virtual int getEndpointID(int port);
+    ImplementSerializable(SST::Merlin::topo_fattree)
 
-    virtual PortState getPortState(int port) const;
+    virtual void route_packet(int port, int vc, internal_router_event* ev) override;
+    virtual internal_router_event* process_input(RtrEvent* ev) override;
 
-    virtual void setOutputBufferCreditArray(int const* array, int vcs);
+    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts) override;
+    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev) override;
 
-    virtual void getVCsPerVN(std::vector<int>& vcs_per_vn) {
+    virtual int getEndpointID(int port) override;
+
+    virtual PortState getPortState(int port) const override;
+
+    virtual void setOutputBufferCreditArray(int const* array, int vcs) override;
+
+    virtual void getVCsPerVN(std::vector<int>& vcs_per_vn)  override
+    {
         for ( int i = 0; i < num_vns; ++i ) {
             vcs_per_vn[i] = vns[i].num_vcs;
         }

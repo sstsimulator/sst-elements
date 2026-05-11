@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -60,8 +60,8 @@ basicSimLifeCycle::basicSimLifeCycle(ComponentId_t id, Params& params) : Compone
     verbose = params.find<bool>("verbose", false);
 
     // configure our links with a callback function that will be called whenever an event arrives
-    leftLink = configureLink("left", new Event::Handler2<basicSimLifeCycle, &basicSimLifeCycle::handleEvent>(this));
-    rightLink = configureLink("right", new Event::Handler2<basicSimLifeCycle, &basicSimLifeCycle::handleEvent>(this));
+    leftLink = configureLink("left", new Event::Handler<basicSimLifeCycle, &basicSimLifeCycle::handleEvent>(this));
+    rightLink = configureLink("right", new Event::Handler<basicSimLifeCycle, &basicSimLifeCycle::handleEvent>(this));
 
     // Make sure we successfully configured the links
     // Failure usually means the user didn't connect the port in the input file

@@ -1,8 +1,8 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -347,23 +347,23 @@ public:
     Nic(ComponentId_t, Params& );
     ~Nic();
 
-    void init( unsigned int phase );
+    void init( unsigned int phase ) override;
     int getNodeId() { return m_myNodeId; }
     int getNum_vNics() { return m_num_vNics; }
-    void printStatus(Output &out) {
+    void printStatus(Output &out) override {
         out.output("NIC %d: start time=%zu\n", m_myNodeId, (size_t) getCurrentSimTimeNano() );
         m_memoryModel->printStatus( out, m_myNodeId );
         out.output("NIC %d: done\n", m_myNodeId );
     }
 
-	Statistic<uint64_t>* m_sentByteCount;
-	Statistic<uint64_t>* m_rcvdByteCount;
-	Statistic<uint64_t>* m_sentPkts;
-	Statistic<uint64_t>* m_rcvdPkts;
-	Statistic<uint64_t>* m_networkStall;
-	Statistic<uint64_t>* m_hostStall;
-	Statistic<uint64_t>* m_recvStreamPending;
-	Statistic<uint64_t>* m_sendStreamPending;
+    Statistic<uint64_t>* m_sentByteCount;
+    Statistic<uint64_t>* m_rcvdByteCount;
+    Statistic<uint64_t>* m_sentPkts;
+    Statistic<uint64_t>* m_rcvdPkts;
+    Statistic<uint64_t>* m_networkStall;
+    Statistic<uint64_t>* m_hostStall;
+    Statistic<uint64_t>* m_recvStreamPending;
+    Statistic<uint64_t>* m_sendStreamPending;
 
     void detailedMemOp( Thornhill::DetailedCompute* detailed,
             std::vector<MemOp>& vec, std::string op, Callback callback );

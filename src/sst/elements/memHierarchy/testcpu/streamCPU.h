@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -59,20 +59,22 @@ public:
 
     SST_ELI_DOCUMENT_PORTS( {"mem_link", "Connection to cache", { "memHierarchy.MemEventBase" } } )
 
+    SST_ELI_IS_CHECKPOINTABLE()
+
 /* Begin class definiton */
     streamCPU(SST::ComponentId_t id, SST::Params& params);
-    void init();
-    void finish() {
+    void finish() override {
         out.output("streamCPU Finished after %" PRIu64 " issued reads, %" PRIu64 " returned\n",
                 num_reads_issued, num_reads_returned);
         out.output("Completed @ %" PRIu64 " ns\n", getCurrentSimTimeNano());
     }
 
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::MemHierarchy::streamCPU);
+
 private:
     streamCPU();  // for serialization only
-    streamCPU(const streamCPU&); // do not implement
-    void operator=(const streamCPU&); // do not implement
-    void init(unsigned int phase);
+    void init(unsigned int phase) override;
 
     void handleEvent( SST::Interfaces::StandardMem::Request * req );
     virtual bool clockTic( SST::Cycle_t );
@@ -90,12 +92,12 @@ private:
 
     std::map<uint64_t, SimTime_t> requests;
 
-    Interfaces::StandardMem * memory;
+    Interfaces::StandardMem * memory = nullptr;
 
     SST::RNG::MarsagliaRNG rng;
 
-    TimeConverter *clockTC;
-    Clock::HandlerBase *clockHandler;
+    TimeConverter clockTC;
+    Clock::HandlerBase *clockHandler = nullptr;
 
 };
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -156,16 +156,16 @@ public:
     noc_mesh(ComponentId_t cid, Params& params);
     ~noc_mesh();
 
-    void init(unsigned int phase);
-    void complete(unsigned int phase);
-    void setup();
-    void finish();
+    void init(unsigned int phase) override;
+    void complete(unsigned int phase) override;
+    void setup() override;
+    void finish() override;
 
     // void sendTopologyEvent(int port, TopologyEvent* ev);
     // void recvTopologyEvent(int port, TopologyEvent* ev);
 
     // void dumpState(std::ostream& stream);
-    void printStatus(Output& out);
+    void printStatus(Output& out) override;
 
 
 };

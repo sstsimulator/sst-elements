@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -42,64 +42,64 @@ public:
     VanadisInstructionLoader(const size_t uop_cache_size, const size_t predecode_cache_entries,
                              const uint64_t cachelinewidth, SST::Output* output) {
 
-        cache_line_width = cachelinewidth;
-        uop_cache = new VanadisCache<uint64_t, VanadisInstructionBundle*, SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE>(uop_cache_size);
-        predecode_cache = new VanadisCache<uint64_t, uint8_t*, SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE_ARRAY>(predecode_cache_entries);
+        cache_line_width_ = cachelinewidth;
+        uop_cache_ = new VanadisCache<uint64_t, VanadisInstructionBundle*, SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE>(uop_cache_size);
+        predecode_cache_ = new VanadisCache<uint64_t, uint8_t*, SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE_ARRAY>(predecode_cache_entries);
         output_ = output;
 
-        mem_if = nullptr;
+        mem_if_ = nullptr;
 
-        loader_mode = VanadisInstructionLoaderMode::LRU_CACHE_MODE;
+        loader_mode_ = VanadisInstructionLoaderMode::LRU_CACHE_MODE;
         switchLoaderMode();
     }
 
     ~VanadisInstructionLoader() {
-        delete uop_cache;
-        delete predecode_cache;
+        delete uop_cache_;
+        delete predecode_cache_;
     }
 
     void setLoaderMode(const VanadisInstructionLoaderMode new_loader_mode) {
-        loader_mode = new_loader_mode;
+        loader_mode_ = new_loader_mode;
         switchLoaderMode();
     }
 
     VanadisInstructionLoaderMode getLoaderMode() const {
-        return loader_mode;
+        return loader_mode_;
     }
 
-    uint64_t getCacheLineWidth() { return cache_line_width; }
+    uint64_t getCacheLineWidth() { return cache_line_width_; }
 
     void setCacheLineWidth(const uint64_t new_line_width) {
         // if the line width is changed then we have to flush our cache
-        if (cache_line_width != new_line_width) {
-            predecode_cache->clear();
+        if (cache_line_width_ != new_line_width) {
+            predecode_cache_->clear();
         }
 
-        cache_line_width = new_line_width;
+        cache_line_width_ = new_line_width;
     }
 
-    void setMemoryInterface(SST::Interfaces::StandardMem* new_if) { mem_if = new_if; }
+    void setMemoryInterface(SST::Interfaces::StandardMem* new_if) { mem_if_ = new_if; }
 
     bool acceptResponse(SST::Interfaces::StandardMem::Request* req) {
         // Looks like we created this request, so we should accept and process it
-        auto check_hit_local = pending_loads.find(req->getID());
+        auto check_hit_local = pending_loads_.find(req->getID());
 
         #ifdef VANADIS_BUILD_DEBUG
         const auto output_verbosity = output_->getVerboseLevel();
         #endif
 
-        if (check_hit_local != pending_loads.end()) {
+        if (check_hit_local != pending_loads_.end()) {
             SST::Interfaces::StandardMem::ReadResp* resp = static_cast<SST::Interfaces::StandardMem::ReadResp*>(req);
-            if (resp->data.size() != cache_line_width) {
+            if (resp->data.size() != cache_line_width_) {
                 output_->fatal(CALL_INFO, -1,
                               "Error: request to the instruction cache was not for a "
-                              "full line, req=%d, line-width=%d\n",
-                              (int)resp->data.size(), (int)cache_line_width);
+                              "full line, req=%zu, line-width=%" PRIu64 "\n",
+                              resp->data.size(), cache_line_width_);
             }
 
 
-            uint8_t* new_line = new uint8_t[cache_line_width];
-            std::memcpy(new_line, &resp->data[0], cache_line_width);
+            uint8_t* new_line = new uint8_t[cache_line_width_];
+            std::memcpy(new_line, &resp->data[0], cache_line_width_);
 
             #ifdef VANADIS_BUILD_DEBUG
             if(output_verbosity >= 16) {
@@ -110,7 +110,7 @@ public:
                 char* temp_line = new char[2048];
                 print_line[0] = '\0';
 
-                for (uint64_t i = 0; i < cache_line_width; ++i) {
+                for (uint64_t i = 0; i < cache_line_width_; ++i) {
                     for (uint64_t j = 0; j < 2048; ++j) {
                         temp_line[j] = print_line[j];
                     }
@@ -128,13 +128,13 @@ public:
 
             if(output_verbosity >= 16) {
                 output_->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ---> hit (addr=0x%" PRI_ADDR "), caching line in predecoder.\n",
-                            resp->pAddr);
+                            resp->vAddr);
             }
             #endif
-            predecode_cache->store(resp->pAddr, new_line);
+            predecode_cache_->store(resp->vAddr, new_line);
 
             // Remove from pending load stores.
-            pending_loads.erase(check_hit_local);
+            pending_loads_.erase(check_hit_local);
 
             return true;
         } else {
@@ -144,18 +144,18 @@ public:
 
     bool getPredecodeBytes(const uint64_t addr, uint8_t* buffer, const size_t buffer_req) {
 
-        if (buffer_req > cache_line_width) {
+        if (buffer_req > cache_line_width_) {
             output_->fatal(CALL_INFO, -1,
                           "[inst-predecode-bytes-check]: Requested a decoded bytes "
                           "fill of longer than a cache line, req=%" PRIu64 ", line-width=%" PRIu64 "\n",
-                          (uint64_t)buffer_req, cache_line_width);
+                          (uint64_t)buffer_req, cache_line_width_);
         }
         #ifdef VANADIS_BUILD_DEBUG
         const auto output_verbosity = output_->getVerboseLevel();
         #endif
 
         // calculate offset within the cache line
-        const uint64_t inst_line_offset = (addr % cache_line_width);
+        const uint64_t inst_line_offset = (addr % cache_line_width_);
 
         // get the start of the cache line containing the request
         const uint64_t cache_line_start = addr - inst_line_offset;
@@ -170,9 +170,9 @@ public:
         }
         #endif
 
-        if (predecode_cache->contains(cache_line_start)) {
-            uint8_t* cached_bytes = predecode_cache->find(cache_line_start);
-			uint64_t bytes_from_this_line = std::min( static_cast<uint64_t>(buffer_req), cache_line_width - inst_line_offset );
+        if (predecode_cache_->contains(cache_line_start)) {
+            uint8_t* cached_bytes = predecode_cache_->find(cache_line_start);
+			uint64_t bytes_from_this_line = std::min( static_cast<uint64_t>(buffer_req), cache_line_width_ - inst_line_offset );
 
             #ifdef VANADIS_BUILD_DEBUG
             if(output_verbosity >= 16) {
@@ -189,8 +189,8 @@ public:
                 }
                 #endif
 
-                if(predecode_cache->contains(cache_line_start + cache_line_width)) {
-                    cached_bytes = predecode_cache->find(cache_line_start + cache_line_width);
+                if(predecode_cache_->contains(cache_line_start + cache_line_width_)) {
+                    cached_bytes = predecode_cache_->find(cache_line_start + cache_line_width_);
 
                     #ifdef VANADIS_BUILD_DEBUG
                     if(output_verbosity >= 16) {
@@ -223,33 +223,33 @@ public:
     }
 
     void cacheDecodedBundle(VanadisInstructionBundle* bundle) {
-        switch(loader_mode) {
+        switch(loader_mode_) {
         case VanadisInstructionLoaderMode::LRU_CACHE_MODE:
         {
-            uop_cache->store(bundle->getInstructionAddress(), bundle);
+            uop_cache_->store(bundle->getInstructionAddress(), bundle);
         } break;
         case VanadisInstructionLoaderMode::INFINITE_CACHE_MODE:
         {
-            infinite_uop_cache.insert(std::pair<uint64_t, VanadisInstructionBundle*>(bundle->getInstructionAddress(), bundle));
+            infinite_uop_cache_.insert(std::pair<uint64_t, VanadisInstructionBundle*>(bundle->getInstructionAddress(), bundle));
         } break;
         }
     }
 
     void clearCache() {
-        uop_cache->clear();
-        predecode_cache->clear();
-        infinite_uop_cache.clear();
+        uop_cache_->clear();
+        predecode_cache_->clear();
+        infinite_uop_cache_.clear();
     }
 
     bool hasBundleAt(const uint64_t addr) const {
-        switch(loader_mode) {
+        switch(loader_mode_) {
         case VanadisInstructionLoaderMode::LRU_CACHE_MODE:
         {
-            return uop_cache->contains(addr);
+            return uop_cache_->contains(addr);
         } break;
         case VanadisInstructionLoaderMode::INFINITE_CACHE_MODE:
         {
-            return !(infinite_uop_cache.find(addr) == infinite_uop_cache.end());
+            return !(infinite_uop_cache_.find(addr) == infinite_uop_cache_.end());
         } break;
         }
         output_->fatal(CALL_INFO, -1, "hasBundleAt reached unpexected state");
@@ -257,26 +257,26 @@ public:
     }
 
 	bool hasPredecodeAt(const uint64_t addr, const uint64_t len) const {
-		const uint64_t line_start    = addr - (addr % static_cast<uint64_t>(cache_line_width));
-		const uint64_t len_line_left = cache_line_width - (addr % static_cast<uint64_t>(cache_line_width));
+		const uint64_t line_start    = addr - (addr % static_cast<uint64_t>(cache_line_width_));
+		const uint64_t len_line_left = cache_line_width_ - (addr % static_cast<uint64_t>(cache_line_width_));
 
 		if(len <= len_line_left) {
-			return predecode_cache->contains(line_start);
+			return predecode_cache_->contains(line_start);
 		} else {
-			const uint64_t line_start_right = line_start + cache_line_width;
-			return predecode_cache->contains(line_start) && predecode_cache->contains(line_start_right);
+			const uint64_t line_start_right = line_start + cache_line_width_;
+			return predecode_cache_->contains(line_start) && predecode_cache_->contains(line_start_right);
 		}
 	}
 
     VanadisInstructionBundle* getBundleAt(const uint64_t addr) {
-        switch(loader_mode) {
+        switch(loader_mode_) {
         case VanadisInstructionLoaderMode::LRU_CACHE_MODE:
         {
-            return uop_cache->find(addr);
+            return uop_cache_->find(addr);
         } break;
         case VanadisInstructionLoaderMode::INFINITE_CACHE_MODE:
         {
-            return infinite_uop_cache.find(addr)->second;
+            return infinite_uop_cache_.find(addr)->second;
         } break;
         }
         output_->fatal(CALL_INFO, -1, "getBundleAt reached unexpected state");
@@ -284,20 +284,20 @@ public:
     }
 
     void requestLoadAt(const uint64_t addr, const uint64_t len) {
-        if (len > cache_line_width) {
+        if (len > cache_line_width_) {
             output_->fatal(CALL_INFO, -1,
                           "Error: requested an instruction load which is longer than "
                           "a cache line, req=%" PRIu64 ", line=%" PRIu64 "\n",
-                          len, cache_line_width);
+                          len, cache_line_width_);
         }
 
         #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG,
                         "[ins-loader] ---> processing a requested load ip=%p, "
                         "icache-line: %" PRIu64 " bytes.\n",
-                        (void*)addr, cache_line_width);
+                        (void*)addr, cache_line_width_);
         #endif
-        const uint64_t line_start_offset = (addr % cache_line_width);
+        const uint64_t line_start_offset = (addr % cache_line_width_);
         uint64_t line_start = addr - line_start_offset;
 
         do {
@@ -305,12 +305,12 @@ public:
             output_->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG,
                             "[ins-loader] ---> issue ins-load line-start: 0x%" PRI_ADDR ", line-len: %" PRIu64
                             " read-len=%" PRIu64 " \n",
-                            line_start, line_start_offset, cache_line_width);
+                            line_start, line_start_offset, cache_line_width_);
             #endif
 
-            if ( predecode_cache->contains(line_start) ) {
+            if ( predecode_cache_->contains(line_start) ) {
                 // line is already in the cache, touch to make sure it is kept in LRU
-                predecode_cache->touch(line_start);
+                predecode_cache_->touch(line_start);
 
                 #ifdef VANADIS_BUILD_DEBUG
                 output_->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ----> line (start-addr: 0x%" PRI_ADDR ") is already in pre-decode cache, updated LRU priority\n",
@@ -319,8 +319,8 @@ public:
 			} else {
 	            bool found_pending_load = false;
 
-	            for (auto pending_load_itr : pending_loads) {
-	                if (pending_load_itr.second->pAddr == line_start) {
+	            for (auto pending_load_itr : pending_loads_) {
+	                if (pending_load_itr.second->vAddr == line_start) {
 	                    found_pending_load = true;
 	                    break;
 	                }
@@ -329,17 +329,17 @@ public:
 	            if (!found_pending_load) {
                     #ifdef VANADIS_BUILD_DEBUG
                     output_->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ----> creating a load for line at 0x%" PRI_ADDR ", len=%" PRIu64 "\n",
-                        line_start, cache_line_width);
+                        line_start, cache_line_width_);
                     #endif
 
 	                SST::Interfaces::StandardMem::Read* req_line = new SST::Interfaces::StandardMem::Read(
-                        line_start, cache_line_width);
+                        line_start, cache_line_width_, 0, line_start);
 
-	                pending_loads.insert(
+	                pending_loads_.insert(
 	                    std::pair<SST::Interfaces::StandardMem::Request::id_t, SST::Interfaces::StandardMem::Read*>(
 	                        req_line->getID(), req_line));
 
-	                mem_if->send(req_line);
+	                mem_if_->send(req_line);
 
                 #ifdef VANADIS_BUILD_DEBUG
 	            } else {
@@ -350,7 +350,7 @@ public:
             	}
 			}
 
-            line_start += cache_line_width;
+            line_start += cache_line_width_;
         } while (line_start < (addr + len));
 
         #ifdef VANADIS_BUILD_DEBUG
@@ -360,25 +360,25 @@ public:
 
     void printStatus() {
         output_->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "Instruction Loader - Internal State Report:\n");
-        output_->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "--> Cache Line Width:          %" PRIu64 "\n", cache_line_width);
+        output_->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "--> Cache Line Width:          %" PRIu64 "\n", cache_line_width_);
         output_->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "--> Pending Loads:             %" PRIu32 "\n",
-                        (uint32_t)pending_loads.size());
+                        (uint32_t)pending_loads_.size());
 
-        for (auto pl_itr : pending_loads) {
-            output_->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "-----> Address:       %p\n", (void*)pl_itr.second->pAddr);
+        for (auto pl_itr : pending_loads_) {
+            output_->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "-----> Address:       %p\n", (void*)pl_itr.second->vAddr);
         }
 
-        output_->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "--> uop Cache Entries:         %" PRIu32 " / %" PRIu32 "\n",
-                        (uint32_t)uop_cache->size(), (uint32_t)uop_cache->capacity());
-        output_->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "--> Predecode Cache Entries:   %" PRIu32 " / %" PRIu32 "\n",
-                        (uint32_t)predecode_cache->size(), (uint32_t)predecode_cache->capacity());
+        output_->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "--> uop Cache Entries:         %zu / %zu\n",
+                        uop_cache_->size(), uop_cache_->capacity());
+        output_->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "--> Predecode Cache Entries:   %zu / %zu\n",
+                        predecode_cache_->size(), predecode_cache_->capacity());
     }
 
     bool pendingLoad(const uint64_t addr, const uint64_t len) {
-        const uint64_t line_start_offset = (addr % cache_line_width);
+        const uint64_t line_start_offset = (addr % cache_line_width_);
         uint64_t line_start = addr - line_start_offset;
-        for (auto pending_load_itr : pending_loads) {
-	        if (pending_load_itr.second->pAddr == line_start) {
+        for (auto pending_load_itr : pending_loads_) {
+	        if (pending_load_itr.second->vAddr == line_start) {
 	            return true;
 	        }
 	    }
@@ -390,43 +390,43 @@ private:
     // All calls are ifdef'd by VANADIS_BUILD_DEBUG
 	void printPendingLoads() {
 		output_->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "[ins-loader]: Pending loads table\n");
-		for( auto next_load : pending_loads ) {
+		for( auto next_load : pending_loads_ ) {
 			output_->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "[ins-loader]:   load: 0x%" PRI_ADDR " / size %" PRIu64 "\n",
-				next_load.second->pAddr, next_load.second->size);
+				next_load.second->vAddr, next_load.second->size);
 		}
 	}
 
     void switchLoaderMode() {
         // clear the infinite cache so we get fresh entries
-        for(auto infinite_itr = infinite_uop_cache.cbegin(); infinite_itr != infinite_uop_cache.cend(); infinite_itr++) {
+        for (auto infinite_itr = infinite_uop_cache_.cbegin(); infinite_itr != infinite_uop_cache_.cend(); infinite_itr++) {
             // delete all the bundles which have been cached to save memory, this could be substantial in very large executables
             delete infinite_itr->second;
         }
 
-        infinite_uop_cache.clear();
+        infinite_uop_cache_.clear();
 
         // any additional mode-specific clean up which is needed
-        switch(loader_mode) {
+        switch(loader_mode_) {
         case VanadisInstructionLoaderMode::INFINITE_CACHE_MODE:
         {
-            uop_cache->clear();
+            uop_cache_->clear();
         } break;
         case VanadisInstructionLoaderMode::LRU_CACHE_MODE:
         {} break;
         }
     }
 
-    uint64_t cache_line_width;
-    SST::Interfaces::StandardMem* mem_if;
+    uint64_t cache_line_width_;
+    SST::Interfaces::StandardMem* mem_if_;
 
-    VanadisCache<uint64_t, VanadisInstructionBundle*, SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE>* uop_cache;
-    VanadisCache<uint64_t, uint8_t*, SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE_ARRAY>* predecode_cache;
+    VanadisCache<uint64_t, VanadisInstructionBundle*, SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE>* uop_cache_;
+    VanadisCache<uint64_t, uint8_t*, SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE_ARRAY>* predecode_cache_;
 
-    std::unordered_map<uint64_t, VanadisInstructionBundle*> infinite_uop_cache;
+    std::unordered_map<uint64_t, VanadisInstructionBundle*> infinite_uop_cache_;
 
-    std::unordered_map<SST::Interfaces::StandardMem::Request::id_t, SST::Interfaces::StandardMem::Read*> pending_loads;
+    std::unordered_map<SST::Interfaces::StandardMem::Request::id_t, SST::Interfaces::StandardMem::Read*> pending_loads_;
 
-    VanadisInstructionLoaderMode loader_mode;
+    VanadisInstructionLoaderMode loader_mode_;
     SST::Output* output_;
 };
 

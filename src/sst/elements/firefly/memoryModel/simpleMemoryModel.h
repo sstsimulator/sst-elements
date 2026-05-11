@@ -1,8 +1,8 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -278,7 +278,7 @@ public:
 		}
 
 		m_selfLink = configureSelfLink("Nic::SimpleMemoryModel", "1 ns",
-        new Event::Handler2<SimpleMemoryModel,&SimpleMemoryModel::handleSelfEvent>(this));
+        new Event::Handler<SimpleMemoryModel,&SimpleMemoryModel::handleSelfEvent>(this));
 	}
 
     virtual ~SimpleMemoryModel() {

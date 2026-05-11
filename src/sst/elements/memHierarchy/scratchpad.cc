@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -179,7 +179,7 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     directory_ = false;
 
     // Create clock
-    TimeConverter tc = registerClock(clock_freq, new Clock::Handler2<Scratchpad, &Scratchpad::clock>(this));
+    TimeConverter tc = registerClock(clock_freq, new Clock::Handler<Scratchpad, &Scratchpad::clock>(this));
 
     // Register statistics
     stat_ScratchReadReceived      = registerStatistic<uint64_t>("request_received_scratch_read");
@@ -195,42 +195,42 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     // Options: cpu and network; or cpu and memory;
     // cpu is a MoveEvent interface, memory & network are MemEvent interfaces (memory is a direct connect while network uses SimpleNetwork)
 
-    linkUp_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, &tc);
+    linkUp_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, tc);
     if (!linkUp_) {
-        linkUp_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, &tc);
+        linkUp_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, tc);
         if (linkUp_) {
             out.output("%s, DEPRECATION WARNING: The 'cpulink' subcomponent slot has been renamed to 'highlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
         }
         if (!linkUp_ && isPortConnected("highlink")) {
             Params p;
             p.insert("port", "highlink");
-            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, p, &tc);
+            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, p, tc);
         }
     }
     if (linkUp_)
-        linkUp_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingCPUEvent>(this));
+        linkUp_->setRecvHandler(new Event::Handler<Scratchpad, &Scratchpad::processIncomingCPUEvent>(this));
 
-    linkDown_ = loadUserSubComponent<MemLinkBase>("lowlink", ComponentInfo::SHARE_NONE, &tc);
+    linkDown_ = loadUserSubComponent<MemLinkBase>("lowlink", ComponentInfo::SHARE_NONE, tc);
     if (!linkDown_) {
-        linkDown_ = loadUserSubComponent<MemLinkBase>("memlink", ComponentInfo::SHARE_NONE, &tc);
+        linkDown_ = loadUserSubComponent<MemLinkBase>("memlink", ComponentInfo::SHARE_NONE, tc);
         if (linkDown_) {
             out.output("%s, DEPRECATION WARNING: The 'memlink' subcomponent slot has been renamed to 'lowlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
         }
         if (!linkDown_ && isPortConnected("lowlink")) {
             Params p;
             p.insert("port", "lowlink");
-            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, p, &tc);
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, p, tc);
         }
     }
     if (linkDown_)
-        linkDown_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingRemoteEvent>(this));
+        linkDown_->setRecvHandler(new Event::Handler<Scratchpad, &Scratchpad::processIncomingRemoteEvent>(this));
 
     if (linkUp_ && !linkDown_) {
         linkDown_ = linkUp_;
-        linkDown_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingNetworkEvent>(this));
+        linkDown_->setRecvHandler(new Event::Handler<Scratchpad, &Scratchpad::processIncomingNetworkEvent>(this));
     } else if (linkDown_ && !linkUp_) {
         linkUp_ = linkDown_;
-        linkDown_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingNetworkEvent>(this));
+        linkDown_->setRecvHandler(new Event::Handler<Scratchpad, &Scratchpad::processIncomingNetworkEvent>(this));
     }
 
     if (!linkUp_) {
@@ -251,15 +251,15 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
         if (cpuDirect) {
             Params cpulink = params.get_scoped_params("cpulink");
             cpulink.insert("port", "cpu");
-            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, cpulink, &tc);
-            linkUp_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingCPUEvent>(this));
+            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, cpulink, tc);
+            linkUp_->setRecvHandler(new Event::Handler<Scratchpad, &Scratchpad::processIncomingCPUEvent>(this));
             out.output("%s, DEPRECATION WARNING: The scratchpad's 'cpu' port has been renamed to 'highlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
         }
         if (memoryDirect) {
             Params memlink = params.get_scoped_params("memlink");
             memlink.insert("port", "memory");
-            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memlink, &tc);
-            linkDown_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingRemoteEvent>(this));
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memlink, tc);
+            linkDown_->setRecvHandler(new Event::Handler<Scratchpad, &Scratchpad::processIncomingRemoteEvent>(this));
             out.output("%s, DEPRECATION WARNING: The scratchpad's 'memory' port has been renamed to 'lowlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
         }
 
@@ -285,15 +285,15 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
             nicParams.insert("group", "3", false); // 3 is the default for anything that talks to memory but this can be set by user too so don't overwrite
 
             if (!memoryDirect) { /* Connect mem side to network */
-                linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, &tc);
-                linkDown_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingRemoteEvent>(this));
+                linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, tc);
+                linkDown_->setRecvHandler(new Event::Handler<Scratchpad, &Scratchpad::processIncomingRemoteEvent>(this));
                 if (!cpuDirect) {
                     linkUp_ = linkDown_; /* Connect cpu side to same network */
-                    linkDown_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingNetworkEvent>(this));
+                    linkDown_->setRecvHandler(new Event::Handler<Scratchpad, &Scratchpad::processIncomingNetworkEvent>(this));
                 }
             } else {
-                linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, &tc);
-                linkUp_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingCPUEvent>(this));
+                linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, tc);
+                linkUp_->setRecvHandler(new Event::Handler<Scratchpad, &Scratchpad::processIncomingCPUEvent>(this));
             }
         }
     }
@@ -622,18 +622,10 @@ void Scratchpad::handleScratchWrite(MemEvent * ev) {
             }
             return;
         }
-    } else if (directory_ && ev->isWriteback() && mshr_.find(ev->getBaseAddr()) != mshr_.end()) {
-        /* Drop writeback if we're stalled waiting for a ForceInv response */
-        MSHREntry * entry = &(mshr_.find(ev->getBaseAddr())->second.front());
-        if (outstandingEventList_.find(entry->id)->second.request->getCmd() == Command::Get) {
-            MemEvent * response = ev->makeResponse();
-            sendResponse(response);
-            delete ev;
-            return;
-        }
     }
 
     /* Drop clean writebacks after sending AckPut */
+    /* Ignore any writeback/invalidation races with a directory since it won't matter */
     if (ev->isWriteback() && !ev->getDirty()) {
         if (caching_) {
             cacheStatus_.at(ev->getBaseAddr()/scratchLineSize_) = directory_;
@@ -656,8 +648,16 @@ void Scratchpad::handleScratchWrite(MemEvent * ev) {
     if (directory_ && ev->isWriteback() && mshr_.find(ev->getBaseAddr()) != mshr_.end()) {
         /* For directory - jump write ahead of a Put so we have correct data but otherwise
          * do not resolve race by treating writeback as ackinv since it may not actually signal that
-         * the block is not present in caches */
+         * the block is not present in caches
+         * For dirty events only, writeback data to scratch ahead of Get since dir does not keep a copy
+         */
         std::list<MSHREntry>* entry = &(mshr_.find(ev->getBaseAddr())->second);
+        if (outstandingEventList_.find(entry->front().id)->second.request->getCmd() == Command::Get) {
+            doScratchWrite(write);
+            delete ev;
+            return;
+        }
+
         for (std::list<MSHREntry>::iterator it = entry->begin(); it != entry->end(); it++) {
             if (it->cmd == Command::Put) {
                 if (it == entry->begin()) {

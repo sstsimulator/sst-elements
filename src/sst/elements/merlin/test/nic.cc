@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -76,7 +76,7 @@ nic::nic(ComponentId_t cid, Params& params) :
         next_seq[i] = 0;
 
     // Register a clock
-    registerClock( "1GHz", new Clock::Handler2<nic,&nic::clock_handler>(this), false);
+    registerClock( "1GHz", new Clock::Handler<nic,&nic::clock_handler>(this), false);
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
@@ -86,9 +86,69 @@ nic::nic(ComponentId_t cid, Params& params) :
 
 nic::~nic()
 {
-    delete link_control;
+    // SST framework manages SubComponent lifecycle — do not delete link_control
     delete [] next_seq;
 }
+
+nic::nic() :
+    Component(),
+    id(0),
+    net_id(0),
+    num_peers(0),
+    msg_size(0),
+    num_msg(0),
+    group_offset(0),
+    group_peers(0),
+    packets_sent(0),
+    packets_recd(0),
+    stalled_cycles(0),
+    expected_recv_count(0),
+    done(false),
+    initialized(false),
+    init_state(0),
+    init_count(0),
+    init_broadcast_count(0),
+    send_untimed_bcast(false),
+    link_control(nullptr),
+    last_target(0),
+    next_seq(nullptr),
+    output(getSimulationOutput())
+{}
+
+void
+nic::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Component::serialize_order(ser);
+
+    SST_SER(id);
+    SST_SER(net_id);
+    SST_SER(num_peers);
+    SST_SER(msg_size);
+    SST_SER(num_msg);
+    SST_SER(group_offset);
+    SST_SER(group_peers);
+    SST_SER(packets_sent);
+    SST_SER(packets_recd);
+    SST_SER(stalled_cycles);
+    SST_SER(expected_recv_count);
+    SST_SER(done);
+    SST_SER(initialized);
+    SST_SER(init_state);
+    SST_SER(init_count);
+    SST_SER(init_broadcast_count);
+    SST_SER(send_untimed_bcast);
+
+    SST_SER(link_control);
+
+    SST_SER(last_target);
+    if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+        next_seq = new int[num_peers];
+    }
+    for ( int i = 0; i < num_peers; i++ ) {
+        SST_SER(next_seq[i]);
+    }
+}
+
 
 void nic::finish()
 {

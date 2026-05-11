@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -39,8 +39,8 @@ basicSubComponent_Component::basicSubComponent_Component(ComponentId_t id, Param
             "Error: The parameter 'value' is a required parameter and was not found in the input configuration\n");
 
     // Configure our links to call our event handler when an event arrives
-    leftLink = configureLink("left", new Event::Handler2<basicSubComponent_Component, &basicSubComponent_Component::handleEvent>(this));
-    rightLink = configureLink("right", new Event::Handler2<basicSubComponent_Component, &basicSubComponent_Component::handleEvent>(this));
+    leftLink = configureLink("left", new Event::Handler<basicSubComponent_Component, &basicSubComponent_Component::handleEvent>(this));
+    rightLink = configureLink("right", new Event::Handler<basicSubComponent_Component, &basicSubComponent_Component::handleEvent>(this));
 
     // Check that the links were configured correctly
     sst_assert(leftLink, CALL_INFO, -1,

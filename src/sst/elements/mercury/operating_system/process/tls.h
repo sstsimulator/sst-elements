@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -34,12 +34,13 @@
 #endif
 
 //
+#ifdef __cplusplus
 #include <cstdint>
 extern "C" int sst_hg_global_stacksize;
-//#else
-//#include <stdint.h>
-//extern int sst_hg_global_stacksize;
-//#endif
+#else
+#include <stdint.h>
+extern int sst_hg_global_stacksize;
+#endif
 
 
 static SST_HG_INLINE uintptr_t get_sst_hg_tls(){

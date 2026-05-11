@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,7 +28,28 @@ namespace Miranda {
 class InOrderSTREAMBenchGenerator : public RequestGenerator {
 
 public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        InOrderSTREAMBenchGenerator,
+        "miranda",
+        "InOrderSTREAMBenchGenerator",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Creates a representation of the STREAM benchmark for in-order CPUs",
+        SST::Miranda::RequestGenerator
+    )
+
+	SST_ELI_DOCUMENT_PARAMS(
+		{ "verbose",          "Sets the verbosity output of the generator", "0" },
+        { "n",                "Sets the number of elements in the STREAM arrays", "10000" },
+        { "block_per_call",   "Sets the number of iterations to generate per call to the generation function", "1"},
+        { "operandwidth",     "Sets the length of the request, default=8 (i.e. one double)", "8" },
+        { "start_a",          "Sets the start address of the array a", "0" },
+        { "start_b",          "Sets the start address of the array b", "1024" },
+        { "start_c",          "Sets the start address of the array c", "2048" },
+    )
+
     InOrderSTREAMBenchGenerator( ComponentId_t id, Params& params ) : RequestGenerator(id, params) { build(params); }
+
+	InOrderSTREAMBenchGenerator() = default;
 
 	void build(Params& params) {
 
@@ -52,7 +73,7 @@ public:
 		delete out;
 	}
 
-	void generate(MirandaRequestQueue<GeneratorRequest*>* q) {
+	void generate(MirandaRequestQueue<GeneratorRequest*>* q) override {
 		if(i == n) {
 			return;
 		}
@@ -88,30 +109,30 @@ public:
 		i += block_per_call;
 	}
 
-	bool isFinished() {
+	bool isFinished() override {
 		return i == n;
 	}
 
-	void completed() {}
+	void completed() override {}
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
-        InOrderSTREAMBenchGenerator,
-        "miranda",
-        "InOrderSTREAMBenchGenerator",
-        SST_ELI_ELEMENT_VERSION(1,0,0),
-        "Creates a representation of the STREAM benchmark for in-order CPUs",
-        SST::Miranda::RequestGenerator
-    )
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::Miranda::RequestGenerator::serialize_order(ser);
+		SST_SER(requestLen);
 
-	SST_ELI_DOCUMENT_PARAMS(
-		{ "verbose",          "Sets the verbosity output of the generator", "0" },
-        { "n",                "Sets the number of elements in the STREAM arrays", "10000" },
-        { "block_per_call",   "Sets the number of iterations to generate per call to the generation function", "1"},
-        { "operandwidth",     "Sets the length of the request, default=8 (i.e. one double)", "8" },
-        { "start_a",          "Sets the start address of the array a", "0" },
-        { "start_b",          "Sets the start address of the array b", "1024" },
-        { "start_c",          "Sets the start address of the array c", "2048" },
-    )
+		SST_SER(start_a);
+		SST_SER(start_b);
+		SST_SER(start_c);
+
+		SST_SER(n);
+		SST_SER(block_per_call);
+		SST_SER(i);
+
+		SST_SER(out);
+    }
+
+    ImplementSerializable(SST::Miranda::InOrderSTREAMBenchGenerator)
+
+
 
 private:
 	uint64_t requestLen;
