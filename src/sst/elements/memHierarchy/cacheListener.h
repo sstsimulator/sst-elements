@@ -44,9 +44,17 @@ public:
                               const Addr iPtr, const uint32_t reqSize,
                               NotifyAccessType accessT,
                               NotifyResultType resultT,
-                              const MemEventBase::id_type evId) :
+                              const SST::Event::id_type evId) :
         size(reqSize), targAddr(tAddr), physAddr(pAddr), virtAddr(vAddr), instPtr(iPtr),
         access(accessT), result(resultT), eventId(evId) {}
+
+    [[deprecated("Use the new CacheListenerNotification() constructor that accepts an event id; this constructor defaults eventId to NO_ID and will eventually be removed")]]
+    CacheListenerNotification(const Addr tAddr, const Addr pAddr, const Addr vAddr,
+                              const Addr iPtr, const uint32_t reqSize,
+                              NotifyAccessType accessT,
+                              NotifyResultType resultT) :
+        size(reqSize), targAddr(tAddr), physAddr(pAddr), virtAddr(vAddr), instPtr(iPtr),
+        access(accessT), result(resultT), eventId(SST::Event::NO_ID) {}
 
     /** the target address is the underlying address from the
         LOAD/STORE, not the baseAddr (which is usually the cache line
@@ -58,7 +66,7 @@ public:
     NotifyAccessType getAccessType() const { return access; }
     NotifyResultType getResultType() const { return result; }
     uint32_t getSize() const { return size; }
-    MemEventBase::id_type getEventID() const { return eventId; }
+    SST::Event::id_type getEventID() const { return eventId; }
 
     CacheListenerNotification() = default; // For serialization
 
@@ -81,7 +89,7 @@ private:
     Addr instPtr;
     NotifyAccessType access;
     NotifyResultType result;
-    MemEventBase::id_type eventId;
+    SST::Event::id_type eventId;
 };
 
 class CacheListener : public SubComponent {
