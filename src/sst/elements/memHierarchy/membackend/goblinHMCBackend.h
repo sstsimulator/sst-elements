@@ -229,6 +229,7 @@ public:
         {"RowAccessTherm",      "HMC DRAM row access thermal",            "btus", 1} )
 
 /* Class definition */
+    [[deprecated("The gc64-hmcsim memory backend has been deprecated and will be removed in SST 17.")]]
         GOBLINHMCSimBackend(ComponentId_t id, Params& params);
 	~GOBLINHMCSimBackend();
 	bool issueRequest(ReqId, Addr, bool,
