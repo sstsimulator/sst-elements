@@ -412,6 +412,7 @@ bool ArielCore::refillQueue() {
                             coreID, (uint32_t) coreQ->size(), (uint32_t) maxQLength));
 
         ArielCommand ac;
+        char *region_name;
         const bool avail = tunnel->readMessageNB(coreID, &ac);
 
         if ( !avail ) {
@@ -425,6 +426,18 @@ bool ArielCore::refillQueue() {
         switch(ac.command) {
             case ARIEL_OUTPUT_STATS:
                 fprintf(stdout, "Performing statistics output at simulation time = %" PRIu64 " cycles\n", getCurrentSimTimeNano());
+                performGlobalStatisticOutput();
+                break;
+
+            case ARIEL_OUTPUT_STATS_BEGIN_REGION:
+                region_name = (char*)ac.inst.payload;
+                fprintf(stdout, "ARIEL_REGION_BEGIN %s %" PRIu64 "\n", region_name, getCurrentSimTime(getCoreTimeBase().toString()));
+                performGlobalStatisticOutput();
+                break;
+
+            case ARIEL_OUTPUT_STATS_END_REGION:
+                region_name = (char*)ac.inst.payload;
+                fprintf(stdout, "ARIEL_REGION_END %s %" PRIu64 "\n", region_name, getCurrentSimTime(getCoreTimeBase().toString()));
                 performGlobalStatisticOutput();
                 break;
 
