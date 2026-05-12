@@ -326,12 +326,6 @@ EXTRA_DIST = \
 	tests/addFiles/test_emberotf2/traces/3.def \
 	tests/addFiles/test_emberotf2/traces/3.evt
 
-if USE_EMBER_CONTEXTS
-libember_la_SOURCES += \
-	embermpicxtgen.h \
-	embermpicxtgen.cc
-endif
-
 if EMBER_HAVE_OTF2
 libember_la_SOURCES += \
 	mpi/motifs/emberotf2.h \
