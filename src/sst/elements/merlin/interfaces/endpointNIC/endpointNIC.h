@@ -27,7 +27,7 @@
 namespace SST {
 namespace Merlin {
 
-class endpointNIC : public SST::Interfaces::SimpleNetwork
+class EndpointNIC : public SST::Interfaces::SimpleNetwork
 {
 protected:
     int vns;
@@ -40,9 +40,9 @@ protected:
 
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
-        endpointNIC,
+        EndpointNIC,
         "merlin",
-        "endpointNIC",
+        "EndpointNIC",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Endpoint NIC with pluggable functionality pipeline",
         SST::Interfaces::SimpleNetwork
@@ -59,8 +59,8 @@ public:
         // If new plugin slots are added, document them here
     )
 
-    endpointNIC(ComponentId_t cid, Params& params, int vns);
-    ~endpointNIC();
+    EndpointNIC(ComponentId_t cid, Params& params, int vns);
+    ~EndpointNIC();
 
     // SimpleNetwork interface methods - forward to link_control
     void init(unsigned int phase);

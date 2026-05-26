@@ -14,7 +14,7 @@
 // distribution.
 
 #include <sst_config.h>
-#include "SourceRouting.h"
+#include "sourceRouting.h"
 #include <sstream>
 
 namespace SST {
