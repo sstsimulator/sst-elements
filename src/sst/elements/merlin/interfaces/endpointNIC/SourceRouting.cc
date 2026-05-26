@@ -29,7 +29,7 @@ RandomWeightedSelection::~RandomWeightedSelection() {
     delete rng;
 }
 
-std::deque<int> RandomWeightedSelection::selectPath(int dest_router, const std::vector<path_with_weight>& paths) {
+const std::deque<int> RandomWeightedSelection::selectPath(int dest_router, const std::vector<path_with_weight>& paths) {
     if (paths.empty()) {
         return std::deque<int>();
     }
@@ -66,7 +66,7 @@ WeightedRoundRobinSelection::WeightedRoundRobinSelection() {
 WeightedRoundRobinSelection::~WeightedRoundRobinSelection() {
 }
 
-std::deque<int> WeightedRoundRobinSelection::selectPath(int dest_router, const std::vector<path_with_weight>& paths) {
+const std::deque<int> WeightedRoundRobinSelection::selectPath(int dest_router, const std::vector<path_with_weight>& paths) {
     if (paths.empty()) {
         return std::deque<int>();
     }
@@ -203,7 +203,7 @@ SST::Interfaces::SimpleNetwork::Request* SourceRoutingPlugin::processOutgoing(
     SourceRoutingMetadata sr_meta;
     if (!ext_req->getMetadata("SourceRouting", sr_meta) || sr_meta.path.empty()) {
         // Lookup path in routing table and set it as metadata
-        std::deque<int> path = selectPath(lookupRtrForEndpoint(ext_req->dest));
+        const std::deque<int> path = selectPath(lookupRtrForEndpoint(ext_req->dest));
 
         // // use verbose to print out this routing decision:
         // std::stringstream path_str;
@@ -342,7 +342,7 @@ void SourceRoutingPlugin::initializePathSelectionAlgorithm(const std::string& al
     }
 }
 
-std::deque<int> SourceRoutingPlugin::selectPath(int dest_router) {
+const std::deque<int> SourceRoutingPlugin::selectPath(int dest_router) {
 
     if (dest_router == myRtrID){
         output.verbose(CALL_INFO, 1, 0, "Assigning empty path for endpoints in the same router. \n");
