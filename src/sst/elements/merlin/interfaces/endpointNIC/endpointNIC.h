@@ -42,7 +42,7 @@ public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         EndpointNIC,
         "merlin",
-        "EndpointNIC",
+        "endpointNIC",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Endpoint NIC with pluggable functionality pipeline",
         SST::Interfaces::SimpleNetwork
