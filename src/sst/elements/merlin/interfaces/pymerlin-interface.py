@@ -131,6 +131,8 @@ class NICplugin(TemplateBase):
         assert(self.PluginName is not None), "PluginFullName must be set before building the plugin."
         thisPlugin = endpointNIC_sstcomp.setSubComponent(self.PluginName, self.PluginFullName, plugin_index)
         thisPlugin.addParam("EP_id", endpointID)
+        for key, value in kwargs.items():
+            thisPlugin.addParam(key, value)
 
         return thisPlugin
 
@@ -140,6 +142,7 @@ class SourceRoutingPlugin(NICplugin):
 
     def __init__(self):
         NICplugin.__init__(self)
+        self._declareParams("SR_shared", ["verbose_level"])
 
     def build(self, endpointNIC_sstcomp, endpointID, plugin_index, **kwargs):
         thisPlugin = super().build(endpointNIC_sstcomp, endpointID, plugin_index, **kwargs)

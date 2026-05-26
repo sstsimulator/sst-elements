@@ -175,6 +175,8 @@ SourceRoutingPlugin::SourceRoutingPlugin(ComponentId_t cid, Params& params) :
     if (routing_table_shared[myRtrID].empty()) {
         parseRoutingEntry(params);
     }
+
+    output.setVerboseLevel(params.find<int>("verbose_level", 0));
 }
 
 SourceRoutingPlugin::~SourceRoutingPlugin() {
@@ -202,6 +204,17 @@ SST::Interfaces::SimpleNetwork::Request* SourceRoutingPlugin::processOutgoing(
     if (!ext_req->getMetadata("SourceRouting", sr_meta) || sr_meta.path.empty()) {
         // Lookup path in routing table and set it as metadata
         std::deque<int> path = selectPath(lookupRtrForEndpoint(ext_req->dest));
+
+        // // use verbose to print out this routing decision:
+        // std::stringstream path_str;
+        // path_str << "Selected path for packet from endpoint " << endpoint_id << " (rtr " << myRtrID 
+        //          << ") to endpoint " << ext_req->dest << " (rtr " << lookupRtrForEndpoint(ext_req->dest) << "): ";
+        // for (int hop : path) {
+        //     path_str << hop << " ";
+        // }
+        // path_str << "\n";
+        // output.verbose(CALL_INFO, 2, 0, "%s", path_str.str().c_str());
+
         SourceRoutingMetadata new_sr_meta(path);
         ext_req->setMetadata("SourceRouting", new_sr_meta);
     }
