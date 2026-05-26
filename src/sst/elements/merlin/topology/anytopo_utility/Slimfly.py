@@ -1,6 +1,11 @@
 from HPC_topos import *
 from statistics import mean
-
+import sys
+try:
+    import galois
+except ImportError:
+    print("library `galois` is required to run this topology. Please install galois and try again.")
+    sys.exit(1)
 #======================some functions to calculate the MMS graph (for slimfly)=====================================
 # This part of the code is copied from this github repo: https://github.com/AdamLatos/slimfly-gen/blob/master/
 
