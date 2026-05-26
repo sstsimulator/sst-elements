@@ -1,1 +1,0 @@
-Loaded NetworkX graph with 18 vertices and 45 edges
