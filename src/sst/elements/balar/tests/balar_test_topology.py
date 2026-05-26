@@ -1,9 +1,5 @@
 """
-Shared SST topology builders for Balar contract tests (testcpu stand-in for Doorbell).
-
-Topologies:
-  router  — merlin.hr_router (default testBalar-testcpu.py pattern)
-  bus     — memHierarchy.Bus (Doorbell P3 / coherent shared DRAM path)
+Shared SST topology builders for Balar and Doorbell-pattern contract tests.
 """
 
 import sst
@@ -23,7 +19,7 @@ MEMORY_SRC = [CORE_GROUP, MMIO_GROUP]
 
 
 def build_testcpu_router(balar_builder, cfg_file, balar_verbosity=0, dma_verbosity=0):
-    """Return (cpu, balar_mmio_addr, stat_links_dict) for merlin router topology."""
+    """Return (cpu, balar_mmio_addr) for merlin router + BalarTestCPU."""
     balar_mmio_iface, balar_mmio_addr, dma_mem_if, dma_mmio_if = balar_builder.buildTestCPU(
         cfg_file, balar_verbosity, dma_verbosity
     )
@@ -106,19 +102,28 @@ def build_testcpu_router(balar_builder, cfg_file, balar_verbosity=0, dma_verbosi
     return cpu, balar_mmio_addr
 
 
-def build_testcpu_coherent_bus(balar_builder, cfg_file, balar_verbosity=0, dma_verbosity=0):
+def build_doorbell_topology(balar_builder, cfg_file, mode="trace", balar_verbosity=0, dma_verbosity=0):
     """
-    CPU L1 -> Bus <- Balar MMIO, DMA mem_iface, MemController (Doorbell P3 pattern).
+    Doorbell-pattern: DoorbellTestCPU cache_link -> L1 -> coherent memory fabric,
+    and mmio_link -> routed MMIO fabric for balarMMIO doorbells.
     """
-    balar_mmio_iface, balar_mmio_addr, dma_mem_if, dma_mmio_if = balar_builder.buildTestCPU(
-        cfg_file, balar_verbosity, dma_verbosity
+    # NOTE: hard-coded high MMIO aperture so wide scratch packets cannot overflow
+    # into the MMIO region. Could derive from max packet size + alignment instead.
+    balar_mmio_addr = 0x10000000
+    dma_mmio_addr = balar_mmio_addr + 1024
+    _, balar_mmio_iface = balar_builder.build(
+        cfg_file, balar_mmio_addr, dma_mmio_addr, verbosity=balar_verbosity
     )
 
-    bus = sst.Component("dram_bus", "memHierarchy.Bus")
-    bus.addParams({
-        "bus_frequency": "2GHz",
-        "drain_bus": "1",
+    dma = sst.Component("dmaEngine", "balar.dmaEngine")
+    dma.addParams({
+        "verbose": dma_verbosity,
+        "clock": CLOCK,
+        "mmio_addr": dma_mmio_addr,
+        "mmio_size": 512,
     })
+    dma_mmio_if = dma.setSubComponent("mmio_iface", "memHierarchy.standardInterface")
+    dma_mem_if = dma.setSubComponent("mem_iface", "memHierarchy.standardInterface")
 
     l1 = sst.Component("l1", "memHierarchy.Cache")
     l1.addParams({
@@ -130,25 +135,77 @@ def build_testcpu_coherent_bus(balar_builder, cfg_file, balar_verbosity=0, dma_v
         "coherence_protocol": "mesi",
         "replacement_policy": "lru",
         "cache_line_size": 64,
+        "addr_range_start": 0,
         "addr_range_end": balar_mmio_addr - 1,
     })
     l1_cpu = l1.setSubComponent("highlink", "memHierarchy.MemLink")
-    l1_bus = l1.setSubComponent("lowlink", "memHierarchy.MemLink")
+    l1_nic = l1.setSubComponent("lowlink", "memHierarchy.MemNIC")
+    l1_nic.addParams({
+        "group": CORE_GROUP,
+        "destinations": CORE_DST,
+        "network_bw": NETWORK_BW,
+    })
 
-    cpu = sst.Component("cpu", "balar.BalarTestCPU")
+    cpu = sst.Component("cpu", "balar.DoorbellTestCPU")
     cpu.addParams({
         "clock": CLOCK,
         "verbose": balar_verbosity,
         "scratch_mem_addr": 0,
-        "gpu_addr": balar_mmio_addr,
+        "mmio_addr": balar_mmio_addr,
+        "cache_line_size": 64,
+        "mode": mode,
         "enable_memcpy_dump": False,
     })
-    cpu_if = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
-    cpu_if.addParams(DEBUG_PARAMS)
+    cache_if = cpu.setSubComponent("cache_link", "memHierarchy.standardInterface")
+    cache_if.addParams(DEBUG_PARAMS)
+    mmio_if = cpu.setSubComponent("mmio_link", "memHierarchy.standardInterface")
+    mmio_if.addParams(DEBUG_PARAMS)
+    cpu_mmio_nic = mmio_if.setSubComponent("lowlink", "memHierarchy.MemNIC")
+    cpu_mmio_nic.addParams({
+        "group": CORE_GROUP,
+        "destinations": CORE_DST,
+        "network_bw": NETWORK_BW,
+    })
+
+    balar_mmio_nic = balar_mmio_iface.setSubComponent("lowlink", "memHierarchy.MemNIC")
+    balar_mmio_nic.addParams({
+        "group": MMIO_GROUP,
+        "sources": MMIO_SRC,
+        "destinations": MMIO_DST,
+        "network_bw": NETWORK_BW,
+    })
+
+    dma_mem_nic = dma_mem_if.setSubComponent("lowlink", "memHierarchy.MemNIC")
+    dma_mem_nic.addParams({
+        "group": CORE_GROUP,
+        "destinations": CORE_DST,
+        "network_bw": NETWORK_BW,
+    })
+
+    dma_mmio_nic = dma_mmio_if.setSubComponent("lowlink", "memHierarchy.MemNIC")
+    dma_mmio_nic.addParams({
+        "group": MEMORY_GROUP,
+        "sources": MEMORY_SRC,
+        "network_bw": NETWORK_BW,
+    })
+
+    chiprtr = sst.Component("doorbell_chiprtr", "merlin.hr_router")
+    chiprtr.addParams({
+        "xbar_bw": "1GB/s",
+        "id": "0",
+        "input_buf_size": "1KB",
+        "num_ports": "6",
+        "flit_size": "72B",
+        "output_buf_size": "1KB",
+        "link_bw": "1GB/s",
+        "topology": "merlin.singlerouter",
+    })
+    chiprtr.setSubComponent("topology", "merlin.singlerouter")
 
     memctrl = sst.Component("memory", "memHierarchy.MemController")
     memctrl.addParams({
         "clock": "1GHz",
+        "addr_range_start": 0,
         "addr_range_end": balar_mmio_addr - 1,
     })
     mem_be = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
@@ -158,22 +215,30 @@ def build_testcpu_coherent_bus(balar_builder, cfg_file, balar_verbosity=0, dma_v
     })
     mem_hi = memctrl.setSubComponent("highlink", "memHierarchy.MemLink")
 
-    sst.Link("cpu_l1").connect((cpu_if, "port", "1ns"), (l1_cpu, "port", "1ns"))
-    sst.Link("l1_bus").connect((l1_bus, "port", "1ns"), (bus, "highlink0", "1ns"))
-    sst.Link("balar_mmio_bus").connect((balar_mmio_iface, "port", "1ns"), (bus, "highlink1", "1ns"))
-    sst.Link("dma_mem_bus").connect((dma_mem_if, "port", "1ns"), (bus, "highlink2", "1ns"))
-    sst.Link("mem_bus").connect((mem_hi, "port", "1ns"), (bus, "lowlink0", "1ns"))
-
-    # DMA MMIO still reaches memory controller directly (doorbell path for dma engine)
-    dma_mmio_mem = sst.Component("dma_mmio_mem", "memHierarchy.MemController")
-    dma_mmio_mem.addParams({
+    directory = sst.Component("directory", "memHierarchy.DirectoryController")
+    directory.addParams({
         "clock": "1GHz",
-        "addr_range_start": balar_mmio_addr,
-        "addr_range_end": balar_mmio_addr + 2048,
+        "coherence_protocol": "MESI",
+        "cache_line_size": 64,
+        "entry_cache_size": 32768,
+        "mshr_num_entries": 16,
+        "addr_range_start": 0,
+        "addr_range_end": balar_mmio_addr - 1,
     })
-    dma_mmio_be = dma_mmio_mem.setSubComponent("backend", "memHierarchy.simpleMem")
-    dma_mmio_be.addParams({"access_time": "100 ns", "mem_size": "4KiB"})
-    dma_mmio_hi = dma_mmio_mem.setSubComponent("highlink", "memHierarchy.MemLink")
-    sst.Link("dma_mmio_link").connect((dma_mmio_if, "port", "1ns"), (dma_mmio_hi, "port", "1ns"))
+    dir_nic = directory.setSubComponent("highlink", "memHierarchy.MemNIC")
+    dir_nic.addParams({
+        "group": MEMORY_GROUP,
+        "sources": MEMORY_SRC,
+        "network_bw": NETWORK_BW,
+    })
+
+    sst.Link("cpu_l1").connect((cache_if, "port", "1ns"), (l1_cpu, "port", "1ns"))
+    sst.Link("mem_bus").connect((mem_hi, "port", "1ns"), (directory, "lowlink", "1ns"))
+    sst.Link("doorbell_l1_rtr").connect((l1_nic, "port", "1ns"), (chiprtr, "port0", "1ns"))
+    sst.Link("doorbell_cpu_mmio_rtr").connect((cpu_mmio_nic, "port", "1ns"), (chiprtr, "port1", "1ns"))
+    sst.Link("doorbell_balar_mmio_rtr").connect((balar_mmio_nic, "port", "1ns"), (chiprtr, "port2", "1ns"))
+    sst.Link("doorbell_dma_mem_rtr").connect((dma_mem_nic, "port", "1ns"), (chiprtr, "port3", "1ns"))
+    sst.Link("doorbell_dma_mmio_rtr").connect((dma_mmio_nic, "port", "1ns"), (chiprtr, "port4", "1ns"))
+    sst.Link("doorbell_dir_rtr").connect((dir_nic, "port", "1ns"), (chiprtr, "port5", "1ns"))
 
     return cpu, balar_mmio_addr

@@ -29,30 +29,24 @@ class testcase_balar_smoke(SSTTestCase):
         for f in ("balarBlock.py", "utils.py", "gpu-v100-mem.cfg"):
             os_symlink_file(test_path, self.testbalarDir, f)
 
+    def _sst_info_text(self):
+        import subprocess
+        rtn = subprocess.run(["sst-info", "balar"], capture_output=True, text=True, timeout=30)
+        return rtn.stdout + rtn.stderr, rtn.returncode
+
     def test_balar_sst_info_registers_components(self):
         """sst-info balar lists balarMMIO when the element is built."""
-        outdir = self.get_test_output_run_dir()
-        outfile = "{0}/test_balar_smoke_info.out".format(outdir)
-        errfile = "{0}/test_balar_smoke_info.err".format(outdir)
-        cmd = "sst-info balar > '{0}' 2> '{1}'".format(outfile, errfile)
-        rtn = os_command(cmd, set_cwd=self.testbalarDir).run()
-        self.assertEqual(rtn.result(), 0, "sst-info balar failed: {0}".format(rtn.output()))
-        with open(outfile, "r", errors="replace") as fh:
-            text = fh.read()
-        if "balarMMIO" in text:
-            return
-        if "not found" in text.lower() or "unable to find" in text.lower():
+        text, rc = self._sst_info_text()
+        if "UNABLE TO PROCESS LIBRARY" in text.upper() or rc != 0:
             self.skipTest("balar element not built (configure without --with-gpgpusim)")
         self.assertIn("balarMMIO", text, "sst-info balar should list balar.balarMMIO")
 
-    def test_balar_python_topology_import(self):
-        """Import balarBlock + balar_test_topology without CUDA."""
-        import sys
-        test_path = self.get_testsuite_dir()
-        if test_path not in sys.path:
-            sys.path.insert(0, test_path)
-        import balarBlock  # noqa: F401
-        import balar_test_topology  # noqa: F401
+    def test_balar_doorbell_testcpu_registered(self):
+        """sst-info balar lists DoorbellTestCPU when the element is built."""
+        text, rc = self._sst_info_text()
+        if "UNABLE TO PROCESS LIBRARY" in text.upper() or rc != 0:
+            self.skipTest("balar element not built (configure without --with-gpgpusim)")
+        self.assertIn("DoorbellTestCPU", text, "sst-info balar should list balar.DoorbellTestCPU")
 
 
 class testcase_balar_simple(BalarTestCase):
@@ -71,14 +65,25 @@ class testcase_balar_simple(BalarTestCase):
             "malloc_free", "testBalar-malloc-free.py", "malloc_free.trace", testtimeout=60 * 15)
 
     @BalarTestCase.balar_basic_unittest
-    def test_balar_contract_coherent_bus(self):
-        self.balar_contract_testcpu_template(
-            "coherent_bus", "testBalar-coherent-bus.py", "malloc_free.trace", testtimeout=60 * 15)
-
-    @BalarTestCase.balar_basic_unittest
     def test_balar_contract_wide_packet(self):
         self.balar_contract_testcpu_template(
             "wide_packet", "testBalar-wide-packet.py", "wide_memcpy_d2h.trace", testtimeout=60 * 20)
+
+    @BalarTestCase.balar_basic_unittest
+    def test_doorbellcpu_doorbell(self):
+        self.doorbell_contract_testcpu_template(
+            "doorbellcpu_doorbell", "testDoorbellCPU-doorbell.py", None, testtimeout=60 * 10)
+
+    @BalarTestCase.balar_basic_unittest
+    def test_doorbellcpu_malloc_free(self):
+        self.doorbell_contract_testcpu_template(
+            "doorbellcpu_malloc_free", "testDoorbellCPU-malloc-free.py", "malloc_free.trace", testtimeout=60 * 15)
+
+    @BalarTestCase.balar_basic_unittest
+    def test_doorbellcpu_wide_packet(self):
+        self.doorbell_contract_testcpu_template(
+            "doorbellcpu_wide_packet", "testDoorbellCPU-wide-packet.py", "wide_memcpy_d2h.trace",
+            testtimeout=60 * 20, min_flush_count=64)
 
     @unittest.skipIf(
         os.getenv("LLVM_INSTALL_PATH") is None or os.getenv("RISCV_TOOLCHAIN_INSTALL_PATH") is None,

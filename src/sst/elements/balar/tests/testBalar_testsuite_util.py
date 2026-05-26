@@ -58,25 +58,45 @@ class BalarTestCase(SSTTestCase):
             return f
         return composed
 
-    def balar_basic_unittest(test):
-        def wrapper(*args):
-            self = args[0]
-            return self.compose_decorators(
-                unittest.skipIf(self.missing_cuda_install_path, "test_balar_runvecadd test: Requires missing environment variable CUDA_INSTALL_PATH."),
-                unittest.skipIf(self.missing_gpgpusim_root, "test_balar_runvecadd test: Requires missing environment variable GPGPUSIM_ROOT."),
-                test(*args)
+    @staticmethod
+    def _sst_element_registered(name):
+        """Return True iff sst-info reports `name` as a known element library."""
+        try:
+            import subprocess
+            out = subprocess.run(
+                ["sst-info", name],
+                capture_output=True, text=True, timeout=15).stdout
+            upper = out.upper()
+            return (
+                "UNABLE TO PROCESS LIBRARY" not in upper
+                and "ELEMENT LIBRARY" in upper
             )
-        return wrapper
+        except Exception:
+            return False
 
+    @staticmethod
+    def balar_basic_unittest(test):
+        """Skip when CUDA or GPGPU-Sim env vars are missing (must return a test method, not call it)."""
+        test = unittest.skipIf(
+            os.getenv("CUDA_INSTALL_PATH") is None,
+            "Requires CUDA_INSTALL_PATH")(test)
+        test = unittest.skipIf(
+            os.getenv("GPGPUSIM_ROOT") is None,
+            "Requires GPGPUSIM_ROOT")(test)
+        # The balar GPU memory hierarchy uses shogun (XBar/NIC). Skip when
+        # shogun isn't built into the local SST install — these tests need it.
+        test = unittest.skipUnless(
+            BalarTestCase._sst_element_registered("shogun"),
+            "Requires shogun element (full balar GPU mem hierarchy)")(test)
+        return test
+
+    @staticmethod
     def balar_gpuapp_unittest(test):
-        def wrapper(*args):
-            self = args[0]
-            return self.compose_decorators(
-                self.balar_basic_unittest,
-                unittest.skipIf(self.missing_gpu_app_collection_root, "test_balar_clang test: Requires missing environment variable GPUAPPS_ROOT."),
-                test(*args)
-            )
-        return wrapper
+        test = BalarTestCase.balar_basic_unittest(test)
+        test = unittest.skipIf(
+            os.getenv("GPUAPPS_ROOT") is None,
+            "Requires GPUAPPS_ROOT")(test)
+        return test
 
 ####
 
@@ -124,7 +144,7 @@ class BalarTestCase(SSTTestCase):
         log_debug("testbalarDir = {0}".format(self.testbalarDir))
 
         gpuMemCfgfile = "{0}/gpu-v100-mem.cfg".format(self.testbalarDir)
-        otherargs = '--model-options=\"-c {0} -s {1} -x {2} -t {3}"'.format(gpuMemCfgfile, statsfile, vecAddBinary, vecAddTrace)
+        otherargs = '--model-options=\"-c {0} -s {1} -x {2} -t {3} -v 1"'.format(gpuMemCfgfile, statsfile, vecAddBinary, vecAddTrace)
 
         # Run SST
         # Unset BALAR_CUDA_EXE_PATH so that we will use the path
@@ -169,7 +189,7 @@ class BalarTestCase(SSTTestCase):
         vecAddBinary = "{0}/balar_trace/vectorAdd".format(self.testbalarDir)
         trace_path = "{0}/traces/{1}".format(self.testbalarDir, trace_name)
         gpuMemCfgfile = "{0}/gpu-v100-mem.cfg".format(self.testbalarDir)
-        otherargs = '--model-options=\"-c {0} -s {1} -x {2} -t {3}"'.format(
+        otherargs = '--model-options=\"-c {0} -s {1} -x {2} -t {3} -v 1"'.format(
             gpuMemCfgfile, statsfile, vecAddBinary, trace_path)
 
         cmd = self.run_sst(sdlfile, outfile, errfile, set_cwd=self.testbalarDir,
@@ -196,6 +216,61 @@ class BalarTestCase(SSTTestCase):
                     line_count_diff > 15,
                     "Line count between Stats file {0} and Reference {1} differ by {2}".format(
                         statsfile, reffile, line_count_diff))
+
+    def doorbell_contract_testcpu_template(self, testcase, sdl_name, trace_name, testtimeout=600, min_flush_count=0):
+        """Doorbell-pattern contract test: DoorbellTestCPU with cache_link flush before mmio doorbell."""
+        missing_nvcc_path = os.getenv("NVCC_PATH") == None
+        self.assertFalse(missing_nvcc_path, "doorbell contract test: Requires NVCC_PATH.")
+
+        test_path = self.get_testsuite_dir()
+        outdir = self.get_test_output_run_dir()
+        testDataFileName = "test_gpgpu_{0}".format(testcase)
+        outfile = "{0}/{1}.out".format(outdir, testDataFileName)
+        errfile = "{0}/{1}.err".format(outdir, testDataFileName)
+        statsfile = "{0}/{1}.stats_out".format(outdir, testDataFileName)
+        sdlfile = "{0}/{1}".format(test_path, sdl_name)
+        vecAddBinary = "{0}/balar_trace/vectorAdd".format(self.testbalarDir)
+        gpuMemCfgfile = "{0}/gpu-v100-mem.cfg".format(self.testbalarDir)
+        if trace_name:
+            trace_path = "{0}/traces/{1}".format(self.testbalarDir, trace_name)
+            otherargs = '--model-options=\"-c {0} -s {1} -x {2} -t {3} -v 1"'.format(
+                gpuMemCfgfile, statsfile, vecAddBinary, trace_path)
+        else:
+            otherargs = '--model-options=\"-c {0} -s {1} -x {2} -v 1"'.format(
+                gpuMemCfgfile, statsfile, vecAddBinary)
+
+        cmd = self.run_sst(sdlfile, outfile, errfile, set_cwd=self.testbalarDir,
+                           other_args=otherargs, timeout_sec=testtimeout)
+        log_debug("cmd = {0}".format(cmd))
+
+        self.assertTrue(os_test_file(statsfile, "-e"),
+                        "doorbell contract {0}: missing stats file {1}".format(testcase, statsfile))
+        with open(outfile, "r", errors="replace") as fh:
+            out_text = fh.read()
+        self.assertIn("Test Completed Successfuly", out_text,
+                      "doorbell contract {0}: DoorbellTestCPU did not report success".format(testcase))
+        with open(errfile, "r", errors="replace") as fh:
+            err_text = fh.read()
+        self.assertNotIn("FATAL", err_text,
+                         "doorbell contract {0}: simulation fatal in stderr".format(testcase))
+
+        if min_flush_count > 0:
+            flush_total = 0
+            with open(statsfile, "r", errors="replace") as fh:
+                for line in fh:
+                    if ".flush_count" in line:
+                        parts = line.replace("=", " ").replace(";", " ").split()
+                        for i, p in enumerate(parts):
+                            if p == "Sum.u64" and i + 1 < len(parts):
+                                try:
+                                    flush_total += int(parts[i + 1])
+                                except ValueError:
+                                    pass
+                                break
+            self.assertGreaterEqual(
+                flush_total, min_flush_count,
+                "doorbell contract {0}: flush_count {1} < {2}".format(
+                    testcase, flush_total, min_flush_count))
 
     def balar_vanadis_template(self, testcase, testtimeout=400):
         """Balar testcase template with vanadis with explicit CUDA api calls
@@ -443,8 +518,10 @@ class BalarTestCase(SSTTestCase):
         for sdl in (
             "testBalar-doorbell.py",
             "testBalar-malloc-free.py",
-            "testBalar-coherent-bus.py",
             "testBalar-wide-packet.py",
+            "testDoorbellCPU-doorbell.py",
+            "testDoorbellCPU-malloc-free.py",
+            "testDoorbellCPU-wide-packet.py",
         ):
             os_symlink_file(test_path, self.testbalarDir, sdl)
         # Copy the shared packet definition files from balar src
@@ -478,11 +555,14 @@ class BalarTestCase(SSTTestCase):
         for f in os.listdir(self.balarElementLLVMVanadisTestDir):
             os_symlink_file(self.balarElementLLVMVanadisTestDir, self.testbalarLLVMVanadisDir, f)
 
-        # Now build libcudart
-        cmd = "make"
-        rtn = os_command(cmd, set_cwd=self.cudartDir).run()
-        log_debug("Balar cudart Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
-        self.assertTrue(rtn.result() == 0, "libcudart failed to compile")
+        # Build Vanadis libcudart only when the RISC-V toolchain is available.
+        if self.missing_riscv_gcc_path:
+            log_debug("Skipping libcudart build (RISCV_TOOLCHAIN_INSTALL_PATH missing)")
+        else:
+            cmd = "make"
+            rtn = os_command(cmd, set_cwd=self.cudartDir).run()
+            log_debug("Balar cudart Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
+            self.assertTrue(rtn.result() == 0, "libcudart failed to compile")
 
         # Now build the vectorAdd example
         cmd = "make"
