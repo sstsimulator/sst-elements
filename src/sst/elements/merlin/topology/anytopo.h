@@ -1,4 +1,17 @@
-// TODO: copyright goes here?
+// Copyright 2009-2025 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2025, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// of the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 // The current name of the Topology class is 'anytopo',
 // however, the name could also be 'arbitrarytopo' or 'generictopo' to better reflect its purpose.
@@ -153,7 +166,6 @@ public:
     void route_packet_SR(topo_any_event* ev);
     void route_packet_dest_tag(int input_port, int vc, topo_any_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
-    // virtual int routeControlPacket(CtrlRtrEvent* ev); //TODO:??
     virtual void routeUntimedData(int input_port, internal_router_event* ev, std::vector<int> &outPorts);
     virtual internal_router_event* process_UntimedData_input(RtrEvent* ev);
 
