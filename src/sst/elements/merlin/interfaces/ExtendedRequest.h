@@ -35,6 +35,10 @@ struct SourceRoutingMetadata {
 
     SourceRoutingMetadata() {}
     SourceRoutingMetadata(const std::deque<int>& p) : path(p) {}
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) {
+        SST_SER(path);
+    }
 };
 
 // Reorder metadata
@@ -43,6 +47,10 @@ struct ReorderMetadata {
 
     ReorderMetadata() : seq_number(0) {}
     ReorderMetadata(uint32_t seq) : seq_number(seq) {}
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) {
+        SST_SER(seq_number);
+    }
 };
 
 // Variant type for all supported metadata types
@@ -148,50 +156,9 @@ public:
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
         Request::serialize_order(ser);
 
-        // Manually serialize the metadata map since std::variant isn't directly supported
-        size_t map_size = metadata.size();
-        ser & map_size;
-
-        switch(ser.mode()) {
-        case SST::Core::Serialization::serializer::SIZER:
-        case SST::Core::Serialization::serializer::PACK:
-            for (auto& pair : metadata) {
-                std::string key = pair.first;  // Copy to avoid const issues
-                ser & key;
-                size_t type_index = pair.second.index();  // Get variant type index
-                ser & type_index;
-
-                // Serialize based on type
-                if (type_index == 1) {  // SourceRoutingMetadata
-                    auto data = std::get<SourceRoutingMetadata>(pair.second);
-                    ser & data.path;
-                } else if (type_index == 2) {  // ReorderMetadata
-                    auto data = std::get<ReorderMetadata>(pair.second);
-                    ser & data.seq_number;
-                }
-            }
-            break;
-        case SST::Core::Serialization::serializer::UNPACK:
-            metadata.clear();
-            for (size_t i = 0; i < map_size; ++i) {
-                std::string key;
-                ser & key;
-                size_t type_index;
-                ser & type_index;
-
-                // Deserialize based on type
-                if (type_index == 1) {  // SourceRoutingMetadata
-                    std::deque<int> path;
-                    ser & path;
-                    metadata[key] = SourceRoutingMetadata(path);
-                } else if (type_index == 2) {  // ReorderMetadata
-                    uint32_t seq_number;
-                    ser & seq_number;
-                    metadata[key] = ReorderMetadata(seq_number);
-                }
-            }
-            break;
-        }
+        // SST serializer now has built-in support for std::variant and std::map
+        // Use SST_SER macro for automatic serialization
+        SST_SER(metadata);
     }
 };
 

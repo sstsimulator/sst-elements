@@ -207,7 +207,7 @@ SST::Interfaces::SimpleNetwork::Request* SourceRoutingPlugin::processOutgoing(
 
         // // use verbose to print out this routing decision:
         // std::stringstream path_str;
-        // path_str << "Selected path for packet from endpoint " << endpoint_id << " (rtr " << myRtrID 
+        // path_str << "Selected path for packet from endpoint " << endpoint_id << " (rtr " << myRtrID
         //          << ") to endpoint " << ext_req->dest << " (rtr " << lookupRtrForEndpoint(ext_req->dest) << "): ";
         // for (int hop : path) {
         //     path_str << hop << " ";
