@@ -20,9 +20,6 @@
 namespace SST {
 namespace Merlin {
 
-// Initialize static members
-std::vector<routing_entries> SourceRoutingPlugin::routing_table;
-std::map<int, int> SourceRoutingPlugin::endpoint_to_router_map = std::map<int, int>();
 
 RandomWeightedSelection::RandomWeightedSelection(ComponentId_t cid) {
     rng = new SST::RNG::MersenneRNG(cid);
@@ -124,41 +121,58 @@ SourceRoutingPlugin::SourceRoutingPlugin(ComponentId_t cid, Params& params) :
         output.fatal(CALL_INFO, -1, "EP_id parameter not provided to SourceRoutingPlugin\n");
     }
 
+    // Get number of routers
+    num_routers = params.find<size_t>("num_routers", 0);
+    if (num_routers == 0) {
+        output.fatal(CALL_INFO, -1, "num_routers parameter not provided or is zero\n");
+    }
+
     // Initialize path selection algorithm
     std::string algorithm = params.find<std::string>("path_selection_algorithm", "random_weighted");
     initializePathSelectionAlgorithm(algorithm);
 
-    if (endpoint_to_router_map.empty()) {
-        // Parse endpoint-to-router mapping
-        // Expected format from Python: dict like "{0:0, 1:0, 2:1, 3:1, ...}"
-        params.find_map<int, int>("endpoint_router_mapping", endpoint_to_router_map);
-        if (endpoint_to_router_map.empty()) {
-            output.fatal(CALL_INFO, -1, "No endpoint-to-router mapping provided\n");
-        }
+    // Initialize SharedArrays with unique names
+    std::string basename = "SourceRoutingPlugin.";
 
-        for (const auto& entry : endpoint_to_router_map) {
-            output.verbose(CALL_INFO, 2, 0, "Endpoint %d -> Router %d\n", entry.first, entry.second);
-        }
-
-        output.verbose(CALL_INFO, 1, 0, "Loaded endpoint-to-router mapping for %zu endpoints\n",
-                    endpoint_to_router_map.size());
+    // Parse endpoint-to-router mapping to determine max endpoint ID
+    std::map<int, int> temp_ep_map;
+    params.find_map<int, int>("endpoint_router_mapping", temp_ep_map);
+    if (temp_ep_map.empty()) {
+        output.fatal(CALL_INFO, -1, "No endpoint-to-router mapping provided\n");
     }
 
-    // Now we can safely use endpoint_id
-    if (endpoint_to_router_map.find(endpoint_id) == endpoint_to_router_map.end()) {
+    // Find max endpoint ID to size the array appropriately
+    int max_endpoint_id = 0;
+    for (const auto& entry : temp_ep_map) {
+        if (entry.first > max_endpoint_id) max_endpoint_id = entry.first;
+    }
+    size_t num_endpoints = max_endpoint_id + 1;
+
+    // Initialize SharedArrays - will create or connect to existing
+    endpoint_to_router_shared.initialize(basename + "endpoint_to_router_map",
+                                          num_endpoints, -1); // -1 = uninitialized
+    routing_table_shared.initialize(basename + "routing_table", num_routers);
+
+    // Populate endpoint mapping (all instances do this, SharedArray handles conflicts)
+    for (const auto& entry : temp_ep_map) {
+        endpoint_to_router_shared.write(entry.first, entry.second);
+        output.verbose(CALL_INFO, 2, 0, "Endpoint %d -> Router %d\n", entry.first, entry.second);
+    }
+    endpoint_to_router_shared.publish();
+
+    output.verbose(CALL_INFO, 1, 0, "Loaded endpoint-to-router mapping for %zu endpoints\n",
+                temp_ep_map.size());
+
+    // Validate that this endpoint is in the mapping
+    if (endpoint_to_router_shared[endpoint_id] == -1) {
         output.fatal(CALL_INFO, -1, "Endpoint ID %d not found in endpoint-to-router mapping\n", endpoint_id);
     }
 
-    myRtrID = endpoint_to_router_map[endpoint_id];
-    num_routers = params.find<size_t>("num_routers", 0);
+    myRtrID = endpoint_to_router_shared[endpoint_id];
     assert(num_routers >= myRtrID && num_routers > 0);
 
-    if (routing_table.empty()) {
-        routing_table.resize(num_routers);
-    }
-
-    // Parse routing table parameters, if not present already
-    if (routing_table[myRtrID].empty()) {
+    // Parse routing table parameters for this router if not present already
+    if (routing_table_shared[myRtrID].empty()) {
         parseRoutingEntry(params);
     }
 }
@@ -219,7 +233,8 @@ void SourceRoutingPlugin::parseRoutingEntry(Params& params) {
     if (!routing_str.empty()) {
         output.verbose(CALL_INFO, 1, 0, "Loading routing entry from string parameter\n");
         routing_entries entries = parseRoutingEntryFromString(routing_str, num_routers, output);
-        routing_table[myRtrID] = entries;
+        routing_table_shared.write(myRtrID, entries);
+        routing_table_shared.publish();
         output.verbose(CALL_INFO, 1, 0, "Loaded routing table entry with %zu destinations\n", entries.size());
     } else { // Maybe other methods to parse routing entries in future
         output.output("Warning: No routing entry provided. Source routing will not function.\n");
@@ -293,7 +308,8 @@ routing_entries SourceRoutingPlugin::parseRoutingEntryFromString(const std::stri
 }
 
 void SourceRoutingPlugin::setSourceRoutingEntriesForSourceRtr(const routing_entries& entries, int src_router) {
-    routing_table[src_router] = entries;
+    routing_table_shared.write(src_router, entries);
+    routing_table_shared.publish();
 }
 
 void SourceRoutingPlugin::setPathSelectionAlgorithm(PathSelectionAlgorithm* algorithm) {
@@ -319,7 +335,7 @@ std::deque<int> SourceRoutingPlugin::selectPath(int dest_router) {
         output.verbose(CALL_INFO, 1, 0, "Assigning empty path for endpoints in the same router. \n");
         return std::deque<int>();
     }else{
-        return path_selector->selectPath(dest_router, routing_table[myRtrID][dest_router]);
+        return path_selector->selectPath(dest_router, routing_table_shared[myRtrID][dest_router]);
     }
 }
 

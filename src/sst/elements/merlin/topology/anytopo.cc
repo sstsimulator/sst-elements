@@ -13,7 +13,6 @@
 namespace SST {
 namespace Merlin {
 
-std::vector<routing_entries> topo_any::simple_routing_table;
 
 // Forward declaration of helper function
 static std::vector<std::vector<std::string>> parse_param_entries(const std::string& param_str, char entry_delim = ';', char token_delim = ',');
@@ -60,12 +59,7 @@ topo_any::topo_any(ComponentId_t cid, Params& params, int num_ports, int rtr_id,
     // Initialize RNG
     rng = new RNG::XORShiftRNG(rtr_id+1);
 
-    if (simple_routing_table.empty()) {
-        simple_routing_table.resize(num_routers);
-    }
-
-    Parse_routing_info(params);
-
+    // Parse endpoint mappings first (needed to determine SharedArray size)
     params.find_map<int, int>("endpoint_to_port_map", endpoint_to_port_map);
     if (endpoint_to_port_map.empty()) {
         output.fatal(CALL_INFO, -1, "No endpoint-to-port mapping provided\n");
@@ -75,6 +69,23 @@ topo_any::topo_any(ComponentId_t cid, Params& params, int num_ports, int rtr_id,
     if (port_to_endpoint_map.empty()) {
         output.fatal(CALL_INFO, -1, "No port-to-endpoint mapping provided\n");
     }
+
+    // Initialize SharedArrays with same names as SourceRoutingPlugin uses
+    std::string basename = "SourceRoutingPlugin.";
+
+    // Connect to the endpoint-to-router mapping SharedArray (SourceRoutingPlugin creates it)
+    int max_endpoint_id = 0;
+    for (const auto& entry : endpoint_to_port_map) {
+        if (entry.first > max_endpoint_id) max_endpoint_id = entry.first;
+    }
+    size_t num_endpoints = max_endpoint_id + 1;
+    // `endpoint_to_router_shared` is initialized in SourceRoutingPlugin, so just connect here
+    endpoint_to_router_shared.initialize(basename + "endpoint_to_router_map", num_endpoints, -1);
+
+    // Initialize simple routing table SharedArray
+    simple_routing_table_shared.initialize(basename + "simple_routing_table", num_routers);
+
+    Parse_routing_info(params);
 
     output.setVerboseLevel(params.find<int>("verbose_level", 0));
 }
@@ -115,7 +126,8 @@ void SST::Merlin::topo_any::Parse_routing_info(SST::Params &params)
     if (!routing_str.empty()) {
         output.verbose(CALL_INFO, 1, 0, "Loading routing entry from string parameter\n");
         routing_entries entries = SourceRoutingPlugin::parseRoutingEntryFromString(routing_str, num_routers, output);
-        simple_routing_table[router_id] = entries;
+        simple_routing_table_shared.write(router_id, entries);
+        simple_routing_table_shared.publish();
         output.verbose(CALL_INFO, 1, 0, "Loaded simple routing table entry with %zu destinations\n", entries.size());
     } else { // Maybe other methods to parse routing entries in future
         output.output("Warning: No simple routing entry provided. Source routing on the untimed packets will not function.\n");
@@ -232,14 +244,15 @@ int topo_any::getEndpointID(int port_id) {
 
 int topo_any::get_router_id(int EP_id) const
 {
-    // Use the shared endpoint-to-router mapping from SourceRoutingPlugin
-    auto& ep_map = SourceRoutingPlugin::endpoint_to_router_map;
-    auto it = ep_map.find(EP_id);
-    if (it != ep_map.end()) {
-        return it->second;
-    }else {
-        fatal(CALL_INFO, -1, "WARNING: Endpoint %d not found in endpoint_to_router_map.", EP_id);
+    // Use the shared endpoint-to-router mapping
+    if (EP_id < 0 || EP_id >= static_cast<int>(endpoint_to_router_shared.size())) {
+        fatal(CALL_INFO, -1, "ERROR: Endpoint ID %d out of range (0-%zu)", EP_id, endpoint_to_router_shared.size() - 1);
     }
+    int router = endpoint_to_router_shared[EP_id];
+    if (router == -1) {
+        fatal(CALL_INFO, -1, "ERROR: Endpoint %d not found in endpoint_to_router mapping", EP_id);
+    }
+    return router;
 }
 
 int topo_any::get_dest_local_port(int dest_EP_id) const
@@ -300,7 +313,7 @@ void topo_any::route_simple(topo_any_event* ev) {
     }
     else {
         // Use the first path (simple routing doesn't have weighted selection)
-        sr_path = simple_routing_table[router_id][dest_router][0].second;
+        sr_path = simple_routing_table_shared[router_id][dest_router][0].second;
         if (sr_path.empty()) {
             fatal(CALL_INFO, -1, "ERROR: No valid routing path found from router %d to router %d in simple routing table\n",
                   router_id, dest_router);
