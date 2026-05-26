@@ -226,12 +226,16 @@ topo_any::~topo_any() {
 
 void topo_any::setOutputBufferCreditArray(int const* array, int vcs) {
     output_credits      = array;
-    assert(vcs==tot_num_vcs);
+    if (vcs != tot_num_vcs) {
+        fatal(CALL_INFO, -1, "ERROR: VCs mismatch in setOutputBufferCreditArray: expected %d, got %d\n", tot_num_vcs, vcs);
+    }
 }
 
 void topo_any::setOutputQueueLengthsArray(int const* array, int vcs) {
     output_queue_lengths = array;
-    assert(vcs==tot_num_vcs);
+    if (vcs != tot_num_vcs) {
+        fatal(CALL_INFO, -1, "ERROR: VCs mismatch in setOutputQueueLengthsArray: expected %d, got %d\n", tot_num_vcs, vcs);
+    }
 }
 
 Topology::PortState topo_any::getPortState(int port_id) const {
@@ -250,7 +254,9 @@ Topology::PortState topo_any::getPortState(int port_id) const {
 
 int topo_any::getEndpointID(int port_id) {
     if (port_id < num_R2R_ports) {
-        assert(!Topology::isHostPort(port_id));
+        if (Topology::isHostPort(port_id)) {
+            fatal(CALL_INFO, -1, "ERROR: Port %d should not be a host port\n", port_id);
+        }
         return -1;
     }else{
         return port_to_endpoint_map.at(port_id);
@@ -360,8 +366,9 @@ void topo_any::route_simple(topo_any_event* ev) {
         fwd_port = get_dest_local_port(dest_EP_id);
     } else {
         // Intermediate hop - determine the next router and forward to the corresponding port
-        // assert that there is a front element
-        assert(!sr_path.empty());
+        if (sr_path.empty()) {
+            fatal(CALL_INFO, -1, "ERROR: Source routing path is empty at intermediate hop\n");
+        }
         ev->next_router_id = sr_path.front(); // update next router id
         ev->num_hops++;
         if (ev->num_hops > tot_num_vcs) {
@@ -423,8 +430,9 @@ void topo_any::route_packet_SR(topo_any_event* ev) {
                 router_id, dest_EP_id, fwd_port);
         } else {
             // Intermediate hop - determine the next router and forward to the corresponding port
-            // assert that there is a front element
-            assert(!sr_path->empty());
+            if (sr_path->empty()) {
+                fatal(CALL_INFO, -1, "ERROR: Source routing path is empty at intermediate hop\n");
+            }
             ev->next_router_id = sr_path->front(); // update next router id
             sr_path->pop_front(); // remove the current router from the path
             ev->num_hops++;
@@ -505,15 +513,17 @@ void topo_any::route_packet_SR_UGAL(int input_port, int vc, topo_any_event* ev) 
             int intermediate_router = rng->generateNextUInt64() % num_routers;
             if (intermediate_router == router_id || intermediate_router == dest_router) continue;
 
-            if (intermediate_router >= static_cast<int>(routing_table.size()) ||
-                routing_table[intermediate_router].empty()) continue;
+            if(intermediate_router >= static_cast<int>(routing_table.size()) || routing_table[intermediate_router].empty()){
+                fatal(CALL_INFO, -1, "ERROR: No valid paths found from router %d to router %d\n", router_id, intermediate_router);
+            }
 
             size_t path_idx = rng->generateNextUInt32() % routing_table[intermediate_router].size();
             std::deque<int> first_segment = routing_table[intermediate_router][path_idx].second;
 
             const routing_entries& intermediate_table = simple_routing_table_shared[intermediate_router];
-            if (dest_router >= static_cast<int>(intermediate_table.size()) ||
-                intermediate_table[dest_router].empty()) continue;
+            if(dest_router >= static_cast<int>(intermediate_table.size()) || intermediate_table[dest_router].empty()){
+                fatal(CALL_INFO, -1, "ERROR: No valid paths found from router %d to router %d\n", intermediate_router, dest_router);
+            }
 
             size_t dest_path_idx = rng->generateNextUInt32() % intermediate_table[dest_router].size();
             std::deque<int> second_segment = intermediate_table[dest_router][dest_path_idx].second;
@@ -525,35 +535,33 @@ void topo_any::route_packet_SR_UGAL(int input_port, int vc, topo_any_event* ev) 
             if (possible_paths.count(complete_path)) continue;
 
             // Calculate weight for first hop
-            if (first_segment.empty()) continue;
             int next_router = first_segment.front();
+            std::set<int>& ports = getPortsToRouter(next_router);
+            int next_port = *ports.begin();
+            int queue_length = output_queue_lengths[next_port * tot_num_vcs + vns[vn].start_vc];
+
+            // Weight: path_length * queue_length (no bias - pure weight comparison)
+            possible_paths[complete_path] = 2*first_segment.size() * queue_length;
+        }
+
+        // Add minimal paths to destination
+        if(dest_router >= static_cast<int>(routing_table.size()) || routing_table[dest_router].empty()){
+            fatal(CALL_INFO, -1, "ERROR: No valid paths found from router %d to router %d\n", router_id, dest_router);
+        }
+        for (const auto& weighted_path : routing_table[dest_router]) {
+            const std::deque<int>& path = weighted_path.second;
+            if (path.empty()) continue;
+
+            int next_router = path.front();
             std::set<int>& ports = getPortsToRouter(next_router);
             if (ports.empty()) continue;
 
             int next_port = *ports.begin();
             int queue_length = output_queue_lengths[next_port * tot_num_vcs + vns[vn].start_vc];
 
-            // Weight: path_length * queue_length (no bias - pure weight comparison)
-            possible_paths[complete_path] = complete_path.size() * queue_length;
-        }
-
-        // Add minimal paths to destination
-        if (dest_router < static_cast<int>(routing_table.size()) && !routing_table[dest_router].empty()) {
-            for (const auto& weighted_path : routing_table[dest_router]) {
-                const std::deque<int>& path = weighted_path.second;
-                if (path.empty()) continue;
-
-                int next_router = path.front();
-                std::set<int>& ports = getPortsToRouter(next_router);
-                if (ports.empty()) continue;
-
-                int next_port = *ports.begin();
-                int queue_length = output_queue_lengths[next_port * tot_num_vcs + vns[vn].start_vc];
-
-                // Weight: path_length * queue_length
-                std::vector<int> path_vec(path.begin(), path.end());
-                possible_paths[path_vec] = path.size() * queue_length;
-            }
+            // Weight: path_length * queue_length
+            std::vector<int> path_vec(path.begin(), path.end());
+            possible_paths[path_vec] = path.size() * queue_length;
         }
 
         if (possible_paths.empty()) {
