@@ -1,5 +1,19 @@
 #!/usr/bin/env python
-# TODO: copyright goes here?
+#
+# Copyright 2009-2025 NTESS. Under the terms
+# of Contract DE-NA0003525 with NTESS, the U.S.
+# Government retains certain rights in this software.
+#
+# Copyright (c) 2009-2025, NTESS
+# All rights reserved.
+#
+# Portions are copyright of other developers:
+# See the file CONTRIBUTORS.TXT in the top level directory
+# of the distribution for more information.
+#
+# This file is part of the SST software package. For license
+# information, see the LICENSE file in the top level directory of the
+# distribution.
 
 """
 SST Merlin Any Topology Module
@@ -12,7 +26,7 @@ For using source routing with this topology:
 - Calculate routing table: routing_table = topo.calculate_routing_table()
 - Pass to SourceRoutingPlugin via EndpointNIC.addPlugin()
 
-See pymerlin-interface.py for SourceRoutingPlugin usage and routing table serialization.
+See pymerlin-interface.py for SourceRoutingPlugin usage with EndpointNIC and routing table serialization.
 """
 
 import sst
@@ -23,8 +37,8 @@ from typing import Callable, Optional
 
 try:
     import networkx as nx
-except ImportError:
-    raise ImportError("NetworkX is required for the 'topo_any' python module. Please install NetworkX and try again.")
+except:
+    pass
 
 def _networkx_Dijkstra_shortest_path(input_nx_graph) -> dict:
     """
