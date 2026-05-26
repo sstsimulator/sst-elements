@@ -99,6 +99,10 @@ class testcase_merlin_Component(SSTTestCase):
     def test_merlin_anytopo_jellyfish(self):
         self.merlin_test_template("anytopo_jellyfish_test")
 
+    @unittest.skipIf('networkx' not in sys.modules, "Anytopo tests require networkx")
+    def test_merlin_anytopo_ember_complete_4(self):
+        self.merlin_test_template("anytopo_ember_complete_4_test")
+
 
 #####
 
