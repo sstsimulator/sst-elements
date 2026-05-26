@@ -97,10 +97,16 @@ struct ReorderInfo {
         uint32_t seq;
         SST::Interfaces::SimpleNetwork::Request* req;
 
+        QueueEntry() : seq(0), req(nullptr) {}
         QueueEntry(uint32_t s, SST::Interfaces::SimpleNetwork::Request* r) : seq(s), req(r) {}
 
         bool operator>(const QueueEntry& other) const {
             return seq > other.seq;
+        }
+
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(seq);
+            SST_SER(req);
         }
     };
 
@@ -116,6 +122,31 @@ struct ReorderInfo {
         // we can't handle more than 4 billion fragments to each host
         // with overflow.
         queue.push(QueueEntry(0xffffffff, nullptr));
+    }
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) {
+        SST_SER(send);
+        SST_SER(recv);
+        
+        // std::priority_queue has no built-in SST serialization support;
+        // manually convert to/from a vector.
+        if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+            while ( !queue.empty() )
+                queue.pop();
+            std::vector<QueueEntry> entries;
+            SST_SER(entries);
+            for ( auto& e : entries )
+                queue.push(e);
+        }
+        else {
+            std::vector<QueueEntry> entries;
+            PriorityQueue tmp = queue;
+            while ( !tmp.empty() ) {
+                entries.push_back(tmp.top());
+                tmp.pop();
+            }
+            SST_SER(entries);
+        }
     }
 };
 

@@ -123,12 +123,8 @@ bool ReorderLinkControl::send(SimpleNetwork::Request* req, int vn) {
     if ( vn >= vns ) return false;
     if ( !link_control->spaceToSend(vn, req->size_in_bits) ) return false;
 
-    // Convert to ExtendedRequest if not already
-    Merlin::ExtendedRequest* ext_req = dynamic_cast<Merlin::ExtendedRequest*>(req);
-    if (!ext_req) {
-        ext_req = new Merlin::ExtendedRequest(req);
-        delete req;
-    }
+    Merlin::ExtendedRequest* ext_req = new Merlin::ExtendedRequest(req);
+    delete req;
 
     // Get or create reorder info for this destination
     if ( reorder_info.find(ext_req->dest) == reorder_info.end() ) {
@@ -208,12 +204,14 @@ const UnitAlgebra& ReorderLinkControl::getLinkBW() const {
 bool ReorderLinkControl::handle_event(int vn) {
     SimpleNetwork::Request* req = link_control->recv(vn);
 
-    // Extract sequence number from metadata
-    Merlin::ExtendedRequest* ext_req = dynamic_cast<Merlin::ExtendedRequest*>(req);
+    // All packets reaching here passed through ReorderLinkControl::send(), which wraps every packet to ExtendedRequest before forwarding. static_cast is safe here.
+    assert(dynamic_cast<Merlin::ExtendedRequest*>(req) != nullptr);
+    Merlin::ExtendedRequest* ext_req = static_cast<Merlin::ExtendedRequest*>(req);
+
     Merlin::ReorderMetadata reorder_meta;
     uint32_t seq = 0;
 
-    if (ext_req && ext_req->getMetadata("Reorder", reorder_meta)) {
+    if (ext_req->getMetadata("Reorder", reorder_meta)) {
         seq = reorder_meta.seq_number;
     } else {
         // No reorder metadata - shouldn't happen in normal operation
