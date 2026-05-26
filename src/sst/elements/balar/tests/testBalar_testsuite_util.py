@@ -207,7 +207,7 @@ class BalarTestCase(SSTTestCase):
         self.assertNotIn("FATAL", err_text,
                          "balar contract {0}: simulation fatal in stderr".format(testcase))
 
-        if os_test_file(reffile, "-e"):
+        if os.path.isfile(reffile):
             num_stat_lines = int(os_wc(statsfile, [0]))
             num_ref_lines = int(os_wc(reffile, [0]))
             line_count_diff = abs(num_ref_lines - num_stat_lines)
