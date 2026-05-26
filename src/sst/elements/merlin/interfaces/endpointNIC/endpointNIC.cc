@@ -26,7 +26,7 @@ endpointNIC::endpointNIC(ComponentId_t cid, Params& params, int vns) :
 
     link_control = loadUserSubComponent<SST::Interfaces::SimpleNetwork>
     ("networkIF", ComponentInfo::SHARE_NONE, 1 /* vns */);
-    
+
     // // Load LinkControl or reorderLinkControl
     // link_control = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>(
     //     networkIF, "networkIF", 0,
@@ -50,7 +50,7 @@ void endpointNIC::loadPlugins(Params& params)
 
     // Load indexed plugin slots
     int slot_num = 0;
-    
+
     while (slot_num < static_cast<int>(plugin_names.size())) {
         // Load user subcomponent
         NICPlugin* plugin = loadUserSubComponent<NICPlugin>(
@@ -58,15 +58,15 @@ void endpointNIC::loadPlugins(Params& params)
 
         if (plugin) {
             plugin_pipeline.push_back(plugin);
-            out.verbose(CALL_INFO, 1, 0, "Loaded plugin %d: %s\n", 
+            out.verbose(CALL_INFO, 1, 0, "Loaded plugin %d: %s\n",
                        slot_num, plugin->getPluginName().c_str());
         } else {
-            out.fatal(CALL_INFO, -1, "Failed to load plugin %d: %s\n", 
+            out.fatal(CALL_INFO, -1, "Failed to load plugin %d: %s\n",
                      slot_num, plugin_names[slot_num].c_str());
         }
         slot_num++;
     }
-    
+
     if (plugin_pipeline.empty()) {
         out.verbose(CALL_INFO, 1, 0, "No plugins loaded - operating as pass-through NIC\n");
     }
@@ -108,7 +108,7 @@ bool endpointNIC::send(Request* req, int vn)
     if (!processed_req) {
         return false;
     }
-    
+
     return link_control->send(processed_req, vn);
 }
 
@@ -123,7 +123,7 @@ SST::Interfaces::SimpleNetwork::Request* endpointNIC::recv(int vn)
     if (!req) {
         return nullptr;
     }
-    
+
     // Process through incoming pipeline
     return processThroughPipeline(req, vn, false);
 }
@@ -186,9 +186,9 @@ SST::Interfaces::SimpleNetwork::Request* endpointNIC::processThroughPipeline(
     Request* req, int vn, bool outgoing)
 {
     if (!req) return nullptr;
-    
+
     Request* current_req = req;
-    
+
     if (outgoing) {
         // Process through pipeline in forward order
         for (auto* plugin : plugin_pipeline) {
@@ -208,7 +208,7 @@ SST::Interfaces::SimpleNetwork::Request* endpointNIC::processThroughPipeline(
             }
         }
     }
-    
+
     return current_req;
 }
 

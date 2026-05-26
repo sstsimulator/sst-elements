@@ -35,7 +35,7 @@ def _networkx_Dijkstra_shortest_path(input_nx_graph) -> dict:
     """
     if input_nx_graph.number_of_nodes() == 0 or input_nx_graph.number_of_edges() == 0:
         raise AssertionError("Graph empty.")
-    
+
     # assert that node IDs are integers
     vertices = list(input_nx_graph.nodes())
     if not all(isinstance(v, int) for v in vertices):
@@ -43,7 +43,7 @@ def _networkx_Dijkstra_shortest_path(input_nx_graph) -> dict:
 
     # Compute shortest paths using Dijkstra's algorithm
     nx_routing_table = dict(nx.all_pairs_dijkstra_path(input_nx_graph))  # dict[int, dict[int, list[int]]]
-    
+
     weighted_routing_table = defaultdict(lambda: defaultdict(list))  # dict[int, dict[int, list[tuple(float, list[int])]]]
     for src, dest_dict in nx_routing_table.items():
         for dest, path in dest_dict.items():
@@ -60,7 +60,7 @@ def _networkx_Dijkstra_all_shortest_paths(input_nx_graph) -> dict:
     """
     if input_nx_graph.number_of_nodes() == 0 or input_nx_graph.number_of_edges() == 0:
         raise AssertionError("Graph empty.")
-    
+
     # assert that node IDs are integers
     vertices = list(input_nx_graph.nodes())
     if not all(isinstance(v, int) for v in vertices):
@@ -70,7 +70,7 @@ def _networkx_Dijkstra_all_shortest_paths(input_nx_graph) -> dict:
     # https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.shortest_paths.generic.all_pairs_all_shortest_paths.html
     # The result is a dict of dicts keyed by source and target router IDs to a list paths.
     try:
-        nx_routing_table = dict(nx.all_pairs_all_shortest_paths(input_nx_graph)) 
+        nx_routing_table = dict(nx.all_pairs_all_shortest_paths(input_nx_graph))
     except AttributeError:
         print("Might be due to old python version.")
 
@@ -103,7 +103,7 @@ class topoAny(Topology):
 
     def set_verbose_level(self, level: int):
         self.verbose_level = level
-    
+
     def add_endpoint_mapping(self, router_id: int, endpoint_id: int):
         # This will be used to store the mapping from router ID to list of endpoint IDs and vice versa
         self.rtr_to_EPs[router_id].append(endpoint_id)
@@ -115,19 +115,19 @@ class topoAny(Topology):
 
     def get_num_endpoints_for_router(self, router_id: int) -> int:
         return len(self.rtr_to_EPs[router_id])
-    
+
     def calculate_routing_table(self, routingAlgo: Optional[Callable] = None):
         """This is an interface for generating a routing table. \n
         The implementation could be dijkstra with all shortest paths or other algorithms. \n
         It optionally takes an input function that is defined by the user to generate custom routing tables.
-        
+
         Note that the routing table should be: a dictionary of dictionaries, mapping from source router ID to destination router ID to a list of (weight, path) tuples.
         The sum of weights of paths between each source-destination pair should be normalized to 1, but in this case all weights are 1 since there is only one path per pair.
         """
         # if no routingAlgo is provided, use default Dijkstra all shortest paths
         if routingAlgo is None:
             routingAlgo = _networkx_Dijkstra_shortest_path
-        
+
         try:
             result = routingAlgo(self.loaded_graph)
             return result
@@ -136,17 +136,17 @@ class topoAny(Topology):
 
     def getNumNodes(self):
         return self.tot_num_endpoints
-    
+
     def getRouterNameForId(self,rtr_id):
         return "router%d"%(rtr_id)
-    
+
     # def findRouterByLocation(self,rtr_id):
     #     return self.getRouterNameForId(self.getRouterNameForId(rtr_id))
 
     def import_graph(self, graph_input):
         """
         Import a graph from either a NetworkX graph object or a file path.
-        
+
         Args:
             graph_input: Either a NetworkX Graph object or a string path to a GraphML file
         """
@@ -154,7 +154,7 @@ class topoAny(Topology):
         if isinstance(graph_input, str):
             if not os.path.exists(graph_input):
                 raise AssertionError(f"Graph file {graph_input} not found")
-            
+
             try:
                 G = nx.read_graphml(graph_input)
                 print(f"Loaded graph from file {graph_input} with {len(G.nodes())} vertices and {len(G.edges())} edges")
@@ -168,19 +168,19 @@ class topoAny(Topology):
 
         else:
             raise AssertionError("graph_input must be either a file path (str) or a NetworkX Graph object")
-        
+
         # Validate graph properties
         if G.is_directed():
             raise AssertionError("FATAL: Input graph must be undirected, in order to assure bidirectional links")
         if isinstance(G, nx.MultiGraph):
             print("NOTE: Inputting a multi-graph, multiple links can present between two routers. Please be aware of this.")
-        
+
         # Convert node IDs to integers if they aren't already
         vertices = list(G.nodes())
         if not all(isinstance(v, int) for v in vertices):
             node_id_map = {node: i for i, node in enumerate(vertices)}
             G = nx.relabel_nodes(G, node_id_map, copy=True)
-        
+
         # by default it should be an undirected simple graph (nx.Graph)
         self.loaded_graph = G
         self._process_graph()
@@ -189,10 +189,10 @@ class topoAny(Topology):
         # Extract local data structures
         vertices = list(self.loaded_graph.nodes())
         self.edges = list(self.loaded_graph.edges())
-        
+
         # Verify all nodes are integers
         assert all(isinstance(v, int) for v in vertices), "Vertex IDs must be integers"
-        
+
         self.num_routers = len(vertices)
 
         global_endpoint_id = 0
@@ -230,7 +230,7 @@ class topoAny(Topology):
     def build(self, endpoint):
         if self.loaded_graph.number_of_nodes() == 0 or self.loaded_graph.number_of_edges() == 0:
             raise AssertionError("Invalid graph data, please assign valid graph data via import_graph() before build().")
-        
+
         # Create routers
         routers = []
         topos=[]
@@ -244,14 +244,14 @@ class topoAny(Topology):
                 port_str = ','.join(map(str, ports))
                 connectivity_entries.append(f"{dest_router},{port_str}")
             connectivity_str = ';'.join(connectivity_entries)
-            
+
             # # Build routing table string: "dest_router_id,next_hop1,next_hop2;dest_router_id,..."
             # routing_entries = []
             # for dest_router, next_hops in routing_tables[r].items():
             #     next_hop_str = ','.join(map(str, next_hops))
             #     routing_entries.append(f"{dest_router},{next_hop_str}")
             # routing_table_str = ';'.join(routing_entries)
-            
+
             # Set topology component
             topo = routers[r].setSubComponent(self.router.getTopologySlotName(), "merlin.anytopo", 0)
             topo.addParams(self._getGroupParams("shared"))
@@ -262,7 +262,7 @@ class topoAny(Topology):
             })
             topo.addParam("simple_routing_entry_string", serialize_routing_entry(self.simple_routing_table[r], r))
             topos.append(topo)
-        
+
         # Build links between routers
         for edge in self.edges:
             src_router, dst_router = edge
@@ -270,16 +270,16 @@ class topoAny(Topology):
             dst_ports = self.connectivity_map[dst_router][src_router]
             if len(src_ports) != len(dst_ports):
                 raise AssertionError(f"The edge between routers {src_router} and {dst_router} must have an equal number of ports on both ends.")
-            
+
             # Create links for each port pair
             for i, (src_port, dst_port) in enumerate(zip(src_ports, dst_ports)):
                 link_name = f"link_{src_router}_{dst_router}_{i}"
                 link = sst.Link(link_name)
-                
+
                 # Connect routers
                 routers[src_router].addLink(link, f"port{src_port}", self.link_latency)
                 routers[dst_router].addLink(link, f"port{dst_port}", self.link_latency)
-        
+
         # Connect endpoints to routers
         for r in range(self.num_routers):
             endpoint_to_port_map = {}

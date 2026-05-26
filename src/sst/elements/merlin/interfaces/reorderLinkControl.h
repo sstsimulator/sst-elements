@@ -91,19 +91,19 @@ namespace Merlin {
 struct ReorderInfo {
     uint32_t send;
     uint32_t recv;
-    
+
     // Priority queue that stores (seq_number, Request*) pairs
     struct QueueEntry {
         uint32_t seq;
         SST::Interfaces::SimpleNetwork::Request* req;
-        
+
         QueueEntry(uint32_t s, SST::Interfaces::SimpleNetwork::Request* r) : seq(s), req(r) {}
-        
+
         bool operator>(const QueueEntry& other) const {
             return seq > other.seq;
         }
     };
-    
+
     typedef std::priority_queue<QueueEntry, std::vector<QueueEntry>, std::greater<QueueEntry>> PriorityQueue;
     PriorityQueue queue;
 

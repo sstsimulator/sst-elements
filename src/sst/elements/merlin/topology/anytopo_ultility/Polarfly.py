@@ -1,4 +1,3 @@
-
 # This is written by Dante Van Poucke (Dante.VanPoucke@UGent.be)
 # origin:
 from HPC_topos import *
@@ -20,7 +19,7 @@ def compute_index(coeffs, primePower, primeFactor):
     index = 0
     while(cid >= 0):
         index = index*primeFactor + coeffs[cid]
-        cid -= 1 
+        cid -= 1
     return index
 
 def least_quadratic_non_residue(p):
@@ -51,7 +50,7 @@ def field_gen(q):
     primeFactor = int(q)
     primePower = int(1)
     tmp = int(q)
-    
+
     for i in range(2, q):
         if ((q%i) == 0):
             primeFactor = i
@@ -73,7 +72,7 @@ def field_gen(q):
     assert(q < 125)
 
 
-    #print(str(q) + " = " + str(primeFactor) + "^" + str(primePower)) 
+    #print(str(q) + " = " + str(primeFactor) + "^" + str(primePower))
 
     add_mat = [[0]*q for i in range(q)]
     mul_mat = [[0]*q for i in range(q)]
@@ -94,13 +93,13 @@ def field_gen(q):
             poly_primePower[1] = 2
         # x^2 = r
         elif ((primeFactor%2 == 1) and (primePower == 2)):
-            r = least_quadratic_non_residue(q) 
+            r = least_quadratic_non_residue(q)
             poly_primePower[0] = r
             print("least quad non residue is " + str(r))
         else:
             print("Sorry! I don't know how to construct multiplication matrix for this field")
             exit(0)
-    
+
     if (isPrimeNumber):
         assert(primePower == 1)
         for i in range(q):
@@ -151,7 +150,7 @@ def field_gen(q):
     return add_mat, mul_mat
 
 class BrownGenerator():
-    
+
     def __init__(self):
         pass
 
@@ -175,10 +174,10 @@ class BrownGenerator():
             prod = self.mul_mat[v1[i]][v2[i]]
             dp = self.add_mat[dp][prod]
         return dp
-        
+
     def make(self, q : int):
-        self.q = q 
-        self.add_mat, self.mul_mat = field_gen(q) 
+        self.q = q
+        self.add_mat, self.mul_mat = field_gen(q)
         V = q**2 + q + 1
 
         vectors = []
@@ -231,9 +230,9 @@ class PolarflyTopo(HPC_topo):
         (only non-extended polarfly is implemented)
         """
 
-        q_candidates = [2, 3, 4, 5, 7, 8, 9, 11, 13, 16, 17, 19, 23, 25, 27, 29, 31, 32, 37, 41, 43, 47, 49, 
-                        53, 59, 61, 64, 67, 71, 73, 79, 81, 83, 89, 97, 101, 103, 107, 109, 113, 121, 125, 127, 
-                        128, 131, 137, 139, 149, 151, 157, 163, 167, 169, 173, 179, 181, 191, 193, 197, 199, 211, 
+        q_candidates = [2, 3, 4, 5, 7, 8, 9, 11, 13, 16, 17, 19, 23, 25, 27, 29, 31, 32, 37, 41, 43, 47, 49,
+                        53, 59, 61, 64, 67, 71, 73, 79, 81, 83, 89, 97, 101, 103, 107, 109, 113, 121, 125, 127,
+                        128, 131, 137, 139, 149, 151, 157, 163, 167, 169, 173, 179, 181, 191, 193, 197, 199, 211,
                         223, 227, 229, 233, 239, 241, 243, 251]
 
         if len(args) == 3 and all(isinstance(e, int) for e in args):
@@ -251,7 +250,7 @@ class PolarflyTopo(HPC_topo):
             if q+1 != args[1]:
                 raise ValueError("Network radix is not q+1")
             self.q = int(q)
-        
+
         self.generate_PF(self.q)
 
     def generate_PF(self, q):

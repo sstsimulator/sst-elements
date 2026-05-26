@@ -1,8 +1,8 @@
 # Merlin endpointNIC Models
 
-This directory contains a NIC model that allows plug-in functionalities. 
+This directory contains a NIC model that allows plug-in functionalities.
 
-The goal is to support a wider varity of NIC/smartNIC functionality for HPC networks in SST Merlin. 
+The goal is to support a wider varity of NIC/smartNIC functionality for HPC networks in SST Merlin.
 
 Some possible applications:
 - enable source routing (e.g., MPLS, SRv6, G-SRv6) [implemented in this PR]
@@ -11,7 +11,7 @@ Some possible applications:
 - RDMA direct memory operations
 - ...
 
-This builds an initial framework for plug-in NIC model, possible to support a variety of NIC functionalities. In its current status, source routing is implemented. 
+This builds an initial framework for plug-in NIC model, possible to support a variety of NIC functionalities. In its current status, source routing is implemented.
 
 ## Python code architecture
 
@@ -112,17 +112,17 @@ Example skeleton:
 ```cpp
 class MyPlugin : public NICPlugin {
     SST_ELI_REGISTER_SUBCOMPONENT(MyPlugin, "merlin", "myPlugin", ...)
-    
+
     Request* processOutgoing(Request* req, int vn) override {
         // Modify outgoing packet
         return req;
     }
-    
+
     Request* processIncoming(Request* req, int vn) override {
         // Modify incoming packet
         return req;
     }
-    
+
     std::string getPluginName() const override { return "MyPlugin"; }
 };
 ```

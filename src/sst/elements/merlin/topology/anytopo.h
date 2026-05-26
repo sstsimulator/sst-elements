@@ -1,6 +1,6 @@
 // TODO: copyright goes here?
 
-// The current name of the Topology class is 'anytopo', 
+// The current name of the Topology class is 'anytopo',
 // however, the name could also be 'arbitrarytopo' or 'generictopo' to better reflect its purpose.
 
 #ifndef COMPONENTS_MERLIN_TOPOLOGY_ANYTOPO_H
@@ -27,21 +27,21 @@ namespace Merlin {
 class topo_any_event : public internal_router_event {
 public:
     // // the id of the destination endpoint
-    // int dest_EP_id; 
+    // int dest_EP_id;
     // // the id of the source endpoint
-    // int src_EP_id;  
-    
+    // int src_EP_id;
+
     // number of hops the packet has traveled, this will only control the VC
     int num_hops;
 
     // the next router id to forward to
     // If source routing is used, this will be read from the encapsulated request (similar to the segment routing header in IPv6)
     // If destination-tag routing is used, this will be determined by the routing table of the current router
-    int next_router_id; 
+    int next_router_id;
 
-    inline topo_any_event() { 
-        num_hops = 0; 
-        // dest_EP_id = -1; src_EP_id = -1; 
+    inline topo_any_event() {
+        num_hops = 0;
+        // dest_EP_id = -1; src_EP_id = -1;
     }
     virtual ~topo_any_event() {}
 
@@ -92,12 +92,12 @@ public:
     int tot_num_vcs=0;
     RNG::Random* rng;
 
-    // I suppose that the purpose of virtual networks (vns) is to separate different types of traffic, 
+    // I suppose that the purpose of virtual networks (vns) is to separate different types of traffic,
     // for example seperating requests and responses for avoiding protocol-level deadlock.
     // Thus the default number of vns is set to 2.
     int num_vns = 2;
     // In commercial switches, the number of available vcs is usually in the order of tens.
-    // For example in infiniband switches (ref: https://network.nvidia.com/pdf/whitepapers/WP_InfiniBand_Technology_Overview.pdf), 
+    // For example in infiniband switches (ref: https://network.nvidia.com/pdf/whitepapers/WP_InfiniBand_Technology_Overview.pdf),
     // 16 virtual lanes (their term for virtual channels) are provided, thus that can be splitted into two virtual networks each with 8 vcs.
     // By default, the vc is incremented at every hop for avoiding deadlock, so the number of vc must not be less than the maximum path length.
     // In case path length is longer than the number of available vcs, the vc will wrap around to 0, but that may induce deadlock (a warning will be printed).
@@ -119,20 +119,20 @@ public:
         // The routers are only responsible for forwarding the packet to the next hop in the pre-determined path.
         source_routing,
         // If per-hop destination-tag routing is used,
-        // every intermediate router makes its own routing decision based on the destination id, 
+        // every intermediate router makes its own routing decision based on the destination id,
         // for which the routing table depends on the network topology
         dest_tag_routing
     };
 
     // This data structure contains the necessary routing information for THIS router
     // key is destination router id, value is a list of next-hop router ids.
-    std::map<int, std::vector<int>> Dest_Tag_Routing_Table; 
+    std::map<int, std::vector<int>> Dest_Tag_Routing_Table;
 
 
     // Note that this need to be specified for every vn
     // If destination-tag routing is used, there are many possible routing algorithms. And these algorithms are independent on the routing table.
     // However, only "nonadaptive" is implemented for now, as the main objective of this project was source routing.
-    // You can try to implement other routing algorithms yourself (could be a bachelor/master project...), 
+    // You can try to implement other routing algorithms yourself (could be a bachelor/master project...),
     // however, you can also just use that defined in the existing network topology classes.
     enum Dest_Tag_Routing_Algo{
         none,
@@ -156,13 +156,13 @@ public:
     // virtual int routeControlPacket(CtrlRtrEvent* ev); //TODO:??
     virtual void routeUntimedData(int input_port, internal_router_event* ev, std::vector<int> &outPorts);
     virtual internal_router_event* process_UntimedData_input(RtrEvent* ev);
-    
+
     virtual void getVCsPerVN(std::vector<int>& vcs_per_vn) {
         for ( int i = 0; i < num_vns; ++i ) {
             vcs_per_vn[i] = vns[i].num_vcs;
         }
     }
-    // note that the port_id starts from 0 to num_R2R_ports-1 for R2R ports, 
+    // note that the port_id starts from 0 to num_R2R_ports-1 for R2R ports,
     // and from num_R2R_ports to num_R2R_ports+num_R2N_ports-1 for R2N ports
     virtual PortState getPortState(int port_id) const;
     // // will return -1 if the port is not an R2N port
@@ -216,7 +216,7 @@ private:
         Dest_Tag_Routing_Algo vn_dest_tag_routing_algo;
     };
 
-    vn_info* vns; 
+    vn_info* vns;
     // calculate the destination router id based on the destination endpoint id
     int get_router_id(int dest_EP_id) const;
     // calculate the local port id (R2N port) based on the destination endpoint id

@@ -21,7 +21,7 @@ protected:
     SST::Interfaces::SimpleNetwork* link_control;
     Output out;
     nid_t EP_id;
-    
+
     // Pipeline of NIC plugins
     std::vector<NICPlugin*> plugin_pipeline;
 
@@ -39,7 +39,7 @@ public:
         {"plugins", "Comma-separated list of plugin names to load in order", ""}
     )
 
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(        
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         {"networkIF", "Network interface", "SST::Interfaces::SimpleNetwork" },
         {"sourceRoutingPlugin", "NIC plugin slot for enabling source routing", "SST::Merlin::NICPlugin"}
         // If new plugin slots are added, document them here
@@ -76,7 +76,7 @@ protected:
 
     // Load plugins from parameters
     void loadPlugins(Params& params);
-    
+
     // Process request through plugin pipeline
     Request* processThroughPipeline(Request* req, int vn, bool outgoing);
 };

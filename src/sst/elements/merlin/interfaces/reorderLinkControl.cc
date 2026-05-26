@@ -122,7 +122,7 @@ void ReorderLinkControl::finish(void)
 bool ReorderLinkControl::send(SimpleNetwork::Request* req, int vn) {
     if ( vn >= vns ) return false;
     if ( !link_control->spaceToSend(vn, req->size_in_bits) ) return false;
-    
+
     // Convert to ExtendedRequest if not already
     Merlin::ExtendedRequest* ext_req = dynamic_cast<Merlin::ExtendedRequest*>(req);
     if (!ext_req) {
@@ -136,7 +136,7 @@ bool ReorderLinkControl::send(SimpleNetwork::Request* req, int vn) {
         reorder_info[ext_req->dest] = info;
     }
     ReorderInfo* info = reorder_info[ext_req->dest];
-    
+
     // Set sequence number as metadata (preserves all other metadata!)
     uint32_t seq = info->send++;
     Merlin::ReorderMetadata reorder_meta(seq);
@@ -207,12 +207,12 @@ const UnitAlgebra& ReorderLinkControl::getLinkBW() const {
 
 bool ReorderLinkControl::handle_event(int vn) {
     SimpleNetwork::Request* req = link_control->recv(vn);
-    
+
     // Extract sequence number from metadata
     Merlin::ExtendedRequest* ext_req = dynamic_cast<Merlin::ExtendedRequest*>(req);
     Merlin::ReorderMetadata reorder_meta;
     uint32_t seq = 0;
-    
+
     if (ext_req && ext_req->getMetadata("Reorder", reorder_meta)) {
         seq = reorder_meta.seq_number;
     } else {
