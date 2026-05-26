@@ -105,7 +105,7 @@ class topoAny(Topology):
         self._declareClassVariables(["link_latency", "host_link_latency", "topo_name", "simple_routing_entry_string",
                                      "loaded_graph", "edges", "connectivity_map", "num_R2R_ports_map",
                                      "tot_num_endpoints", "rtr_to_EPs", "EP_to_rtr", "simple_routing_table"])
-        self._declareParams("shared",["num_routers", "routing_mode", "verbose_level"])
+        self._declareParams("shared",["num_routers", "routing_mode", "verbose_level", "source_routing_algo", "vn_ugal_num_valiant"])
         self._subscribeToPlatformParamSet("topology")
         self.loaded_graph = nx.empty_graph()
         self.rtr_to_EPs = defaultdict(list)   # dict[int, list[int]], default to empty list

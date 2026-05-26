@@ -1,6 +1,6 @@
-Loaded NetworkX graph with 4 vertices and 6 edges
+Loaded NetworkX graph with 18 vertices and 45 edges
   Offered   Average
     Load    Latency
-     0.50      156.158 ns
+     0.50      10.7575 us
 
 Simulation is complete, simulated time: 400 us
