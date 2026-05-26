@@ -101,6 +101,19 @@ public:
         return true;
     }
     
+    // Get a const pointer to plugin-specific metadata without copying
+    // Returns nullptr if metadata doesn't exist or type mismatch
+    template<typename T>
+    T* getMetadataPtr(const std::string& key) const {
+        auto it = metadata.find(key);
+        if (it == metadata.end()) return nullptr;
+        
+        TypedMetadata<T>* typed = dynamic_cast<TypedMetadata<T>*>(it->second.get());
+        if (!typed) return nullptr;
+        
+        return &(typed->data);
+    }
+    
     // Check if metadata exists for a given key
     bool hasMetadata(const std::string& key) const {
         return metadata.find(key) != metadata.end();
@@ -128,10 +141,10 @@ public:
 
 // Source Routing metadata
 struct SourceRoutingMetadata {
-    std::vector<int> path;
+    std::deque<int> path = {};
     
     SourceRoutingMetadata() {}
-    SourceRoutingMetadata(const std::vector<int>& p) : path(p) {}
+    SourceRoutingMetadata(const std::deque<int>& p) : path(p) {}
 };
 
 // Reorder metadata

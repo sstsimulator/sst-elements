@@ -30,8 +30,10 @@ public:
     // int dest_EP_id; 
     // // the id of the source endpoint
     // int src_EP_id;  
-    // number of hops the packet has traveled
-    int num_hops;   
+    
+    // number of hops the packet has traveled, this will only control the VC
+    int num_hops;
+
     // the next router id to forward to
     // If source routing is used, this will be read from the encapsulated request (similar to the segment routing header in IPv6)
     // If destination-tag routing is used, this will be determined by the routing table of the current router
@@ -146,6 +148,8 @@ public:
 
     void Parse_routing_info(SST::Params &params);
     virtual void route_packet(int input_port, int vc, internal_router_event* ev);
+    void route_untimed_packet(int input_port, int vc, internal_router_event* ev);
+    void route_simple(topo_any_event* ev);
     void route_packet_SR(topo_any_event* ev);
     void route_packet_dest_tag(int input_port, int vc, topo_any_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
@@ -161,7 +165,7 @@ public:
     // note that the port_id starts from 0 to num_R2R_ports-1 for R2R ports, 
     // and from num_R2R_ports to num_R2R_ports+num_R2N_ports-1 for R2N ports
     virtual PortState getPortState(int port_id) const;
-    // will return -1 if the port is not an R2N port
+    // // will return -1 if the port is not an R2N port
     virtual int getEndpointID(int port_id);
 
 
@@ -186,14 +190,14 @@ private:
             if( router_id == 0 ) {// only print the warning once
                 try {
                     if constexpr (std::is_arithmetic<T>::value) {
-                        output.output("WARNING: Parameter '%s' not found for anytopo, using default value: %s\n", key.c_str(), std::to_string(default_val).c_str());
+                        output.verbose(CALL_INFO, 1, 0, "WARNING: Parameter '%s' not found for anytopo, using default value: %s\n", key.c_str(), std::to_string(default_val).c_str());
                     } else if constexpr (std::is_same<T, std::string>::value) {
-                        output.output("WARNING: Parameter '%s' not found for anytopo, using default value: %s\n", key.c_str(), default_val.c_str());
+                        output.verbose(CALL_INFO, 1, 0, "WARNING: Parameter '%s' not found for anytopo, using default value: %s\n", key.c_str(), default_val.c_str());
                     } else {
-                        output.output("WARNING: Parameter '%s' not found for anytopo, using default value (unprintable type)\n", key.c_str());
+                        output.verbose(CALL_INFO, 1, 0, "WARNING: Parameter '%s' not found for anytopo, using default value (unprintable type)\n", key.c_str());
                     }
                 } catch (...) {
-                    output.output("WARNING: Parameter '%s' not found for anytopo, using default value (unprintable type)\n", key.c_str());
+                    output.verbose(CALL_INFO, 1, 0, "WARNING: Parameter '%s' not found for anytopo, using default value (unprintable type)\n", key.c_str());
                 }
             }
         }
@@ -221,6 +225,9 @@ private:
     // for now ports are randomly selected
     int getPortToRouter(int target_router_id) const;
     std::set<int>& getPortsToRouter(int target_router_id) const;
+
+    std::map<int, int> endpoint_to_port_map; // maps from the endpoint ID to the port ID.
+    std::map<int, int> port_to_endpoint_map; // maps from the port ID to the endpoint ID.
 
     // void route_nonadaptive(int port, int vc, internal_router_event* ev, int dest_router);
     // void route_nonadaptive_weighted(int port, int vc, internal_router_event* ev, int dest_router);

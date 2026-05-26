@@ -14,8 +14,8 @@
 namespace SST {
 namespace Merlin {
 
-// Define a type for path with weight, where the float is the weight and the vector<int> is the sequence of hop router IDs
-typedef std::pair<float, std::vector<int>> path_with_weight;
+// Define a type for path with weight, where the float is the weight and the deque<int> is the sequence of hop router IDs
+typedef std::pair<float, std::deque<int>> path_with_weight;
 
 // The index is destination router ID, the value is a vector of weighted paths (each path is a vector of hop router IDs) with associated weights
 typedef std::vector<std::vector<path_with_weight>> routing_entries;
@@ -24,7 +24,7 @@ typedef std::vector<std::vector<path_with_weight>> routing_entries;
 class PathSelectionAlgorithm {
 public:
     virtual ~PathSelectionAlgorithm() {}
-    virtual std::vector<int> selectPath(int dest_router, const std::vector<path_with_weight>& paths) = 0;
+    virtual std::deque<int> selectPath(int dest_router, const std::vector<path_with_weight>& paths) = 0;
     virtual void reset() {}
 };
 
@@ -36,7 +36,7 @@ private:
 public:
     RandomWeightedSelection(ComponentId_t cid);
     ~RandomWeightedSelection();
-    std::vector<int> selectPath(int dest_router, const std::vector<path_with_weight>& paths) override;
+    std::deque<int> selectPath(int dest_router, const std::vector<path_with_weight>& paths) override;
 };
 
 // Weighted round-robin path selection algorithm
@@ -48,7 +48,7 @@ private:
 public:
     WeightedRoundRobinSelection();
     ~WeightedRoundRobinSelection();
-    std::vector<int> selectPath(int dest_router, const std::vector<path_with_weight>& paths) override;
+    std::deque<int> selectPath(int dest_router, const std::vector<path_with_weight>& paths) override;
     void reset() override;
 };
 
@@ -113,7 +113,7 @@ public:
 private:
     void parseRoutingEntry(Params& params);
     void initializePathSelectionAlgorithm(const std::string& algorithm_name);
-    std::vector<int> selectPath(int dest_router);
+    std::deque<int> selectPath(int dest_router);
     inline size_t lookupRtrForEndpoint(SST::Interfaces::SimpleNetwork::nid_t endpoint) {
         return endpoint_to_router_map[endpoint];
     }

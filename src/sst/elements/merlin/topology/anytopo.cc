@@ -65,6 +65,18 @@ topo_any::topo_any(ComponentId_t cid, Params& params, int num_ports, int rtr_id,
     }
 
     Parse_routing_info(params);
+
+    params.find_map<int, int>("endpoint_to_port_map", endpoint_to_port_map);
+    if (endpoint_to_port_map.empty()) {
+        output.fatal(CALL_INFO, -1, "No endpoint-to-port mapping provided\n");
+    }
+
+    params.find_map<int, int>("port_to_endpoint_map", port_to_endpoint_map);
+    if (port_to_endpoint_map.empty()) {
+        output.fatal(CALL_INFO, -1, "No port-to-endpoint mapping provided\n");
+    }
+
+    output.setVerboseLevel(params.find<int>("verbose_level", 0));
 }
 
 void SST::Merlin::topo_any::Parse_routing_info(SST::Params &params)
@@ -213,7 +225,8 @@ int topo_any::getEndpointID(int port_id) {
         assert(!Topology::isHostPort(port_id));
         return -1;
     }else{
-        return router_id * num_R2N_ports + (port_id - num_R2R_ports);
+        return port_to_endpoint_map.at(port_id);
+        // return router_id * num_R2N_ports + (port_id - num_R2R_ports);
     }
 }
 
@@ -224,14 +237,14 @@ int topo_any::get_router_id(int EP_id) const
     auto it = ep_map.find(EP_id);
     if (it != ep_map.end()) {
         return it->second;
+    }else {
+        fatal(CALL_INFO, -1, "WARNING: Endpoint %d not found in endpoint_to_router_map.", EP_id);
     }
-    
-    fatal(CALL_INFO, -1, "WARNING: Endpoint %d not found in endpoint_to_router_map.", EP_id);
 }
 
 int topo_any::get_dest_local_port(int dest_EP_id) const
 {
-    return num_R2R_ports + (dest_EP_id % num_R2N_ports);
+    return endpoint_to_port_map.at(dest_EP_id);
 }
 
 //===============================================================
@@ -269,6 +282,62 @@ void topo_any::route_packet(int input_port, int vc, internal_router_event* ev) {
     }
 }
 
+void topo_any::route_untimed_packet(int input_port, int vc, internal_router_event* ev) {
+    // For untimed packets, always use simple routing table
+    route_simple(static_cast<topo_any_event*>(ev));
+}
+
+void topo_any::route_simple(topo_any_event* ev) {
+    std::deque<int> sr_path;
+
+    int dest_EP_id = ev->getDest();
+    int dest_router = get_router_id(dest_EP_id);
+    
+    // Look up the simple routing table
+    
+    if (dest_router == router_id){
+        // Destination is local, use empty path
+        sr_path = {};
+    }
+    else {
+        // Use the first path (simple routing doesn't have weighted selection)
+        sr_path = simple_routing_table[router_id][dest_router][0].second;
+        if (sr_path.empty()) {
+            fatal(CALL_INFO, -1, "ERROR: No valid routing path found from router %d to router %d in simple routing table\n",
+                  router_id, dest_router);
+        }
+        output.verbose(CALL_INFO, 2, 0, 
+            "Using simple routing table for untimed packet from router %d to router %d\n",
+            router_id, dest_router);
+    }
+
+    // Route the packet based on the path
+    int fwd_port = -1;
+    if (sr_path.empty() || sr_path.back() == router_id) {
+        // Arriving at destination router, forward to endpoint
+        
+        int dest_EP_id = ev->getDest();
+        if (get_router_id(dest_EP_id) != router_id) {
+            fatal(CALL_INFO, -1, "ERROR: destination endpoint %d is not contained within this router %d\n",
+                dest_EP_id, router_id);
+        }
+        ev->next_router_id = -1; // no next router
+        fwd_port = get_dest_local_port(dest_EP_id);
+    } else {
+        // Intermediate hop - determine the next router and forward to the corresponding port
+        // assert that there is a front element
+        assert(!sr_path.empty());
+        ev->next_router_id = sr_path.front(); // update next router id and increment the hop count
+        ev->setVC(ev->num_hops);
+        fwd_port = getPortToRouter(ev->next_router_id);
+    }
+
+    if (fwd_port == -1) {
+        fatal(CALL_INFO, -1, "ERROR: No port found to forward to router %d\n", ev->next_router_id);
+    }
+    ev->setNextPort(fwd_port);
+}
+
 void topo_any::route_packet_SR(topo_any_event* ev) {
     // For source routing, the path should already be in the encapsulated event's metadata
     // For untimed packets (during init/complete phase), fall back to simple_routing_table
@@ -281,76 +350,59 @@ void topo_any::route_packet_SR(topo_any_event* ev) {
 
     // Try to get the request as ExtendedRequest and extract path from metadata
     ExtendedRequest* ext_req = dynamic_cast<ExtendedRequest*>(req);
-    SourceRoutingMetadata sr_meta;
-    std::vector<int> sr_path;
     
-    if (ext_req && ext_req->getMetadata("SourceRouting", sr_meta)) {
-        // Normal timed packet with source routing metadata
-        sr_path = sr_meta.path;
-    } else {
-        // Untimed packet without ExtendedRequest - use simple routing table
-        // This should only happen during init/complete phase
+    if (ext_req) {
 
-        int src_EP_id = ev->getSrc();
-        int src_router = get_router_id(src_EP_id);
-        assert(src_router == router_id);
-
-        int dest_EP_id = ev->getDest();
-        int dest_router = get_router_id(dest_EP_id);
+        // Try to get pointer to metadata without copying
+        SourceRoutingMetadata* sr_meta_ptr = ext_req->getMetadataPtr<SourceRoutingMetadata>("SourceRouting");
+        std::deque<int>* sr_path;
         
-        // Look up the simple routing table
-        
-        if (dest_router == router_id){
-            // Destination is local, use empty path
-            sr_path.clear();
+        if (sr_meta_ptr) {
+                sr_path = &(sr_meta_ptr->path);
+        } else {
+            fatal(CALL_INFO, -1, "DEBUG anytopo: No SourceRouting metadata found?");
         }
-        else {
-            // Use the first path (simple routing doesn't have weighted selection)
-            sr_path = simple_routing_table[router_id][dest_router][0].second;
 
-            if (sr_path.empty()) {
-                fatal(CALL_INFO, -1, "ERROR: No valid routing path found from router %d to router %d in simple routing table\n",
-                      router_id, dest_router);
+        // Route the packet based on the path
+        int fwd_port = -1;
+        if (sr_path->empty() || sr_path->back() == router_id) {
+            // Arriving at destination router, forward to endpoint
+            
+            int dest_EP_id = ev->getDest();
+            if (dest_EP_id == -1){
+                fatal(CALL_INFO, -1, "ERROR: Source routing packet missing destination endpoint ID\n");
             }
             
-            output.verbose(CALL_INFO, 2, 0, 
-                "Using simple routing table for untimed packet from router %d to router %d\n",
-                router_id, dest_router);
+            if (get_router_id(dest_EP_id) != router_id) {
+                fatal(CALL_INFO, -1, "ERROR: destination endpoint %d is not contained within this router %d\n",
+                    dest_EP_id, router_id);
+            }
+            ev->next_router_id = -1; // no next router
+            fwd_port = get_dest_local_port(dest_EP_id);
+
+            output.verbose(CALL_INFO, 2, 0, "destination router %d forwarding packet to dest EP %d via port %d\n",
+                router_id, dest_EP_id, fwd_port);
+        } else {
+            // Intermediate hop - determine the next router and forward to the corresponding port
+            // assert that there is a front element
+            assert(!sr_path->empty());
+            ev->next_router_id = sr_path->front(); // update next router id and increment the hop count
+            sr_path->pop_front(); // remove the current router from the path
+            ev->setVC(ev->num_hops);
+            fwd_port = getPortToRouter(ev->next_router_id);
+
+            output.verbose(CALL_INFO, 2, 0, "Intermediate router %d routing packet to next router %d via port %d\n",
+                router_id, ev->next_router_id, fwd_port);
         }
 
-        // TODO: modify the inner req of this untimed rtrEvent? But that will require the num_hops to be put in the meta data.
-        // TODO: ev->setMetadata("SourceRouting", SourceRoutingMetadata(sr_path));
-    }
-
-    // Validate hop count
-    if (ev->num_hops > sr_path.size()) {
-        fatal(CALL_INFO, -1, "ERROR: num_hops (%d) has exceeded the path length (%zu)\n", 
-              ev->num_hops, sr_path.size());
-    }
-
-    // Route the packet based on the path
-    int fwd_port = -1;
-    if (sr_path.empty() || sr_path.back() == router_id) {
-        // Arriving at destination router, forward to endpoint
-        assert(ev->num_hops == sr_path.size());
-        int dest_EP_id = ev->getDest();
-        if (get_router_id(dest_EP_id) != router_id) {
-            fatal(CALL_INFO, -1, "ERROR: destination endpoint %d is not contained within this router %d\n",
-                  dest_EP_id, router_id);
+        if (fwd_port == -1) {
+            fatal(CALL_INFO, -1, "ERROR: No port found to forward to router %d\n", ev->next_router_id);
         }
-        ev->next_router_id = -1; // no next router
-        fwd_port = get_dest_local_port(dest_EP_id);
+        ev->setNextPort(fwd_port);
     } else {
-        // Intermediate hop - determine the next router and forward to the corresponding port
-        ev->next_router_id = sr_path[ev->num_hops++]; // update next router id and increment the hop count
-        ev->setVC(ev->num_hops);
-        fwd_port = getPortToRouter(ev->next_router_id);
+        fatal(CALL_INFO, -1, "timed packet should always have source routing metadata");
     }
 
-    if (fwd_port == -1) {
-        fatal(CALL_INFO, -1, "ERROR: No port found to forward to router %d\n", ev->next_router_id);
-    }
-    ev->setNextPort(fwd_port);
 }
 
 void topo_any::route_packet_dest_tag(int input_port, int vc, topo_any_event* ev) {
@@ -383,7 +435,7 @@ void topo_any::routeUntimedData(int input_port, internal_router_event* ev, std::
         // We need a topology-independent network-broadcasting protocol here, 
         // but I don't see any use case of UNTIMED_BROADCAST_ADDR for now in the whole sst-element source code?
     }else{
-        route_packet(input_port, ev->getVC(), ev);
+        route_untimed_packet(input_port, ev->getVC(), ev);
         outPorts.push_back(ev->getNextPort());
     }
 }
