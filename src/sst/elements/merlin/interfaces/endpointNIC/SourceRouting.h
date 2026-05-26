@@ -95,10 +95,12 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {"routing_entry_string", "Compact routing table string format: dest1:weight1,hop1,hop2;weight2,hop3|dest2:weight1,hop1", ""},
-        {"endpoint_router_mapping", "Mapping from endpoint ID to router ID, passed as Python dict", ""},
-        {"path_selection_algorithm", "Algorithm for selecting paths from routing table", "random_weighted"},
-        {"num_routers", "Number of routers in the network", ""}
+        {"EP_id",                    "Endpoint ID assigned to this plugin. Inherited from the parent NIC.", ""},
+        {"num_routers",              "Total number of routers in the network.", ""},
+        {"endpoint_router_mapping",  "Mapping from endpoint ID to router ID, passed as Python dict, e.g. {0:0, 1:0, 2:1, ...}.", ""},
+        {"routing_entry_string",     "Compact routing table string for this source router. Format: 'dest1:weight1,hop1,hop2;weight2,hop3|dest2:weight1,hop1'.", ""},
+        {"path_selection_algorithm", "Algorithm for selecting among weighted paths: 'random_weighted' or 'weighted_round_robin'.", "random_weighted"},
+        {"verbose_level",            "Verbosity level for output messages (higher value = more output).", "0"},
     )
 
     SourceRoutingPlugin(ComponentId_t cid, Params& params);
