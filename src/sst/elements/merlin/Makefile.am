@@ -69,6 +69,7 @@ libmerlin_la_SOURCES = \
 	inspectors/circuitCounter.cc \
 	inspectors/testInspector.cc \
 	inspectors/testInspector.h \
+	interfaces/ExtendedRequest.h \
 	interfaces/linkControl.h \
 	interfaces/linkControl.cc \
 	interfaces/portControl.h \

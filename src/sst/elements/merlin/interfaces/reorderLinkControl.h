@@ -35,59 +35,6 @@ class Component;
 
 namespace Merlin {
 
-// // Need our own version of Request to add a sequence number
-// class ReorderRequest : public SST::Interfaces::SimpleNetwork::Request {
-
-// public:
-//     uint32_t seq;
-
-//     ReorderRequest() :
-//         Request(),
-//         seq(0)
-//         {}
-
-//     // ReorderRequest(SST::Interfaces::SimpleNetwork::nid_t dest, SST::Interfaces::SimpleNetwork::nid_t src,
-//     //                size_t size_in_bits, bool head, bool tail, uint32_t seq, Event* payload = NULL) :
-//     //     Request(dest, src, size_in_bits, head, tail, payload ),
-//     //     seq(seq)
-//     //     {
-//     //     }
-
-//     ReorderRequest(SST::Interfaces::SimpleNetwork::Request* req, uint32_t seq = 0) :
-//         Request(req->dest, req->src, req->size_in_bits, req->head, req->tail),
-//         seq(seq)
-//         {
-//             givePayload(req->takePayload());
-//             trace = req->getTraceType();
-//             traceID = req->getTraceID();
-//         }
-
-//     ~ReorderRequest() {}
-
-
-//     // This is here just for the priority_queue insertion, so is
-//     // sorting based on what comes out of queue first (i.e. lowest
-//     // number, which makes this look backwards)
-//     class Priority {
-//     public:
-//         bool operator()(ReorderRequest* const& lhs, ReorderRequest* const& rhs) {
-//             return lhs->seq > rhs->seq;
-//         }
-//     };
-
-//     typedef std::priority_queue<ReorderRequest*, std::vector<ReorderRequest*>, Priority> PriorityQueue;
-
-//     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
-//         SST::Interfaces::SimpleNetwork::Request::serialize_order(ser);
-//         SST_SER(seq);
-//     }
-
-// private:
-//     ImplementSerializable(SST::Merlin::ReorderRequest)
-// };
-
-
-
 struct ReorderInfo {
     uint32_t send;
     uint32_t recv;
@@ -127,7 +74,7 @@ struct ReorderInfo {
     void serialize_order(SST::Core::Serialization::serializer& ser) {
         SST_SER(send);
         SST_SER(recv);
-        
+
         // std::priority_queue has no built-in SST serialization support;
         // manually convert to/from a vector.
         if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
