@@ -224,7 +224,13 @@ class ProcessQueuesState : public SubComponent
             Msg( (MatchHdr*)_vec[0].addr.getBacking() ),
             srcCore( _srcCore ), vec(_vec), key( _key)
         {
-            m_ioVec.push_back( vec[1] );
+            // vec[0]=MatchHdr, vec[1..N]=data segments. A multi-segment sender
+            // (e.g. a wrapped recursive-doubling Allgather window) must keep ALL
+            // segments; only keeping vec[1] truncates the payload and trips
+            // copyIoVec's copied==len check. Do not reduce this to vec[1].
+            for ( size_t i = 1; i < vec.size(); i++ ) {
+                m_ioVec.push_back( vec[i] );
+            }
         }
 
         int srcCore;
