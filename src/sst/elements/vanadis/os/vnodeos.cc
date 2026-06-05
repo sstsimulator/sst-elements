@@ -33,6 +33,8 @@
 #include "utils.h"
 #include "sst/elements/mmu/utils.h"
 
+#include <iostream>
+
 using namespace SST::Vanadis;
 
 VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Params& params)
@@ -343,7 +345,6 @@ int VanadisNodeOSComponent::checkpointLoad( std::string dir )
     std::stringstream filename;
     filename << checkpoint_dir_ << "/" << getName();
     output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"Checkpoint component `%s` %s\n",getName().c_str(), filename.str().c_str());
-
     auto fp = fopen(filename.str().c_str(),"r");
     assert(fp);
 
@@ -409,13 +410,13 @@ int VanadisNodeOSComponent::checkpointLoad( std::string dir )
         output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"core: %" PRIu32 "\n",core);
         assert( core == i );
 
-        assert( 1 == fscanf(fp,"hw_thread_map_.size(): %zd\n",&size) );
+        assert( 1 == fscanf(fp,"m_hwThreadMap.size(): %zd\n",&size) );
         output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"hw_thread_map_.size(): %zu\n",size);
 
         for ( auto j = 0; j < size; j++ ) {
             uint32_t hw_thread;
             // hw_thread: 0
-            assert( 1 == fscanf(fp, "hw_thread: %" SCNu32 "\n",&hw_thread) );
+            assert( 1 == fscanf(fp, "hwThread: %" SCNu32 "\n",&hw_thread) );
             output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"hw_thread: %" PRIu32 "\n",hw_thread);
             assert( hw_thread == j );
             uint32_t pid,tid;
@@ -433,7 +434,6 @@ int VanadisNodeOSComponent::checkpointLoad( std::string dir )
         char str [80];
         assert( 1 == fscanf(fp,"filename: %s\n",str));
         output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"filename: %s\n",str);
-
         auto & page_map = elf_page_cache_[ elf_map_[str] ];
 
         size_t size2;

@@ -249,7 +249,7 @@ MemoryRegion::MemoryRegion( SST::Output* output, FILE* fp, PhysMemManager* mem_m
 
     for ( auto i = 0; i < size; i++ ) {
         int vpn,ppn,ref_cnt;
-        assert( 3 == fscanf(fp,"vpn: %d, ppn: %d, refCnt: %d\n", &vpn, &ppn, &ref_cnt ) );
+        assert( 3 == fscanf(fp,"vpn: %d, ppn: %d, ref_cnt: %d\n", &vpn, &ppn, &ref_cnt ) );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"vpn: %d, ppn: %d, refCnt: %d\n", vpn, ppn, ref_cnt );
         virt_to_phys_page_map_[vpn] = new OS::Page( mem_manager, ppn, ref_cnt );
     }
