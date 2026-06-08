@@ -173,7 +173,8 @@ class BalarTestCase(SSTTestCase):
         if line_count_diff > 15:
             self.assertFalse(line_count_diff > 15, "Line count between Stats file {0} does not match Reference File {1}; They contain {2} different lines".format(statsfile, reffile, line_count_diff))
 
-    def balar_contract_testcpu_template(self, testcase, sdl_name, trace_name, testtimeout=600):
+    def balar_contract_testcpu_template(
+            self, testcase, sdl_name, trace_name, testtimeout=600, min_d2h_ratio=0.0):
         """Contract test: trace-driven testcpu with completion + optional gold line count."""
         missing_nvcc_path = os.getenv("NVCC_PATH") == None
         self.assertFalse(missing_nvcc_path, "balar contract test: Requires NVCC_PATH.")
@@ -206,6 +207,8 @@ class BalarTestCase(SSTTestCase):
             err_text = fh.read()
         self.assertNotIn("FATAL", err_text,
                          "balar contract {0}: simulation fatal in stderr".format(testcase))
+        if min_d2h_ratio > 0.0:
+            self._assert_min_d2h_ratio(statsfile, testcase, "balar contract", min_d2h_ratio)
 
         if os.path.isfile(reffile):
             num_stat_lines = int(os_wc(statsfile, [0]))
@@ -217,25 +220,64 @@ class BalarTestCase(SSTTestCase):
                     "Line count between Stats file {0} and Reference {1} differ by {2}".format(
                         statsfile, reffile, line_count_diff))
 
-    def _stat_sum_u64(self, statsfile, stat_name):
-        total = 0
+    def _stat_values(self, statsfile, stat_name, field_name):
+        values = []
         with open(statsfile, "r", errors="replace") as fh:
             for line in fh:
                 if ".{0}".format(stat_name) not in line:
                     continue
                 parts = line.replace("=", " ").replace(";", " ").split()
                 for i, p in enumerate(parts):
-                    if p == "Sum.u64" and i + 1 < len(parts):
-                        try:
-                            total += int(parts[i + 1])
-                        except ValueError:
-                            pass
+                    if p == field_name and i + 1 < len(parts):
+                        values.append(parts[i + 1])
                         break
+        return values
+
+    def _stat_sum_u64(self, statsfile, stat_name):
+        total = 0
+        for value in self._stat_values(statsfile, stat_name, "Sum.u64"):
+            try:
+                total += int(value)
+            except ValueError:
+                pass
         return total
+
+    def _stat_min_f64(self, statsfile, stat_name):
+        values = []
+        for value in self._stat_values(statsfile, stat_name, "Min.f64"):
+            try:
+                values.append(float(value))
+            except ValueError:
+                pass
+        return min(values) if values else None
+
+    def _stat_count_u64(self, statsfile, stat_name):
+        total = 0
+        for value in self._stat_values(statsfile, stat_name, "Count.u64"):
+            try:
+                total += int(value)
+            except ValueError:
+                pass
+        return total
+
+    def _assert_min_d2h_ratio(self, statsfile, testcase, test_kind, min_d2h_ratio):
+        stat_name = "correct_memD2H_ratio"
+        ratio_count = self._stat_count_u64(statsfile, stat_name)
+        self.assertGreater(
+            ratio_count, 0,
+            "{0} {1}: {2} was not recorded".format(test_kind, testcase, stat_name))
+        min_ratio = self._stat_min_f64(statsfile, stat_name)
+        self.assertIsNotNone(
+            min_ratio,
+            "{0} {1}: missing Min.f64 for {2}".format(test_kind, testcase, stat_name))
+        self.assertGreaterEqual(
+            min_ratio + 1e-9, min_d2h_ratio,
+            "{0} {1}: {2} Min.f64 {3} < {4}".format(
+                test_kind, testcase, stat_name, min_ratio, min_d2h_ratio))
 
     def doorbell_contract_testcpu_template(
             self, testcase, sdl_name, trace_name, testtimeout=600, min_flush_count=0,
-            min_cuda_calls_completed=0, min_d2h_bytes=0):
+            min_cuda_calls_completed=0, min_d2h_bytes=0, min_d2h_ratio=0.0):
         """Doorbell-pattern contract test: DoorbellTestCPU with cache_link flush before mmio doorbell."""
         missing_nvcc_path = os.getenv("NVCC_PATH") == None
         self.assertFalse(missing_nvcc_path, "doorbell contract test: Requires NVCC_PATH.")
@@ -284,6 +326,8 @@ class BalarTestCase(SSTTestCase):
                 d2h_bytes, min_d2h_bytes,
                 "doorbell contract {0}: total_memD2H_bytes {1} < {2}".format(
                     testcase, d2h_bytes, min_d2h_bytes))
+        if min_d2h_ratio > 0.0:
+            self._assert_min_d2h_ratio(statsfile, testcase, "doorbell contract", min_d2h_ratio)
         if min_flush_count > 0:
             flush_total = self._stat_sum_u64(statsfile, "flush_count")
             self.assertGreaterEqual(

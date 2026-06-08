@@ -67,7 +67,8 @@ class testcase_balar_simple(BalarTestCase):
     @BalarTestCase.balar_basic_unittest
     def test_balar_contract_wide_packet(self):
         self.balar_contract_testcpu_template(
-            "wide_packet", "testBalar-wide-packet.py", "wide_memcpy_d2h.trace", testtimeout=60 * 20)
+            "wide_packet", "testBalar-wide-packet.py", "wide_memcpy_d2h.trace",
+            testtimeout=60 * 20, min_d2h_ratio=1.0)
 
     @BalarTestCase.balar_basic_unittest
     def test_doorbellcpu_doorbell(self):
@@ -85,7 +86,7 @@ class testcase_balar_simple(BalarTestCase):
         self.doorbell_contract_testcpu_template(
             "doorbellcpu_wide_packet", "testDoorbellCPU-wide-packet.py", "wide_memcpy_d2h.trace",
             testtimeout=60 * 20, min_flush_count=64, min_cuda_calls_completed=5,
-            min_d2h_bytes=4096)
+            min_d2h_bytes=4096, min_d2h_ratio=1.0)
 
     @unittest.skipIf(
         os.getenv("LLVM_INSTALL_PATH") is None or os.getenv("RISCV_TOOLCHAIN_INSTALL_PATH") is None,
