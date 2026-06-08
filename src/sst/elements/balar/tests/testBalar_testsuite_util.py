@@ -603,12 +603,13 @@ class BalarTestCase(SSTTestCase):
             os_symlink_file(self.balarElementTracesTestDir, self.testbalarTracesDir, f)
 
         # 4 KiB memcpy payload for wide-packet contract test
+        wide_data = bytes([(i % 256) for i in range(4096)])
         wide_payload = os.path.join(self.testbalarTracesDir, "cuMemcpyH2D-0-4096.data")
         with open(wide_payload, "wb") as wf:
-            wf.write(bytes([(i % 256) for i in range(4096)]))
+            wf.write(wide_data)
         wide_d2h = os.path.join(self.testbalarTracesDir, "cuMemcpyD2H-0-4096.data")
         with open(wide_d2h, "wb") as wf:
-            wf.write(bytes([0] * 4096))
+            wf.write(wide_data)
 
         # Create a simlink of each file in the balar/tests/vanadisHandshake directory
         for f in os.listdir(self.balarElementVanadisHandshakeTestDir):

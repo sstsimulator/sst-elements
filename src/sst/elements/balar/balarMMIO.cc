@@ -1469,9 +1469,16 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
                 balar->compact_d2h_data.assign(begin, end);
                 balar->compact_d2h_offset = 0;
             }
+            balar->cuda_ret.cudamemcpy.sim_data =
+                (volatile uint8_t*)request_associated_packet->cuda_memcpy.dst_buf;
+            balar->cuda_ret.cudamemcpy.real_data =
+                (volatile uint8_t*)request_associated_packet->cuda_memcpy.payload;
+            balar->cuda_ret.cudamemcpy.size = request_associated_packet->cuda_memcpy.count;
+            balar->cuda_ret.cudamemcpy.kind = request_associated_packet->cuda_memcpy.kind;
             out->verbose(_INFO_, "%s: done with a memcpyD2H\n", balar->getName().c_str());
 
-            free(request_associated_packet->cuda_memcpy.dst_buf);
+            // The return packet exposes dst_buf so DoorbellTestCPU can validate
+            // D2H correctness after the blocked response is released.
             balar->mmio_iface->send(balar->blocked_response);
             balar->has_blocked_response = false;
 

@@ -12,9 +12,48 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "balar_consts.h"
+
+#if defined(__has_include)
+#if __has_include("builtin_types.h") && __has_include("driver_types.h")
 #include "builtin_types.h"
 #include "driver_types.h"
-#include "balar_consts.h"
+#define BALAR_PACKET_WIRE_HAS_CUDA_TYPES 1
+#endif
+#endif
+
+#ifndef BALAR_PACKET_WIRE_HAS_CUDA_TYPES
+#ifndef CUDA_RUNTIME_TYPES_FIRMWARE_H
+typedef int cudaError_t;
+typedef void* cudaStream_t;
+typedef void* cudaEvent_t;
+typedef int cudaDeviceAttr;
+
+enum cudaMemcpyKind {
+    cudaMemcpyHostToHost = 0,
+    cudaMemcpyHostToDevice = 1,
+    cudaMemcpyDeviceToHost = 2,
+    cudaMemcpyDeviceToDevice = 3,
+    cudaMemcpyDefault = 4,
+};
+
+struct textureReference {
+    uint8_t reserved[128];
+};
+
+struct cudaChannelFormatDesc {
+    int x;
+    int y;
+    int z;
+    int w;
+    int f;
+};
+
+struct cudaDeviceProp {
+    uint8_t reserved[1024];
+};
+#endif
+#endif
 
 #ifdef __cplusplus
 namespace SST {
