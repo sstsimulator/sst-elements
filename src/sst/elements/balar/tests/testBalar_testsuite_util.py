@@ -217,7 +217,25 @@ class BalarTestCase(SSTTestCase):
                     "Line count between Stats file {0} and Reference {1} differ by {2}".format(
                         statsfile, reffile, line_count_diff))
 
-    def doorbell_contract_testcpu_template(self, testcase, sdl_name, trace_name, testtimeout=600, min_flush_count=0):
+    def _stat_sum_u64(self, statsfile, stat_name):
+        total = 0
+        with open(statsfile, "r", errors="replace") as fh:
+            for line in fh:
+                if ".{0}".format(stat_name) not in line:
+                    continue
+                parts = line.replace("=", " ").replace(";", " ").split()
+                for i, p in enumerate(parts):
+                    if p == "Sum.u64" and i + 1 < len(parts):
+                        try:
+                            total += int(parts[i + 1])
+                        except ValueError:
+                            pass
+                        break
+        return total
+
+    def doorbell_contract_testcpu_template(
+            self, testcase, sdl_name, trace_name, testtimeout=600, min_flush_count=0,
+            min_cuda_calls_completed=0, min_d2h_bytes=0):
         """Doorbell-pattern contract test: DoorbellTestCPU with cache_link flush before mmio doorbell."""
         missing_nvcc_path = os.getenv("NVCC_PATH") == None
         self.assertFalse(missing_nvcc_path, "doorbell contract test: Requires NVCC_PATH.")
@@ -254,19 +272,20 @@ class BalarTestCase(SSTTestCase):
         self.assertNotIn("FATAL", err_text,
                          "doorbell contract {0}: simulation fatal in stderr".format(testcase))
 
+        if min_cuda_calls_completed > 0:
+            calls_completed = self._stat_sum_u64(statsfile, "cuda_calls_completed")
+            self.assertGreaterEqual(
+                calls_completed, min_cuda_calls_completed,
+                "doorbell contract {0}: cuda_calls_completed {1} < {2}".format(
+                    testcase, calls_completed, min_cuda_calls_completed))
+        if min_d2h_bytes > 0:
+            d2h_bytes = self._stat_sum_u64(statsfile, "total_memD2H_bytes")
+            self.assertGreaterEqual(
+                d2h_bytes, min_d2h_bytes,
+                "doorbell contract {0}: total_memD2H_bytes {1} < {2}".format(
+                    testcase, d2h_bytes, min_d2h_bytes))
         if min_flush_count > 0:
-            flush_total = 0
-            with open(statsfile, "r", errors="replace") as fh:
-                for line in fh:
-                    if ".flush_count" in line:
-                        parts = line.replace("=", " ").replace(";", " ").split()
-                        for i, p in enumerate(parts):
-                            if p == "Sum.u64" and i + 1 < len(parts):
-                                try:
-                                    flush_total += int(parts[i + 1])
-                                except ValueError:
-                                    pass
-                                break
+            flush_total = self._stat_sum_u64(statsfile, "flush_count")
             self.assertGreaterEqual(
                 flush_total, min_flush_count,
                 "doorbell contract {0}: flush_count {1} < {2}".format(

@@ -12,6 +12,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "builtin_types.h"
+#include "driver_types.h"
 #include "balar_consts.h"
 
 #ifdef __cplusplus
@@ -294,8 +296,28 @@ typedef struct BalarCudaCallReturnPacket {
 } BalarCudaCallReturnPacket_t;
 
 #ifdef __cplusplus
-static_assert(sizeof(BalarCudaCallPacket_t) > 0, "Balar packet wire ABI is empty");
-static_assert(sizeof(BalarCudaCallReturnPacket_t) > 0, "Balar return packet wire ABI is empty");
+static_assert(sizeof(enum cudaMemcpyKind) == sizeof(int), "Balar wire ABI expects cudaMemcpyKind to be int-sized");
+static_assert(sizeof(cudaError_t) == sizeof(int), "Balar wire ABI expects cudaError_t to be int-sized");
+static_assert(sizeof(cudaDeviceAttr) == sizeof(int), "Balar wire ABI expects cudaDeviceAttr to be int-sized");
+static_assert(sizeof(void*) == sizeof(uint64_t), "Balar wire ABI expects 64-bit pointers");
+static_assert(sizeof(cudaStream_t) == sizeof(void*), "Balar wire ABI expects cudaStream_t to be pointer-sized");
+static_assert(sizeof(cudaEvent_t) == sizeof(void*), "Balar wire ABI expects cudaEvent_t to be pointer-sized");
+static_assert(sizeof(((BalarCudaCallPacket_t*)0)->register_fatbin.file_name) == BALAR_CUDA_MAX_FILE_NAME,
+              "Balar wire ABI changed register_fatbin filename size");
+static_assert(sizeof(((BalarCudaCallPacket_t*)0)->register_function.deviceFun) == BALAR_CUDA_MAX_KERNEL_NAME,
+              "Balar wire ABI changed register_function deviceFun size");
+static_assert(sizeof(((BalarCudaCallPacket_t*)0)->setup_argument.value) == BALAR_CUDA_MAX_ARG_SIZE,
+              "Balar wire ABI changed setup_argument value size");
+static_assert(offsetof(BalarCudaCallPacket_t, cuda_memcpy.kind) ==
+                  offsetof(BalarCudaCallPacket_t, cuda_memcpy.src_buf) +
+                      sizeof(((BalarCudaCallPacket_t*)0)->cuda_memcpy.src_buf),
+              "Balar wire ABI changed cuda_memcpy field order");
+static_assert(offsetof(BalarCudaCallPacket_t, cudaMemcpyAsync.stream) % alignof(cudaStream_t) == 0,
+              "Balar wire ABI changed cudaMemcpyAsync stream alignment");
+static_assert(offsetof(BalarCudaCallReturnPacket_t, cudamemcpy.kind) ==
+                  offsetof(BalarCudaCallReturnPacket_t, cudamemcpy.size) +
+                      sizeof(((BalarCudaCallReturnPacket_t*)0)->cudamemcpy.size),
+              "Balar return wire ABI changed cudamemcpy field order");
 } // namespace BalarComponent
 } // namespace SST
 #endif

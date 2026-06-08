@@ -118,7 +118,7 @@ private:
 class DoorbellTestCPU::CudaAPITraceParser {
 public:
     CudaAPITraceParser(DoorbellTestCPU* cpu, SST::Output* out, const std::string& trace_file, const std::string& cuda_executable)
-        : cpu_(cpu), out_(out), cuda_executable_(cuda_executable), fat_cubin_handle_(0)
+        : cpu_(cpu), out_(out), cuda_executable_(cuda_executable), fat_cubin_handle_(0), has_peeked_packet_(false)
     {
         trace_stream_.open(trace_file, std::ifstream::in);
         if (!trace_stream_.is_open()) {
@@ -137,6 +137,11 @@ public:
 
     bool getNextPacket(BalarCudaCallPacket_t& pack)
     {
+        if (has_peeked_packet_) {
+            pack = peeked_packet_;
+            has_peeked_packet_ = false;
+            return true;
+        }
         if (!init_packets_.empty()) {
             pack = init_packets_.front();
             init_packets_.pop();
@@ -298,6 +303,15 @@ public:
         return false;
     }
 
+    bool hasNextPacket()
+    {
+        if (has_peeked_packet_) {
+            return true;
+        }
+        has_peeked_packet_ = getNextPacket(peeked_packet_);
+        return has_peeked_packet_;
+    }
+
     void setFatbinHandle(uint64_t handle) { fat_cubin_handle_ = handle; }
 
 private:
@@ -310,6 +324,8 @@ private:
     std::map<std::string, CUdeviceptr*> dptr_map_;
     std::map<std::string, uint64_t> func_map_;
     uint64_t fat_cubin_handle_;
+    bool has_peeked_packet_;
+    BalarCudaCallPacket_t peeked_packet_;
 };
 
 DoorbellTestCPU::DoorbellTestCPU(ComponentId_t id, Params& params) : Component(id)
@@ -642,8 +658,7 @@ void DoorbellTestCPU::tryFinishSimulation()
         return;
     }
     if (!packet_issue_active_ && requests_.empty() && trace_parser_) {
-        BalarCudaCallPacket_t pack{};
-        if (!trace_parser_->getNextPacket(pack)) {
+        if (!trace_parser_->hasNextPacket()) {
             out.verbose(CALL_INFO, 1, 0, "DoorbellTestCPU: Test Completed Successfuly\n");
             primaryComponentOKToEndSim();
         }
