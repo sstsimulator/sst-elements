@@ -210,22 +210,26 @@ DIRECT_FN const char *sumi_av_straddr(struct fid_av *av,
 		size_t *len)
 {
   sumi_fid_av* av_impl = (sumi_fid_av*) av;
-  char* ret = new char[SUMI_SSTMAC_ADDR_STR_LEN];
+  size_t size;
 
   if (av_impl->domain->addr_format == FI_ADDR_STR){
-    ::strcpy(ret, (const char*)addr);
+    ::strcpy(buf, (const char*)addr);
+    size = ::strlen(buf);
   } else if (av_impl->domain->addr_format == FI_ADDR_SSTMAC) {
     uint64_t* addr_ptr = reinterpret_cast<uint64_t*>(const_cast<void*>(addr));
     uint32_t rank = ADDR_RANK(*addr_ptr);
     uint16_t cq = ADDR_CQ(*addr_ptr);
     uint16_t rx = ADDR_QUEUE(*addr_ptr);
-    snprintf(ret, SUMI_SSTMAC_ADDR_STR_LEN, "%" PRIu32 ".%" PRIu16 ".%" PRIu16,
+    size = snprintf(buf, *len, "%" PRIu32 ".%" PRIu16 ".%" PRIu16,
             rank, cq, rx);
   } else {
     sst_hg_abort_printf("internal error: got addr format that isn't SSTMAC or STR");
   }
-  *len = ::strlen(ret);
-  return ret;
+  // Make sure that possibly truncated output is NUL-terminated.
+  if (buf && *len)
+    buf[*len - 1] = '\0';
+  *len = size + 1;
+  return buf;
 }
 
 static int sumi_av_close(fid_t fid)
