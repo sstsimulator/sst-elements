@@ -209,6 +209,9 @@ DIRECT_FN const char *sumi_av_straddr(struct fid_av *av,
 		const void *addr, char *buf,
 		size_t *len)
 {
+  if (!addr || !len)
+    return NULL;
+
   sumi_fid_av* av_impl = (sumi_fid_av*) av;
   size_t size;
 
