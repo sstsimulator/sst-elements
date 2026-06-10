@@ -112,6 +112,8 @@ static struct fi_ops sumi_fi_av_ops = {
 #define SUMI_MAX_ADDR_CHARS 16
 #define SUMI_ADDR_FORMAT_STR "%010" PRIu32 ".%05" PRIu16
 #define SUMI_MAX_ADDR_LEN (SUMI_MAX_ADDR_CHARS+1)
+// FI_ADDR_SSTMAC string form: "<rank>.<cq>.<rx>" with max widths 10.5.5.
+#define SUMI_SSTMAC_ADDR_STR_LEN (22 + 1)
 
 /*
  * Note: this function (according to WG), is not intended to
@@ -207,23 +209,29 @@ DIRECT_FN const char *sumi_av_straddr(struct fid_av *av,
 		const void *addr, char *buf,
 		size_t *len)
 {
+  if (!addr || !len)
+    return NULL;
+
   sumi_fid_av* av_impl = (sumi_fid_av*) av;
-  char* ret = new char[SUMI_MAX_ADDR_LEN];
+  size_t size;
 
   if (av_impl->domain->addr_format == FI_ADDR_STR){
-    ::strcpy(ret, (const char*)addr);
+    size = snprintf(buf, *len, "%s", (const char*)addr);
   } else if (av_impl->domain->addr_format == FI_ADDR_SSTMAC) {
     uint64_t* addr_ptr = reinterpret_cast<uint64_t*>(const_cast<void*>(addr));
     uint32_t rank = ADDR_RANK(*addr_ptr);
     uint16_t cq = ADDR_CQ(*addr_ptr);
     uint16_t rx = ADDR_QUEUE(*addr_ptr);
-    snprintf(ret, 22 + 1, "%" PRIu32 ".%" PRIu16 ".%" PRIu16,
+    size = snprintf(buf, *len, "%" PRIu32 ".%" PRIu16 ".%" PRIu16,
             rank, cq, rx);
   } else {
     sst_hg_abort_printf("internal error: got addr format that isn't SSTMAC or STR");
   }
-  *len = ::strlen(ret);
-  return ret;
+  // Make sure that possibly truncated output is NUL-terminated.
+  if (buf && *len)
+    buf[*len - 1] = '\0';
+  *len = size + 1;
+  return buf;
 }
 
 static int sumi_av_close(fid_t fid)
