@@ -21,20 +21,22 @@ class Interface : public Hermes::Interface {
 
     virtual ~Interface() = default;
 
-    // Network IO READ - reads from network storage to local buffer
-    // dest: local destination address
-    // offset: global byte offset in network storage (node ID calculated via interleaving)
-    // length: number of bytes to read
-    // blocking: whether to block until completion
-    // callback: completion callback
+    /**
+     * @brief Read from network storage to local buffer
+     * @param dest   Local destination address
+     * @param offset Global byte offset in network storage (node ID calculated via interleaving)
+     * @param length Number of bytes to read
+     * @param callback Completion callback
+     */
     virtual void networkIORead(Vaddr dest, uint64_t offset, uint64_t length, Callback) { assert(0); }
 
-    // Network IO WRITE - writes from local buffer to network storage
-    // offset: global byte offset in network storage (node ID calculated via interleaving)
-    // src: local source address
-    // length: number of bytes to write
-    // blocking: whether to block until completion
-    // callback: completion callback
+    /**
+     * @brief Write from local buffer to network storage
+     * @param offset Global byte offset in network storage (node ID calculated via interleaving)
+     * @param src    Local source address
+     * @param length Number of bytes to write
+     * @param callback Completion callback
+     */
     virtual void networkIOWrite(uint64_t offset, Vaddr src, uint64_t length, Callback) { assert(0); }
 };
 

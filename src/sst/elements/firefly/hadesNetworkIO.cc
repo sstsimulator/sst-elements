@@ -16,22 +16,19 @@ HadesNetworkIO::HadesNetworkIO(ComponentId_t id, Params& params) :
         params.find<uint32_t>("verboseLevel",0),
         params.find<uint32_t>("verboseMask",-1),
         Output::STDOUT );
-    
-    auto parse = [](const std::string& s) 
-    {
-        std::vector<int> v;
-        std::istringstream ss(s);
-        for(int i; ss >> i; ss.ignore()) v.push_back(i);
-        return v;
-    };
+
     m_numSsdNodes = params.find<int64_t>("numStorageNodes", 0);
     m_ssd_start_node = params.find<int64_t>("ssd_start_node", 0);
     
     for (int64_t i = 0; i < m_numSsdNodes; i++) {
         m_storageNodesList.push_back(m_ssd_start_node + i);
     }
-    
-    m_storageNodeCapacity = params.find<UnitAlgebra>("storageNodeCapacity", "1GiB").getRoundedValue();
+
+    UnitAlgebra storageCapacity = params.find<UnitAlgebra>("storageNodeCapacity", "1GiB");
+    if (!storageCapacity.hasUnits("B")) {
+        m_dbg.fatal(CALL_INFO, -1, "storageNodeCapacity must be specified in byte units (e.g., '1GiB')\n");
+    }
+    m_storageNodeCapacity = storageCapacity.getRoundedValue();
 }
 
 void HadesNetworkIO::setOS( Hermes::OS* os )
