@@ -644,6 +644,27 @@ void DoorbellTestCPU::completeCudaCall(const BalarCudaCallReturnPacket_t* ret_pa
             stat_total_memD2H_bytes_->addData(tot);
             stat_correct_memD2H_bytes_->addData(correct);
             stat_correct_memD2H_ratio_->addData(tot ? (double)correct / (double)tot : 1.0);
+
+            // Optional: dump the GPU result (and reference) so a host tool can
+            // do a tolerance comparison for non-bit-exact (e.g. tone) inputs.
+            if (enable_memcpy_dump_) {
+                char buf[200];
+                snprintf(buf, sizeof(buf), "cudamemcpyD2H-sim-%p-%p-size-%zu.data",
+                         (void*)sim_ptr, (void*)real_ptr, tot);
+                std::ofstream simDump(buf, std::ios::out | std::ios::binary);
+                if (!simDump.is_open()) {
+                    out.fatal(CALL_INFO, -1, "Cannot open '%s' for D2H dump\n", buf);
+                }
+                simDump.write((const char*)sim_ptr, tot);
+
+                snprintf(buf, sizeof(buf), "cudamemcpyD2H-real-%p-%p-size-%zu.data",
+                         (void*)sim_ptr, (void*)real_ptr, tot);
+                std::ofstream realDump(buf, std::ios::out | std::ios::binary);
+                if (!realDump.is_open()) {
+                    out.fatal(CALL_INFO, -1, "Cannot open '%s' for D2H dump\n", buf);
+                }
+                realDump.write((const char*)real_ptr, tot);
+            }
         }
     }
 }
