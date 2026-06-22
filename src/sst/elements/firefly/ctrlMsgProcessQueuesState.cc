@@ -1050,12 +1050,11 @@ void ProcessQueuesState::copyIoVec(
 
     size_t copied = 0;
     size_t rV = 0,rP =0;
-    for ( unsigned int i=0; i < src.size() && copied < len; i++ )
+    for ( unsigned int i=0; i < src.size() && copied < len && rV < dst.size(); i++ )
     {
-        assert( rV < dst.size() );
         dbg().debug(CALL_INFO,3,DBG_MSK_PQS_Q,"src[%d].len %lu\n", i, src[i].len);
 
-        for ( unsigned int j=0; j < src[i].len && copied < len ; j++ ) {
+        for ( unsigned int j=0; j < src[i].len && copied < len && rV < dst.size(); j++ ) {
             dbg().debug(CALL_INFO,3,DBG_MSK_PQS_Q,"copied=%lu rV=%lu rP=%lu\n",
                                                         copied,rV,rP);
 
@@ -1071,7 +1070,17 @@ void ProcessQueuesState::copyIoVec(
             }
         }
     }
-    assert( copied == len );
+
+    if ( copied != len ) {
+        size_t srcBytes = 0, dstBytes = 0;
+        for ( unsigned int i = 0; i < src.size(); i++ ) srcBytes += src[i].len;
+        for ( unsigned int i = 0; i < dst.size(); i++ ) dstBytes += dst[i].len;
+        dbg().fatal(CALL_INFO,-1,
+            "copyIoVec under-copied: copied=%lu len=%lu "
+            "src.size()=%lu (srcBytes=%lu) dst.size()=%lu (dstBytes=%lu). "
+            "Sender/receiver IoVec byte counts disagree - internal defect.\n",
+            copied, len, src.size(), srcBytes, dst.size(), dstBytes );
+    }
 }
 
 void ProcessQueuesState::postShortRecvBuffer( )
