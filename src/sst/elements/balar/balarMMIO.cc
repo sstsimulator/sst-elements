@@ -1461,24 +1461,27 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
             // Send the blocked response aved in the previous
             // request handler for memcpyD2H to notify CPU we are done with memcpyD2H
             // Since we get this request only after all data have been copied into host memory
+            uint8_t* dst_buf = request_associated_packet->cuda_memcpy.dst_buf;
+            size_t count = request_associated_packet->cuda_memcpy.count;
 
-            // Free temp buffer to hold memcpyD2H data
+            // Copy the D2H result into a balar-owned buffer so the testCPU can
+            // validate sim vs real data after the blocked response is released,
+            // then free the simulator-side buffer to avoid leaking it per copy.
+            balar->last_d2h_dst_buf.assign(dst_buf, dst_buf + count);
             if (balar->compact_return_value) {
-                uint8_t* begin = request_associated_packet->cuda_memcpy.dst_buf;
-                uint8_t* end = begin + request_associated_packet->cuda_memcpy.count;
-                balar->compact_d2h_data.assign(begin, end);
+                balar->compact_d2h_data = balar->last_d2h_dst_buf;
                 balar->compact_d2h_offset = 0;
             }
             balar->cuda_ret.cudamemcpy.sim_data =
-                (volatile uint8_t*)request_associated_packet->cuda_memcpy.dst_buf;
+                (volatile uint8_t*)balar->last_d2h_dst_buf.data();
             balar->cuda_ret.cudamemcpy.real_data =
                 (volatile uint8_t*)request_associated_packet->cuda_memcpy.payload;
-            balar->cuda_ret.cudamemcpy.size = request_associated_packet->cuda_memcpy.count;
+            balar->cuda_ret.cudamemcpy.size = count;
             balar->cuda_ret.cudamemcpy.kind = request_associated_packet->cuda_memcpy.kind;
+            // Free temp buffer to hold memcpyD2H data
+            free(dst_buf);
             out->verbose(_INFO_, "%s: done with a memcpyD2H\n", balar->getName().c_str());
 
-            // The return packet exposes dst_buf so DoorbellTestCPU can validate
-            // D2H correctness after the blocked response is released.
             balar->mmio_iface->send(balar->blocked_response);
             balar->has_blocked_response = false;
 

@@ -18,6 +18,7 @@
 #include <iostream>
 #include <map>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 
 #include "testcpu/doorbellTestCPU.h"
@@ -86,6 +87,67 @@ std::string lookup_param(const std::map<std::string, std::string>& params, const
     return "";
 }
 
+// The numeric parses below fatal() on malformed input instead of letting
+// std::stoull/stoll/stod throw an uncaught exception that would abort the run.
+uint64_t parse_u64(const std::string& what, const std::string& raw, SST::Output* out)
+{
+    std::string value = trim(raw);
+    try {
+        size_t consumed = 0;
+        uint64_t v = std::stoull(value, &consumed);
+        if (consumed != value.size()) {
+            out->fatal(CALL_INFO, -1, "Trace value for '%s' is not a valid unsigned integer: '%s'\n",
+                       what.c_str(), value.c_str());
+        }
+        return v;
+    } catch (const std::exception&) {
+        out->fatal(CALL_INFO, -1, "Trace value for '%s' is not a valid unsigned integer: '%s'\n",
+                   what.c_str(), value.c_str());
+    }
+    return 0;
+}
+
+int64_t parse_i64(const std::string& what, const std::string& raw, SST::Output* out)
+{
+    std::string value = trim(raw);
+    try {
+        size_t consumed = 0;
+        int64_t v = std::stoll(value, &consumed);
+        if (consumed != value.size()) {
+            out->fatal(CALL_INFO, -1, "Trace value for '%s' is not a valid integer: '%s'\n",
+                       what.c_str(), value.c_str());
+        }
+        return v;
+    } catch (const std::exception&) {
+        out->fatal(CALL_INFO, -1, "Trace value for '%s' is not a valid integer: '%s'\n",
+                   what.c_str(), value.c_str());
+    }
+    return 0;
+}
+
+double parse_double(const std::string& what, const std::string& raw, SST::Output* out)
+{
+    std::string value = trim(raw);
+    try {
+        size_t consumed = 0;
+        double v = std::stod(value, &consumed);
+        if (consumed != value.size()) {
+            out->fatal(CALL_INFO, -1, "Trace value for '%s' is not a valid float: '%s'\n",
+                       what.c_str(), value.c_str());
+        }
+        return v;
+    } catch (const std::exception&) {
+        out->fatal(CALL_INFO, -1, "Trace value for '%s' is not a valid float: '%s'\n",
+                   what.c_str(), value.c_str());
+    }
+    return 0.0;
+}
+
+uint64_t lookup_u64(const std::map<std::string, std::string>& params, const std::string& key, SST::Output* out)
+{
+    return parse_u64(key, lookup_param(params, key, out), out);
+}
+
 } // namespace
 
 class DoorbellTestCPU::CacheHandlers : public StandardMem::RequestHandler {
@@ -135,6 +197,16 @@ public:
         init_packets_.push(fatbin);
     }
 
+    ~CudaAPITraceParser()
+    {
+        for (void* p : heap_allocs_) {
+            free(p);
+        }
+        for (auto& kv : dptr_map_) {
+            free(kv.second);
+        }
+    }
+
     bool getNextPacket(BalarCudaCallPacket_t& pack)
     {
         if (has_peeked_packet_) {
@@ -147,15 +219,14 @@ public:
             init_packets_.pop();
             return true;
         }
-        if (trace_stream_.eof()) {
-            return false;
-        }
-
         std::string line;
-        std::getline(trace_stream_, line);
-        if (line.empty()) {
-            return false;
-        }
+        // Skip blank lines; stop only at a genuine end of stream so an interior
+        // blank line cannot silently truncate the trace.
+        do {
+            if (!std::getline(trace_stream_, line)) {
+                return false;
+            }
+        } while (trim(line).empty());
         out_->verbose(CALL_INFO, 2, 0, "Trace: %s\n", line.c_str());
 
         pack = BalarCudaCallPacket_t{};
@@ -198,6 +269,7 @@ public:
             std::vector<uint8_t> file_data(size);
             data_stream.read((char*)file_data.data(), size);
             uint8_t* real_data = (uint8_t*)malloc(size);
+            heap_allocs_.push_back(real_data);
             memcpy(real_data, file_data.data(), size);
             auto it = dptr_map_.find(dptr_name);
             if (it == dptr_map_.end()) {
@@ -213,6 +285,7 @@ public:
                 cpu_->scratch_append_payload_ = std::move(file_data);
             } else {
                 uint8_t* buf = (uint8_t*)malloc(size);
+                heap_allocs_.push_back(buf);
                 pack.cuda_memcpy.kind = cudaMemcpyDeviceToHost;
                 pack.cuda_memcpy.dst = (uint64_t)buf;
                 pack.cuda_memcpy.src = (uint64_t)*it->second;
@@ -233,13 +306,13 @@ public:
             config.cuda_call_id = CUDA_CONFIG_CALL;
             set_arg.cuda_call_id = CUDA_SET_ARG;
             launch.cuda_call_id = CUDA_LAUNCH;
-            config.configure_call.gdx = std::stoul(lookup_param(params_map, "gdx", out_));
-            config.configure_call.gdy = std::stoul(lookup_param(params_map, "gdy", out_));
-            config.configure_call.gdz = std::stoul(lookup_param(params_map, "gdz", out_));
-            config.configure_call.bdx = std::stoul(lookup_param(params_map, "bdx", out_));
-            config.configure_call.bdy = std::stoul(lookup_param(params_map, "bdy", out_));
-            config.configure_call.bdz = std::stoul(lookup_param(params_map, "bdz", out_));
-            config.configure_call.sharedMem = std::stoul(lookup_param(params_map, "sharedBytes", out_));
+            config.configure_call.gdx = lookup_u64(params_map, "gdx", out_);
+            config.configure_call.gdy = lookup_u64(params_map, "gdy", out_);
+            config.configure_call.gdz = lookup_u64(params_map, "gdz", out_);
+            config.configure_call.bdx = lookup_u64(params_map, "bdx", out_);
+            config.configure_call.bdy = lookup_u64(params_map, "bdy", out_);
+            config.configure_call.bdz = lookup_u64(params_map, "bdz", out_);
+            config.configure_call.sharedMem = lookup_u64(params_map, "sharedBytes", out_);
             config.configure_call.stream = nullptr;
             init_packets_.push(config);
 
@@ -265,17 +338,28 @@ public:
                 pos = arguments.find("/");
                 std::string arg_size_str = arguments.substr(0, pos);
                 arguments = arguments.substr(pos + 1);
-                size_t arg_size = 0;
-                std::stringstream(arg_size_str) >> arg_size;
+                size_t arg_size = (size_t)parse_u64("kernel arg size", arg_size_str, out_);
+                if (arg_size == 0) {
+                    out_->fatal(CALL_INFO, -1, "Kernel arg '%s' has size 0; arg size must be > 0\n",
+                                arg_val.c_str());
+                }
+                if (arg_size > BALAR_CUDA_MAX_ARG_SIZE) {
+                    out_->fatal(CALL_INFO, -1, "Kernel arg '%s' size %zu exceeds max %d\n",
+                                arg_val.c_str(), arg_size, BALAR_CUDA_MAX_ARG_SIZE);
+                }
                 size_t align_amount = arg_size;
                 offset = (offset + align_amount - 1) / align_amount * align_amount;
                 set_arg.setup_argument.size = arg_size;
                 set_arg.setup_argument.offset = offset;
                 offset += arg_size;
                 if (arg_val.find("dptr") != std::string::npos) {
-                    set_arg.setup_argument.arg = (uint64_t)*dptr_map_.at(arg_val);
+                    auto dit = dptr_map_.find(arg_val);
+                    if (dit == dptr_map_.end()) {
+                        out_->fatal(CALL_INFO, -1, "Unknown device pointer kernel arg '%s'\n", arg_val.c_str());
+                    }
+                    set_arg.setup_argument.arg = (uint64_t)*dit->second;
                 } else if (arg_val.find(".") != std::string::npos) {
-                    double val = std::stod(arg_val);
+                    double val = parse_double("kernel arg", arg_val, out_);
                     set_arg.setup_argument.arg = 0;
                     if (arg_size == 8) {
                         memcpy(set_arg.setup_argument.value, &val, arg_size);
@@ -284,8 +368,12 @@ public:
                         memcpy(set_arg.setup_argument.value, &val_f, arg_size);
                     }
                 } else {
-                    int val = std::stoi(arg_val);
+                    int64_t val = parse_i64("kernel arg", arg_val, out_);
                     set_arg.setup_argument.arg = 0;
+                    if (arg_size > sizeof(val)) {
+                        out_->fatal(CALL_INFO, -1, "Integer kernel arg size %zu exceeds %zu bytes\n",
+                                    arg_size, sizeof(val));
+                    }
                     memcpy(set_arg.setup_argument.value, &val, arg_size);
                 }
                 init_packets_.push(set_arg);
@@ -297,9 +385,14 @@ public:
         if (cuda_call_type.find("free") != std::string::npos) {
             pack.cuda_call_id = CUDA_FREE;
             std::string dptr_name = lookup_param(params_map, "dptr", out_);
-            pack.cuda_free.devPtr = (void*)*dptr_map_.at(dptr_name);
+            auto it = dptr_map_.find(dptr_name);
+            if (it == dptr_map_.end()) {
+                out_->fatal(CALL_INFO, -1, "Unknown device pointer '%s'\n", dptr_name.c_str());
+            }
+            pack.cuda_free.devPtr = (void*)*it->second;
             return true;
         }
+        out_->fatal(CALL_INFO, -1, "Unrecognized CUDA trace line: '%s'\n", line.c_str());
         return false;
     }
 
@@ -323,6 +416,7 @@ private:
     std::queue<BalarCudaCallPacket_t> init_packets_;
     std::map<std::string, CUdeviceptr*> dptr_map_;
     std::map<std::string, uint64_t> func_map_;
+    std::vector<void*> heap_allocs_;
     uint64_t fat_cubin_handle_;
     bool has_peeked_packet_;
     BalarCudaCallPacket_t peeked_packet_;
@@ -393,6 +487,13 @@ DoorbellTestCPU::DoorbellTestCPU(ComponentId_t id, Params& params) : Component(i
     } else if (!found) {
         cuda_executable_ = "./balar_trace/vectorAdd";
     }
+}
+
+DoorbellTestCPU::~DoorbellTestCPU()
+{
+    delete trace_parser_;
+    delete cache_handlers_;
+    delete mmio_handlers_;
 }
 
 void DoorbellTestCPU::init(unsigned int phase)

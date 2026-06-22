@@ -357,6 +357,15 @@ static_assert(offsetof(BalarCudaCallReturnPacket_t, cudamemcpy.kind) ==
                   offsetof(BalarCudaCallReturnPacket_t, cudamemcpy.size) +
                       sizeof(((BalarCudaCallReturnPacket_t*)0)->cudamemcpy.size),
               "Balar return wire ABI changed cudamemcpy field order");
+#ifdef BALAR_PACKET_WIRE_HAS_CUDA_TYPES
+// The firmware/standalone fallback reserves fixed sizes for these CUDA structs.
+// A real CUDA header whose struct is larger would overrun the wire packet that a
+// fallback-compiled peer expects, so pin the reservation as an upper bound here.
+static_assert(sizeof(struct textureReference) <= 128,
+              "Balar wire ABI: real textureReference exceeds reserved firmware size (128B)");
+static_assert(sizeof(struct cudaDeviceProp) <= 1024,
+              "Balar wire ABI: real cudaDeviceProp exceeds reserved firmware size (1024B)");
+#endif
 } // namespace BalarComponent
 } // namespace SST
 #endif

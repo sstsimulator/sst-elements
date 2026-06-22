@@ -157,6 +157,9 @@ private:
     bool compact_return_pending = false;
     std::vector<uint8_t> compact_d2h_data;
     size_t compact_d2h_offset = 0;
+    // Owns the most recent D2H result so cuda_ret.cudamemcpy.sim_data stays
+    // valid for the testCPU to validate, without leaking the simulator buffer
+    std::vector<uint8_t> last_d2h_dst_buf;
 
     // Indicating that an API has been blocked from issuing
     // This should be marked for every CUDA API in GPGPU-Sim that

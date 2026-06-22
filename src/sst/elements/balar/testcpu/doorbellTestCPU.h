@@ -69,6 +69,7 @@ public:
         { "mmio_link", "MMIO path for doorbell and status reads", "SST::Interfaces::StandardMem" })
 
     DoorbellTestCPU(SST::ComponentId_t id, SST::Params& params);
+    ~DoorbellTestCPU() override;
     void init(unsigned int phase) override;
     void setup() override;
     void finish() override;
