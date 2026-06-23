@@ -607,7 +607,7 @@ void CoherenceController::notifyListenerOfAccess(MemEvent * event, NotifyAccessT
 }
 
 
-void CoherenceController::notifyListenerOfEvict(Addr addr, uint32_t size, Addr ip, MemEventBase::id_type evId) {
+void CoherenceController::notifyListenerOfEvict(Addr addr, uint32_t size, Addr ip, SST::Event::id_type evId) {
     CacheListenerNotification notify(addr, addr, 0, ip, size, EVICT, NA, evId);
 
     for (int i = 0; i < listeners_.size(); i++) {
