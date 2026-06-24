@@ -227,10 +227,10 @@ class topoPolarFly(Topology):
     """
     def __init__(self,q = -1, N = -1):
         Topology.__init__(self)
-        self._declareClassVariables(["link_latency","host_link_latency","global_link_map","bundleEndpoints"])
+        self._declareClassVariables(["link_latency","host_link_latency","global_link_map","bundleEndpoints","data_path"])
         self._declareParams("main",["topo","q","hosts_per_router","network_radix","total_radix","total_routers",
                                     "total_endnodes","edge","name","algorithm","adaptive_threshold","global_routes","config_failed_links",
-                                    "failed_links", "GF", "vec_len", "data_path"])
+                                    "failed_links", "GF", "vec_len"])
         self.global_routes = "absolute"
         self._subscribeToPlatformParamSet("topology")
 
@@ -462,6 +462,8 @@ class topoPolarFly(Topology):
             topology = rtr.setSubComponent(self.router.getTopologySlotName(),"merlin.polarfly")
             self._applyStatisticsSettings(topology)
             topology.addParams(self._getGroupParams("main"))
+            #data_path is internal (not a user-facing param), so add it explicitly
+            topology.addParam("data_path", self.data_path)
 
             port = 0
 
