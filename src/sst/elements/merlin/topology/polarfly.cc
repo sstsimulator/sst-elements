@@ -27,6 +27,7 @@ topo_polarfly::topo_polarfly(ComponentId_t cid, Params& params, int num_ports, i
     total_radix         = params.find<int>("total_radix");
     total_routers       = params.find<int>("total_routers");
     total_endnodes      = params.find<int>("total_endnodes");
+    data_path           = params.find<std::string>("data_path");
     std::string algo    = params.find<std::string>("algorithm");
 
     if (!algo.compare("MINIMAL") ) {
@@ -88,6 +89,7 @@ topo_polarfly::serialize_order(SST::Core::Serialization::serializer& ser)
     SST_SER(total_radix);
     SST_SER(total_routers);
     SST_SER(total_endnodes);
+    SST_SER(data_path);
     SST_SER(routing_algo);
     SST_SER(node_links);
     SST_SER(route_table);
@@ -249,13 +251,13 @@ void topo_polarfly::routeValiant(int port, int vc, internal_router_event* ev){
 
 
 void topo_polarfly::initPolarGraph() {
-    //Read polarfly topology from file
-    char dir[256];
-    (void) !getcwd(dir, 256);
-    std::string filepath    = std::string(dir) + "/polarfly_data/PolarFly.q_" + std::to_string(this->q) + ".txt";
+    //Read polarfly topology from the adjacency list written by the python module
+    std::string filepath    = data_path + "/PolarFly.q_" + std::to_string(this->q) + ".txt";
 
     std::fstream fp;
     fp.open(filepath.c_str(), std::ios::in);
+    if (!fp.is_open())
+        output.fatal(CALL_INFO, -1, "Could not open polarfly topology file %s\n", filepath.c_str());
 
     std::string line;
     int line_no = 0;

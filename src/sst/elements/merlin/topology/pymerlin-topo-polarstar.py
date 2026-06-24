@@ -14,6 +14,7 @@ from os import path, makedirs
 
 import os
 import sys
+import tempfile
 
 try:
     import networkx as nx
@@ -351,7 +352,7 @@ class topoPolarStar(Topology):
         self._declareClassVariables(["link_latency", "host_link_latency", "global_link_map", "bundleEndpoints"])
         self._declareParams("main",["topo","phi","d","sn_type","pfq","snq","pfV", "snV", "phi", "hosts_per_router","network_radix","total_radix","total_routers",
                                     "total_endnodes","edge","name","algorithm","adaptive_threshold","global_routes","config_failed_links",
-                                    "failed_links"])
+                                    "failed_links","data_path"])
         self.global_routes      = "absolute"
         self._subscribeToPlatformParamSet("topology")
 
@@ -387,6 +388,10 @@ class topoPolarStar(Topology):
         self.total_radix        = None
         self.total_endnodes     = None
 
+        #Directory the adjacency list is written to and read back by polarstar.cc.
+        #Resolved to a writable, run-specific path at build time (see _build_impl).
+        self.data_path          = None
+
 
     def setEP(self):
         if self.hosts_per_router is None:
@@ -420,7 +425,7 @@ class topoPolarStar(Topology):
 
 
     def getFolderPath(self):
-        return os.getcwd()+"/polarstar_data/"
+        return self.data_path + "/"
 
 
     def make(self):
@@ -611,6 +616,11 @@ class topoPolarStar(Topology):
 
 
     def _build_impl(self, endpoint):
+
+        # Resolve a writable directory for the adjacency-list handoff to polarstar.cc.
+        # Must be set before params are gathered so "data_path" reaches the C++ side.
+        if self.data_path is None:
+            self.data_path = tempfile.mkdtemp(prefix="sst_polarstar_")
 
         if self._check_first_build():
             sst.addGlobalParams("params_%s"%self._instance_name, self._getGroupParams("main"))
