@@ -590,6 +590,7 @@ class BalarTestCase(SSTTestCase):
         # Copy the shared packet definition files from balar src
         os_symlink_file(self.balarElementDir, tmpdir, "balar_packet.h")
         os_symlink_file(self.balarElementDir, tmpdir, "balar_consts.h")
+        os_symlink_file(self.balarElementDir, tmpdir, "balar_packet_wire.h")
 
         src_cudart_dir = os.path.abspath("{0}/libcudart".format(test_path))
         for f in os.listdir(src_cudart_dir):
