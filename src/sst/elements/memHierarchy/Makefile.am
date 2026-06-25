@@ -174,11 +174,7 @@ EXTRA_DIST = \
 	tests/test_backing.py \
 	tests/testBackendChaining.py \
 	tests/testBackendDelayBuffer.py \
-	tests/testBackendDramsim3.py \
 	tests/testBackendGoblinHMC.py \
-	tests/testBackendHBMDramsim.py \
-	tests/testBackendHBMPagedMulti.py \
-	tests/testBackendPagedMulti.py \
 	tests/testBackendRamulator-1.py \
 	tests/testBackendRamulator-2.py \
 	tests/testBackendRamulator2.py \
@@ -221,22 +217,13 @@ EXTRA_DIST = \
 	tests/testStdMem-mmio3.py \
 	tests/DDR3_micron_32M_8B_x4_sg125.ini \
 	tests/system.ini \
-	tests/DDR4_8Gb_x16_3200.ini \
 	tests/ramulator-ddr3.cfg \
 	tests/ramulator2-ddr4.cfg \
-	tests/ddr_device.ini \
-	tests/ddr_system.ini \
-	tests/hbm_device.ini \
-	tests/hbm_system.ini \
 	tests/utils.py \
 	tests/mhlib.py \
 	tests/refFiles/test_memHA_BackendChaining.out \
 	tests/refFiles/test_memHA_BackendDelayBuffer.out \
-	tests/refFiles/test_memHA_BackendDramsim3.out \
 	tests/refFiles/test_memHA_BackendGoblinHMC.out \
-	tests/refFiles/test_memHA_BackendHBMDramsim.out \
-	tests/refFiles/test_memHA_BackendHBMPagedMulti.out \
-	tests/refFiles/test_memHA_BackendPagedMulti.out \
 	tests/refFiles/test_memHA_BackendRamulator_1.out \
 	tests/refFiles/test_memHA_BackendRamulator_2.out \
 	tests/refFiles/test_memHA_BackendRamulator2.out \
@@ -447,44 +434,6 @@ nobase_sst_HEADERS += membackend/ramulator2Backend.h
 AM_CPPFLAGS += $(RAMULATOR2_CPPFLAGS) -DHAVE_LIBRAMULATOR2
 endif
 
-if HAVE_DRAMSIM
-libmemHierarchy_la_LDFLAGS += $(DRAMSIM_LDFLAGS)
-libmemHierarchy_la_LIBADD += $(DRAMSIM_LIB)
-libmemHierarchy_la_SOURCES += membackend/dramSimBackend.cc \
-	membackend/dramSimBackend.h
-nobase_sst_HEADERS += membackend/dramSimBackend.h
-AM_CPPFLAGS += $(DRAMSIM_CPPFLAGS) -DHAVE_LIBDRAMSIM
-
-libmemHierarchy_la_SOURCES += membackend/pagedMultiBackend.cc \
-	membackend/pagedMultiBackend.h
-nobase_sst_HEADERS += membackend/pagedMultiBackend.h
-
-endif
-
-if HAVE_DRAMSIM3
-libmemHierarchy_la_LDFLAGS += $(DRAMSIM3_LDFLAGS)
-libmemHierarchy_la_LIBADD += $(DRAMSIM3_LIB)
-libmemHierarchy_la_SOURCES += membackend/dramSim3Backend.cc \
-	membackend/dramSim3Backend.h
-nobase_sst_HEADERS += membackend/dramSim3Backend.h
-AM_CPPFLAGS += $(DRAMSIM3_CPPFLAGS) -DHAVE_LIBDRAMSIM3
-
-endif
-
-if HAVE_HBMDRAMSIM
-libmemHierarchy_la_LDFLAGS += $(HBMDRAMSIM_LDFLAGS)
-libmemHierarchy_la_LIBADD += $(HBMDRAMSIM_LIB)
-libmemHierarchy_la_SOURCES += membackend/HBMdramSimBackend.cc \
-	membackend/HBMdramSimBackend.h
-nobase_sst_HEADERS += membackend/HBMdramSimBackend.h
-AM_CPPFLAGS += $(HBMDRAMSIM_CPPFLAGS) -DHAVE_LIBHBMDRAMSIM
-
-libmemHierarchy_la_SOURCES += membackend/HBMpagedMultiBackend.cc \
-	membackend/HBMpagedMultiBackend.h
-nobase_sst_HEADERS += membackend/HBMpagedMultiBackend.h
-
-endif
-
 if USE_LIBZ
 libmemHierarchy_la_LDFLAGS += $(LIBZ_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(LIBZ_LIB)
@@ -504,9 +453,6 @@ endif
 AM_CPPFLAGS += $(HMC_FLAG)
 
 install-exec-hook:
-	$(SST_REGISTER_TOOL) DRAMSIM LIBDIR=$(DRAMSIM_LIBDIR)
-	$(SST_REGISTER_TOOL) DRAMSIM3 LIBDIR=$(DRAMSIM3_LIBDIR)
-	$(SST_REGISTER_TOOL) HBMDRAMSIM LIBDIR=$(HBMDRAMSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) GOBLIN_HMCSIM LIBDIR=$(GOBLIN_HMCSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) RAMULATOR LIBDIR=$(RAMULATOR_LIBDIR)
 	$(SST_REGISTER_TOOL) RAMULATOR2 LIBDIR=$(RAMULATOR2_LIBDIR)
