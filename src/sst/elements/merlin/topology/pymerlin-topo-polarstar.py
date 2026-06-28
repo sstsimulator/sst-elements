@@ -76,7 +76,8 @@ class Paley():
 
 
     def validate(self):
-        print("--> Validating Paley(%d):" %self.q)
+        if sst.getProgramOptions()["verbose"] > 0:
+            print("--> Validating Paley(%d):" %self.q)
         # check sizes
         if (len(self.topo) != self.q):
             print("     --> construction error: incorrect number of nodes")
@@ -184,7 +185,8 @@ class IQ():
 
 
     def validate(self):
-        print("--> Validating Inducitve-Quad(%d):" %self.q)
+        if sst.getProgramOptions()["verbose"] > 0:
+            print("--> Validating Inducitve-Quad(%d):" %self.q)
         #check sizes
         if (len(self.topo) != 2*self.q + 2):
             print("     --> construction error: incorrect number of nodes")
@@ -436,7 +438,8 @@ class topoPolarStar(Topology):
 
 
     def validate(self):
-        print("--> Validating PolarStar(%d):" %self.d)
+        if sst.getProgramOptions()["verbose"] > 0:
+            print("--> Validating PolarStar(%d):" %self.d)
 
         #check sizes
         if len(self.topo) != self.total_routers:

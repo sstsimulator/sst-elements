@@ -363,7 +363,8 @@ class topoPolarFly(Topology):
 
 
     def validate(self):
-        print("--> Validating Polarfly(%d):" %self.q)
+        if sst.getProgramOptions()["verbose"] > 0:
+            print("--> Validating Polarfly(%d):" %self.q)
         # check sizes
         if len(self.topo) != self.q**2 + self.q + 1:
             print("     --> construction error: incorrect number of nodes")
