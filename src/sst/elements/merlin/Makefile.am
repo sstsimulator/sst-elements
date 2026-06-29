@@ -38,6 +38,8 @@ libmerlin_la_SOURCES = \
 	test/simple_patterns/shift.cc \
 	test/simple_patterns/incast.h \
 	test/simple_patterns/incast.cc \
+	topology/anytopo.h\
+	topology/anytopo.cc\
 	topology/torus.h \
 	topology/torus.cc \
 	topology/mesh.h \
@@ -67,6 +69,7 @@ libmerlin_la_SOURCES = \
 	inspectors/circuitCounter.cc \
 	inspectors/testInspector.cc \
 	inspectors/testInspector.h \
+	interfaces/ExtendedRequest.h \
 	interfaces/linkControl.h \
 	interfaces/linkControl.cc \
 	interfaces/portControl.h \
@@ -75,6 +78,11 @@ libmerlin_la_SOURCES = \
 	interfaces/reorderLinkControl.cc \
 	interfaces/output_arb_basic.h \
 	interfaces/output_arb_qos_multi.h \
+    interfaces/endpointNIC/endpointNIC.h \
+    interfaces/endpointNIC/endpointNIC.cc \
+    interfaces/endpointNIC/NICPlugin.h \
+    interfaces/endpointNIC/sourceRouting.h \
+    interfaces/endpointNIC/sourceRouting.cc \
 	arbitration/single_arb.h \
 	arbitration/single_arb_lru.h \
 	arbitration/single_arb_rr.h \
@@ -86,6 +94,7 @@ libmerlin_la_SOURCES = \
 	pymerlin-router.py \
 	interfaces/pymerlin-interface.py \
 	target_generator/pymerlin-targetgen.py \
+	topology/pymerlin-topo-any.py \
 	topology/pymerlin-topo-dragonfly.py \
 	topology/pymerlin-topo-polarfly.py \
 	topology/pymerlin-topo-polarstar.py \
@@ -139,6 +148,7 @@ BUILT_SOURCES = \
 	interfaces/pymerlin-interface.inc \
 	target_generator/pymerlin-targetgen.inc \
 	topology/pymerlin-topo-dragonfly.inc \
+	topology/pymerlin-topo-any.inc \
 	topology/pymerlin-topo-polarfly.inc \
 	topology/pymerlin-topo-polarstar.inc \
 	topology/pymerlin-topo-hyperx.inc \
