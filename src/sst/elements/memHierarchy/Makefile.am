@@ -215,8 +215,6 @@ EXTRA_DIST = \
 	tests/testStdMem-mmio.py \
 	tests/testStdMem-mmio2.py \
 	tests/testStdMem-mmio3.py \
-	tests/DDR3_micron_32M_8B_x4_sg125.ini \
-	tests/system.ini \
 	tests/ramulator-ddr3.cfg \
 	tests/ramulator2-ddr4.cfg \
 	tests/utils.py \
