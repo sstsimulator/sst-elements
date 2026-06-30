@@ -14,6 +14,7 @@ from os import path, makedirs
 
 import os
 import sys
+import tempfile
 
 try:
     import networkx as nx
@@ -75,7 +76,8 @@ class Paley():
 
 
     def validate(self):
-        print("--> Validating Paley(%d):" %self.q)
+        if sst.getProgramOptions()["verbose"] > 0:
+            print("--> Validating Paley(%d):" %self.q)
         # check sizes
         if (len(self.topo) != self.q):
             print("     --> construction error: incorrect number of nodes")
@@ -183,7 +185,8 @@ class IQ():
 
 
     def validate(self):
-        print("--> Validating Inducitve-Quad(%d):" %self.q)
+        if sst.getProgramOptions()["verbose"] > 0:
+            print("--> Validating Inducitve-Quad(%d):" %self.q)
         #check sizes
         if (len(self.topo) != 2*self.q + 2):
             print("     --> construction error: incorrect number of nodes")
@@ -348,7 +351,7 @@ class topoPolarStar(Topology):
     def __init__(self, d=-1, sn="max", pfq=-1, snq=-1, N=-1):
         print("PolarStar Topology Constructor!")
         Topology.__init__(self)
-        self._declareClassVariables(["link_latency", "host_link_latency", "global_link_map", "bundleEndpoints"])
+        self._declareClassVariables(["link_latency", "host_link_latency", "global_link_map", "bundleEndpoints", "data_path"])
         self._declareParams("main",["topo","phi","d","sn_type","pfq","snq","pfV", "snV", "phi", "hosts_per_router","network_radix","total_radix","total_routers",
                                     "total_endnodes","edge","name","algorithm","adaptive_threshold","global_routes","config_failed_links",
                                     "failed_links"])
@@ -387,6 +390,10 @@ class topoPolarStar(Topology):
         self.total_radix        = None
         self.total_endnodes     = None
 
+        #Directory the adjacency list is written to and read back by polarstar.cc.
+        #Resolved to a writable, run-specific path at build time (see _build_impl).
+        self.data_path          = None
+
 
     def setEP(self):
         if self.hosts_per_router is None:
@@ -420,7 +427,7 @@ class topoPolarStar(Topology):
 
 
     def getFolderPath(self):
-        return os.getcwd()+"/polarstar_data/"
+        return self.data_path + "/"
 
 
     def make(self):
@@ -431,7 +438,8 @@ class topoPolarStar(Topology):
 
 
     def validate(self):
-        print("--> Validating PolarStar(%d):" %self.d)
+        if sst.getProgramOptions()["verbose"] > 0:
+            print("--> Validating PolarStar(%d):" %self.d)
 
         #check sizes
         if len(self.topo) != self.total_routers:
@@ -612,6 +620,11 @@ class topoPolarStar(Topology):
 
     def _build_impl(self, endpoint):
 
+        # Resolve a writable directory for the adjacency-list handoff to polarstar.cc.
+        # Must be set before params are gathered so "data_path" reaches the C++ side.
+        if self.data_path is None:
+            self.data_path = tempfile.mkdtemp(prefix="sst_polarstar_")
+
         if self._check_first_build():
             sst.addGlobalParams("params_%s"%self._instance_name, self._getGroupParams("main"))
 
@@ -645,6 +658,8 @@ class topoPolarStar(Topology):
             topology = rtr.setSubComponent(self.router.getTopologySlotName(),"merlin.polarstar")
             self._applyStatisticsSettings(topology)
             topology.addParams(self._getGroupParams("main"))
+            #data_path is internal (not a user-facing param), so add it explicitly
+            topology.addParam("data_path", self.data_path)
 
             port = 0
 

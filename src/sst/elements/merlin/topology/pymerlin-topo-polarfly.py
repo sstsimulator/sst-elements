@@ -15,6 +15,7 @@ from os import path, makedirs
 import os
 import sys
 import itertools
+import tempfile
 
 try:
     from sympy.polys.domains import ZZ
@@ -226,7 +227,7 @@ class topoPolarFly(Topology):
     """
     def __init__(self,q = -1, N = -1):
         Topology.__init__(self)
-        self._declareClassVariables(["link_latency","host_link_latency","global_link_map","bundleEndpoints"])
+        self._declareClassVariables(["link_latency","host_link_latency","global_link_map","bundleEndpoints","data_path"])
         self._declareParams("main",["topo","q","hosts_per_router","network_radix","total_radix","total_routers",
                                     "total_endnodes","edge","name","algorithm","adaptive_threshold","global_routes","config_failed_links",
                                     "failed_links", "GF", "vec_len"])
@@ -272,6 +273,10 @@ class topoPolarFly(Topology):
         self.GF                 = None
         self.vec_len            = 3
 
+        #Directory the adjacency list is written to and read back by polarfly.cc.
+        #Resolved to a writable, run-specific path at build time (see _build_impl).
+        self.data_path          = None
+
 
     def setEP(self):
         if (self.hosts_per_router is None):
@@ -306,7 +311,7 @@ class topoPolarFly(Topology):
 
 
     def getFolderPath(self):
-        return os.getcwd()+"/polarfly_data/"
+        return self.data_path + "/"
 
 
     #return v1.v2
@@ -358,7 +363,8 @@ class topoPolarFly(Topology):
 
 
     def validate(self):
-        print("--> Validating Polarfly(%d):" %self.q)
+        if sst.getProgramOptions()["verbose"] > 0:
+            print("--> Validating Polarfly(%d):" %self.q)
         # check sizes
         if len(self.topo) != self.q**2 + self.q + 1:
             print("     --> construction error: incorrect number of nodes")
@@ -420,6 +426,11 @@ class topoPolarFly(Topology):
 
 
     def _build_impl(self, endpoint):
+        # Resolve a writable directory for the adjacency-list handoff to polarfly.cc.
+        # Must be set before params are gathered so "data_path" reaches the C++ side.
+        if self.data_path is None:
+            self.data_path = tempfile.mkdtemp(prefix="sst_polarfly_")
+
         if self._check_first_build():
             sst.addGlobalParams("params_%s"%self._instance_name, self._getGroupParams("main"))
 
@@ -452,6 +463,8 @@ class topoPolarFly(Topology):
             topology = rtr.setSubComponent(self.router.getTopologySlotName(),"merlin.polarfly")
             self._applyStatisticsSettings(topology)
             topology.addParams(self._getGroupParams("main"))
+            #data_path is internal (not a user-facing param), so add it explicitly
+            topology.addParam("data_path", self.data_path)
 
             port = 0
 
