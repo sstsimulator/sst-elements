@@ -153,10 +153,6 @@ mem_params = {
 
     "backend.mem_size" : memory_capacity / (groups * memory_controllers_per_group),
 
-	#"backend": 'memHierarchy.dramsim',
-	#"backend.device_ini" : "ini/DDR3_micron_32M_8B_x4_sg125.ini",
-   	#"backend.system_ini" : "ini/system.ini",
-
 	# simple memory
     "backend.access_time" : "45ns",
 }

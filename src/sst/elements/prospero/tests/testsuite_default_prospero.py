@@ -193,15 +193,6 @@ class testcase_prospero(SSTTestCase):
             shutil.rmtree(self.testProsperoTARTracesDir, True)
         os.makedirs(self.testProsperoTARTracesDir)
 
-        # Create a simlink of the memH ini files files
-        filename = "DDR3_micron_32M_8B_x4_sg125.ini"
-        os_symlink_file(memHElementsTestsDir, self.testProsperoPINTracesDir, filename)
-        os_symlink_file(memHElementsTestsDir, self.testProsperoTARTracesDir, filename)
-
-        filename = "system.ini"
-        os_symlink_file(memHElementsTestsDir, self.testProsperoPINTracesDir, filename)
-        os_symlink_file(memHElementsTestsDir, self.testProsperoTARTracesDir, filename)
-
 ####
 
     def _create_prospero_PIN_trace_files(self):
