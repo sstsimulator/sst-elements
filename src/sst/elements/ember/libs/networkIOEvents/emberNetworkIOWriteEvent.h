@@ -12,7 +12,7 @@ class EmberNetworkIOWriteEvent : public EmberNetworkIOEvent {
 public:
     EmberNetworkIOWriteEvent(NetworkIO::Interface& api, Output* output, uint64_t offset,
                            Hermes::MemAddr src, uint32_t length,
-                           EmberEventTimeStatistic* stat = NULL) :
+                           EmberEventTimeStatistic* stat = nullptr) :
         EmberNetworkIOEvent(api, output, stat),
         m_offset(offset), m_src(src), m_length(length)
     {}

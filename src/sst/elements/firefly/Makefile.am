@@ -165,7 +165,7 @@ libfirefly_la_SOURCES = \
 	storageModel/simpleSSD.cc \
 	hadesNetworkIO.h \
 	hadesNetworkIO.cc \
-	nicNetworkSendEntry.h \
+	nicNetworkIOSendEntry.h \
 	nicNetworkIO.cc \
 	nicNetworkIO.h \
 	nicNetworkIOStream.cc \

@@ -16,7 +16,7 @@ typedef Statistic<uint32_t> EmberEventTimeStatistic;
 class EmberNetworkIOEvent : public EmberEvent {
 public:
     EmberNetworkIOEvent(NetworkIO::Interface& api, Output* output, 
-                   EmberEventTimeStatistic* stat = NULL) :
+                   EmberEventTimeStatistic* stat = nullptr) :
         EmberEvent(output, stat), m_api(api)
     {
         m_state = IssueCallback;  

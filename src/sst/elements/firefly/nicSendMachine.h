@@ -102,7 +102,7 @@ class SendMachine {
                 return m_numPending == m_maxQsize;
             }
 
-            void  enque( int unit, int pid, std::vector< MemOp >* vec, FireflyNetworkEvent* ev, int vn, int dest, Callback callback = NULL, SendEntryBase* entry=NULL );
+            void  enque( int unit, int pid, std::vector< MemOp >* vec, FireflyNetworkEvent* ev, int vn, int dest, Callback callback = nullptr, SendEntryBase* entry=nullptr );
 
             void wakeMeUp( Callback  callback) {
                 assert(!m_callback);
