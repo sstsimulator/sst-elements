@@ -9,6 +9,10 @@
 // See the file CONTRIBUTORS.TXT in the top level directory
 // of the distribution for more information.
 //
+// Portions copyright (c) 2026, Hewlett Packard Enterprise Development LP
+// SPDX-FileCopyrightText: Copyright Hewlett Packard Enterprise Development LP
+// SPDX-License-Identifier: BSD-3-Clause
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -37,6 +41,9 @@ Nic::RecvMachine::StreamBase* Nic::RecvMachine::Ctx::newStream( FireflyNetworkEv
         break;
       case MsgHdr::Shmem:
         return new ShmemStream( m_dbg, this, ev->getSrcNode(),ev->getSrcPid(), ev->getDestPid(), ev );
+        break;
+      case MsgHdr::NetworkIO:
+        return new NetworkIOStream( m_dbg, this, ev->getSrcNode(),ev->getSrcPid(), ev->getDestPid(), ev );
         break;
     }
     assert(0);
