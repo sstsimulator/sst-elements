@@ -6,7 +6,7 @@
 
 using namespace SST::Ember;
 
-EmberNetworkIOGenerator::EmberNetworkIOGenerator(ComponentId_t id, Params& params, std::string name) 
+EmberNetworkIOGenerator::EmberNetworkIOGenerator(ComponentId_t id, Params& params, std::string name)
     : EmberGenerator(id, params, name), m_networkIOLib(nullptr)
 {
     m_shmemLib = nullptr;

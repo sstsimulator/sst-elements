@@ -9,7 +9,7 @@ using namespace SST;
 using namespace Firefly;
 
 SimpleSSD::SimpleSSD(ComponentId_t id, Params &params)
-    : SimpleSSDAPI(id), m_pendingRequests(0) 
+    : SimpleSSDAPI(id), m_pendingRequests(0)
 {
     int nSSDsPerNode = params.find<int>("nSSDsPerNode", 1);
     int nQueuesPerSSD = params.find<int>("queuesCountPerSSD", 4);

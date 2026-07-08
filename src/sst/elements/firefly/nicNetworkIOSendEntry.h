@@ -9,7 +9,7 @@
 // Base class for all NetworkIO storage SendEntry types
 class NetworkIOSendEntryBase : public SendEntryBase {
   public:
-    NetworkIOSendEntryBase(int local_vNic, int streamNum) : 
+    NetworkIOSendEntryBase(int local_vNic, int streamNum) :
         SendEntryBase(local_vNic, streamNum) {}
     ~NetworkIOSendEntryBase() {}
 
@@ -40,12 +40,12 @@ class NetworkIOStorageReadEntry : public NetworkIOSendEntryBase {
     void copyOut(Output& dbg, int numBytes, FireflyNetworkEvent& event, std::vector<MemOp>& vec) override
     {
         // READ request: NO MemOp - just sending request, no data to read from host
-        
+
         // Append NetworkIOMsgHdr with READ operation type
         Nic::NetworkIOMsgHdr netHdr;
         netHdr.op = Nic::NetworkIOMsgHdr::Read;
         event.bufAppend(&netHdr, sizeof(netHdr));
-        
+
         // Append operation parameters
         event.bufAppend(&m_src, sizeof(m_src));          // Storage offset
         event.bufAppend(&m_dest, sizeof(m_dest));        // Local buffer
@@ -57,7 +57,7 @@ class NetworkIOStorageReadEntry : public NetworkIOSendEntryBase {
 
     size_t totalBytes() override { return m_len; }
     int dest() override { return m_dst_node; }  // Target storage node
-    
+
     // Set response key for blocking operations (ACK matching)
     void setRespKey(uint32_t key) { m_respKey = key; }
 
@@ -89,12 +89,12 @@ class NetworkIOStorageWriteEntry : public NetworkIOSendEntryBase {
     void copyOut(Output& dbg, int numBytes, FireflyNetworkEvent& event, std::vector<MemOp>& vec) override
     {
         // WRITE request: NO MemOp - just sending request
-        
+
         // Append NetworkIOMsgHdr with WRITE operation type
         Nic::NetworkIOMsgHdr netHdr;
         netHdr.op = Nic::NetworkIOMsgHdr::Write;
         event.bufAppend(&netHdr, sizeof(netHdr));
-        
+
         // Append operation parameters
         event.bufAppend(&m_dest, sizeof(m_dest));        // Storage offset
         event.bufAppend(&m_src, sizeof(m_src));          // Local buffer
@@ -107,7 +107,7 @@ class NetworkIOStorageWriteEntry : public NetworkIOSendEntryBase {
     size_t totalBytes() override { return m_len; }
     int dest() override { return m_dst_node; }
     bool isWriteOp() override { return true; }  // This is a WRITE operation
-    
+
     void setRespKey(uint32_t key) { m_respKey = key; }
 
   private:

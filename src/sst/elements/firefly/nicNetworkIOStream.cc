@@ -22,15 +22,15 @@ Nic::RecvMachine::NetworkIOStream::NetworkIOStream( Output& output, Ctx* ctx,
 {
     // Pop the MsgHdr to get to packet payload
     ev->bufPop(sizeof(MsgHdr));
-    
+
     unsigned char* bufPtr = (unsigned char*)ev->bufPtr();
-    
+
     // Peek at first byte to determine packet type
     // ACK packets are small: only [isAck=true][respKey]
     bool isAck = false;
     if (ev->bufSize() == sizeof(bool) + sizeof(uint32_t)) {
         memcpy(&isAck, bufPtr, sizeof(isAck));
-        
+
         if (isAck) {
             // Handle ACK packet (requester side)
             processAck(ev, bufPtr);
@@ -39,7 +39,7 @@ Nic::RecvMachine::NetworkIOStream::NetworkIOStream( Output& output, Ctx* ctx,
             return;
         }
     }
-    
+
     // Handle storage operation packet (storage node side)
     processStorageOp(ev, bufPtr);
 }
@@ -52,15 +52,15 @@ void Nic::RecvMachine::NetworkIOStream::processAck(FireflyNetworkEvent* ev, unsi
 {
     bufPtr += sizeof(bool);
     ev->bufPop(sizeof(bool));
-    
+
     // Extract response key from ACK packet
     uint32_t respKey = 0;
     memcpy(&respKey, bufPtr, sizeof(respKey));
     ev->bufPop(sizeof(respKey));
-    
+
     m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,
                 "ACK received: respKey=%u\n", respKey);
-    
+
     // Retrieve and invoke stored callback
     // getRespKeyValue() removes entry from m_respKeyMap
     auto* respCallback = static_cast<std::function<void()>*>(
@@ -75,7 +75,7 @@ void Nic::RecvMachine::NetworkIOStream::processAck(FireflyNetworkEvent* ev, unsi
 // Process Storage Operation (Storage Node Side)
 // ========================================================================
 // Handles READ or WRITE operations sent to storage node
-// 
+//
 // Packet format:
 //   [NetworkMsgHdr][offset][src][length][respKey]
 //
@@ -90,7 +90,7 @@ void Nic::RecvMachine::NetworkIOStream::processStorageOp(FireflyNetworkEvent* ev
     memcpy(&netHdr, bufPtr, sizeof(netHdr));
     bufPtr += sizeof(netHdr);
     ev->bufPop(sizeof(netHdr));
-    
+
     // Extract operation parameters from packet
     memcpy(&m_offset, bufPtr, sizeof(m_offset));
     bufPtr += sizeof(m_offset);
@@ -99,19 +99,19 @@ void Nic::RecvMachine::NetworkIOStream::processStorageOp(FireflyNetworkEvent* ev
     memcpy(&m_length, bufPtr, sizeof(m_length));
     bufPtr += sizeof(m_length);
     ev->bufPop(sizeof(m_offset) + sizeof(m_src) + sizeof(m_length));
-    
+
     // Extract respKey (always present - ACKs always sent)
     uint32_t respKey;
     memcpy(&respKey, bufPtr, sizeof(respKey));
     ev->bufPop(sizeof(respKey));
-    
+
     m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,
                 "op=%u offset=%lu length=%lu respKey=%u\n",
                 netHdr.op, m_offset, m_length, respKey);
-    
+
     // Submit DMA operation based on operation type
     std::vector<MemOp>* vec = new std::vector<MemOp>;
-    
+
     if (netHdr.op == Nic::NetworkIOMsgHdr::Read) {
         // READ: BusDmaFromHost (load data FROM storage to send to requester)
         vec->push_back(MemOp(m_offset, m_length, MemOp::Op::BusDmaFromHost));
@@ -119,23 +119,23 @@ void Nic::RecvMachine::NetworkIOStream::processStorageOp(FireflyNetworkEvent* ev
         // WRITE: BusDmaToHost (store data TO storage)
         vec->push_back(MemOp(m_offset, m_length, MemOp::Op::BusDmaToHost));
     }
-    
+
     // Use dmaRead() for READ, dmaWrite() for WRITE to select correct DMA engine
     int unit = m_ctx->nic().allocNicRecvUnit(m_myPid);
-    
+
     if (netHdr.op == Nic::NetworkIOMsgHdr::Read) {
         // READ uses dmaRead() -> DetailedCompute[0]
         auto callback = [=]() {
          m_dbg.debug(CALL_INFO_LAMBDA,"NetworkIOStream",1,NIC_DBG_RECV_STREAM,
-                            "DMA READ complete, sending ACK respKey=%u to node=%d\n", 
+                            "DMA READ complete, sending ACK respKey=%u to node=%d\n",
                             respKey, m_srcNode);
-                
+
                 // Create ACK packet with matching respKey
                 NetworkIOAckSendEntry* ackEntry = new NetworkIOAckSendEntry(
                     m_myPid, m_srcNode, respKey
                 );
                 m_ctx->nic().qSendEntry(ackEntry);
-                
+
                 delete ev;
                 setDone();
     };
@@ -158,19 +158,19 @@ void Nic::RecvMachine::NetworkIOStream::processStorageOp(FireflyNetworkEvent* ev
         // WRITE uses dmaWrite() -> DetailedCompute[1]
         auto writeCallback = [=]() {
             m_dbg.debug(CALL_INFO_LAMBDA,"NetworkIOStream",1,NIC_DBG_RECV_STREAM,
-                        "DMA WRITE complete, sending ACK respKey=%u to node=%d\n", 
+                        "DMA WRITE complete, sending ACK respKey=%u to node=%d\n",
                         respKey, m_srcNode);
-            
+
             // Create ACK packet with matching respKey
             NetworkIOAckSendEntry* ackEntry = new NetworkIOAckSendEntry(
                 m_myPid, m_srcNode, respKey
             );
             m_ctx->nic().qSendEntry(ackEntry);
-            
+
             delete ev;
             setDone();
         };
-        
+
         if(m_ctx->nic().getSimpleSSDPtr()!=NULL){
             std::cout<<"Current node id : "<<m_ctx->nic().getNodeId()<<std::endl;
             SimpleSSD* m_ssd = m_ctx->nic().getSimpleSSDPtr();

@@ -71,8 +71,8 @@ nicParams = {
     "simpleSSD.writeBandwidthPerSSD_GBps": 6.25,
     "simpleSSD.readOverheadLatency_ns": 500,
     "simpleSSD.writeOverheadLatency_ns": 500,
-    
-    
+
+
     #"numVNs" : 7,
 
     #"getHdrVN" : 1,

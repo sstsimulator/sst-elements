@@ -38,7 +38,7 @@ class SendEntryBase {
     virtual size_t hdrSize() = 0;
     virtual void copyOut( Output& dbg, int numBytes,
             FireflyNetworkEvent& event, std::vector<MemOp>& vec ) = 0;
-    
+
     virtual bool isWriteOp() { return false; }  // Override for WRITE operations
     virtual bool shouldDelete() { return true; }
     bool isCtrl() { return m_isCtrl; }
