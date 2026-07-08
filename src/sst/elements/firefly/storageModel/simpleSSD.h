@@ -1,5 +1,17 @@
-// SPDX-FileCopyrightText: Copyright Hewlett Packard Enterprise Development LP
-// SPDX-License-Identifier: BSD-3-Clause
+// Copyright 2013-2026 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2013-2026, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// of the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #pragma once
 
@@ -9,6 +21,8 @@
 #include <queue>
 #include <vector>
 #include <functional>
+#include <unordered_map>
+#include <cstdint>
 
 using SsdReqCallback = std::function<void(void)>;
 
@@ -84,7 +98,18 @@ namespace SST
                                     {"writeBandwidthPerSSD_GBps", "", "6.25"}, 
                                     {"readOverheadLatency_ns", "Latency(ns) used for tuning simulations to hardware experiments", "500"},
                                     {"writeOverheadLatency_ns", "Latency(ns) used for tuning simulations to hardware experiments", "500"})
-            
+
+            SST_ELI_DOCUMENT_STATISTICS(
+                {"readRequests",       "Number of read requests dispatched to the SSD bus", "count", 1},
+                {"writeRequests",      "Number of write requests dispatched to the SSD bus", "count", 1},
+                {"readBytes",          "Total bytes read from the SSD", "bytes", 1},
+                {"writeBytes",         "Total bytes written to the SSD", "bytes", 1},
+                {"readLatency_ns",     "Per-request read latency (ns), sum of modelled SSD delays", "ns", 1},
+                {"writeLatency_ns",    "Per-request write latency (ns), sum of modelled SSD delays", "ns", 1},
+                {"queueDepthOnEnqueue","Lane queue depth observed at the moment a request was enqueued", "depth", 1},
+                {"pendingOnDispatch",  "In-flight request count observed when clockTick issued a request", "depth", 1},
+            )
+
             /// Constructor
             SimpleSSD(ComponentId_t id, Params &params);
             
@@ -116,6 +141,25 @@ namespace SST
             /// Counter for the total number of pending requests
             int64_t m_pendingRequests;
 
+            /// Per-lane busy-until cycle (1 GHz clock => 1 cycle == 1 ns)
+            std::vector<int64_t> m_laneFreeAtCycle;
+
+            /// Counters for finish() summary lines
+            uint64_t m_totalReadRequests = 0;
+            uint64_t m_totalWriteRequests = 0;
+            uint64_t m_totalReadBytes = 0;
+            uint64_t m_totalWriteBytes = 0;
+
+            /// SST statistics
+            Statistic<uint64_t>* m_statReadRequests = nullptr;
+            Statistic<uint64_t>* m_statWriteRequests = nullptr;
+            Statistic<uint64_t>* m_statReadBytes = nullptr;
+            Statistic<uint64_t>* m_statWriteBytes = nullptr;
+            Statistic<uint64_t>* m_statReadLatency = nullptr;
+            Statistic<uint64_t>* m_statWriteLatency = nullptr;
+            Statistic<uint64_t>* m_statQueueDepthOnEnqueue = nullptr;
+            Statistic<uint64_t>* m_statPendingOnDispatch = nullptr;
+
             /// Handle event function for the self-link
             void handleEvent(SST::Event *ev);
 
@@ -125,13 +169,38 @@ namespace SST
             /// API to queue the requests
             void enqueueRequest(const int64_t offset, const size_t bytes, const double bandwidth, const int64_t latency, const SsdReqCallback& callback);
 
+            /// finish() emits a single summary line per SimpleSSD instance
+            void finish() override;
+
+            std::unordered_map<uint32_t, SsdReqCallback> m_ssdCbMap;
+            uint32_t m_nextSsdCbId = 1;
+            uint32_t registerSsdCb(const SsdReqCallback& cb) {
+                uint32_t id = m_nextSsdCbId++;
+                if ( 0 == id ) { id = m_nextSsdCbId++; }
+                m_ssdCbMap[id] = cb;
+                return id;
+            }
+            void invokeSsdCb(uint32_t id) {
+                auto it = m_ssdCbMap.find(id);
+                assert( it != m_ssdCbMap.end() );
+                auto cb = std::move(it->second);
+                m_ssdCbMap.erase(it);
+                cb();
+            }
+
             /// Delay class for the delay events
             class DelayEvent : public SST::Event
             {
             public:
-                SsdReqCallback m_callback;
-                DelayEvent(SsdReqCallback callback) : Event(), m_callback(callback) {}
-                NotSerializable(DelayEvent)
+                uint32_t m_cb_id;
+                DelayEvent() : Event(), m_cb_id(0) {}
+                DelayEvent(uint32_t cb_id) : Event(), m_cb_id(cb_id) {}
+
+                void serialize_order(SST::Core::Serialization::serializer& ser) override {
+                    Event::serialize_order(ser);
+                    SST_SER(m_cb_id);
+                }
+                ImplementSerializable(SST::Firefly::SimpleSSD::DelayEvent);
             };
         };
     }

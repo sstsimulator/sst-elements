@@ -935,29 +935,67 @@ class System(TemplateBase):
     # Functions used to allocated endpoints to jobs
     _allocate_functions = {}
 
+    # Factory for the default I/O-node job (must be registered by a
+    # higher-level library like ember; merlin/base must not depend on it).
+    _io_node_job_factory = None
+
     @classmethod
     def addAllocationFunction(cls,name,func):
         cls._allocate_functions[name] = func
 
+    @classmethod
+    def setIoNodeJobFactory(cls, factory):
+        cls._io_node_job_factory = factory
+
 
     def __init__(self):
         TemplateBase.__init__(self)
-        self._declareClassVariables(["topology","allocation_block_size","_available_nodes","_num_nodes","_endpoints","_deferred_endpoint"])
+        self._declareClassVariables(["topology","allocation_block_size","_available_nodes","_num_nodes","_endpoints","_deferred_endpoint","_io_nid_list","_io_pools","_io_network_interface"])
         self._setCallbackOnWrite("topology",self._topology_config_callback)
         self._setCallbackOnWrite("allocation_block_size",self._block_size_config_callback)
 
         self._subscribeToPlatformParamSet("system")
         self.topology = PlatformDefinition.getPlatformDefinedClassInstance("topology")
         self._deferred_endpoint = None
+        # Per-pool I/O-node lists, populated by allocateIoNodes(...,pool=).
+        # PR 6b (per-job storage pools): map pool-name -> ordered list of NIDs.
+        # An anonymous allocation lands in the implicit pool named "default".
+        # The flat union view `_io_nid_list` is kept in sync for SDLs that
+        # introspect it directly (back-compat).
+        self._io_pools = {}
+        self._io_nid_list = []
+        # Optional override of the I/O-node network interface.  Must match the
+        # interface used by compute jobs (e.g. ReorderLinkControl) -- the
+        # receiver's static_cast<ReorderRequest*> on a plain SimpleNetwork::Request
+        # otherwise reads past-end memory as the seq field and parks the packet.
+        self._io_network_interface = None
         #self.allocation_block_size = 1
 
     def setTopology(self, topo, allocation_block_size = 1):
         self.allocation_block_size = allocation_block_size
         self.topology = topo
 
-    # Build the system
+    def setIoNetworkInterface(self, nif):
+        self._io_network_interface = nif
+
     def build(self):
-        # For any unallocated nodes, use EmptyJob
+        if self._io_pools and self._io_node_job_factory is not None:
+            if self._io_network_interface is not None:
+                io_nif = self._io_network_interface
+            else:
+                io_nif = self.topology.router.getDefaultNetworkInterface()
+            io_nif.link_bw = "1 GB/s"
+            # PR 6b: invoke the factory once per pool. Each call returns
+            # the IoNodeJob that owns the NIDs in that pool. The factory
+            # contract is documented in ember/pyember.py:_ioNodeJobDefaultFactory.
+            for pool_name, pool_nids in self._io_pools.items():
+                io_job = type(self)._io_node_job_factory(
+                    pool_nids, io_nif, pool_name=pool_name)
+                nid_map = {pid: i for i, pid in enumerate(pool_nids)}
+                for pid in pool_nids:
+                    self._endpoints[pid] = io_job
+                io_job._nid_map = nid_map
+
         if len(self._available_nodes) > 0:
             remainder = EmptyJob(-1,len(self._available_nodes) * self.allocation_block_size)
             remainder.network_interface = self.topology.router.getDefaultNetworkInterface()
@@ -1025,6 +1063,48 @@ class System(TemplateBase):
 
         job._nid_map = nid_map
 
+
+    def allocateIoNodes(self, count, method, *args, pool="default"):
+        if not self.allocation_block_size: self.allocation_block_size = 1
+        if not isinstance(pool, str) or not pool:
+            raise ValueError("allocateIoNodes: pool name must be a non-empty string")
+        num_units = -(-count // self.allocation_block_size)
+
+        allocated, available = self._allocate_functions[method](self._available_nodes, num_units, *args)
+        self._available_nodes = available
+
+        nid_list = []
+        for i in range(num_units):
+            for j in range(self.allocation_block_size):
+                pid = allocated[i] * self.allocation_block_size + j
+                nid_list.append(pid)
+                self._endpoints[pid] = None
+
+        nid_list.sort()
+        # PR 6b: append to per-pool list (creating it on first use), then
+        # rebuild the flat-union back-compat view in insertion order.
+        if pool not in self._io_pools:
+            self._io_pools[pool] = []
+        self._io_pools[pool].extend(nid_list)
+        self._io_pools[pool].sort()
+        flat = []
+        for p in self._io_pools.values():
+            flat.extend(p)
+        flat.sort()
+        self._io_nid_list = flat
+        return nid_list
+
+
+    def getIoNidList(self, pool=None):
+        if pool is None:
+            return list(self._io_nid_list)
+        if pool not in self._io_pools:
+            raise KeyError("getIoNidList: no such I/O pool %r (known: %r)"
+                           % (pool, list(self._io_pools.keys())))
+        return list(self._io_pools[pool])
+
+    def getIoPools(self):
+        return {name: list(nids) for name, nids in self._io_pools.items()}
 
 
 # Built-in allocation functions for System

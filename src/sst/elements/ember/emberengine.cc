@@ -211,6 +211,16 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 void EmberEngine::init(unsigned int phase) {
 	// Pass the init phases through to the OS layer
 	m_os->_componentInit(phase);
+
+	// PR 7: propagate init(phase) to API subcomponents to mirror setup()
+	// and finish() below. Required so HadesNetworkIO::init(phase=2) can
+	// publish the per-pool permit AFTER VirtNic::init(phase=1) has
+	// assigned the real NID, but BEFORE Simulation_impl::setup()'s
+	// SharedObject::manager.updateState(true) locks the set.
+	ApiMap::iterator iter = m_apiMap.begin();
+	for ( ; iter != m_apiMap.end(); ++ iter ) {
+	    iter->second->api->init(phase);
+	}
 }
 
 void EmberEngine::finish() {

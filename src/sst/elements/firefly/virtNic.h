@@ -25,6 +25,10 @@
 #include "sst/elements/hermes/shmemapi.h"
 #include "sst/elements/hermes/networkIOapi.h"
 #include "ioVec.h"
+#include <unordered_map>
+#include <cstdint>
+#include <vector>
+#include <string>
 
 namespace SST {
 namespace Firefly {
@@ -32,7 +36,7 @@ namespace Firefly {
 
 class NicRespEvent;
 class NicShmemRespBaseEvent;
-class NicNetworkIORespBaseEvent;
+class NicNetworkIORespEvent;
 
 class VirtNic : public SST::SubComponent {
 
@@ -212,8 +216,28 @@ class VirtNic : public SST::SubComponent {
     void notifyRecvDmaDone( int src, int tag, size_t len, void* key );
     void notifyNeedRecv( int src, int tag, size_t length );
 
-    void networkIORead( int targetNid, Hermes::Vaddr dest, size_t len, std::function<void(int)> );
-    void networkIOWrite( int targetNid, Hermes::Vaddr src, size_t len, std::function<void(int)> );
+    void networkIORead( int targetNid, Hermes::Vaddr dest, size_t len, std::function<void(int)>, uint32_t fileId = 0 );
+    void networkIOWrite( int targetNid, Hermes::Vaddr src, size_t len, std::function<void(int)>, uint32_t fileId = 0 );
+    void networkIOOpen( int targetNid, uint32_t fileId, uint64_t stripeUnit, uint64_t capacity,
+                        const std::vector<int>& stripeNids,
+                        const std::string& poolName,
+                        std::function<void(int)> );
+    void networkIOClose( int targetNid, uint32_t fileId,
+                         std::function<void(int)> );
+
+    uint32_t registerNetworkIoCb( std::function<void(int)> cb ) {
+        uint32_t id = m_nextNetworkIoCbId++;
+        if ( 0 == id ) { id = m_nextNetworkIoCbId++; }
+        m_networkIoCbMap[id] = cb;
+        return id;
+    }
+    void invokeNetworkIoCb( uint32_t id, int retval ) {
+        auto it = m_networkIoCbMap.find(id);
+        assert( it != m_networkIoCbMap.end() );
+        auto cb = std::move(it->second);
+        m_networkIoCbMap.erase(it);
+        cb(retval);
+    }
     
     bool isBlocked() {
 		m_dbg.debug(CALL_INFO,2,0,"%d %d\n", m_curNicQdepth, m_maxNicQdepth);
@@ -262,7 +286,7 @@ class VirtNic : public SST::SubComponent {
     void handleEvent( Event * );
     void handleMsgEvent( NicRespEvent * );
     void handleShmemEvent( NicShmemRespBaseEvent * );
-    void handleNetworkIOEvent( NicNetworkIORespBaseEvent * );
+    void handleNetworkIOEvent( NicNetworkIORespEvent * );
 
     int         m_realNicId;
     int         m_coreId;
@@ -279,6 +303,9 @@ class VirtNic : public SST::SubComponent {
     int m_maxNicQdepth;
     int m_curNicQdepth;
     Callback m_blockedCallback;
+
+    std::unordered_map<uint32_t, std::function<void(int)>> m_networkIoCbMap;
+    uint32_t m_nextNetworkIoCbId = 1;
 };
 
 }
