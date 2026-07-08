@@ -97,7 +97,7 @@ void VirtNic::handleEvent( Event* ev )
         handleShmemEvent( static_cast<NicShmemRespEvent*>(ev ) );
         break;
     case NicRespBaseEvent::NetworkIO:
-        handleNetworkIOEvent( static_cast<NicNetworkIORespBaseEvent*>(ev ) );
+        handleNetworkIOEvent( static_cast<NicNetworkIORespEvent*>(ev ) );
         break;
     }
     delete ev;
@@ -140,12 +140,11 @@ void VirtNic::handleShmemEvent( NicShmemRespBaseEvent* event )
    	}
 }
 
-void VirtNic::handleNetworkIOEvent( NicNetworkIORespBaseEvent* event )
+void VirtNic::handleNetworkIOEvent( NicNetworkIORespEvent* event )
 {
-    NicNetworkIORespBaseEvent* ev = static_cast<NicNetworkIORespBaseEvent*>(event);
-
-   	m_dbg.debug(CALL_INFO,2,0,"[VirtNic] calling NetworkIO callback\n");
-   	ev->callback();
+   	m_dbg.debug(CALL_INFO,2,0,"[VirtNic] calling NetworkIO callback cb_id=%u retval=%d\n",
+                event->getCbId(), event->getRetval());
+   	invokeNetworkIoCb( event->getCbId(), event->getRetval() );
 
 	m_dbg.debug(CALL_INFO,2,0," %d %d\n", m_curNicQdepth, m_maxNicQdepth);
    	assert( m_curNicQdepth > 0 );
@@ -303,14 +302,38 @@ void VirtNic::setNotifyNeedRecv(
     m_notifyNeedRecv = functor;
 }
 
-void VirtNic::networkIORead( int targetNid, Hermes::Vaddr dest, size_t len, std::function<void(int)> callback )
+void VirtNic::networkIORead( int targetNid, Hermes::Vaddr dest, size_t len, std::function<void(int)> callback, uint32_t fileId )
 {
-    m_dbg.debug(CALL_INFO,2,0,"dest=%#lx len=%zu\n", dest, len);
-    sendCmd(0, new NicNetworkIOReadCmdEvent(  targetNid, dest, len, callback ) );
+    uint32_t cb_id = registerNetworkIoCb( callback );
+    m_dbg.debug(CALL_INFO,2,0,"dest=%#" PRIx64 " len=%zu cb_id=%u fileId=%u\n", dest, len, cb_id, fileId);
+    sendCmd(0, new NicNetworkIOReadCmdEvent( targetNid, dest, len, cb_id, fileId ) );
 }
 
-void VirtNic::networkIOWrite( int targetNid, Hermes::Vaddr src, size_t len, std::function<void(int)> callback )
+void VirtNic::networkIOWrite( int targetNid, Hermes::Vaddr src, size_t len, std::function<void(int)> callback, uint32_t fileId )
 {
-    m_dbg.debug(CALL_INFO,2,0,"src=%#lx len=%zu\n", src, len);
-    sendCmd(0, new NicNetworkIOWriteCmdEvent(  targetNid, src, len, callback ) );
+    uint32_t cb_id = registerNetworkIoCb( callback );
+    m_dbg.debug(CALL_INFO,2,0,"src=%#" PRIx64 " len=%zu cb_id=%u fileId=%u\n", src, len, cb_id, fileId);
+    sendCmd(0, new NicNetworkIOWriteCmdEvent( targetNid, src, len, cb_id, fileId ) );
+}
+
+void VirtNic::networkIOOpen( int targetNid, uint32_t fileId,
+                              uint64_t stripeUnit, uint64_t capacity,
+                              const std::vector<int>& stripeNids,
+                              const std::string& poolName,
+                              std::function<void(int)> callback )
+{
+    uint32_t cb_id = registerNetworkIoCb( callback );
+    m_dbg.debug(CALL_INFO,2,0,"open targetNid=%d fileId=%u cb_id=%u\n",
+                targetNid, fileId, cb_id);
+    sendCmd(0, new NicNetworkIOOpenCmdEvent( targetNid, fileId,
+                stripeUnit, capacity, stripeNids, poolName, cb_id ) );
+}
+
+void VirtNic::networkIOClose( int targetNid, uint32_t fileId,
+                               std::function<void(int)> callback )
+{
+    uint32_t cb_id = registerNetworkIoCb( callback );
+    m_dbg.debug(CALL_INFO,2,0,"close targetNid=%d fileId=%u cb_id=%u\n",
+                targetNid, fileId, cb_id);
+    sendCmd(0, new NicNetworkIOCloseCmdEvent( targetNid, fileId, cb_id ) );
 }

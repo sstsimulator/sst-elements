@@ -256,6 +256,17 @@ libember_la_SOURCES = \
 	libs/networkIOEvents/emberNetworkIOEvent.h \
 	libs/networkIOEvents/emberNetworkIOReadEvent.h \
 	libs/networkIOEvents/emberNetworkIOWriteEvent.h \
+	libs/networkIOEvents/emberNetworkIOOpenEvent.h \
+	libs/networkIOEvents/emberNetworkIOCloseEvent.h \
+	libs/networkIOEvents/emberNetworkIOReadAtEvent.h \
+	libs/networkIOEvents/emberNetworkIOWriteAtEvent.h \
+	libs/networkIOEvents/emberNetworkIOIReadAtEvent.h \
+	libs/networkIOEvents/emberNetworkIOIWriteAtEvent.h \
+	libs/networkIOEvents/emberNetworkIOWaitEvent.h \
+	libs/networkIOEvents/emberNetworkIOWaitallEvent.h \
+	libs/networkIOEvents/emberNetworkIOTestEvent.h \
+	libs/networkIOEvents/emberNetworkIOTestAnyEvent.h \
+	libs/networkIOEvents/emberNetworkIOCancelEvent.h \
 	libs/emberNetworkIOLib.h \
 	networkIO/emberNetworkIOGen.h \
 	networkIO/emberNetworkIOGen.cc \
@@ -291,10 +302,8 @@ EXTRA_DIST = \
 	test/loadFAM200 \
 	test/loadFAM200rand \
 	test/loadFAM2048 \
-	test/loadNetworkIO \
 	test/loadFileParse.py \
 	test/loadUtils.py \
-	test/networkIOParams.py \
 	test/paramUtils.py \
 	test/Tester.py \
 	test/defaultSim.py \
@@ -308,11 +317,17 @@ EXTRA_DIST = \
 	test/generateNidListGroup.py \
 	test/generateNidListInterval.py \
 	test/generateNidListRandom.py \
+	test/loadNetworkIO \
+	test/networkIOParams.py \
+	test/testIO.py \
+	test/testIO_stripe.py \
 	tests/testsuite_default_ember_nightly.py \
 	tests/testsuite_default_ember_otf2.py \
 	tests/testsuite_default_ember_sweep.py \
 	tests/testsuite_default_ember_qos.py \
 	tests/testsuite_default_ember_ESshmem.py \
+	tests/testsuite_default_ember_networkIO.py \
+	tests/testsuite_default_ember_networkIO_stripe.py \
 	tests/ESshmem_List-of-Tests \
 	tests/qos-dragonfly.sh \
 	tests/qos-fattree.sh \
@@ -322,6 +337,8 @@ EXTRA_DIST = \
 	tests/refFiles/test_EmberSweep.out \
 	tests/refFiles/test_embernightly.out \
 	tests/refFiles/test_emberotf2.out \
+	tests/refFiles/test_ember_networkIO.out \
+	tests/refFiles/test_ember_networkIO_stripe.out \
 	tests/refFiles/test_qos-dragonfly.out \
 	tests/refFiles/test_qos-fattree.out \
 	tests/refFiles/test_qos-hyperx.out \

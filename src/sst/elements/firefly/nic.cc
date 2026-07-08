@@ -318,8 +318,17 @@ Nic::Nic(ComponentId_t id, Params &params) :
     if(params.find<int>("useSimpleSSD", 0))
     {
         Params ssdParams = params.get_scoped_params("simpleSSD");
-        m_simpleSSDPtr = dynamic_cast<SimpleSSD*>(loadAnonymousSubComponent<SimpleSSDAPI>("firefly.SimpleSSD","SimpleSSD", 0, ComponentInfo::SHARE_NONE, ssdParams ));
+        m_simpleSSDPtr = dynamic_cast<SimpleSSD*>(loadAnonymousSubComponent<SimpleSSDAPI>("firefly.SimpleSSD","SimpleSSD", 0, ComponentInfo::INSERT_STATS, ssdParams ));
         assert(m_simpleSSDPtr && "Failed to load SimpleSSD subcomponent in NIC\n");
+    }
+
+    if(params.find<int>("useStorageController", 0))
+    {
+        Params controllerParams = params.get_scoped_params("storageController");
+        m_storageControllerPtr = loadAnonymousSubComponent<HadesStorageController>(
+            "firefly.HadesStorageController", "HadesStorageController", 0,
+            ComponentInfo::SHARE_NONE, controllerParams);
+        assert(m_storageControllerPtr && "Failed to load HadesStorageController subcomponent in NIC\n");
     }
 
 	m_sentByteCount =     registerStatistic<uint64_t>("sentByteCount");
@@ -332,10 +341,17 @@ Nic::Nic(ComponentId_t id, Params &params) :
 	m_recvStreamPending = registerStatistic<uint64_t>("recvStreamPending");
 	m_sendStreamPending = registerStatistic<uint64_t>("sendStreamPending");
 
-    Statistic<uint64_t>* m_sentByteCount;
-    Statistic<uint64_t>* m_rcvdByteCount;
-    Statistic<uint64_t>* m_sentPkts;
-    Statistic<uint64_t>* m_rcvdPkts;
+	m_statNetworkIoReadTargetNid  = registerStatistic<uint64_t>("networkIoReadTargetNid");
+	m_statNetworkIoWriteTargetNid = registerStatistic<uint64_t>("networkIoWriteTargetNid");
+	m_statNetworkIoReadLatency    = registerStatistic<uint64_t>("networkIoReadLatency_ns");
+	m_statNetworkIoWriteLatency   = registerStatistic<uint64_t>("networkIoWriteLatency_ns");
+}
+
+bool Nic::permittedSender( int srcNid ) const
+{
+    assert( m_storageControllerPtr );
+    auto& permit = m_storageControllerPtr->getPermit();
+    return permit.find( srcNid ) != permit.end();
 }
 
 Nic::~Nic()

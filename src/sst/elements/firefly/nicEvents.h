@@ -56,10 +56,16 @@ class NicCmdBaseEvent : public Event {
   public:
     enum Type { Shmem, Msg, NetworkIO } base_type;
 
+    NicCmdBaseEvent() : Event(), base_type(Msg) {}
     NicCmdBaseEvent( Type type ) : Event(), base_type(type) {}
 
     virtual int getPid() { return -1; }
-    NotSerializable(NicCmdBaseEvent)
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        Event::serialize_order(ser);
+        SST_SER(base_type);
+    }
+    ImplementVirtualSerializable(SST::Firefly::NicCmdBaseEvent)
 };
 
 class NicShmemCmdEvent : public NicCmdBaseEvent {
@@ -405,9 +411,14 @@ class NicCmdEvent : public NicCmdBaseEvent {
 class NicRespBaseEvent : public Event {
   public:
     enum Type { Shmem, Msg, NetworkIO } base_type;
+    NicRespBaseEvent() : Event(), base_type(Msg) {}
     NicRespBaseEvent( Type type ) : Event(), base_type(type) {}
 
-    NotSerializable(NicCmdEvent)
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        Event::serialize_order(ser);
+        SST_SER(base_type);
+    }
+    ImplementVirtualSerializable(SST::Firefly::NicRespBaseEvent)
 };
 
 class NicShmemRespBaseEvent : public NicCmdBaseEvent {
@@ -455,33 +466,29 @@ class NicShmemValueRespEvent : public NicShmemRespBaseEvent {
     NotSerializable(NicShmemValueRespEvent)
 };
 
-class NicNetworkIORespBaseEvent : public NicRespBaseEvent {
-  public:
-
-    NicNetworkIORespBaseEvent( ) :
-        NicRespBaseEvent( NetworkIO ) {}
-
-    virtual ~NicNetworkIORespBaseEvent() {}
-
-    virtual void callback() = 0;
-    NotSerializable(NicNetworkIORespBaseEvent)
-};
-
-class NicNetworkIORespEvent : public NicNetworkIORespBaseEvent {
+class NicNetworkIORespEvent : public NicRespBaseEvent {
 
   public:
-    typedef std::function<void(int)> Callback;
+    NicNetworkIORespEvent() :
+        NicRespBaseEvent( NetworkIO ), m_cb_id(0), m_retval(0) {}
 
-    NicNetworkIORespEvent( Callback callback, int retval ) :
-        NicNetworkIORespBaseEvent( ), m_callback(callback), m_retval(retval) {}
+    NicNetworkIORespEvent( uint32_t cb_id, int retval ) :
+        NicRespBaseEvent( NetworkIO ), m_cb_id(cb_id), m_retval(retval) {}
 
-    void callback() override { m_callback(m_retval); }
+    uint32_t getCbId() const { return m_cb_id; }
+    int      getRetval() const { return m_retval; }
 
   private:
-    Callback m_callback;
-    int m_retval;
+    uint32_t m_cb_id;
+    int      m_retval;
 
-    NotSerializable(NicNetworkIORespEvent)
+  public:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        NicRespBaseEvent::serialize_order(ser);
+        SST_SER(m_cb_id);
+        SST_SER(m_retval);
+    }
+    ImplementSerializable(SST::Firefly::NicNetworkIORespEvent);
 };
 
 class NicRespEvent : public NicRespBaseEvent {
@@ -535,71 +542,185 @@ class NicNetworkIOCmdEvent : public NicCmdBaseEvent {
 public:
     enum Type {
         NetworkIORead,
-        NetworkIOWrite
+        NetworkIOWrite,
+        NetworkIOOpen,
+        NetworkIOClose
     };
-    
-    NicNetworkIOCmdEvent(Type type, std::function<void(int)> callback)
-        : NicCmdBaseEvent(NetworkIO), type(type), m_callback(callback) {}
-    
+
+    NicNetworkIOCmdEvent()
+        : NicCmdBaseEvent(NetworkIO), type(NetworkIORead), m_cb_id(0) {}
+
+    NicNetworkIOCmdEvent(Type type, uint32_t cb_id)
+        : NicCmdBaseEvent(NetworkIO), type(type), m_cb_id(cb_id) {}
+
     virtual ~NicNetworkIOCmdEvent() {}
-    
+
     Type type;
-    
+
     std::string getTypeStr() {
         switch(type) {
             case NetworkIORead: return "NetworkIORead";
             case NetworkIOWrite: return "NetworkIOWrite";
+            case NetworkIOOpen: return "NetworkIOOpen";
+            case NetworkIOClose: return "NetworkIOClose";
             default: return "Unknown";
         }
     }
-    
-    std::function<void(int)> getCallback() { return m_callback; }
-    
-private:
-    std::function<void(int)> m_callback;
-    
-    NotSerializable(NicNetworkIOCmdEvent)
+
+    uint32_t getCbId() const { return m_cb_id; }
+
+protected:
+    uint32_t m_cb_id;
+
+public:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        NicCmdBaseEvent::serialize_order(ser);
+        SST_SER(type);
+        SST_SER(m_cb_id);
+    }
+    ImplementVirtualSerializable(SST::Firefly::NicNetworkIOCmdEvent)
 };
 
 
 
 class NicNetworkIOReadCmdEvent : public NicNetworkIOCmdEvent {
 public:
-  NicNetworkIOReadCmdEvent(int targetNid, Hermes::Vaddr dest, size_t len, std::function<void(int)> callback)
-    : NicNetworkIOCmdEvent(NetworkIORead, callback), m_targetNid(targetNid), m_dest(dest), m_len(len) {}
+  NicNetworkIOReadCmdEvent()
+    : NicNetworkIOCmdEvent(NetworkIORead, 0), m_targetNid(0), m_dest(0), m_len(0), m_fileId(0) {}
+
+  NicNetworkIOReadCmdEvent(int targetNid, Hermes::Vaddr dest, size_t len, uint32_t cb_id, uint32_t fileId = 0)
+    : NicNetworkIOCmdEvent(NetworkIORead, cb_id), m_targetNid(targetNid), m_dest(dest), m_len(len), m_fileId(fileId) {}
 
   ~NicNetworkIOReadCmdEvent() {}
 
   int getTargetNid() const { return m_targetNid; }
   Hermes::Vaddr getDest() const { return m_dest; }
   size_t getLen() const { return m_len; }
+  uint32_t getFileId() const { return m_fileId; }
 
 private:
   int m_targetNid;
   Hermes::Vaddr m_dest;
   size_t m_len;
+  uint32_t m_fileId;
 
-  NotSerializable(NicNetworkIOReadCmdEvent)
+public:
+  void serialize_order(SST::Core::Serialization::serializer& ser) override {
+      NicNetworkIOCmdEvent::serialize_order(ser);
+      SST_SER(m_targetNid);
+      SST_SER(m_dest);
+      SST_SER(m_len);
+      SST_SER(m_fileId);
+  }
+  ImplementSerializable(SST::Firefly::NicNetworkIOReadCmdEvent);
 };
 
 
 class NicNetworkIOWriteCmdEvent : public NicNetworkIOCmdEvent {
 public:
-  NicNetworkIOWriteCmdEvent(int targetNid, Hermes::Vaddr src, size_t len, std::function<void(int)> callback)
-    : NicNetworkIOCmdEvent(NetworkIOWrite, callback), m_targetNid(targetNid), m_src(src), m_len(len) {}
+  NicNetworkIOWriteCmdEvent()
+    : NicNetworkIOCmdEvent(NetworkIOWrite, 0), m_targetNid(0), m_src(0), m_len(0), m_fileId(0) {}
+
+  NicNetworkIOWriteCmdEvent(int targetNid, Hermes::Vaddr src, size_t len, uint32_t cb_id, uint32_t fileId = 0)
+    : NicNetworkIOCmdEvent(NetworkIOWrite, cb_id), m_targetNid(targetNid), m_src(src), m_len(len), m_fileId(fileId) {}
 
   ~NicNetworkIOWriteCmdEvent() {}
 
   int getTargetNid() const { return m_targetNid; }
   Hermes::Vaddr getSrc() const { return m_src; }
   size_t getLen() const { return m_len; }
+  uint32_t getFileId() const { return m_fileId; }
 
 private:
   int m_targetNid;
   Hermes::Vaddr m_src;
   size_t m_len;
+  uint32_t m_fileId;
 
-  NotSerializable(NicNetworkIOWriteCmdEvent)
+public:
+  void serialize_order(SST::Core::Serialization::serializer& ser) override {
+      NicNetworkIOCmdEvent::serialize_order(ser);
+      SST_SER(m_targetNid);
+      SST_SER(m_src);
+      SST_SER(m_len);
+      SST_SER(m_fileId);
+  }
+  ImplementSerializable(SST::Firefly::NicNetworkIOWriteCmdEvent);
+};
+
+
+class NicNetworkIOOpenCmdEvent : public NicNetworkIOCmdEvent {
+public:
+  NicNetworkIOOpenCmdEvent()
+    : NicNetworkIOCmdEvent(NetworkIOOpen, 0), m_targetNid(0), m_fileId(0),
+      m_stripeUnit(0), m_capacity(0) {}
+
+  NicNetworkIOOpenCmdEvent(int targetNid, uint32_t fileId,
+                           uint64_t stripeUnit, uint64_t capacity,
+                           const std::vector<int>& stripeNids,
+                           const std::string& poolName,
+                           uint32_t cb_id)
+    : NicNetworkIOCmdEvent(NetworkIOOpen, cb_id),
+      m_targetNid(targetNid), m_fileId(fileId),
+      m_stripeUnit(stripeUnit), m_capacity(capacity),
+      m_stripeNids(stripeNids), m_poolName(poolName) {}
+
+  ~NicNetworkIOOpenCmdEvent() {}
+
+  int getTargetNid() const { return m_targetNid; }
+  uint32_t getFileId() const { return m_fileId; }
+  uint64_t getStripeUnit() const { return m_stripeUnit; }
+  uint64_t getCapacity() const { return m_capacity; }
+  const std::vector<int>& getStripeNids() const { return m_stripeNids; }
+  const std::string& getPoolName() const { return m_poolName; }
+
+private:
+  int m_targetNid;
+  uint32_t m_fileId;
+  uint64_t m_stripeUnit;
+  uint64_t m_capacity;
+  std::vector<int> m_stripeNids;
+  std::string m_poolName;
+
+public:
+  void serialize_order(SST::Core::Serialization::serializer& ser) override {
+      NicNetworkIOCmdEvent::serialize_order(ser);
+      SST_SER(m_targetNid);
+      SST_SER(m_fileId);
+      SST_SER(m_stripeUnit);
+      SST_SER(m_capacity);
+      SST_SER(m_stripeNids);
+      SST_SER(m_poolName);
+  }
+  ImplementSerializable(SST::Firefly::NicNetworkIOOpenCmdEvent);
+};
+
+
+class NicNetworkIOCloseCmdEvent : public NicNetworkIOCmdEvent {
+public:
+  NicNetworkIOCloseCmdEvent()
+    : NicNetworkIOCmdEvent(NetworkIOClose, 0), m_targetNid(0), m_fileId(0) {}
+
+  NicNetworkIOCloseCmdEvent(int targetNid, uint32_t fileId, uint32_t cb_id)
+    : NicNetworkIOCmdEvent(NetworkIOClose, cb_id),
+      m_targetNid(targetNid), m_fileId(fileId) {}
+
+  ~NicNetworkIOCloseCmdEvent() {}
+
+  int getTargetNid() const { return m_targetNid; }
+  uint32_t getFileId() const { return m_fileId; }
+
+private:
+  int m_targetNid;
+  uint32_t m_fileId;
+
+public:
+  void serialize_order(SST::Core::Serialization::serializer& ser) override {
+      NicNetworkIOCmdEvent::serialize_order(ser);
+      SST_SER(m_targetNid);
+      SST_SER(m_fileId);
+  }
+  ImplementSerializable(SST::Firefly::NicNetworkIOCloseCmdEvent);
 };
 
 #if defined(__clang__)

@@ -194,6 +194,68 @@ class EmberMPIJob(EmberJob):
         self.nic = BasicNicConfiguration()
         self._lockVariable("nic")
 
+    def useNetworkIO(self, system, mapper="firefly.Block_NetworkIOMapper",
+                     mapper_params=None, pool="default",
+                     suppress_permit=False):
+        # PR 6b forward-compat: pool kwarg accepts str|list[str]. v1 only
+        # implements single-pool binding; list raises so v2 multi-pool
+        # binding is not a breaking signature change.
+        if isinstance(pool, list):
+            raise NotImplementedError(
+                "EmberMPIJob.useNetworkIO(): multi-pool binding "
+                "(pool=list[str]) is Phase-4 / Tier-1 MPI-IO work; "
+                "v1 accepts a single pool name only.")
+        if not isinstance(pool, str) or not pool:
+            raise ValueError(
+                "EmberMPIJob.useNetworkIO(): pool must be a non-empty string")
+
+        try:
+            nid_list = system.getIoNidList(pool=pool)
+        except KeyError:
+            raise AssertionError(
+                "EmberMPIJob.useNetworkIO(): pool %r was not allocated; "
+                "call system.allocateIoNodes(count, method, pool=%r) first."
+                % (pool, pool))
+        if not nid_list:
+            raise RuntimeError(
+                "EmberMPIJob.useNetworkIO(): pool %r has no I/O nodes; "
+                "call system.allocateIoNodes(count, method, pool=%r) before "
+                "useNetworkIO()." % (pool, pool))
+
+        csv = ",".join(str(n) for n in nid_list)
+
+        existing_modules = {v for k, v in self._apis.items() if k.endswith(".module")}
+        next_slot = len(existing_modules)
+
+        if "firefly.hadesSHMEM" not in existing_modules:
+            self._apis["api.%d.module" % next_slot] = "firefly.hadesSHMEM"
+            next_slot += 1
+
+        api_key = "api.%d.module" % next_slot
+        self._apis[api_key] = "firefly.hadesNetworkIO"
+
+        # EmberEngine::createApiMap scopes module params by module name
+        # (firefly.hadesNetworkIO.*), NOT by api.<N>.*  See ember/emberengine.cc.
+        mod_prefix = "firefly.hadesNetworkIO."
+        self._apis[mod_prefix + "nodeMapper.name"] = mapper
+        self._apis[mod_prefix + "nodeMapper.ioNidList"] = csv
+        # PR 6b: emit the pool name as a param. The C++ side (HadesNetworkIO)
+        # ignores `nodeMapper.poolName` until PR 6c wires up SharedArray
+        # dispatch; emitting it now lets two-pool SDLs be validated end-to-end
+        # at the Python layer.
+        self._apis[mod_prefix + "nodeMapper.poolName"] = pool
+
+        if mapper_params:
+            for k, v in mapper_params.items():
+                self._apis[mod_prefix + "nodeMapper." + k] = str(v)
+
+        # PR 8 debug-misconfig hook: pools testsuite uses this to force a
+        # rogue-NID or empty-permit scenario. Production code must not set it.
+        if suppress_permit:
+            self._apis[mod_prefix + "suppressPermitInsert"] = "1"
+
+        return nid_list
+
 
 class EmberSimpleMemoryJob(EmberJob):
     def __init__(self, job_id, num_nodes, apis, numCores = 1, nicsPerNode = 1):
@@ -254,3 +316,62 @@ class EmberFAMNodeJob(EmberSimpleMemoryJob):
         #self.nic._declareParams("nic",["FAM_memSize","FAM_backed"])
         #x = self.nic._createPrefixedParams("simpleMemoryModel")
         #x._declareParams("nic",simpleMemory_params,"simpleMemoryModel")
+
+
+class IoNodeJob(EmberNullJob):
+    """Empty/idle job that occupies storage NIDs allocated via
+    ``System.allocateIoNodes()``.
+
+    Runs the NullMotif so the EmberEngine stays alive (the receiving NIC
+    needs primaryComponentDoNotEndSim ref-count > 0) but does no host-side
+    work.  The NIC uses ``StorageNicConfiguration`` so the SimpleSSD
+    storage-model subcomponent is enabled on these (and only these) NIDs.
+    Pass ``useSimpleSSD=False`` to fall back to the raw DMA path; in that
+    case ``BasicNicConfiguration`` is used and no SSD is loaded.
+    """
+
+    _next_job_id = 9000
+
+    def __init__(self, io_nid_list, numCores=1, nicsPerNode=1, job_id=None,
+                 network_interface=None, useSimpleSSD=True,
+                 pool_name="default", pool_size=None):
+        if job_id is None:
+            job_id = IoNodeJob._next_job_id
+            IoNodeJob._next_job_id += 1
+
+        EmberNullJob.__init__(self, job_id, len(io_nid_list), numCores, nicsPerNode)
+
+        if network_interface is not None:
+            self.network_interface = network_interface
+
+        resolved_pool_size = (pool_size if pool_size is not None
+                              else len(io_nid_list))
+
+        if useSimpleSSD:
+            self._unlockVariable("nic")
+            self.nic = StorageNicConfiguration()
+            self.nic._pool_name = pool_name
+            self.nic._pool_size = resolved_pool_size
+            self._lockVariable("nic")
+
+        object.__setattr__(self, "pool_name", pool_name)
+        object.__setattr__(self, "pool_size", resolved_pool_size)
+
+    def getName(self):
+        return "IoNodeJob"
+
+    def build(self, nodeID, extraKeys):
+        if getattr(self.nic, "_nid_map", None) is None:
+            self._unlockVariable("nic")
+            self.nic._nid_map = self._nid_map
+            self._lockVariable("nic")
+        return EmberNullJob.build(self, nodeID, extraKeys)
+
+
+def _ioNodeJobDefaultFactory(io_nid_list, network_interface, pool_name="default"):
+    # PR 6b: factory invoked once per pool by System.build(). The
+    # `pool_name` kwarg replaces the previous nameless single-pool model.
+    return IoNodeJob(io_nid_list, network_interface=network_interface,
+                     pool_name=pool_name, pool_size=len(io_nid_list))
+
+System.setIoNodeJobFactory(_ioNodeJobDefaultFactory)

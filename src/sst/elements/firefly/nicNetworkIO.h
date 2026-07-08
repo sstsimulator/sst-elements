@@ -1,52 +1,37 @@
-// SPDX-FileCopyrightText: Copyright Hewlett Packard Enterprise Development LP
-// SPDX-License-Identifier: BSD-3-Clause
+// Copyright 2013-2026 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2013-2026, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// of the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 class NetworkIO {
     public:
         NetworkIO(Nic& nic, Params& params, Output& output);
         ~NetworkIO() {}
 
-        // Main event handler - dispatches to READ, WRITE, or QUIET handlers
+        // Main event handler - dispatches to READ or WRITE handlers
         void handleEvent(NicNetworkIOCmdEvent* event, int id);
 
     private:
         // Network storage operation handlers
         void handleNetworkIORead(NicNetworkIOReadCmdEvent* event, int id);
         void handleNetworkIOWrite(NicNetworkIOWriteCmdEvent* event, int id);
+        void handleNetworkIOOpen(NicNetworkIOOpenCmdEvent* event, int id);
+        void handleNetworkIOClose(NicNetworkIOCloseCmdEvent* event, int id);
 
-        struct PendingOps {
-                PendingOps() : readCount(0), writeCount(0) {}
-                int readCount;                      // Number of pending non-blocking reads
-                int writeCount;                     // Number of pending non-blocking writes
-        };
+        // Core references
+        Nic& m_nic;
+        Output& m_dbg;
+        std::string m_prefix;
 
-        void incPendingReads(int id) {
-                ++m_pendingOps[id].readCount;
-        }
-
-        void decPendingReads(int id) {
-                PendingOps& ops = m_pendingOps[id];
-                assert(ops.readCount > 0);
-                --ops.readCount;
-        }
-    
-    void incPendingWrites(int id) {
-        ++m_pendingOps[id].writeCount;
-    }
-    
-    void decPendingWrites(int id) {
-        PendingOps& ops = m_pendingOps[id];
-        assert(ops.writeCount > 0);
-        --ops.writeCount;
-    }
-    
-    // Core references
-    Nic& m_nic;
-    Output& m_dbg;
-    std::string m_prefix;
-    
-    // Per-core tracking of pending non-blocking operations
-    std::vector<PendingOps> m_pendingOps;
-    
-    std::string prefix() { return m_prefix; }
+        std::string prefix() { return m_prefix; }
 };
