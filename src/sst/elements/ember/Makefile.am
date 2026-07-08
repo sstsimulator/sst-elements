@@ -253,6 +253,14 @@ libember_la_SOURCES = \
 	shmem/motifs/emberShmemFAM_Gatherv.h \
 	shmem/motifs/emberShmemFAM_AtomicInc.h \
 	shmem/motifs/emberShmemFAM_Cswap.h \
+	libs/networkIOEvents/emberNetworkIOEvent.h \
+	libs/networkIOEvents/emberNetworkIOReadEvent.h \
+	libs/networkIOEvents/emberNetworkIOWriteEvent.h \
+	libs/emberNetworkIOLib.h \
+	networkIO/emberNetworkIOGen.h \
+	networkIO/emberNetworkIOGen.cc \
+	networkIO/motifs/emberTestNetworkIO.h \
+	networkIO/motifs/emberTestNetworkIO.cc \
 	sirius/include/sirius/siriusglobals.h \
 	pyember.py
 
@@ -283,8 +291,10 @@ EXTRA_DIST = \
 	test/loadFAM200 \
 	test/loadFAM200rand \
 	test/loadFAM2048 \
+	test/loadNetworkIO \
 	test/loadFileParse.py \
 	test/loadUtils.py \
+	test/networkIOParams.py \
 	test/paramUtils.py \
 	test/Tester.py \
 	test/defaultSim.py \
