@@ -47,7 +47,11 @@ public:
         m_toCoreLink->send( m_msgHostDelay, event );
     }
 
-    void send( SimTime_t delay, SST::Event * event ) {
+    void sendShmem( SimTime_t delay, SST::Event * event ) {
+        m_toCoreLink->send( delay , event );
+    }
+
+    void sendNetworkIO( SimTime_t delay, SST::Event * event ) {
         m_toCoreLink->send( delay , event );
     }
 
@@ -77,18 +81,18 @@ public:
     }
 
     void notifyShmem( SimTime_t delay ) {
-        send( delay, new NicShmemRespEvent( [](){} ));
+        sendShmem( delay, new NicShmemRespEvent( [](){} ));
     }
 
     void notifyShmem( SimTime_t delay, NicShmemRespEvent::Callback callback ) {
-        send( delay, new NicShmemRespEvent( callback ));
+        sendShmem( delay, new NicShmemRespEvent( callback ));
     }
 
     void notifyShmem( SimTime_t delay, NicShmemValueRespEvent::Callback callback, Hermes::Value& value ) {
-        send( delay, new NicShmemValueRespEvent( callback, value ));
+        sendShmem( delay, new NicShmemValueRespEvent( callback, value ));
     }
-    void notifyNetworkIO( SimTime_t delay, std::function<void(int)> callback, int retval ) {
-        send( delay, new NicNetworkIORespEvent( callback, retval ));
+    void notifyNetworkIO( SimTime_t delay, uint32_t cb_id, int retval ) {
+        sendNetworkIO( delay, new NicNetworkIORespEvent( cb_id, retval ));
     }
 
     // Following functions needed so checkpointable handlers will
