@@ -21,13 +21,13 @@ public:
 
 protected:
     EmberShmemLib* m_shmemLib;
-    
-    
+
+
     EmberNetworkIOLib* m_networkIOLib;
     EmberNetworkIOLib& networkIO() { return *m_networkIOLib; }
 
     EmberShmemLib& shmem() { return *m_shmemLib; }
-    
+
     // Barrier macro (same as EmberShmemGen)
     #define enQ_barrier_all shmem().barrier_all
     #define enQ_malloc shmem().malloc

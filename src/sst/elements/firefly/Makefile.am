@@ -170,7 +170,7 @@ libfirefly_la_SOURCES = \
 	nicNetworkIO.h \
 	nicNetworkIOStream.cc \
 	nicNetworkIOStream.h \
-	pyfirefly.py 
+	pyfirefly.py
 
 libfirefly_la_LDFLAGS = -module -avoid-version
 

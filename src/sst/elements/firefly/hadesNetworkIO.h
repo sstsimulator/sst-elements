@@ -44,7 +44,7 @@ class HadesNetworkIO : public Hermes::NetworkIO::Interface {
 
     void networkIORead(Hermes::Vaddr dest, uint64_t offset, uint64_t length,
                       Callback callback) override;
-    
+
     void networkIOWrite(uint64_t offset, Hermes::Vaddr src, uint64_t length,
                        Callback callback) override;
 

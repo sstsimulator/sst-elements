@@ -214,7 +214,7 @@ class VirtNic : public SST::SubComponent {
 
     void networkIORead( int targetNid, Hermes::Vaddr dest, size_t len, std::function<void(int)> );
     void networkIOWrite( int targetNid, Hermes::Vaddr src, size_t len, std::function<void(int)> );
-    
+
     bool isBlocked() {
 		m_dbg.debug(CALL_INFO,2,0,"%d %d\n", m_curNicQdepth, m_maxNicQdepth);
         return m_curNicQdepth == m_maxNicQdepth;
