@@ -18,7 +18,6 @@
 #include <mercury/common/util.h>
 #include <mercury/components/node_base.h>
 #include <mercury/components/operating_system.h>
-#include <mercury/hardware/common/flow_key.h>
 #include <mercury/hardware/network/network_message.h>
 
 #include <memory>
@@ -127,24 +126,19 @@ NIC::incomingPacket(int vn){
     auto* payload = req->takePayload();
 
     // Key reassembly by (source, flowId): flowId is only unique per sender.
-    if (req->src < 0 || uint64_t(req->src) > kFlowKeyMaxSrc) {
-      sst_hg_abort_printf("NIC reassembly key: source %lld out of range "
-                          "(max %llu); widen the flow key for this scale\n",
-                          (long long)req->src, (unsigned long long)kFlowKeyMaxSrc);
-    }
-    auto flowKey = [&](uint64_t fid){ return recvCqFlowKey(uint64_t(req->src), fid); };
+    uint64_t src = uint64_t(req->src);
 
     uint64_t flow_id = 0;
     auto* tracker = dynamic_cast<FlowTracker*>(payload);
     if (tracker != nullptr) {
       flow_id = tracker->id();
-      Flow* flow = cq_.recv(flowKey(flow_id), bytes, nullptr);
+      Flow* flow = cq_.recv(src, flow_id, bytes, nullptr);
     }
 
     if (req->tail) {
       auto* incoming_msg = payload ? dynamic_cast<NetworkMessage*>(payload) : nullptr;
       if (incoming_msg == nullptr) sst_hg_abort_printf("couldn't cast event to NetworkMessage\n");
-      Flow* flow = cq_.recv(flowKey(incoming_msg->flowId()), bytes, incoming_msg);
+      Flow* flow = cq_.recv(src, incoming_msg->flowId(), bytes, incoming_msg);
       if (flow == nullptr) sst_hg_abort_printf("couldn't get a flow\n");
       auto* msg = dynamic_cast<NetworkMessage*>(flow);
       if (msg == nullptr) sst_hg_abort_printf("couldn't cast flow to message\n");

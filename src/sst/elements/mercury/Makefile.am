@@ -156,7 +156,6 @@ nobase_library_include_HEADERS = \
   hardware/network/network_message.h \
   hardware/network/network_message_fwd.h \
   hardware/common/recv_cq.h \
-  hardware/common/flow_key.h \
   hardware/common/flow_fwd.h \
   hardware/common/packet.h \
   hardware/common/flow.h \
