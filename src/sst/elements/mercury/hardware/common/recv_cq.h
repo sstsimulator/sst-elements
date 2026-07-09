@@ -43,7 +43,7 @@ class RecvCQ
   */
   Flow* recv(Packet* pkt);
 
-  Flow* recv(uint64_t unique_id, uint32_t bytes, Flow* payload);
+  Flow* recv(uint64_t src, uint64_t flow_id, uint32_t bytes, Flow* payload);
 
   void print();
 
@@ -61,12 +61,15 @@ class RecvCQ
   };
 
   /**
-      Keys are unique network ID for all messages.
+      Keys are (source, flowId): flowId alone is only unique per sender,
+      so source and flowId are tracked separately rather than packed into
+      one integer, which would risk overflowing a narrower bit field.
       Value is the number of bytes receved.
   */
-  using pair_type = std::pair<const uint64_t, incomingMsg>;
+  using key_type = std::pair<uint64_t, uint64_t>;
+  using pair_type = std::pair<const key_type, incomingMsg>;
   using alloc = SST::Hg::threadSafeAllocator<pair_type>;
-  using received_map = std::map<uint64_t, incomingMsg, std::less<uint64_t>, alloc>;
+  using received_map = std::map<key_type, incomingMsg, std::less<key_type>, alloc>;
   received_map bytes_recved_;
 };
 

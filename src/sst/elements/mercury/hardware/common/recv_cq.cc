@@ -34,21 +34,22 @@ RecvCQ::print()
   std::cout << "Completion Queue" << std::endl;
   for (auto& pair : bytes_recved_){
     incomingMsg& incoming = pair.second;
-    std::cout << "Message " << pair.first << " has "
+    std::cout << "Message (src=" << pair.first.first << ", flow=" << pair.first.second << ") has "
         << incoming.bytes_arrived << " bytes arrived "
         << " out of " << incoming.bytes_total << "\n";
   }
 }
 
 Flow*
-RecvCQ::recv(uint64_t unique_id, uint32_t bytes, Flow* orig)
+RecvCQ::recv(uint64_t src, uint64_t flow_id, uint32_t bytes, Flow* orig)
 {
-  incomingMsg& incoming  = bytes_recved_[unique_id];
+  key_type key(src, flow_id);
+  incomingMsg& incoming  = bytes_recved_[key];
 #if SST_HG_SANITY_CHECK
   if (incoming.msg && orig){
     sst_hg_abort_printf(
-        "RecvCQ::recv: only one message chunk should carry the parent payload for %" PRIu64 ": %s",
-        unique_id, incoming.msg->toString().c_str());
+        "RecvCQ::recv: only one message chunk should carry the parent payload for (src=%" PRIu64 ", flow=%" PRIu64 "): %s",
+        src, flow_id, incoming.msg->toString().c_str());
   }
 #endif
   if (orig){
@@ -60,7 +61,7 @@ RecvCQ::recv(uint64_t unique_id, uint32_t bytes, Flow* orig)
 
   if (incoming.bytes_arrived == incoming.bytes_total){
     Flow* ret = incoming.msg;
-    bytes_recved_.erase(unique_id);
+    bytes_recved_.erase(key);
     return ret;
   } else {
     return NULL;
@@ -71,7 +72,7 @@ Flow*
 RecvCQ::recv(Packet* pkt)
 {
   Flow* payload = dynamic_cast<Flow*>(pkt->flow());
-  return recv(pkt->flowId(), pkt->byteLength(), payload);
+  return recv(pkt->fromaddr(), pkt->flowId(), pkt->byteLength(), payload);
 }
 
 } // end namespace Hg
