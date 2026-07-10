@@ -6,12 +6,10 @@
 // All rights reserved.
 //
 // Portions are copyright of other developers:
-// See the file CONTRIBUTORS.TXT in the top level directory
-// of the distribution for more information.
+// See the file CONTRIBUTORS.TXT in the top level directory of the distribution.
 //
-// This file is part of the SST software package. For license
-// information, see the LICENSE file in the top level directory of the
-// distribution.
+// This file is part of the SST software package. For license information,
+// see the LICENSE file in the top level directory of the distribution.
 
 #ifndef CARCOSA_PINGPONGAGENT_H
 #define CARCOSA_PINGPONGAGENT_H
@@ -27,10 +25,7 @@ namespace SST {
 namespace Carcosa {
 
 /**
- * InterceptionAgent that implements the MMIO ping-pong coordination protocol
- * used with Vanadis (command register at base+0, status register at base+4).
- * Coordinates with a partner Hali via the ring; supports initial_command,
- * max_iterations, and exit (-1) semantics.
+ * MMIO ping-pong (cmd@+0, status@+4) with ring partner; exit on -1.
  */
 class PingPongAgent : public InterceptionAgentAPI
 {

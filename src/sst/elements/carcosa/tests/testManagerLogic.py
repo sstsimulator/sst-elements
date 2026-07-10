@@ -1,7 +1,7 @@
-# testmanagerLogic.py
+# testManagerLogic.py
 # Puts a faultInjectorMemH on each L1 cache and assigns each Hali to manage exactly one
 # injector via separate PM registries: hali_0 -> l1_0 (c0_l1cache), hali_1 -> l1_1, etc.
-# Run with: sst testmanagerLogic.py
+# Run with: sst testManagerLogic.py
 # Look for "[ManagerLogic]" debug lines to verify each manager only sees its own PM.
 
 import sst

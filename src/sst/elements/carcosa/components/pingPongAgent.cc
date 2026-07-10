@@ -6,12 +6,10 @@
 // All rights reserved.
 //
 // Portions are copyright of other developers:
-// See the file CONTRIBUTORS.TXT in the top level directory
-// of the distribution for more information.
+// See the file CONTRIBUTORS.TXT in the top level directory of the distribution.
 //
-// This file is part of the SST software package. For license
-// information, see the LICENSE file in the top level directory of the
-// distribution.
+// This file is part of the SST software package. For license information,
+// see the LICENSE file in the top level directory of the distribution.
 
 #include "sst_config.h"
 #include "sst/elements/carcosa/components/pingPongAgent.h"
@@ -65,8 +63,7 @@ bool PingPongAgent::handleInterceptedEvent(MemEvent* ev, Link* highlink)
         checkBothDone();
         return true;
     }
-    delete ev;
-    return true;
+    return warnAndDropUnknownIntercept(ev, controlAddrBase_);
 }
 
 void PingPongAgent::notifyPartnerDone(unsigned iteration)

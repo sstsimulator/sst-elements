@@ -26,10 +26,7 @@
 namespace SST {
 namespace Carcosa {
 
-/**
- * Parsed Port Module command: "<command> [param1 [param2 ...]]".
- * Parameters are kept as strings and converted on-demand via getParam<T>().
- */
+/** Parsed PM command string: command + string params. */
 struct PMData {
     std::string command;
     std::vector<std::string> params;
@@ -192,10 +189,7 @@ struct ManagerMessage {
     }
 };
 
-/**
- * Per-manager registry: maps event IDs to PM command strings, plus a queue of
- * PortModule -> Manager messages (e.g. RegisterPM). Look up by id via PMRegistryResolver.
- */
+/** Event-id -> PM command map, plus PortModule->Manager message queue. */
 class PMDataRegistry {
 public:
     PMDataRegistry() = default;

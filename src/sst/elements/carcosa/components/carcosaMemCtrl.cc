@@ -45,13 +45,7 @@ using namespace SST::MemHierarchy;
 #define is_debug_event(ev) false
 #define Debug(level, fmt, ... )
 #endif
-/*
- *  Debug levels:
- *  3  - event receive/response
- *  4  - backing store
- *  9  - init()
- *  10 - address translation
- */
+/* Debug levels: 3=event, 4=backing, 9=init, 10=addr translation. */
 
 /*************************** Memory Controller ********************/
 CarcosaMemCtrl::CarcosaMemCtrl(ComponentId_t id, Params &params) : Component(id), backing_(NULL) {
@@ -112,13 +106,7 @@ CarcosaMemCtrl::CarcosaMemCtrl(ComponentId_t id, Params &params) : Component(id)
 
     string link_lat         = params.find<std::string>("direct_link_latency", "10 ns");
 
-    /* CarcosaMemCtrl supports multiple ways of loading in backends:
-     *  Legacy:
-     *      Define backend and/or backendConvertor in the memcontroller's parameter set
-     *  Better way:
-     *      Fill backend slot with backend and memcontroller loads the compatible convertor
-     *
-     */
+    /* Prefer backend subcomponent slot; fall back to legacy params. */
 
     MemBackend * memory = loadUserSubComponent<MemBackend>("backend");
     if (!memory) {  /* Try to load from our parameters (legacy mode 1) */
@@ -811,11 +799,7 @@ void CarcosaMemCtrl::processInitEvent( MemEventInit* me ) {
 
 
 void CarcosaMemCtrl::adjustRegionToMemSize() {
-    // Check memSize_ against region
-    // Set region_ to the smaller of the two
-    // It's sometimes useful to be able to adjust one of the params and not the other
-    // So, a mismatch is likely not an error, but alert the user in debug mode just in case
-    // TODO deprecate mem_size & just use region?
+    // Shrink region_ to memSize_ when both are set (either param may lag).
     uint64_t regSize = region_.end - region_.start;
     if (regSize != region_.REGION_MAX) {  // The default is for region_.end = uint64_t -1, but then if we add one we wrap...
         regSize++; // Since region_.end and region_.start are inclusive
