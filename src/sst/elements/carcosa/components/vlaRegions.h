@@ -12,9 +12,7 @@
 #ifndef CARCOSA_VLA_REGIONS_H
 #define CARCOSA_VLA_REGIONS_H
 
-// Publish labeled regions into PipelineStateRegistry for region-aware ECC.
-// Slot 0 = MMIO control; CSV NAME:BASE:SIZE fills slots 1..N (hex or decimal).
-
+#include <sst/elements/carcosa/components/configParse.h>
 #include <sst/core/output.h>
 #include <sst/elements/carcosa/components/pipelineStateRegistry.h>
 #include <cctype>
@@ -26,17 +24,6 @@
 
 namespace SST {
 namespace Carcosa {
-
-inline uint64_t parseUint64Token(const std::string& tok) {
-    if (tok.empty()) return 0;
-    try {
-        if (tok.size() > 2 && (tok.substr(0, 2) == "0x" || tok.substr(0, 2) == "0X"))
-            return std::stoull(tok, nullptr, 16);
-        return std::stoull(tok, nullptr, 10);
-    } catch (...) {
-        return 0;
-    }
-}
 
 inline void trimRegionTok(std::string& s) {
     size_t b = 0;
@@ -82,15 +69,16 @@ inline int publishUserRegions(const std::string& stateKey,
         }
 
         const std::string& name = parts[0];
-        uint64_t base = parseUint64Token(parts[1]);
-        uint64_t size = parseUint64Token(parts[2]);
+        uint64_t base = 0, size = 0;
+        if (!ConfigParse::parseUint64(parts[1], base) ||
+            !ConfigParse::parseUint64(parts[2], size)) {
+            if (log) log->fatal(CALL_INFO, -1,
+                                "%s: invalid region entry '%s'.\n", who,
+                                entry.c_str());
+            return published;
+        }
 
-        s->ensureRegionSlot(slot);
-        s->regions[slot].base  = base;
-        s->regions[slot].size  = size;
-        s->regions[slot].valid = (size > 0);
-        s->regions[slot].id    = slot;
-        s->regions[slot].name  = name;
+        s->publishRegion(slot, base, size, name);
         ++slot;
         ++published;
     }
@@ -103,10 +91,7 @@ inline bool consumeFrameAbort(const std::string& stateKey) {
     PipelineStateBase* s =
         PipelineStateRegistry<PipelineStateBase>::getMutable(stateKey);
     if (!s) return false;
-    if (!s->frameAbortRequested) return false;
-    s->frameAbortRequested = false;
-    s->framesDropped += 1;
-    return true;
+    return s->consumeFrameAbort();
 }
 
 } // namespace Carcosa

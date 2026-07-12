@@ -42,11 +42,11 @@ SimplePipelineProducer::SimplePipelineProducer(ComponentId_t id, Params& params)
 {
     out_ = new Output("", 1, 0, Output::STDOUT);
 
-    stateKey_    = params.find<std::string>("state_key", "");
+    state_key_   = params.find<std::string>("state_key", "");
     totalCycles_ = params.find<int>("total_cycles", 4);
     verbose_     = params.find<bool>("verbose", false);
 
-    if (stateKey_.empty()) stateKey_ = getName();
+    if (state_key_.empty()) state_key_ = getName();
 
     outLink_ = configureLink("out");
     sst_assert(outLink_, CALL_INFO, -1,
@@ -56,9 +56,8 @@ SimplePipelineProducer::SimplePipelineProducer(ComponentId_t id, Params& params)
     // Publish the initial snapshot. The gate may consult this before our first
     // tick fires; seed currentKernel=-1 so it doesn't accidentally match any
     // real stage id in the drop set.
-    state_ = PipelineStateRegistry<PipelineStateBase>::getOrCreate(stateKey_);
-    state_->currentKernel = -1;
-    state_->pipelineCycle = 0;
+    state_ = PipelineStateRegistry<PipelineStateBase>::getOrCreate(state_key_);
+    state_->publishKernel(-1, "IDLE", 0);
 
     // Demonstrate the region-publish API with a single dummy region; not used
     // by the gate in this example but exercised so the pattern is visible.
@@ -76,7 +75,7 @@ SimplePipelineProducer::SimplePipelineProducer(ComponentId_t id, Params& params)
 
     if (verbose_) {
         out_->output("%s: producer ready, state_key='%s', total_cycles=%d, clock=%s\n",
-                     getName().c_str(), stateKey_.c_str(), totalCycles_, clock_freq.c_str());
+                     getName().c_str(), state_key_.c_str(), totalCycles_, clock_freq.c_str());
     }
 }
 
@@ -92,8 +91,7 @@ bool SimplePipelineProducer::tick(Cycle_t /*cycle*/)
 
     // Publish BEFORE sending, so any PortModule on the receiving side observes
     // the snapshot that corresponds to the event it is about to see.
-    state_->currentKernel = stage;
-    state_->pipelineCycle = cycle;
+    state_->publishKernel(stage, simpleStageName(stage), cycle);
 
     outLink_->send(new SimpleStageEvent(stage));
 
@@ -194,10 +192,10 @@ SimpleStageGate::SimpleStageGate(Params& params)
     verbose_    = params.find<bool>("verbose", false);
     out_        = new Output("", verbose_ ? 1 : 0, 0, Output::STDOUT);
 
-    stateKey_   = params.find<std::string>("state_key", "");
+    state_key_  = params.find<std::string>("state_key", "");
     dropStages_ = parseIntCsv(params.find<std::string>("drop_stages", ""));
 
-    if (stateKey_.empty()) {
+    if (state_key_.empty()) {
         out_->fatal(CALL_INFO, -1,
                     "SimpleStageGate: 'state_key' is required (must match the producer's state_key or getName()).\n");
     }
@@ -209,7 +207,7 @@ SimpleStageGate::SimpleStageGate(Params& params)
             list += simpleStageName(s);
         }
         out_->output("SimpleStageGate: state_key='%s' drop_stages=[%s]\n",
-                     stateKey_.c_str(), list.c_str());
+                     state_key_.c_str(), list.c_str());
     }
 }
 
@@ -217,7 +215,7 @@ SimpleStageGate::~SimpleStageGate()
 {
     if (out_) {
         out_->output("[SimpleStageGate %s] summary: evaluated=%" PRIu64 " dropped=%" PRIu64 "\n",
-                     stateKey_.c_str(), evaluated_, dropped_);
+                     state_key_.c_str(), evaluated_, dropped_);
         delete out_;
     }
 }
@@ -225,7 +223,7 @@ SimpleStageGate::~SimpleStageGate()
 const PipelineStateBase* SimpleStageGate::resolveState() const
 {
     if (cached_) return cached_;
-    cached_ = PipelineStateRegistry<PipelineStateBase>::get(stateKey_);
+    cached_ = PipelineStateRegistry<PipelineStateBase>::get(state_key_);
     return cached_;
 }
 
@@ -249,7 +247,7 @@ void SimpleStageGate::interceptHandler(uintptr_t /*key*/, Event*& ev, bool& canc
 
     if (verbose_) {
         out_->output("[SimpleStageGate %s] DROP stage=%s cycle=%d\n",
-                     stateKey_.c_str(),
+                     state_key_.c_str(),
                      simpleStageName(st->currentKernel),
                      st->pipelineCycle);
     }

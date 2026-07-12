@@ -49,9 +49,8 @@
 namespace SST {
 namespace Carcosa {
 
-/**
- * Ring GPU substrate on balar; dedicated H2D weight stage for EccGuard confinement.
- */
+class BalarTraceParser;
+
 class BalarRingBridge : public InterceptionAgentAPI
 {
 public:
@@ -88,8 +87,6 @@ public:
 
     BalarRingBridge(ComponentId_t id, Params& params);
     BalarRingBridge() : InterceptionAgentAPI() {}
-    // Out-of-line so the (forward-declared) CudaAPITraceParser / handler types are
-    // complete at the delete site.
     ~BalarRingBridge() override;
 
     // Unused data-plane hook (this agent speaks the ring + its own StandardMem links).
@@ -98,7 +95,7 @@ public:
         (void)ev; (void)highlink; return false;
     }
 
-    void setRingLink(SST::Link* leftLink) override { ringLink_ = leftLink; }
+    void setRingLink(SST::Link* leftLink) override { ring_link_ = leftLink; }
     void handleRingEvent(SST::Carcosa::HaliEvent* ev) override;
 
     void agentInit(unsigned phase) override;
@@ -138,18 +135,18 @@ private:
     static uint64_t dataToUInt64(std::vector<uint8_t>* data);
 
     SST::Output*                  out_       = nullptr;
-    SST::Link*                    ringLink_  = nullptr;
+    SST::Link*                    ring_link_  = nullptr;
     SST::Interfaces::StandardMem* cache_link_ = nullptr;
     SST::Interfaces::StandardMem* mmio_link_  = nullptr;
 
-    std::string stateKey_;
-    uint64_t    mmioAddr_        = 0;
-    uint64_t    scratchMemAddr_  = 0;
-    uint64_t    weightStageAddr_ = 0x20000000;
-    uint64_t    cacheLineSize_   = 64;
-    std::string traceFile_;
-    std::string cudaExecutable_;
-    bool        replayEachCmd_   = false;
+    std::string state_key_;
+    uint64_t    mmio_addr_         = 0;
+    uint64_t    scratch_mem_addr_  = 0;
+    uint64_t    weight_stage_addr_ = 0x20000000;
+    uint64_t    cache_line_size_   = 64;
+    std::string trace_file_;
+    std::string cuda_executable_;
+    bool        replay_each_cmd_   = false;
     bool        verbose_         = false;
 
     // Per-request bookkeeping: tag + which link it went out on.
@@ -157,13 +154,8 @@ private:
              std::pair<std::string, IfacePath>> requests_;
 
     // Staging: one or more (addr, bytes) segments written before the doorbell.
-    // Segment 0 is always the encoded command packet at scratchMemAddr_; for an
-    // H2D memcpy a second segment holds the weight payload at weightStageAddr_.
     struct StageSegment { uint64_t addr; std::vector<uint8_t> bytes; };
     std::vector<StageSegment> stage_segments_;
-    // Filled by the trace parser for an H2D memcpy: the weight payload to stage at
-    // weightStageAddr_ (a dedicated, separable region) rather than intermingled
-    // with the command packet. Consumed by beginPacketIssue.
     std::vector<uint8_t> pending_weight_payload_;
     size_t   seg_index_        = 0;    // which segment we're writing
     size_t   seg_offset_       = 0;    // byte offset within the current segment
@@ -187,7 +179,9 @@ private:
     // State for the single in-flight D2H memcpy. Small, non-SST copies return a
     // directly populated host buffer. SST-memory copies instead require an
     // asynchronous StandardMem readback after balar's DMA completion.
-    uint8_t* pending_d2h_host_buf_ = nullptr;
+    // Backing storage for small, non-SST D2H copies. The packet carries a
+    // pointer into this vector, which remains stable until the call completes.
+    std::vector<uint8_t> pending_d2h_host_buf_;
     uint64_t pending_d2h_sst_addr_ = 0;
     size_t   pending_d2h_bytes_ = 0;
     size_t   pending_d2h_read_bytes_ = 0;
@@ -195,8 +189,7 @@ private:
     size_t   pending_d2h_read_chunk_ = 0;
     bool     pending_d2h_is_sst_ = false;
 
-    class CudaAPITraceParser;
-    CudaAPITraceParser* trace_parser_ = nullptr;
+    BalarTraceParser* trace_parser_ = nullptr;
 
     // Handler adapters for StandardMem's double-dispatch RequestHandler.
     class CacheHandlers;

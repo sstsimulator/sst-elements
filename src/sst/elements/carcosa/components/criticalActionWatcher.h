@@ -85,7 +85,7 @@ private:
     std::string  critical_region_;
     uint64_t     critical_len_ = 64;
 
-    bool applyOnResponsesOnly_ = true;
+    bool apply_on_responses_only_ = true;
 
     PipelineStateBase* state_ptr_ = nullptr;
     std::string        actuation_kernel_name_;

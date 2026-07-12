@@ -57,33 +57,32 @@ bool parseModeWeightsCsv(const std::string& csv, double out[kModeCount]) {
     int idx = 0;
     while (std::getline(ss, tok, ':')) {
         if (idx >= kModeCount) return false;
-        try {
-            out[idx++] = std::stod(tok);
-        } catch (...) {
-            return false;
-        }
+        double value = 0.0;
+        if (!ConfigParse::parseDouble(tok, value) || value < 0.0) return false;
+        out[idx++] = value;
     }
     return idx == kModeCount;
 }
 
-EccGuard::FaultModel parseFaultModel(const std::string& s) {
-    if (s == "jedec_mix" || s == "jedec" || s == "JEDEC_MIX") return EccGuard::FaultModel::JedecMix;
-    if (s == "campaign"  || s == "CAMPAIGN")                  return EccGuard::FaultModel::Campaign;
-    if (s == "resident"  || s == "RESIDENT")                  return EccGuard::FaultModel::Resident;
-    return EccGuard::FaultModel::Poisson;
+bool parseFaultModel(const std::string& s, EccGuard::FaultModel& model) {
+    if (s == "poisson" || s == "POISSON") model = EccGuard::FaultModel::Poisson;
+    else if (s == "jedec_mix" || s == "jedec" || s == "JEDEC_MIX") model = EccGuard::FaultModel::JedecMix;
+    else if (s == "campaign" || s == "CAMPAIGN") model = EccGuard::FaultModel::Campaign;
+    else if (s == "resident" || s == "RESIDENT") model = EccGuard::FaultModel::Resident;
+    else return false;
+    return true;
 }
 
-// Parse campaign mode name into FaultMode; unknown -> SingleRow (same
-// defaulting as jedec_mix). Crash only on empty/garbage upstream.
-EccGuard::FaultMode parseCampaignMode(const std::string& s) {
-    if (s == "cell"   || s == "single_cell"   || s == "SingleCell")   return EccGuard::FaultMode::SingleCell;
-    if (s == "word"   || s == "single_word"   || s == "SingleWord")   return EccGuard::FaultMode::SingleWord;
-    if (s == "row"    || s == "single_row"    || s == "SingleRow")    return EccGuard::FaultMode::SingleRow;
-    if (s == "column" || s == "single_column" || s == "SingleColumn") return EccGuard::FaultMode::SingleColumn;
-    if (s == "bank"   || s == "single_bank"   || s == "SingleBank")   return EccGuard::FaultMode::SingleBank;
-    if (s == "device" || s == "single_device" || s == "SingleDevice") return EccGuard::FaultMode::SingleDevice;
-    if (s == "multi_chip" || s == "MULTI_CHIP") return EccGuard::FaultMode::SingleWord;
-    return EccGuard::FaultMode::SingleRow;
+bool parseFaultMode(const std::string& s, EccGuard::FaultMode& mode) {
+    if (s == "cell" || s == "single_cell" || s == "SingleCell") mode = EccGuard::FaultMode::SingleCell;
+    else if (s == "word" || s == "single_word" || s == "SingleWord") mode = EccGuard::FaultMode::SingleWord;
+    else if (s == "row" || s == "single_row" || s == "SingleRow") mode = EccGuard::FaultMode::SingleRow;
+    else if (s == "column" || s == "single_column" || s == "SingleColumn") mode = EccGuard::FaultMode::SingleColumn;
+    else if (s == "bank" || s == "single_bank" || s == "SingleBank") mode = EccGuard::FaultMode::SingleBank;
+    else if (s == "device" || s == "single_device" || s == "SingleDevice") mode = EccGuard::FaultMode::SingleDevice;
+    else if (s == "multi_chip" || s == "MULTI_CHIP") mode = EccGuard::FaultMode::SingleWord;
+    else return false;
+    return true;
 }
 
 bool isMultiChipCampaignAlias(const std::string& s) {
@@ -100,62 +99,11 @@ std::string resolveCampaignKernel(const std::string& raw) {
     return raw;
 }
 
-EccGuard::PayloadDtype parseDtype(const std::string& s) {
-    if (s == "bf16" || s == "BF16") return EccGuard::PayloadDtype::Bf16;
-    if (s == "fp8"  || s == "FP8")  return EccGuard::PayloadDtype::Fp8;
-    if (s == "int8" || s == "INT8") return EccGuard::PayloadDtype::Int8;
-    return EccGuard::PayloadDtype::Bytes;
-}
-
-EccGuard::DueAction parseDueAction(const std::string& s) {
-    if (s == "drop_frame" || s == "drop" || s == "DROP_FRAME") return EccGuard::DueAction::DropFrame;
-    return EccGuard::DueAction::LatencyOnly;
-}
-
-const char* dtypeName(EccGuard::PayloadDtype d) {
-    switch (d) {
-    case EccGuard::PayloadDtype::Bytes: return "bytes";
-    case EccGuard::PayloadDtype::Bf16:  return "bf16";
-    case EccGuard::PayloadDtype::Fp8:   return "fp8";
-    case EccGuard::PayloadDtype::Int8:  return "int8";
-    }
-    return "unknown";
-}
-
-// Returns true if the given bit (0-indexed inside its element) is "high blast"
-// for the dtype (sign bit or top exponent bit). Bit 0 is LSB of the element.
-bool isHighBlastBit(EccGuard::PayloadDtype dtype, unsigned bit_in_element) {
-    switch (dtype) {
-    case EccGuard::PayloadDtype::Bf16: {
-        // bf16: [15] sign, [14:7] exponent, [6:0] mantissa.
-        if (bit_in_element == 15)        return true;       // sign
-        if (bit_in_element >= 13 && bit_in_element <= 14) return true; // top 2 exp bits
-        return false;
-    }
-    case EccGuard::PayloadDtype::Fp8: {
-        // E4M3-style fp8: [7] sign, [6:3] exponent, [2:0] mantissa.
-        if (bit_in_element == 7)         return true;
-        if (bit_in_element == 6)         return true;
-        return false;
-    }
-    case EccGuard::PayloadDtype::Int8: {
-        // Two's-complement int8: bit 7 sign.
-        return bit_in_element == 7;
-    }
-    case EccGuard::PayloadDtype::Bytes:
-    default:
-        return false;
-    }
-}
-
-unsigned dtypeBytes(EccGuard::PayloadDtype d) {
-    switch (d) {
-    case EccGuard::PayloadDtype::Bf16:  return 2;
-    case EccGuard::PayloadDtype::Fp8:
-    case EccGuard::PayloadDtype::Int8:  return 1;
-    case EccGuard::PayloadDtype::Bytes:
-    default:                             return 1;
-    }
+bool parseDueAction(const std::string& s, EccGuard::DueAction& action) {
+    if (s == "latency_only" || s == "LATENCY_ONLY") action = EccGuard::DueAction::LatencyOnly;
+    else if (s == "drop_frame" || s == "drop" || s == "DROP_FRAME") action = EccGuard::DueAction::DropFrame;
+    else return false;
+    return true;
 }
 
 } // namespace
@@ -165,21 +113,22 @@ EccGuard::EccGuard(ComponentId_t id, Params& params) : Component(id) {
 
     out_ = new Output("", 1, 0, Output::STDOUT);
     verbose_ = params.find<bool>("verbose", false);
-    test_total_min_ = params.find<int64_t>("test_total_min", -1);
-    test_total_max_ = params.find<int64_t>("test_total_max", -1);
-    test_clean_min_ = params.find<int64_t>("test_clean_min", -1);
-    test_clean_max_ = params.find<int64_t>("test_clean_max", -1);
-    test_correctable_min_ = params.find<int64_t>("test_correctable_min", -1);
-    test_correctable_max_ = params.find<int64_t>("test_correctable_max", -1);
-    test_due_min_ = params.find<int64_t>("test_due_min", -1);
-    test_due_max_ = params.find<int64_t>("test_due_max", -1);
-    test_escape_min_ = params.find<int64_t>("test_escape_min", -1);
-    test_escape_max_ = params.find<int64_t>("test_escape_max", -1);
-    test_resident_born_min_ = params.find<int64_t>("test_resident_born_min", -1);
-    test_resident_born_max_ = params.find<int64_t>("test_resident_born_max", -1);
+    test_bounds_.add("total", params.find<int64_t>("test_total_min", -1),
+                     params.find<int64_t>("test_total_max", -1));
+    test_bounds_.add("clean", params.find<int64_t>("test_clean_min", -1),
+                     params.find<int64_t>("test_clean_max", -1));
+    test_bounds_.add("correctable", params.find<int64_t>("test_correctable_min", -1),
+                     params.find<int64_t>("test_correctable_max", -1));
+    test_bounds_.add("due", params.find<int64_t>("test_due_min", -1),
+                     params.find<int64_t>("test_due_max", -1));
+    test_bounds_.add("escape", params.find<int64_t>("test_escape_min", -1),
+                     params.find<int64_t>("test_escape_max", -1));
+    test_bounds_.add("resident_born",
+                     params.find<int64_t>("test_resident_born_min", -1),
+                     params.find<int64_t>("test_resident_born_max", -1));
 
     state_key_            = params.find<std::string>("state_key", "");
-    applyOnResponsesOnly_ = params.find<bool>("apply_on_responses_only", true);
+    apply_on_responses_only_ = params.find<bool>("apply_on_responses_only", true);
 
     EccPolicyEntry uniform;
     uniform.inherits_uniform = false;
@@ -204,15 +153,29 @@ EccGuard::EccGuard(ComponentId_t id, Params& params) : Component(id) {
         std::vector<std::string> errors;
         int parsed = policy_.parseCsv(ks_csv, errors);
         for (auto& e : errors) out_->output("EccGuard: %s\n", e.c_str());
+        if (!errors.empty()) {
+            out_->fatal(CALL_INFO, -1, "EccGuard: invalid kernel_policy.\n");
+        }
         if (verbose_) {
             out_->output("EccGuard: parsed %d kernel/region policy override(s).\n", parsed);
         }
     }
 
-    // Phase 2: fault model + dtype-aware flips + DUE action.
-    fault_model_   = parseFaultModel(params.find<std::string>("fault_model",   "poisson"));
-    payload_dtype_ = parseDtype     (params.find<std::string>("payload_dtype", "bytes"));
-    due_action_    = parseDueAction (params.find<std::string>("due_action",    "latency_only"));
+    std::string fault_model = params.find<std::string>("fault_model", "poisson");
+    std::string payload_dtype = params.find<std::string>("payload_dtype", "bytes");
+    std::string due_action = params.find<std::string>("due_action", "latency_only");
+    if (!parseFaultModel(fault_model, fault_model_)) {
+        out_->fatal(CALL_INFO, -1, "EccGuard: unknown fault_model '%s'.\n",
+                    fault_model.c_str());
+    }
+    if (!EccPayloadCorruptor::parseDtype(payload_dtype, payload_dtype_)) {
+        out_->fatal(CALL_INFO, -1, "EccGuard: unknown payload_dtype '%s'.\n",
+                    payload_dtype.c_str());
+    }
+    if (!parseDueAction(due_action, due_action_)) {
+        out_->fatal(CALL_INFO, -1, "EccGuard: unknown due_action '%s'.\n",
+                    due_action.c_str());
+    }
 
     std::string mw_csv = params.find<std::string>("fault_mode_weights", "");
     if (!mw_csv.empty()) {
@@ -228,7 +191,6 @@ EccGuard::EccGuard(ComponentId_t id, Params& params) : Component(id) {
     {
         double sum = 0.0;
         for (int i = 0; i < kModeCount; ++i) {
-            if (mode_weights_[i] < 0.0) mode_weights_[i] = 0.0;
             sum += mode_weights_[i];
         }
         if (sum <= 0.0) {
@@ -239,6 +201,11 @@ EccGuard::EccGuard(ComponentId_t id, Params& params) : Component(id) {
     }
 
     fault_event_rate_ = params.find<double>("fault_event_rate", 0.0);
+    if (!ConfigParse::isProbability(fault_event_rate_)) {
+        out_->fatal(CALL_INFO, -1,
+                    "EccGuard: fault_event_rate=%g must be in [0,1].\n",
+                    fault_event_rate_);
+    }
 
     // Campaign-mode parameters. These are inert unless fault_model_ == Campaign.
     {
@@ -253,6 +220,11 @@ EccGuard::EccGuard(ComponentId_t id, Params& params) : Component(id) {
         }
         campaign_event_budget_  = params.find<uint64_t>("campaign_event_budget", 0);
         campaign_event_rate_    = params.find<double>  ("campaign_event_rate",   0.0);
+        if (!ConfigParse::isProbability(campaign_event_rate_)) {
+            out_->fatal(CALL_INFO, -1,
+                        "EccGuard: campaign_event_rate=%g must be in [0,1].\n",
+                        campaign_event_rate_);
+        }
         campaign_max_per_kernel_entry_ =
             params.find<uint64_t>("campaign_max_events_per_kernel_entry", 0);
         campaign_errors_fixed_ = params.find<unsigned>("campaign_errors_fixed", 0);
@@ -260,7 +232,10 @@ EccGuard::EccGuard(ComponentId_t id, Params& params) : Component(id) {
         campaign_force_multi_chip_ =
             params.find<bool>("campaign_force_multi_chip", false)
             || isMultiChipCampaignAlias(raw_cmode);
-        campaign_mode_ = parseCampaignMode(raw_cmode);
+        if (!parseFaultMode(raw_cmode, campaign_mode_)) {
+            out_->fatal(CALL_INFO, -1, "EccGuard: unknown campaign_mode '%s'.\n",
+                        raw_cmode.c_str());
+        }
         addr_filter_region_ = params.find<std::string>("addr_filter_region", "");
         addr_filter_len_    = params.find<uint64_t>("addr_filter_len", 0);
         inject_addr_start_  = params.find<uint64_t>("inject_addr_start", 0);
@@ -283,6 +258,10 @@ EccGuard::EccGuard(ComponentId_t id, Params& params) : Component(id) {
     double fit_rate     = params.find<double>("fit_per_mbit_per_hour", 0.0);
     double dram_mb      = params.find<double>("dram_capacity_mb", 1024.0);
     double per_event_ns = params.find<double>("sim_time_per_event_ns", 100.0);
+    if (fit_rate < 0.0 || dram_mb <= 0.0 || per_event_ns <= 0.0) {
+        out_->fatal(CALL_INFO, -1,
+                    "EccGuard: FIT must be nonnegative; capacity and event time must be positive.\n");
+    }
     if (fit_rate > 0.0 && fault_event_rate_ <= 0.0) {
         // FIT = failures per 1e9 device-hours, per Mbit. Convert to per-event prob.
         // dram_capacity_mb is megaBYTES; FIT is per megaBIT, hence the x8.
@@ -292,6 +271,11 @@ EccGuard::EccGuard(ComponentId_t id, Params& params) : Component(id) {
             out_->output("EccGuard: FIT=%.3g per Mbit/h x dram_mb=%.0f, sim_ns/event=%.1f -> fault_event_rate=%.3e\n",
                          fit_rate, dram_mb, per_event_ns, fault_event_rate_);
         }
+    }
+    if (!ConfigParse::isProbability(fault_event_rate_)) {
+        out_->fatal(CALL_INFO, -1,
+                    "EccGuard: derived fault_event_rate=%g exceeds [0,1].\n",
+                    fault_event_rate_);
     }
 
     // Resident fault-map parameters (fault_model='resident'). Parsed
@@ -304,16 +288,30 @@ EccGuard::EccGuard(ComponentId_t id, Params& params) : Component(id) {
         double rate_per_ms        = params.find<double>("resident_fault_rate_per_ms", 0.0);
         resident_time_accel_      = params.find<double>("resident_time_acceleration", 1.0);
         double scrub_us           = params.find<double>("resident_scrub_interval_us", 0.0);
+        if (rate_per_ms < 0.0 || resident_time_accel_ < 0.0 || scrub_us < 0.0) {
+            out_->fatal(CALL_INFO, -1,
+                        "EccGuard: resident rates, acceleration, and scrub interval must be nonnegative.\n");
+        }
         resident_scrub_interval_ns_ = static_cast<uint64_t>(scrub_us * 1e3);
         resident_permanent_fraction_ =
             params.find<double>("resident_permanent_fraction", 0.3);
+        if (!ConfigParse::isProbability(resident_permanent_fraction_)) {
+            out_->fatal(CALL_INFO, -1,
+                        "EccGuard: resident_permanent_fraction=%g must be in [0,1].\n",
+                        resident_permanent_fraction_);
+        }
         std::string rmode = params.find<std::string>("resident_mode", "mix");
         resident_mode_mix_ = (rmode.empty() || rmode == "mix" || rmode == "MIX");
-        if (!resident_mode_mix_) resident_mode_fixed_ = parseCampaignMode(rmode);
+        if (!resident_mode_mix_ && !parseFaultMode(rmode, resident_mode_fixed_)) {
+            out_->fatal(CALL_INFO, -1, "EccGuard: unknown resident_mode '%s'.\n",
+                        rmode.c_str());
+        }
         resident_row_bytes_ = params.find<uint64_t>("resident_row_bytes", 8192);
         resident_bank_rows_ = params.find<uint64_t>("resident_bank_rows", 8);
-        if (resident_row_bytes_ < 64) resident_row_bytes_ = 64;
-        if (resident_bank_rows_ == 0) resident_bank_rows_ = 1;
+        if (resident_row_bytes_ < 64 || resident_bank_rows_ == 0) {
+            out_->fatal(CALL_INFO, -1,
+                        "EccGuard: resident_row_bytes must be >=64 and resident_bank_rows must be >0.\n");
+        }
 
         if (rate_per_ms > 0.0) {
             resident_rate_per_ns_ = rate_per_ms / 1e6;
@@ -457,7 +455,7 @@ void EccGuard::setup() {
                           ? "jedec_mix"
                           : (fault_model_ == FaultModel::Campaign ? "campaign"
                                                                   : "poisson")),
-                     dtypeName(payload_dtype_),
+                     EccPayloadCorruptor::dtypeName(payload_dtype_),
                      due_action_ == DueAction::DropFrame ? "drop_frame" : "latency_only",
                      fault_event_rate_);
     }
@@ -528,7 +526,7 @@ void EccGuard::finish() {
         out_->output("escape_high_blast,escape_low_blast,frames_aborted,payload_dtype,due_poisoned_bits\n");
         out_->output("%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%s,%" PRIu64 "\n",
                      escape_high_blast_total_, escape_low_blast_total_,
-                     frames_aborted_total_, dtypeName(payload_dtype_),
+                     frames_aborted_total_, EccPayloadCorruptor::dtypeName(payload_dtype_),
                      due_poison_flips_total_);
         out_->output("=== End EccGuard %s Escape/Abort Summary ===\n\n", getName().c_str());
     }
@@ -550,25 +548,15 @@ void EccGuard::finish() {
     }
 
     const uint64_t total = totals.clean + totals.correctable + totals.due + totals.escape;
-    bool ok = true;
-    auto bound = [&](const char* name, uint64_t got, int64_t lo, int64_t hi) {
-        if ((lo >= 0 && got < static_cast<uint64_t>(lo)) ||
-            (hi >= 0 && got > static_cast<uint64_t>(hi))) {
-            out_->output("EccGuard '%s': FAIL %s=%" PRIu64
-                         " outside [%" PRId64 ",%" PRId64 "].\n",
-                         getName().c_str(), name, got, lo, hi);
-            ok = false;
-        }
-    };
-    bound("total", total, test_total_min_, test_total_max_);
-    bound("clean", totals.clean, test_clean_min_, test_clean_max_);
-    bound("correctable", totals.correctable,
-          test_correctable_min_, test_correctable_max_);
-    bound("due", totals.due, test_due_min_, test_due_max_);
-    bound("escape", totals.escape, test_escape_min_, test_escape_max_);
-    bound("resident_born", resident_faults_born_total_,
-          test_resident_born_min_, test_resident_born_max_);
-    if (!ok) out_->fatal(CALL_INFO, -1, "EccGuard test expectations failed.\n");
+    test_bounds_.set("total", total);
+    test_bounds_.set("clean", totals.clean);
+    test_bounds_.set("correctable", totals.correctable);
+    test_bounds_.set("due", totals.due);
+    test_bounds_.set("escape", totals.escape);
+    test_bounds_.set("resident_born", resident_faults_born_total_);
+    if (!test_bounds_.check(*out_, getName())) {
+        out_->fatal(CALL_INFO, -1, "EccGuard test expectations failed.\n");
+    }
 }
 
 void EccGuard::resolveStateLazy() {
@@ -620,7 +608,7 @@ bool EccGuard::resolveAddrFilterBounds(uint64_t& base_out, uint64_t& len_out) co
 bool EccGuard::shouldApplyPolicy(MemEvent* mev) {
     if (!mev) return false;
     resolveStateLazy();
-    if (!applyOnResponsesOnly_) return true;
+    if (!apply_on_responses_only_) return true;
     if (mev->isResponse()) return true;
     if (fault_model_ != FaultModel::Campaign || addr_filter_region_.empty())
         return false;
@@ -656,7 +644,7 @@ void EccGuard::requestFrameAbort() {
     PipelineStateBase* s =
         PipelineStateRegistry<PipelineStateBase>::getMutable(state_key_);
     if (!s) return;
-    s->frameAbortRequested = true;
+    if (!s->requestFrameAbort()) return;
     ++frames_aborted_total_;
     if (stat_frames_aborted_) stat_frames_aborted_->addData(1);
 }
@@ -670,8 +658,7 @@ void publishCumulative(const std::string& state_key, uint64_t escapes_inc,
     PipelineStateBase* s =
         PipelineStateRegistry<PipelineStateBase>::getMutable(state_key);
     if (!s) return;
-    s->eccCumulativeEscapes += escapes_inc;
-    s->eccCumulativeFlips   += flips_inc;
+    s->addEccCounts(escapes_inc, flips_inc);
 }
 
 // Bump per-frame per-kernel escape counts (argmaxed at frame close).
@@ -681,7 +668,7 @@ void publishPerFrameEscape(const std::string& state_key,
     PipelineStateBase* s =
         PipelineStateRegistry<PipelineStateBase>::getMutable(state_key);
     if (!s) return;
-    s->eccPerFrameEscapesByKernel[kernel_name] += 1;
+    s->addKernelEscape(kernel_name);
 }
 } // namespace
 
@@ -811,6 +798,53 @@ void EccGuard::distributeErrorsToChips(
     }
 }
 
+void EccGuard::placeFaultErrors(FaultDraw& draw, uint32_t payload_bytes,
+                                EccScheme scheme)
+{
+    uint32_t word_count = numWords(payload_bytes, scheme);
+    draw.per_word_errors.assign(word_count, 0u);
+    bool chip_aware = scheme == EccScheme::CHIPKILL_x4;
+    if (chip_aware) draw.per_word_chip_errors.resize(word_count);
+    if (word_count == 0 || draw.num_errors == 0) return;
+
+    auto setWord = [&](uint32_t word, unsigned errors) {
+        draw.per_word_errors[word] = errors;
+        if (chip_aware) {
+            distributeErrorsToChips(draw.per_word_chip_errors[word], errors,
+                                    scheme, draw.mode);
+        }
+    };
+
+    if (isCorrelatedMode(draw.mode)) {
+        std::uniform_int_distribution<uint32_t> pick(0, word_count - 1);
+        uint32_t word = pick(stdRng_);
+        unsigned remaining = draw.num_errors;
+        unsigned capacity = bitsPerWord(payload_bytes, scheme);
+        for (uint32_t offset = 0; remaining > 0 && offset < word_count; ++offset) {
+            uint32_t target = (word + offset) % word_count;
+            unsigned placed = capacity == 0
+                ? remaining : std::min(capacity, remaining);
+            setWord(target, placed);
+            remaining -= placed;
+        }
+        return;
+    }
+
+    std::uniform_int_distribution<uint32_t> pick(0, word_count - 1);
+    for (unsigned i = 0; i < draw.num_errors; ++i) {
+        ++draw.per_word_errors[pick(stdRng_)];
+    }
+    if (chip_aware) {
+        for (uint32_t word = 0; word < word_count; ++word) {
+            if (draw.per_word_errors[word] > 0) {
+                distributeErrorsToChips(draw.per_word_chip_errors[word],
+                                        draw.per_word_errors[word], scheme,
+                                        draw.mode);
+            }
+        }
+    }
+}
+
 EccGuard::FaultDraw EccGuard::drawFaultPoisson(uint32_t payload_bytes,
                                                double ber,
                                                EccScheme scheme) {
@@ -847,8 +881,6 @@ EccGuard::FaultDraw EccGuard::drawFaultJedecMix(uint32_t payload_bytes,
     FaultDraw d;
     if (payload_bytes == 0) return d;
 
-    uint32_t nwords = numWords(payload_bytes, scheme);
-    d.per_word_errors.assign(nwords, 0u);
     if (event_rate <= 0.0) return d;
     std::bernoulli_distribution gate(std::min(event_rate, 1.0));
     if (!gate(stdRng_)) return d;
@@ -874,51 +906,7 @@ EccGuard::FaultDraw EccGuard::drawFaultJedecMix(uint32_t payload_bytes,
     if (cap > 0 && errs > cap) errs = cap;
     d.num_errors = errs;
 
-    // Correlated/single-word modes deposit into one random word (physical
-    // clustering); SingleCell scatters across words bit-by-bit.
-    bool need_chips = (scheme == EccScheme::CHIPKILL_x4);
-    if (need_chips) d.per_word_chip_errors.resize(nwords);
-    if (nwords > 0) {
-        if (isCorrelatedMode(d.mode)) {
-            std::uniform_int_distribution<uint32_t> wpick(0, nwords - 1);
-            uint32_t w = wpick(stdRng_);
-            unsigned word_cap = bitsPerWord(payload_bytes, scheme);
-            if (word_cap > 0 && errs > word_cap) {
-                d.per_word_errors[w] = word_cap;
-                if (need_chips)
-                    distributeErrorsToChips(d.per_word_chip_errors[w], word_cap, scheme, d.mode);
-                unsigned remaining = errs - word_cap;
-                uint32_t offset = 1;
-                while (remaining > 0 && offset < nwords) {
-                    uint32_t wn = (w + offset) % nwords;
-                    unsigned put = std::min<unsigned>(word_cap, remaining);
-                    d.per_word_errors[wn] = put;
-                    if (need_chips)
-                        distributeErrorsToChips(d.per_word_chip_errors[wn], put, scheme, d.mode);
-                    remaining -= put;
-                    ++offset;
-                }
-            } else {
-                d.per_word_errors[w] = errs;
-                if (need_chips)
-                    distributeErrorsToChips(d.per_word_chip_errors[w], errs, scheme, d.mode);
-            }
-        } else {
-            // Uncorrelated (SingleCell, default): scatter bit-by-bit.
-            std::uniform_int_distribution<uint32_t> wpick(0, nwords - 1);
-            for (unsigned i = 0; i < errs; ++i) {
-                uint32_t w = wpick(stdRng_);
-                d.per_word_errors[w] += 1;
-            }
-            if (need_chips) {
-                for (uint32_t w = 0; w < nwords; ++w) {
-                    if (d.per_word_errors[w] > 0)
-                        distributeErrorsToChips(d.per_word_chip_errors[w],
-                                                d.per_word_errors[w], scheme, d.mode);
-                }
-            }
-        }
-    }
+    placeFaultErrors(d, payload_bytes, scheme);
 
     ++per_mode_draws_[chosen];
     if (chosen == static_cast<int>(FaultMode::SingleRow)    && stat_correlated_row_)    stat_correlated_row_->addData(1);
@@ -935,9 +923,6 @@ EccGuard::FaultDraw EccGuard::drawFaultCampaign(uint32_t payload_bytes,
                                                  const std::string& kernel_name) {
     FaultDraw d;
     if (payload_bytes == 0) return d;
-
-    uint32_t nwords = numWords(payload_bytes, scheme);
-    d.per_word_errors.assign(nwords, 0u);
 
     if (campaign_event_budget_ == 0) return d;
     if (campaign_events_fired_ >= campaign_event_budget_) return d;
@@ -984,47 +969,7 @@ EccGuard::FaultDraw EccGuard::drawFaultCampaign(uint32_t payload_bytes,
     if (cap > 0 && errs > cap) errs = cap;
     d.num_errors = errs;
 
-    bool need_chips = (scheme == EccScheme::CHIPKILL_x4);
-    if (need_chips) d.per_word_chip_errors.resize(nwords);
-    if (nwords > 0) {
-        if (isCorrelatedMode(d.mode)) {
-            std::uniform_int_distribution<uint32_t> wpick(0, nwords - 1);
-            uint32_t w = wpick(stdRng_);
-            unsigned word_cap = bitsPerWord(payload_bytes, scheme);
-            if (word_cap > 0 && errs > word_cap) {
-                d.per_word_errors[w] = word_cap;
-                if (need_chips)
-                    distributeErrorsToChips(d.per_word_chip_errors[w], word_cap, scheme, d.mode);
-                unsigned remaining = errs - word_cap;
-                uint32_t offset = 1;
-                while (remaining > 0 && offset < nwords) {
-                    uint32_t wn = (w + offset) % nwords;
-                    unsigned put = std::min<unsigned>(word_cap, remaining);
-                    d.per_word_errors[wn] = put;
-                    if (need_chips)
-                        distributeErrorsToChips(d.per_word_chip_errors[wn], put, scheme, d.mode);
-                    remaining -= put;
-                    ++offset;
-                }
-            } else {
-                d.per_word_errors[w] = errs;
-                if (need_chips)
-                    distributeErrorsToChips(d.per_word_chip_errors[w], errs, scheme, d.mode);
-            }
-        } else {
-            std::uniform_int_distribution<uint32_t> wpick(0, nwords - 1);
-            for (unsigned i = 0; i < errs; ++i) {
-                d.per_word_errors[wpick(stdRng_)] += 1;
-            }
-            if (need_chips) {
-                for (uint32_t w = 0; w < nwords; ++w) {
-                    if (d.per_word_errors[w] > 0)
-                        distributeErrorsToChips(d.per_word_chip_errors[w],
-                                                d.per_word_errors[w], scheme, d.mode);
-                }
-            }
-        }
-    }
+    placeFaultErrors(d, payload_bytes, scheme);
 
     ++campaign_events_fired_;
     ++campaign_events_this_entry_;
@@ -1372,35 +1317,6 @@ EccGuard::FaultDraw EccGuard::drawFaultResident(MemEvent* mev,
     return d;
 }
 
-unsigned EccGuard::flipExactBitsInWord(MemEvent* mev, uint32_t word_index,
-                                       EccScheme scheme,
-                                       const std::vector<uint32_t>& exact_bits,
-                                       unsigned& high_flips, unsigned& low_flips) {
-    auto& payload = mev->getPayload();
-    if (payload.empty() || exact_bits.empty()) return 0;
-    const uint32_t total_bits = static_cast<uint32_t>(payload.size()) * 8;
-    const uint32_t wb        = eccWordBytes(scheme);
-    const uint32_t start_bit = (wb == 0) ? 0 : word_index * wb * 8;
-    const uint32_t end_bit   = (wb == 0) ? total_bits
-        : std::min(total_bits, start_bit + wb * 8);
-    unsigned elem_bytes = dtypeBytes(payload_dtype_);
-    if (elem_bytes == 0) elem_bytes = 1;
-
-    unsigned flipped = 0;
-    for (uint32_t b : exact_bits) {
-        if (b < start_bit || b >= end_bit) continue;
-        const uint32_t byte = b / 8u, bit = b % 8u;
-        payload[byte] ^= static_cast<uint8_t>(1u << bit);
-        bool hi = false;
-        if (payload_dtype_ != PayloadDtype::Bytes) {
-            hi = isHighBlastBit(payload_dtype_, (byte % elem_bytes) * 8u + bit);
-        }
-        if (hi) ++high_flips; else ++low_flips;
-        ++flipped;
-    }
-    return flipped;
-}
-
 void EccGuard::warnIfBerExceedsTightBound(double ber, const char* origin) {
     if (ber <= kEccBerTightUpperBound) return;
     // Memoize so repeated BER values don't spam the log.
@@ -1508,13 +1424,15 @@ uint64_t EccGuard::applyPolicy(MemEvent* mev) {
             requestFrameAbort();
             return;
         }
-        unsigned hi = 0, lo = 0, flips = 0;
+        unsigned flips = 0;
         for (uint32_t w : line.due_words) {
-            flips += draw.exact_bits.empty()
-                ? flipBitsInWord(mev, w, entry.scheme,
-                                 draw.per_word_errors[w], hi, lo)
-                : flipExactBitsInWord(mev, w, entry.scheme,
-                                      draw.exact_bits, hi, lo);
+            EccPayloadFlipCount count = draw.exact_bits.empty()
+                ? EccPayloadCorruptor::flipRandom(
+                    *mev, w, entry.scheme, draw.per_word_errors[w],
+                    payload_dtype_, rng_)
+                : EccPayloadCorruptor::flipExact(
+                    *mev, w, entry.scheme, draw.exact_bits, payload_dtype_);
+            flips += count.total;
         }
         due_poison_flips_total_ += flips;
         if (stat_due_poisoned_) stat_due_poisoned_->addData(flips);
@@ -1540,11 +1458,15 @@ uint64_t EccGuard::applyPolicy(MemEvent* mev) {
         // Correctable words leak nothing; DUE words get the DUE response below.
         unsigned hi = 0, lo = 0, flips = 0;
         for (uint32_t w : line.escape_words) {
-            flips += draw.exact_bits.empty()
-                ? flipBitsInWord(mev, w, entry.scheme,
-                                 draw.per_word_errors[w], hi, lo)
-                : flipExactBitsInWord(mev, w, entry.scheme,
-                                      draw.exact_bits, hi, lo);
+            EccPayloadFlipCount count = draw.exact_bits.empty()
+                ? EccPayloadCorruptor::flipRandom(
+                    *mev, w, entry.scheme, draw.per_word_errors[w],
+                    payload_dtype_, rng_)
+                : EccPayloadCorruptor::flipExact(
+                    *mev, w, entry.scheme, draw.exact_bits, payload_dtype_);
+            flips += count.total;
+            hi += count.high;
+            lo += count.low;
         }
         escape_high_blast_total_ += hi;
         escape_low_blast_total_  += lo;
@@ -1604,46 +1526,4 @@ uint64_t EccGuard::applyPolicy(MemEvent* mev) {
     }
 
     return latency_ps;
-}
-
-unsigned EccGuard::flipBitsInWord(MemEvent* mev, uint32_t word_index,
-                                  EccScheme scheme, unsigned nbits,
-                                  unsigned& high_flips, unsigned& low_flips) {
-    auto& payload = mev->getPayload();
-    if (payload.empty() || nbits == 0) return 0;
-    uint32_t total_bytes = static_cast<uint32_t>(payload.size());
-    uint32_t wb    = eccWordBytes(scheme);
-    uint32_t start = (wb == 0) ? 0 : word_index * wb;
-    uint32_t end   = (wb == 0) ? total_bytes
-                               : std::min(total_bytes, start + wb);
-    if (start >= end) return 0;
-    uint32_t span_bits = (end - start) * 8;
-    if (nbits > span_bits) nbits = span_bits;
-
-    unsigned elem_bytes = dtypeBytes(payload_dtype_);
-    if (elem_bytes == 0) elem_bytes = 1;
-
-    // Sample distinct bit positions inside the word span so repeated flips
-    // cannot XOR-cancel. nbits << span_bits in practice, so rejection
-    // sampling terminates quickly; the cap above guarantees termination.
-    std::set<uint32_t> used;
-    unsigned flipped = 0;
-    while (flipped < nbits) {
-        uint32_t bit = rng_.generateNextUInt32() % span_bits;
-        if (!used.insert(bit).second) continue;
-        uint32_t global_byte = start + bit / 8u;
-        uint32_t bit_in_byte = bit % 8u;
-        payload[global_byte] ^= static_cast<uint8_t>(1u << bit_in_byte);
-        bool hi = false;
-        if (payload_dtype_ != PayloadDtype::Bytes) {
-            // Elements are little-endian and aligned to the payload start;
-            // bit 0 of an element is its LSB (byte 0 of bf16 = mantissa low,
-            // byte 1 = sign + exponent high).
-            uint32_t bit_in_elem = (global_byte % elem_bytes) * 8u + bit_in_byte;
-            hi = isHighBlastBit(payload_dtype_, bit_in_elem);
-        }
-        if (hi) ++high_flips; else ++low_flips;
-        ++flipped;
-    }
-    return flipped;
 }

@@ -95,7 +95,7 @@ private:
     SST::MemHierarchy::MemEvent* pendingCommandRead_ = nullptr;
 
     // Registry publishing state
-    std::string stateKey_;
+    std::string state_key_;
     std::string regionsCsv_;
     std::vector<std::string> kernelNames_;
     int         publishedKernel_ = IDLE;

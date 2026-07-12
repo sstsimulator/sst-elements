@@ -119,7 +119,7 @@ private:
     SST::Link*         outLink_    = nullptr;
     PipelineStateBase* state_      = nullptr;
 
-    std::string stateKey_;
+    std::string state_key_;
     int  totalCycles_   = 0;
     int  tickCount_     = 0;
     bool verbose_       = false;
@@ -198,7 +198,7 @@ private:
     static std::set<int>     parseIntCsv(const std::string& s);
 
     SST::Output*  out_ = nullptr;
-    std::string   stateKey_;
+    std::string   state_key_;
     std::set<int> dropStages_;
     bool          verbose_ = false;
 

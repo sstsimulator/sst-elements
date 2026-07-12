@@ -83,15 +83,8 @@ FramePipelineDriver::FramePipelineDriver(ComponentId_t id, Params& params)
     // across components is unspecified. Constructors all run first.
     state_ptr_ = PipelineStateRegistry<PipelineStateBase>::getOrCreate(state_key_);
     state_ptr_->actuationKernelName = "ACTUATE";
-    state_ptr_->currentKernel       = -1;
-    state_ptr_->currentKernelName   = "IDLE";
-    state_ptr_->pipelineCycle       = 0;
-    state_ptr_->ensureRegionSlot(0);
-    state_ptr_->regions[0].base  = region_base_;
-    state_ptr_->regions[0].size  = region_size_;
-    state_ptr_->regions[0].valid = true;
-    state_ptr_->regions[0].id    = 0;
-    state_ptr_->regions[0].name  = region_name_;
+    state_ptr_->publishKernel(-1, "IDLE", 0);
+    state_ptr_->publishRegion(0, region_base_, region_size_, region_name_);
 
     std::string extra = params.find<std::string>("extra_region", "");
     if (!extra.empty()) {
@@ -103,12 +96,8 @@ FramePipelineDriver::FramePipelineDriver(ComponentId_t id, Params& params)
                 "FramePipelineDriver '%s': extra_region must be "
                 "'name:base:size' (got '%s').\n", getName().c_str(), extra.c_str());
         }
-        state_ptr_->ensureRegionSlot(1);
-        state_ptr_->regions[1].base  = std::stoull(base_s, nullptr, 0);
-        state_ptr_->regions[1].size  = std::stoull(size_s, nullptr, 0);
-        state_ptr_->regions[1].valid = true;
-        state_ptr_->regions[1].id    = 1;
-        state_ptr_->regions[1].name  = name;
+        state_ptr_->publishRegion(1, std::stoull(base_s, nullptr, 0),
+                                  std::stoull(size_s, nullptr, 0), name);
     }
 
     buildScript();
@@ -148,9 +137,7 @@ bool FramePipelineDriver::clockTick(Cycle_t) {
         const Op& op = script_[pc_++];
         switch (op.kind) {
         case Op::Kind::Publish:
-            state_ptr_->currentKernel     = op.kernelId;
-            state_ptr_->currentKernelName = op.kernelName;
-            state_ptr_->pipelineCycle     = op.cycle;
+            state_ptr_->publishKernel(op.kernelId, op.kernelName, op.cycle);
             cur_frame_                    = op.cycle;
             if (verbose_) {
                 out_->output("FramePipelineDriver '%s': publish kernel=%d "
@@ -188,7 +175,7 @@ void FramePipelineDriver::stampFrame() {
         fr.actionToken = frame_tokens_[cur_frame_];
     if (std::find(escape_frames_.begin(), escape_frames_.end(), cur_frame_)
         != escape_frames_.end()) {
-        ++state_ptr_->eccCumulativeEscapes;
+        state_ptr_->addEccCounts(1, 0);
     }
     fr.cumulativeEscapes = state_ptr_->eccCumulativeEscapes;
     fr.cumulativeFlips   = state_ptr_->eccCumulativeFlips;
@@ -199,7 +186,7 @@ void FramePipelineDriver::stampFrame() {
         fr.actionChecksum = state_ptr_->watcherActionChecksum;
     }
     fr.simTimePs = getCurrentSimTimeNano() * 1000;
-    state_ptr_->frames.push_back(fr);
+    state_ptr_->appendFrame(fr);
     if (verbose_) {
         out_->output("FramePipelineDriver '%s': stamped frame cycle=%d "
                      "checksum=%" PRIu64 "\n", getName().c_str(),

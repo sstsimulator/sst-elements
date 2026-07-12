@@ -12,9 +12,7 @@
 #ifndef SST_ELEMENTS_CARCOSA_ACTION_SCORER_H
 #define SST_ELEMENTS_CARCOSA_ACTION_SCORER_H
 
-// ActionScorer: walks PipelineStateBase::frames on finish() into a CSV.
-// Prefer actionToken over raw checksum for divergence (O3 vs O4); missing
-// golden_log fatals unless golden_required=false (empty log => no divergence).
+#include "sst/elements/carcosa/components/componentTestBounds.h"
 
 #include <sst/core/component.h>
 #include <sst/core/output.h>
@@ -90,14 +88,7 @@ private:
     std::vector<GoldenEntry> golden_;
     bool                     golden_loaded_ = false;
 
-    // Test hooks (-1 = unchecked); see the expect_* params.
-    int64_t expect_frames_total_       = -1;
-    int64_t expect_frames_dropped_     = -1;
-    int64_t expect_frames_argmax_diff_ = -1;
-    int64_t expect_frames_action_diff_ = -1;
-    int64_t expect_frames_unsafe_      = -1;
-    int64_t expect_frames_o1_ = -1, expect_frames_o2_ = -1;
-    int64_t expect_frames_o3_ = -1, expect_frames_o4_ = -1;
+    ComponentTestBounds test_bounds_;
 
     SST::Output* out_ = nullptr;
 

@@ -21,6 +21,7 @@
 #include <string>
 #include <type_traits>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace SST {
@@ -147,6 +148,55 @@ struct PipelineStateBase {
         stagedBase = 0;
         stagedSize = 0;
     }
+
+    void publishKernel(int id, std::string name, int cycle) {
+        currentKernel = id;
+        currentKernelName = std::move(name);
+        pipelineCycle = cycle;
+    }
+
+    void publishRegion(size_t id, uint64_t base, uint64_t size,
+                       std::string name = {}) {
+        ensureRegionSlot(id);
+        regions[id] = {base, size, size > 0, static_cast<int>(id),
+                       std::move(name)};
+    }
+
+    bool requestFrameAbort() {
+        if (frameAbortRequested) return false;
+        frameAbortRequested = true;
+        return true;
+    }
+
+    bool consumeFrameAbort() {
+        if (!frameAbortRequested) return false;
+        frameAbortRequested = false;
+        ++framesDropped;
+        return true;
+    }
+
+    void addEccCounts(uint64_t escapes, uint64_t flips) {
+        eccCumulativeEscapes += escapes;
+        eccCumulativeFlips += flips;
+    }
+
+    void addKernelEscape(const std::string& kernel) {
+        ++eccPerFrameEscapesByKernel[kernel];
+    }
+
+    void publishWatcherChecksum(uint64_t checksum) {
+        watcherActionChecksum = checksum;
+        watcherActionChecksumValid = true;
+    }
+
+    void retireWatcherChecksum() { watcherActionChecksumValid = false; }
+
+    void recordWatcherCorruption(bool corrupted) {
+        watcherCriticalCorrupted = corrupted;
+        if (corrupted) ++framesCriticalRegionCorrupted;
+    }
+
+    void appendFrame(FrameRecord frame) { frames.push_back(std::move(frame)); }
 
     virtual ~PipelineStateBase() = default;
 };

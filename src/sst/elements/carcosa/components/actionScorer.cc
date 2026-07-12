@@ -30,15 +30,15 @@ ActionScorer::ActionScorer(ComponentId_t id, Params& params)
     emit_golden_     = params.find<bool>("emit_golden", false);
     golden_required_ = params.find<bool>("golden_required", true);
     verbose_         = params.find<bool>("verbose", false);
-    expect_frames_total_       = params.find<int64_t>("expect_frames_total", -1);
-    expect_frames_dropped_     = params.find<int64_t>("expect_frames_dropped", -1);
-    expect_frames_argmax_diff_ = params.find<int64_t>("expect_frames_argmax_diff", -1);
-    expect_frames_action_diff_ = params.find<int64_t>("expect_frames_action_diff", -1);
-    expect_frames_unsafe_      = params.find<int64_t>("expect_frames_unsafe", -1);
-    expect_frames_o1_          = params.find<int64_t>("expect_frames_o1", -1);
-    expect_frames_o2_          = params.find<int64_t>("expect_frames_o2", -1);
-    expect_frames_o3_          = params.find<int64_t>("expect_frames_o3", -1);
-    expect_frames_o4_          = params.find<int64_t>("expect_frames_o4", -1);
+    test_bounds_.addExact("frames_total", params.find<int64_t>("expect_frames_total", -1));
+    test_bounds_.addExact("frames_dropped", params.find<int64_t>("expect_frames_dropped", -1));
+    test_bounds_.addExact("frames_argmax_diff", params.find<int64_t>("expect_frames_argmax_diff", -1));
+    test_bounds_.addExact("frames_action_diff", params.find<int64_t>("expect_frames_action_diff", -1));
+    test_bounds_.addExact("frames_unsafe", params.find<int64_t>("expect_frames_unsafe", -1));
+    test_bounds_.addExact("frames_outcome_O1", params.find<int64_t>("expect_frames_o1", -1));
+    test_bounds_.addExact("frames_outcome_O2", params.find<int64_t>("expect_frames_o2", -1));
+    test_bounds_.addExact("frames_outcome_O3", params.find<int64_t>("expect_frames_o3", -1));
+    test_bounds_.addExact("frames_outcome_O4", params.find<int64_t>("expect_frames_o4", -1));
     if (state_key_.empty()) {
         out_->fatal(CALL_INFO, -1,
             "ActionScorer '%s': state_key is required.\n", getName().c_str());
@@ -341,26 +341,16 @@ void ActionScorer::finish() {
             getName().c_str(), unmatched, total);
     }
 
-    // Test hooks: turn the summary counters into pass/fail so in-tree
-    // configs (tests/testFramePipeline*.py) can assert scorer behavior via
-    // the sst exit code alone.
-    bool expect_ok = true;
-    auto check = [&](const char* name, int64_t want, uint64_t got) {
-        if (want < 0 || static_cast<uint64_t>(want) == got) return;
-        out_->output("ActionScorer '%s': FAIL %s=%" PRIu64 " != expected %" PRId64 ".\n",
-                     getName().c_str(), name, got, want);
-        expect_ok = false;
-    };
-    check("frames_total",       expect_frames_total_,       total);
-    check("frames_dropped",     expect_frames_dropped_,     dropped);
-    check("frames_argmax_diff", expect_frames_argmax_diff_, argmax_diff);
-    check("frames_action_diff", expect_frames_action_diff_, action_diff);
-    check("frames_unsafe",      expect_frames_unsafe_,      unsafe);
-    check("frames_outcome_O1",  expect_frames_o1_,          o1);
-    check("frames_outcome_O2",  expect_frames_o2_,          o2);
-    check("frames_outcome_O3",  expect_frames_o3_,          o3);
-    check("frames_outcome_O4",  expect_frames_o4_,          o4);
-    if (!expect_ok) {
+    test_bounds_.set("frames_total", total);
+    test_bounds_.set("frames_dropped", dropped);
+    test_bounds_.set("frames_argmax_diff", argmax_diff);
+    test_bounds_.set("frames_action_diff", action_diff);
+    test_bounds_.set("frames_unsafe", unsafe);
+    test_bounds_.set("frames_outcome_O1", o1);
+    test_bounds_.set("frames_outcome_O2", o2);
+    test_bounds_.set("frames_outcome_O3", o3);
+    test_bounds_.set("frames_outcome_O4", o4);
+    if (!test_bounds_.check(*out_, getName())) {
         out_->fatal(CALL_INFO, -1,
             "ActionScorer '%s': expect_* checks failed (see FAIL lines).\n",
             getName().c_str());

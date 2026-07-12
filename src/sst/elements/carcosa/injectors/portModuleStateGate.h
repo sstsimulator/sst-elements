@@ -67,19 +67,19 @@ protected:
     enum class Mode { Drop, Flip, DropFlip };
 
     // Configuration
-    std::string            stateKey_;
+    std::string            state_key_;
     Mode                   mode_ = Mode::Drop;
-    double                 dropProb_ = 1.0;
-    double                 flipProb_ = 1.0;
+    double                 drop_probability_ = 1.0;
+    double                 flip_probability_ = 1.0;
 
     // Predicate configuration, kept in serializable form so checkpoint
     // restore can rebuild predicates_ (std::function is not serializable).
-    std::string            kernelsCsv_;
-    bool                   hasCycleRange_ = false;
-    int                    cycleStart_ = 0;
-    int                    cycleEnd_   = INT32_MAX;
-    std::string            regionIdsCsv_;
-    std::string            regionNamesCsv_;
+    std::string            kernels_csv_;
+    bool                   has_cycle_range_ = false;
+    int                    cycle_start_ = 0;
+    int                    cycle_end_   = INT32_MAX;
+    std::string            region_ids_csv_;
+    std::string            region_names_csv_;
 
     // Composed predicates (AND semantics; empty list => always-match).
     std::vector<Predicate> predicates_;
@@ -104,17 +104,17 @@ protected:
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         FaultInjectorBase::serialize_order(ser);
-        SST_SER(stateKey_);
+        SST_SER(state_key_);
         SST_SER(mode_);
-        SST_SER(dropProb_);
-        SST_SER(flipProb_);
+        SST_SER(drop_probability_);
+        SST_SER(flip_probability_);
         SST_SER(triggered_);
-        SST_SER(kernelsCsv_);
-        SST_SER(hasCycleRange_);
-        SST_SER(cycleStart_);
-        SST_SER(cycleEnd_);
-        SST_SER(regionIdsCsv_);
-        SST_SER(regionNamesCsv_);
+        SST_SER(kernels_csv_);
+        SST_SER(has_cycle_range_);
+        SST_SER(cycle_start_);
+        SST_SER(cycle_end_);
+        SST_SER(region_ids_csv_);
+        SST_SER(region_names_csv_);
         // predicates_ is a vector<std::function> and cannot be serialized;
         // checkpoint restore uses the serialization ctor (NOT the params
         // ctor), so rebuild the lambdas from the config members here.
@@ -124,7 +124,7 @@ protected:
     ImplementVirtualSerializable(SST::Carcosa::PortModuleStateGate)
 
 private:
-    static Mode parseMode(const std::string& s);
+    static bool parseMode(const std::string& s, Mode& mode);
 };
 
 } // namespace SST::Carcosa

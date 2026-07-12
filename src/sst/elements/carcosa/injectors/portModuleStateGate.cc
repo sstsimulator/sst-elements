@@ -10,6 +10,7 @@
 // distribution.
 
 #include "sst/elements/carcosa/injectors/portModuleStateGate.h"
+#include "sst/elements/carcosa/components/configParse.h"
 #include "sst/elements/carcosa/faultlogic/randomFlipFault.h"
 #include "sst/core/params.h"
 
@@ -43,10 +44,13 @@ std::vector<std::string> splitCsv(const std::string& csv) {
     return out;
 }
 
-std::set<int> parseIntSet(const std::string& csv) {
+std::set<int> parseIntSet(const std::string& csv, bool& valid) {
     std::set<int> out;
+    valid = true;
     for (const auto& tok : splitCsv(csv)) {
-        try { out.insert(std::stoi(tok)); } catch (...) { /* skip bad tokens */ }
+        int value = 0;
+        if (!ConfigParse::parseInt(tok, value)) valid = false;
+        else out.insert(value);
     }
     return out;
 }
@@ -59,29 +63,38 @@ std::set<std::string> parseStringSet(const std::string& csv) {
 
 } // namespace
 
-PortModuleStateGate::Mode
-PortModuleStateGate::parseMode(const std::string& s) {
+bool PortModuleStateGate::parseMode(const std::string& s, Mode& mode) {
     std::string v;
     v.reserve(s.size());
     for (char c : s) v.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
-    if (v == "drop")      return Mode::Drop;
-    if (v == "flip")      return Mode::Flip;
-    if (v == "drop_flip" || v == "dropflip" || v == "both") return Mode::DropFlip;
-    return Mode::Drop;
+    if (v == "drop") mode = Mode::Drop;
+    else if (v == "flip") mode = Mode::Flip;
+    else if (v == "drop_flip" || v == "dropflip" || v == "both") mode = Mode::DropFlip;
+    else return false;
+    return true;
 }
 
 PortModuleStateGate::PortModuleStateGate(Params& params)
     : FaultInjectorBase(params)
 {
-    stateKey_ = params.find<std::string>("state_key", "");
-    if (stateKey_.empty()) {
+    state_key_ = params.find<std::string>("state_key", "");
+    if (state_key_.empty()) {
         out_->fatal(CALL_INFO_LONG, -1,
                     "PortModuleStateGate: 'state_key' is required.\n");
     }
 
-    mode_     = parseMode(params.find<std::string>("fault_mode", "drop"));
-    dropProb_ = params.find<double>("drop_probability", 1.0);
-    flipProb_ = params.find<double>("flip_probability", 1.0);
+    std::string mode = params.find<std::string>("fault_mode", "drop");
+    if (!parseMode(mode, mode_)) {
+        out_->fatal(CALL_INFO_LONG, -1,
+                    "PortModuleStateGate: unknown fault_mode '%s'.\n", mode.c_str());
+    }
+    drop_probability_ = params.find<double>("drop_probability", 1.0);
+    flip_probability_ = params.find<double>("flip_probability", 1.0);
+    if (!ConfigParse::isProbability(drop_probability_) ||
+        !ConfigParse::isProbability(flip_probability_)) {
+        out_->fatal(CALL_INFO_LONG, -1,
+                    "PortModuleStateGate: probabilities must be in [0,1].\n");
+    }
 
     // Fixed layout [drop=0, flip=1]. Drop is inline (cancelDelivery on any Event);
     // fault[0] stays null. fault[1] is RandomFlipFault only when flip is enabled.
@@ -93,13 +106,18 @@ PortModuleStateGate::PortModuleStateGate(Params& params)
 
     buildPredicates(params);
     setValidInstallation(params, SEND_RECEIVE_VALID);
+    if (getInstallDirection() == installDirection::Send &&
+        (mode_ == Mode::Drop || mode_ == Mode::DropFlip)) {
+        out_->fatal(CALL_INFO_LONG, -1,
+                    "PortModuleStateGate: drop modes require install_direction='Receive'.\n");
+    }
 
 #ifdef __SST_DEBUG_OUTPUT__
     dbg_->debug(CALL_INFO_LONG, 1, 0,
                 "PortModuleStateGate: state_key='%s' mode=%d drop_p=%f flip_p=%f "
                 "predicates=%zu\n",
-                stateKey_.c_str(), static_cast<int>(mode_),
-                dropProb_, flipProb_, predicates_.size());
+                state_key_.c_str(), static_cast<int>(mode_),
+                drop_probability_, flip_probability_, predicates_.size());
 #endif
 }
 
@@ -108,13 +126,13 @@ PortModuleStateGate::buildPredicates(Params& params)
 {
     // Parse into serializable members first; rebuildPredicates() turns them
     // into lambdas and runs again after checkpoint restore.
-    kernelsCsv_     = params.find<std::string>("kernels", "");
-    hasCycleRange_  = params.contains("pipeline_cycle_start")
+    kernels_csv_     = params.find<std::string>("kernels", "");
+    has_cycle_range_ = params.contains("pipeline_cycle_start")
                       || params.contains("pipeline_cycle_end");
-    cycleStart_     = params.find<int>("pipeline_cycle_start", 0);
-    cycleEnd_       = params.find<int>("pipeline_cycle_end", INT32_MAX);
-    regionIdsCsv_   = params.find<std::string>("region_ids", "");
-    regionNamesCsv_ = params.find<std::string>("region_names", "");
+    cycle_start_     = params.find<int>("pipeline_cycle_start", 0);
+    cycle_end_       = params.find<int>("pipeline_cycle_end", INT32_MAX);
+    region_ids_csv_  = params.find<std::string>("region_ids", "");
+    region_names_csv_ = params.find<std::string>("region_names", "");
 
     rebuildPredicates();
 }
@@ -125,8 +143,12 @@ PortModuleStateGate::rebuildPredicates()
     predicates_.clear();
 
     // kernel-id set predicate: matches when currentKernel is in the set.
-    if (!kernelsCsv_.empty()) {
-        auto allowed = parseIntSet(kernelsCsv_);
+    if (!kernels_csv_.empty()) {
+        bool valid = false;
+        auto allowed = parseIntSet(kernels_csv_, valid);
+        if (!valid) out_->fatal(CALL_INFO_LONG, -1,
+                                "PortModuleStateGate: invalid kernels CSV '%s'.\n",
+                                kernels_csv_.c_str());
         predicates_.emplace_back(
             [allowed = std::move(allowed)](const PipelineStateBase& s,
                                            const EventAddress&) {
@@ -136,9 +158,13 @@ PortModuleStateGate::rebuildPredicates()
 
     // pipeline cycle range predicate: [start, end] inclusive; either bound optional.
     // Use a large sentinel for "unset" to keep the comparison branch-free.
-    if (hasCycleRange_) {
-        const int start = cycleStart_;
-        const int end   = cycleEnd_;
+    if (has_cycle_range_) {
+        if (cycle_start_ > cycle_end_) {
+            out_->fatal(CALL_INFO_LONG, -1,
+                        "PortModuleStateGate: pipeline_cycle_start exceeds pipeline_cycle_end.\n");
+        }
+        const int start = cycle_start_;
+        const int end   = cycle_end_;
         predicates_.emplace_back(
             [start, end](const PipelineStateBase& s, const EventAddress&) {
                 return s.pipelineCycle >= start && s.pipelineCycle <= end;
@@ -154,8 +180,12 @@ PortModuleStateGate::rebuildPredicates()
         return ea.addr < r.base + r.size && ea.addr + sz > r.base;
     };
 
-    if (!regionIdsCsv_.empty()) {
-        auto allowed = parseIntSet(regionIdsCsv_);
+    if (!region_ids_csv_.empty()) {
+        bool valid = false;
+        auto allowed = parseIntSet(region_ids_csv_, valid);
+        if (!valid) out_->fatal(CALL_INFO_LONG, -1,
+                                "PortModuleStateGate: invalid region_ids CSV '%s'.\n",
+                                region_ids_csv_.c_str());
         predicates_.emplace_back(
             [allowed = std::move(allowed), overlaps](const PipelineStateBase& s,
                                                      const EventAddress& ea) {
@@ -167,8 +197,8 @@ PortModuleStateGate::rebuildPredicates()
             });
     }
 
-    if (!regionNamesCsv_.empty()) {
-        auto allowed = parseStringSet(regionNamesCsv_);
+    if (!region_names_csv_.empty()) {
+        auto allowed = parseStringSet(region_names_csv_);
         predicates_.emplace_back(
             [allowed = std::move(allowed), overlaps](const PipelineStateBase& s,
                                                      const EventAddress& ea) {
@@ -197,7 +227,7 @@ PortModuleStateGate::doInjection(Event* ev)
     triggered_ = {{false, false}};
 
     const PipelineStateBase* state =
-        PipelineStateRegistry<PipelineStateBase>::get(stateKey_);
+        PipelineStateRegistry<PipelineStateBase>::get(state_key_);
     if (!state) {
         // Agent hasn't published yet; no gate can match.
         return false;
@@ -220,17 +250,17 @@ PortModuleStateGate::doInjection(Event* ev)
 
     switch (mode_) {
         case Mode::Drop:
-            triggered_[0] = (this->randFloat(0.0, 1.0) <= dropProb_);
+            triggered_[0] = (this->randFloat(0.0, 1.0) < drop_probability_);
             return triggered_[0];
         case Mode::Flip:
-            triggered_[1] = (this->randFloat(0.0, 1.0) <= flipProb_);
+            triggered_[1] = (this->randFloat(0.0, 1.0) < flip_probability_);
             return triggered_[1];
         case Mode::DropFlip:
-            triggered_[0] = (this->randFloat(0.0, 1.0) <= dropProb_);
+            triggered_[0] = (this->randFloat(0.0, 1.0) < drop_probability_);
             // Only roll for flip if we didn't already decide to drop the event;
             // a dropped event has nothing left to flip.
             triggered_[1] = !triggered_[0] &&
-                            (this->randFloat(0.0, 1.0) <= flipProb_);
+                            (this->randFloat(0.0, 1.0) < flip_probability_);
             return triggered_[0] || triggered_[1];
     }
     return false;
@@ -240,19 +270,9 @@ void
 PortModuleStateGate::executeFaults(Event*& ev)
 {
     if (triggered_[0]) {
-        // Generic drop via cancelDelivery(); interceptor must delete the event
-        // (same contract as RandomDropFault::faultLogic).
-        if (getInstallDirection() == installDirection::Receive) {
-            delete ev;
-            ev = nullptr;
-            this->cancelDelivery();
-        } else {
-#ifdef __SST_DEBUG_OUTPUT__
-            dbg_->debug(CALL_INFO_LONG, 1, 0,
-                        "PortModuleStateGate: drop requested in Send direction is a no-op "
-                        "(the framework doesn't expose a cancel hook on Send).\n");
-#endif
-        }
+        delete ev;
+        ev = nullptr;
+        this->cancelDelivery();
         return;
     }
     if (triggered_[1]) {

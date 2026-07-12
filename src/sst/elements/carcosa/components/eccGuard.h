@@ -17,6 +17,8 @@
 // Schroeder SIGMETRICS'09). due_action=drop_frame sets frameAbortRequested.
 
 #include "sst/elements/carcosa/components/eccPolicy.h"
+#include "sst/elements/carcosa/components/eccPayloadCorruptor.h"
+#include "sst/elements/carcosa/components/componentTestBounds.h"
 #include "sst/elements/carcosa/components/eccScheme.h"
 #include "sst/elements/carcosa/components/pipelineStateRegistry.h"
 #include "sst/elements/memHierarchy/memEvent.h"
@@ -162,7 +164,7 @@ public:
     void finish() override;
 
     enum class FaultModel : uint8_t { Poisson, JedecMix, Campaign, Resident };
-    enum class PayloadDtype : uint8_t { Bytes, Bf16, Fp8, Int8 };
+    using PayloadDtype = EccPayloadDtype;
     enum class DueAction   : uint8_t { LatencyOnly, DropFrame };
 
     enum class FaultMode : uint8_t {
@@ -197,19 +199,12 @@ private:
     void handleSelf(SST::Event* ev);
 
     uint64_t applyPolicy(SST::MemHierarchy::MemEvent* mev);
-    // Flip nbits distinct random bits in ECC word word_index (no XOR-cancel).
-    // Classifies high/low blast for payload_dtype_. Returns bits actually flipped.
-    unsigned flipBitsInWord(SST::MemHierarchy::MemEvent* mev,
-                            uint32_t word_index, EccScheme scheme,
-                            unsigned nbits,
-                            unsigned& high_flips, unsigned& low_flips);
     FaultDraw drawFaultPoisson(uint32_t payload_bytes, double ber, EccScheme scheme);
     FaultDraw drawFaultJedecMix(uint32_t payload_bytes, double event_rate, EccScheme scheme);
     void      distributeErrorsToChips(std::vector<uint8_t>& chip_counts,
                                       unsigned errs, EccScheme scheme, FaultMode mode);
-    // Campaign injection: deterministic budget gated on (current kernel ==
-    // campaign_target_kernel_) and per-access probability
-    // campaign_event_rate_; see eccGuard.h docs.
+    void      placeFaultErrors(FaultDraw& draw, uint32_t payload_bytes,
+                               EccScheme scheme);
     FaultDraw drawFaultCampaign(uint32_t payload_bytes, EccScheme scheme,
                                  const std::string& kernel_name);
 
@@ -238,13 +233,6 @@ private:
                              unsigned bit_in_line);
     FaultDraw drawFaultResident(SST::MemHierarchy::MemEvent* mev,
                                 uint32_t payload_bytes, EccScheme scheme);
-    // Flip the subset of draw.exact_bits that falls inside ECC word
-    // `word_index` (payload-relative), classifying blast per bit.
-    unsigned flipExactBitsInWord(SST::MemHierarchy::MemEvent* mev,
-                                 uint32_t word_index, EccScheme scheme,
-                                 const std::vector<uint32_t>& exact_bits,
-                                 unsigned& high_flips, unsigned& low_flips);
-
     // Emit a one-shot warning whenever a policy entry's BER exceeds the
     // documented tight-approximation bound (see kEccBerTightUpperBound in
     // eccScheme.h). Tracks already-warned BER values to avoid log spam.
@@ -273,7 +261,7 @@ private:
     SST::Link*    selfLink_ = nullptr;
 
     EccPolicyTable policy_;
-    bool           applyOnResponsesOnly_ = true;
+    bool           apply_on_responses_only_ = true;
 
     FaultModel    fault_model_   = FaultModel::Poisson;
     PayloadDtype  payload_dtype_ = PayloadDtype::Bytes;
@@ -373,13 +361,7 @@ private:
     // "" means "no FSM publisher yet".
     std::map<std::pair<std::string, std::string>, OutcomeCounters> per_kernel_region_;
 
-    // Dedicated-branch test oracles. A negative value disables each bound.
-    int64_t test_total_min_ = -1, test_total_max_ = -1;
-    int64_t test_clean_min_ = -1, test_clean_max_ = -1;
-    int64_t test_correctable_min_ = -1, test_correctable_max_ = -1;
-    int64_t test_due_min_ = -1, test_due_max_ = -1;
-    int64_t test_escape_min_ = -1, test_escape_max_ = -1;
-    int64_t test_resident_born_min_ = -1, test_resident_born_max_ = -1;
+    ComponentTestBounds test_bounds_;
 
     // Fault-mode draw counters; written every time fault_model_=JedecMix fires.
     uint64_t per_mode_draws_[static_cast<int>(FaultMode::Count)] = {};

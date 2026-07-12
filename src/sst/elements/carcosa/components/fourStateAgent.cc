@@ -28,7 +28,7 @@ FourStateAgent::FourStateAgent(ComponentId_t id, Params& params)
 {
     out_ = new Output("", 1, 0, Output::STDOUT);
 
-    stateKey_       = params.find<std::string>("state_key", "");
+    state_key_      = params.find<std::string>("state_key", "");
     regionSize_     = params.find<uint64_t>("region_size", 4096);
     regionsCsv_     = params.find<std::string>("regions", "");
     initialCommand_ = params.find<int>("initial_command", 0);
@@ -42,7 +42,7 @@ FourStateAgent::FourStateAgent(ComponentId_t id, Params& params)
                     "FourStateAgent: 'num_commands' must be >= 1 (got %d).\n", numCommands_);
     }
 
-    if (stateKey_.empty()) {
+    if (state_key_.empty()) {
         out_->fatal(CALL_INFO, -1,
                     "FourStateAgent: 'state_key' is required (pick something unique per core, "
                     "e.g. 'core0').\n");
@@ -59,33 +59,26 @@ void FourStateAgent::agentSetup()
     nextCommand_ = initialCommand_;
 
     // Establish the registry entry for this core. After this point any
-    // PortModule (e.g. PortModuleStateGate) looking up stateKey_ will see
+    // PortModule (e.g. PortModuleStateGate) looking up state_key_ will see
     // a live snapshot instead of nullptr.
-    PipelineStateBase* s = PipelineStateRegistry<PipelineStateBase>::getOrCreate(stateKey_);
-    s->currentKernel     = IDLE;
-    s->currentKernelName = kernelNameFor(IDLE);
-    s->pipelineCycle     = 0;
+    PipelineStateBase* s = PipelineStateRegistry<PipelineStateBase>::getOrCreate(state_key_);
+    s->publishKernel(IDLE, kernelNameFor(IDLE), 0);
     publishedKernel_     = IDLE;
 
     // Publish the MMIO control region as a named region so that
     // `region_names="mmio_control"` predicates can match.
-    s->ensureRegionSlot(0);
-    s->regions[0].base  = controlAddrBase_;
-    s->regions[0].size  = regionSize_;
-    s->regions[0].valid = regionSize_ > 0;
-    s->regions[0].id    = 0;
-    s->regions[0].name  = "mmio_control";
+    s->publishRegion(0, controlAddrBase_, regionSize_, "mmio_control");
 
-    int n_user = publishUserRegions(stateKey_, regionsCsv_, out_, "FourStateAgent");
+    int n_user = publishUserRegions(state_key_, regionsCsv_, out_, "FourStateAgent");
     if (verbose_ && n_user > 0) {
         out_->output("FourStateAgent[%s]: published %d user region(s)\n",
-                     stateKey_.c_str(), n_user);
+                     state_key_.c_str(), n_user);
     }
 
     if (verbose_) {
         out_->output("FourStateAgent[%s]: setup initial_command=%d num_commands=%d "
                      "max_iterations=%d mmio_base=0x%" PRIx64 " size=%" PRIu64 "\n",
-                     stateKey_.c_str(), initialCommand_, numCommands_, maxIterations_,
+                     state_key_.c_str(), initialCommand_, numCommands_, maxIterations_,
                      controlAddrBase_, regionSize_);
     }
 
@@ -98,20 +91,19 @@ void FourStateAgent::agentSetup()
 
 void FourStateAgent::publishState(int kernel)
 {
-    PipelineStateBase* s = PipelineStateRegistry<PipelineStateBase>::getMutable(stateKey_);
+    PipelineStateBase* s = PipelineStateRegistry<PipelineStateBase>::getMutable(state_key_);
     if (!s) {
         // agentSetup() should have created the entry; defensively re-create
         // so a stray lookup from a PortModule never sees nullptr mid-run.
-        s = PipelineStateRegistry<PipelineStateBase>::getOrCreate(stateKey_);
+        s = PipelineStateRegistry<PipelineStateBase>::getOrCreate(state_key_);
     }
-    s->currentKernel     = kernel;
-    s->currentKernelName = kernelNameFor(kernel);
-    s->pipelineCycle     = (numCommands_ > 0) ? (currentIteration_ / numCommands_) : 0;
+    s->publishKernel(kernel, kernelNameFor(kernel),
+                     numCommands_ > 0 ? currentIteration_ / numCommands_ : 0);
     publishedKernel_     = kernel;
 
     if (verbose_) {
         out_->output("FourStateAgent[%s]: publish currentKernel=%d ('%s') pipelineCycle=%d\n",
-                     stateKey_.c_str(), s->currentKernel, s->currentKernelName.c_str(),
+                     state_key_.c_str(), s->currentKernel, s->currentKernelName.c_str(),
                      s->pipelineCycle);
     }
 }
@@ -156,7 +148,7 @@ bool FourStateAgent::handleInterceptedEvent(MemEvent* ev, Link* highlink)
         }
         if (verbose_) {
             out_->output("FourStateAgent[%s]: sent done iteration %u\n",
-                         stateKey_.c_str(), currentIteration_);
+                         state_key_.c_str(), currentIteration_);
         }
         checkBothDone();
         return true;
@@ -174,7 +166,7 @@ void FourStateAgent::notifyPartnerDone(unsigned iteration)
     partnerDone_ = true;
     if (verbose_) {
         out_->output("FourStateAgent[%s]: partner done (iteration=%u)\n",
-                     stateKey_.c_str(), iteration);
+                     state_key_.c_str(), iteration);
     }
     checkBothDone();
 }
@@ -207,15 +199,10 @@ void FourStateAgent::setInterceptBase(uint64_t base) {
     // agentSetup() hasn't necessarily run yet, but if the registry entry
     // already exists (e.g. a gate looked it up), keep the region info
     // consistent with the base Hali handed us.
-    if (!stateKey_.empty()) {
-        PipelineStateBase* s = PipelineStateRegistry<PipelineStateBase>::getMutable(stateKey_);
+    if (!state_key_.empty()) {
+        PipelineStateBase* s = PipelineStateRegistry<PipelineStateBase>::getMutable(state_key_);
         if (s) {
-            s->ensureRegionSlot(0);
-            s->regions[0].base  = controlAddrBase_;
-            s->regions[0].size  = regionSize_;
-            s->regions[0].valid = regionSize_ > 0;
-            s->regions[0].id    = 0;
-            s->regions[0].name  = "mmio_control";
+            s->publishRegion(0, controlAddrBase_, regionSize_, "mmio_control");
         }
     }
 }

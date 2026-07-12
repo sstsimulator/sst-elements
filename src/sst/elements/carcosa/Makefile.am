@@ -13,11 +13,15 @@ libcarcosa_la_SOURCES =                     \
     components/hali.h                       \
     components/eccGuard.cc                  \
     components/eccGuard.h                   \
+    components/eccPayloadCorruptor.cc       \
+    components/eccPayloadCorruptor.h        \
     components/eccModelMath.h               \
     components/criticalActionWatcher.cc     \
     components/criticalActionWatcher.h      \
     components/eccScheme.h                  \
     components/eccPolicy.h                  \
+    components/componentTestBounds.h        \
+    components/configParse.h                \
     components/actionScorer.cc              \
     components/actionScorer.h               \
     components/faultInjManager.cc           \
@@ -93,7 +97,9 @@ libcarcosa_la_SOURCES =                     \
 if SST_CARCOSA_HAVE_BALAR
 libcarcosa_la_SOURCES += \
     components/balarRingBridge.cc \
-    components/balarRingBridge.h
+    components/balarRingBridge.h \
+    components/balarTraceParser.cc \
+    components/balarTraceParser.h
 # HAVE_BALAR_BRIDGE is passed on the command line (like balar's own -DHAVE_CUDA=1
 # in CUDA_CPPFLAGS) rather than via sst_element_config.h, which element sources do
 # not include. CUDA_CPPFLAGS carries the CUDA include path for balar's packet headers.
@@ -171,9 +177,12 @@ nobase_sst_HEADERS =                        \
     faultlogic/randomFlipFault.h            \
     faultlogic/randomFlipMemHFault.h        \
     components/pmDataRegistry.h             \
+    components/componentTestBounds.h        \
+    components/configParse.h                \
     components/eccScheme.h                  \
     components/eccPolicy.h                  \
     components/eccGuard.h                   \
+    components/eccPayloadCorruptor.h        \
     components/eccModelMath.h               \
     components/criticalActionWatcher.h      \
     components/actionScorer.h               \

@@ -12,6 +12,7 @@
 #ifndef SST_ELEMENTS_CARCOSA_ECC_POLICY_H
 #define SST_ELEMENTS_CARCOSA_ECC_POLICY_H
 
+#include "sst/elements/carcosa/components/configParse.h"
 #include "sst/elements/carcosa/components/eccScheme.h"
 #include <cctype>
 #include <cstdint>
@@ -139,10 +140,31 @@ public:
                     continue;
                 }
             }
-            if (parts.size() >= 3) e.ber                    = parseDouble(parts[2]);
-            if (parts.size() >= 4) e.correctable_latency_ps = parseUInt64(parts[3]);
-            if (parts.size() >= 5) e.due_latency_ps         = parseUInt64(parts[4]);
-            if (parts.size() >= 6) e.escape_latency_ps      = parseUInt64(parts[5]);
+            if (parts.size() >= 3 &&
+                (!ConfigParse::parseDouble(parts[2], e.ber) ||
+                 !ConfigParse::isProbability(e.ber))) {
+                errors.push_back("ecc_kernel_policy: invalid BER '" + parts[2] + "' for '" + parts[0] + "'");
+                continue;
+            }
+            if (parts.size() >= 4 &&
+                !ConfigParse::parseUint64(parts[3], e.correctable_latency_ps)) {
+                errors.push_back("ecc_kernel_policy: invalid correctable latency '" + parts[3] + "'");
+                continue;
+            }
+            if (parts.size() >= 5 &&
+                !ConfigParse::parseUint64(parts[4], e.due_latency_ps)) {
+                errors.push_back("ecc_kernel_policy: invalid DUE latency '" + parts[4] + "'");
+                continue;
+            }
+            if (parts.size() >= 6 &&
+                !ConfigParse::parseUint64(parts[5], e.escape_latency_ps)) {
+                errors.push_back("ecc_kernel_policy: invalid escape latency '" + parts[5] + "'");
+                continue;
+            }
+            if (parts.size() > 6) {
+                errors.push_back("ecc_kernel_policy: too many fields in '" + buf + "'");
+                continue;
+            }
 
             if (!kernel_any && !region_any) {
                 setPerKernelRegion(kernel_tok, region_tok, e);
@@ -198,12 +220,6 @@ private:
         return out;
     }
 
-    static double parseDouble(const std::string& s) {
-        try { return std::stod(s); } catch (...) { return 0.0; }
-    }
-    static uint64_t parseUInt64(const std::string& s) {
-        try { return static_cast<uint64_t>(std::stoull(s)); } catch (...) { return 0; }
-    }
 };
 
 } // namespace Carcosa

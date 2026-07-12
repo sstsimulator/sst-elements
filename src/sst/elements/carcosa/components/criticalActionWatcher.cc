@@ -24,7 +24,7 @@ CriticalActionWatcher::CriticalActionWatcher(ComponentId_t id, Params& params)
     state_key_       = params.find<std::string>("state_key", "");
     critical_region_ = params.find<std::string>("critical_region", "action_queue");
     critical_len_    = params.find<uint64_t>("critical_len", 64);
-    applyOnResponsesOnly_ =
+    apply_on_responses_only_ =
         params.find<bool>("apply_on_responses_only", true);
     actuation_kernel_name_ = params.find<std::string>("actuation_kernel", "");
     golden_path_     = params.find<std::string>("golden_log", "");
@@ -180,8 +180,7 @@ void CriticalActionWatcher::mergePayloadIntoSnapshot(uint64_t rel_off,
     // the pipeline driver closes its FrameRecord on the ACTUATE status write,
     // before this watcher necessarily sees traffic from the next kernel.
     if (observed_this_frame_ && state_ptr_) {
-        state_ptr_->watcherActionChecksum = hashSnapshot();
-        state_ptr_->watcherActionChecksumValid = true;
+        state_ptr_->publishWatcherChecksum(hashSnapshot());
     }
 }
 
@@ -321,16 +320,15 @@ void CriticalActionWatcher::finalizeActuateFrame() {
             corrupted = checksum != golden;
         }
     }
-    state_ptr_->watcherCriticalCorrupted = corrupted;
+    state_ptr_->recordWatcherCorruption(corrupted);
     if (corrupted) {
-        ++state_ptr_->framesCriticalRegionCorrupted;
         if (stat_frames_critical_corrupted_)
             stat_frames_critical_corrupted_->addData(1);
     }
     // Frame-close status write (no intervening critical traffic) already
     // consumed this fold; retire the flag so the next frame cannot inherit a
     // stale checksum if nothing downstream reads it.
-    state_ptr_->watcherActionChecksumValid = false;
+    state_ptr_->retireWatcherChecksum();
     snapshot_.assign(crit_len_, 0);
     observed_this_frame_ = false;
 }
@@ -353,7 +351,7 @@ void CriticalActionWatcher::observeEvent(MemEvent* mev) {
     last_kernel_id_   = state_ptr_->currentKernel;
     saw_kernel_       = true;
 
-    if ((!applyOnResponsesOnly_ || isResponseCmd(mev))
+    if ((!apply_on_responses_only_ || isResponseCmd(mev))
         && k == actuation_kernel_name_) {
         uint64_t rel = 0, poff = 0, olen = 0;
         if (eventOverlapsCritical(mev, rel, poff, olen)) {
