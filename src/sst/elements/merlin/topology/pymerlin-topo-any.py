@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright 2009-2025 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test for anytopo with cubical graph (8 vertices, 12 edges)
 
