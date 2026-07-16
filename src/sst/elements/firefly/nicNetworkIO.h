@@ -29,24 +29,24 @@ class NetworkIO {
                 assert(ops.readCount > 0);
                 --ops.readCount;
         }
-    
+
     void incPendingWrites(int id) {
         ++m_pendingOps[id].writeCount;
     }
-    
+
     void decPendingWrites(int id) {
         PendingOps& ops = m_pendingOps[id];
         assert(ops.writeCount > 0);
         --ops.writeCount;
     }
-    
+
     // Core references
     Nic& m_nic;
     Output& m_dbg;
     std::string m_prefix;
-    
+
     // Per-core tracking of pending non-blocking operations
     std::vector<PendingOps> m_pendingOps;
-    
+
     std::string prefix() { return m_prefix; }
 };

@@ -135,24 +135,26 @@ VOID RecordMemRead(VOID * addr, UINT32 size, THREADID thr)
 
     PerformInstrumentCountCheck(thr);
 
-    if(0 == trace_format) {
-	fprintf(trace[thr], "%llu R %llu %d\n",
-		(unsigned long long int) thread_instr_id[thr].insCount,
-		(unsigned long long int) ma_addr,
-		(int) size);
-	thread_instr_id[thr].readCount++;
-    } else if (1 == trace_format || 2 == trace_format) {
-	copy(RECORD_BUFFER, &(thread_instr_id[thr].insCount), 0, sizeof(uint64_t) );
-    	copy(RECORD_BUFFER, &READ_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
-    	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
-    	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
-
-	if(1 == trace_format) {
-		if(thr < max_thread_count && (traceEnabled > 0)) {
-    			fwrite(RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace[thr]);
+	if (traceEnabled > 0) {
+		if(0 == trace_format) {
+			fprintf(trace[thr], "%llu R %llu %d\n",
+				(unsigned long long int) thread_instr_id[thr].insCount,
+				(unsigned long long int) ma_addr,
+				(int) size);
 			thread_instr_id[thr].readCount++;
+		} else if (1 == trace_format || 2 == trace_format) {
+			copy(RECORD_BUFFER, &(thread_instr_id[thr].insCount), 0, sizeof(uint64_t) );
+			copy(RECORD_BUFFER, &READ_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
+			copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
+			copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
+
+			if(1 == trace_format) {
+				if(thr < max_thread_count) {
+						fwrite(RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace[thr]);
+					thread_instr_id[thr].readCount++;
+				}
+			}
 		}
-	}
 	}
 
 #ifdef PROSPERO_DEBUG
@@ -172,24 +174,26 @@ VOID RecordMemWrite(VOID * addr, UINT32 size, THREADID thr)
 
     UINT64 ma_addr = (UINT64) addr;
 
-    if(0 == trace_format) {
-	fprintf(trace[thr], "%llu W %llu %d\n",
-		(unsigned long long int) thread_instr_id[thr].insCount,
-		(unsigned long long int) ma_addr,
-		(int) size);
-	thread_instr_id[thr].writeCount++;
-    } else if(1 == trace_format || 2 == trace_format) {
-    	copy(RECORD_BUFFER, &(thread_instr_id[thr].insCount), 0, sizeof(uint64_t) );
-    	copy(RECORD_BUFFER, &WRITE_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
-    	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
-    	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
-
-	if(1 == trace_format) {
-		if(thr < max_thread_count && (traceEnabled > 0)) {
-	   		fwrite(RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace[thr]);
+	if (traceEnabled > 0) {
+		if(0 == trace_format) {
+			fprintf(trace[thr], "%llu W %llu %d\n",
+				(unsigned long long int) thread_instr_id[thr].insCount,
+				(unsigned long long int) ma_addr,
+				(int) size);
 			thread_instr_id[thr].writeCount++;
+		} else if(1 == trace_format || 2 == trace_format) {
+			copy(RECORD_BUFFER, &(thread_instr_id[thr].insCount), 0, sizeof(uint64_t) );
+			copy(RECORD_BUFFER, &WRITE_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
+			copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
+			copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
+
+			if(1 == trace_format) {
+				if(thr < max_thread_count) {
+					fwrite(RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace[thr]);
+					thread_instr_id[thr].writeCount++;
+				}
+			}
 		}
-	}
 	}
 #ifdef PROSPERO_DEBUG
      printf("PROSPERO: Completed into RecordMemWrite...\n");

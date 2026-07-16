@@ -10,16 +10,16 @@ using namespace SST::Firefly;
 // ========================================================================
 // NetworkIO Constructor - Initialize storage configuration from parameters
 // ========================================================================
-Nic::NetworkIO::NetworkIO(Nic& nic, Params& params, Output& output) : 
+Nic::NetworkIO::NetworkIO(Nic& nic, Params& params, Output& output) :
     m_nic(nic), m_dbg(output)
 {
     m_prefix = "@t:" + std::to_string(nic.getNodeId()) + ":Nic::NetworkIO::@p():@l ";
-    
-       
+
+
     // Initialize per-core pending operation tracking (same size as vNIC count)
     m_pendingOps.resize(nic.getNum_vNics());
-    
-    m_dbg.verbosePrefix(prefix().c_str(), CALL_INFO, 1, NIC_DBG_NETWORKIO, 
+
+    m_dbg.verbosePrefix(prefix().c_str(), CALL_INFO, 1, NIC_DBG_NETWORKIO,
         "storage config:cores=%d\n", nic.getNum_vNics());
 }
 
@@ -28,7 +28,7 @@ Nic::NetworkIO::NetworkIO(Nic& nic, Params& params, Output& output) :
 // ========================================================================
 void Nic::NetworkIO::handleEvent(NicNetworkIOCmdEvent* event, int id)
 {
-    m_dbg.verbosePrefix(prefix().c_str(), CALL_INFO, 1, NIC_DBG_NETWORKIO, 
+    m_dbg.verbosePrefix(prefix().c_str(), CALL_INFO, 1, NIC_DBG_NETWORKIO,
         "core=%d `%s`\n", id, event->getTypeStr().c_str());
 
     // Dispatch based on operation type

@@ -23,24 +23,24 @@ namespace SST
             int64_t delay_ns;
             SsdReqCallback callback;
         };
-        
+
         struct Bus
         {
             std::vector<std::queue<Request>> lanes;
             int currentLane = 0;
         };
-        
+
         class SimpleSSDAPI : public SST::SubComponent
         {
         public:
             SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Firefly::SimpleSSDAPI)
-            
+
             /// Constructor
             SimpleSSDAPI(ComponentId_t id) : SubComponent(id) {};
-            
-            /// Destructor            
+
+            /// Destructor
             virtual ~SimpleSSDAPI() {};
-            
+
             /// SSD read API to read bytes from offset
             virtual void read(int64_t offset, size_t bytes, const SsdReqCallback &callback) = 0;
 
@@ -62,7 +62,7 @@ namespace SST
 
             /// SSD's read bandwidth per queue
             double m_readBandwidthPerQueue_GBps;
-            
+
             /// SSD's read bandwidth per queue
             double m_writeBandwidthPerQueue_GBps;
         };
@@ -80,14 +80,14 @@ namespace SST
 
             SST_ELI_DOCUMENT_PARAMS({"nSSDsPerNode","The number of SSDs to simulate", "1"},
                                     {"queuesCountPerSSD", "The number of parallel paths per SSD", "4"},
-                                    {"readBandwidthPerSSD_GBps", "", "6.25"}, 
-                                    {"writeBandwidthPerSSD_GBps", "", "6.25"}, 
+                                    {"readBandwidthPerSSD_GBps", "", "6.25"},
+                                    {"writeBandwidthPerSSD_GBps", "", "6.25"},
                                     {"readOverheadLatency_ns", "Latency(ns) used for tuning simulations to hardware experiments", "500"},
                                     {"writeOverheadLatency_ns", "Latency(ns) used for tuning simulations to hardware experiments", "500"})
-            
+
             /// Constructor
             SimpleSSD(ComponentId_t id, Params &params);
-            
+
             /// Copy constructor deleted
             SimpleSSD(const SimpleSSD &) = delete;
 
@@ -99,7 +99,7 @@ namespace SST
 
             /// SSD read API to read bytes from offset
             void read(int64_t offset, size_t bytes, const std::function<void(void)> &callback) override;
-            
+
             /// SSD write API to write bytes to offset
             void write(int64_t offset, size_t bytes, const std::function<void(void)> &callback) override;
 

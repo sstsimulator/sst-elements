@@ -528,7 +528,7 @@ class NicRespEvent : public NicRespBaseEvent {
 };
 
 //=============================================================================
-// NetworkIO Command Events 
+// NetworkIO Command Events
 //=============================================================================
 
 class NicNetworkIOCmdEvent : public NicCmdBaseEvent {
@@ -537,14 +537,14 @@ public:
         NetworkIORead,
         NetworkIOWrite
     };
-    
+
     NicNetworkIOCmdEvent(Type type, std::function<void(int)> callback)
         : NicCmdBaseEvent(NetworkIO), type(type), m_callback(callback) {}
-    
+
     virtual ~NicNetworkIOCmdEvent() {}
-    
+
     Type type;
-    
+
     std::string getTypeStr() {
         switch(type) {
             case NetworkIORead: return "NetworkIORead";
@@ -552,12 +552,12 @@ public:
             default: return "Unknown";
         }
     }
-    
+
     std::function<void(int)> getCallback() { return m_callback; }
-    
+
 private:
     std::function<void(int)> m_callback;
-    
+
     NotSerializable(NicNetworkIOCmdEvent)
 };
 

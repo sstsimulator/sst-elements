@@ -24,7 +24,7 @@ public:
         "Network I/O Library for network-attached storage operations",
         SST::Ember::EmberLib
     )
-    
+
     SST_ELI_DOCUMENT_PARAMS()
 
     EmberNetworkIOLib(Params& params) {}
@@ -38,7 +38,7 @@ public:
     {
         q.push(new EmberNetworkIOWriteEvent(api(), m_output, offset, src, length));
     }
-    
+
 private:
     NetworkIO::Interface& api() { return *static_cast<NetworkIO::Interface*>(m_api); }
 };

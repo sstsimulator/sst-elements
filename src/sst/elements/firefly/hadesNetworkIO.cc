@@ -19,7 +19,7 @@ HadesNetworkIO::HadesNetworkIO(ComponentId_t id, Params& params) :
 
     m_numSsdNodes = params.find<int64_t>("numStorageNodes", 0);
     m_ssd_start_node = params.find<int64_t>("ssd_start_node", 0);
-    
+
     for (int64_t i = 0; i < m_numSsdNodes; i++) {
         m_storageNodesList.push_back(m_ssd_start_node + i);
     }
@@ -45,7 +45,7 @@ void HadesNetworkIO::setup()
 
 void HadesNetworkIO::networkIORead(Hermes::Vaddr dest, uint64_t offset, uint64_t length, Callback callback)
 {
-    m_dbg.verbose(CALL_INFO, 1, 0, "network_read: dest=%lx offset=%lu length=%lu \n", 
+    m_dbg.verbose(CALL_INFO, 1, 0, "network_read: dest=%lx offset=%lu length=%lu \n",
                   dest, offset, length);
     int targetNid = calcTargetNid(offset);
     m_nicPtr->networkIORead(targetNid, dest, length, callback);
@@ -53,7 +53,7 @@ void HadesNetworkIO::networkIORead(Hermes::Vaddr dest, uint64_t offset, uint64_t
 
 void HadesNetworkIO::networkIOWrite(uint64_t offset, Hermes::Vaddr src, uint64_t length, Callback callback)
 {
-    m_dbg.verbose(CALL_INFO, 1, 0, "network_write: offset=%lu src=%lx length=%lu \n", 
+    m_dbg.verbose(CALL_INFO, 1, 0, "network_write: offset=%lu src=%lx length=%lu \n",
                   offset, src, length);
     int targetNid = calcTargetNid(offset);
     m_nicPtr->networkIOWrite(targetNid, src, length, callback);
@@ -63,7 +63,7 @@ void HadesNetworkIO::networkIOWrite(uint64_t offset, Hermes::Vaddr src, uint64_t
 int64_t HadesNetworkIO::calcTargetNid(int64_t offset)
 {
     assert(m_storageNodesList.size() > 0 && "No storage nodes defined in storageNodesList");
-    
+
     int nodeIndex = (offset/m_storageNodeCapacity)%m_storageNodesList.size();
     return m_storageNodesList.at(nodeIndex);
 }

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test for anytopo with Ember using complete graph (4 vertices)
 
