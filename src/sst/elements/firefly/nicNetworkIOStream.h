@@ -13,6 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+// SPDX-FileCopyrightText: Copyright Hewlett Packard Enterprise Development LP
+// SPDX-License-Identifier: BSD-3-Clause
+
 // NetworkStream: Handles incoming network storage operations
 class NetworkIOStream : public StreamBase {
   public:
