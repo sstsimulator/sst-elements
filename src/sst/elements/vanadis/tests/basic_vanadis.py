@@ -60,6 +60,7 @@ parser.add_argument("--cpu-clock", help="Core clock frequency. Default is 2.3GHz
 parser.add_argument("--library", help="Which vanadis library to use, 'vanadis' or 'vanadisdbg'. Default is vanadis.")
 parser.add_argument("--halt-at-address", help="An optional instruction address at which to end simulation. 0 indicates none (default).")
 parser.add_argument("--tlb-iface", help="Whether to put TLBs in the core's memory interface (1) or place them between the interface and L1 (0, default).")
+parser.add_argument("--cpt", help="vanadis checkpoint. save or load or nothing")
 args = parser.parse_args()
 
 
@@ -109,8 +110,13 @@ mh_debug=0
 l1_debug=0
 dbgAddr="0"
 stopDbg="0"
-checkpointDir = ""
+checkpointDir = "/ascldap/users/grvosku/dev1/sst-elements/src/sst/elements/vanadis/tests/test-checkpoint"
 checkpoint = ""
+if args.cpt == "save":
+    checkpoint = "save"
+elif args.cpt == "load":
+    checkpoint = "load"
+
 pythonDebug=False
 
 #exe = "hello-world-cpp"
@@ -269,11 +275,15 @@ memCtrlParams = {
       "initBacking": 1,
       "addr_range_start": 0,
       "addr_range_end": 0xffffffff,
-      "debug_level" : mh_debug_level,
-      "debug" : mh_debug,
+      "debug_level" : 10, #mh_debug_level,
+      "debug" : 1, #mh_debug,
       "checkpointDir" : checkpointDir,
       "checkpoint" : checkpoint
 }
+if checkpoint == "save":
+    memCtrlParams["backing_out_file"] = checkpointDir + "/" + "memory.out"
+elif checkpoint == "load":
+    memCtrlParams["backing_in_file"] = checkpointDir + "/" + "memory.out"
 
 memParams = {
       "mem_size" : "4GiB",
