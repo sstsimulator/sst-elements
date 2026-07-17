@@ -61,6 +61,7 @@ parser.add_argument("--library", help="Which vanadis library to use, 'vanadis' o
 parser.add_argument("--halt-at-address", help="An optional instruction address at which to end simulation. 0 indicates none (default).")
 parser.add_argument("--tlb-iface", help="Whether to put TLBs in the core's memory interface (1) or place them between the interface and L1 (0, default).")
 parser.add_argument("--cpt", help="vanadis checkpoint. save or load or nothing")
+parser.add_argument("--cptdir", help="vanadis checkpoint directory")
 args = parser.parse_args()
 
 
@@ -110,7 +111,7 @@ mh_debug=0
 l1_debug=0
 dbgAddr="0"
 stopDbg="0"
-checkpointDir = "/ascldap/users/grvosku/dev1/sst-elements/src/sst/elements/vanadis/tests/test-checkpoint"
+checkpointDir = "" if args.cptdir == None else args.cptdir
 checkpoint = ""
 if args.cpt == "save":
     checkpoint = "save"
