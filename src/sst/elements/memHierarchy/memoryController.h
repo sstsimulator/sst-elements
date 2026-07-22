@@ -60,7 +60,8 @@ public:
             {"backing_in_file",     "(string) An optional file to pre-load memory contents from.", ""},\
             {"backing_out_file",    "(string) An optional file to write out memory contents to. Setting this will also trigger a flush of cache contents prior to writing the file. May be the same as 'backing_in_file'.", ""},\
             {"backing_out_screen",  "(bool) Write out memory contents to screen at end of simulation. Setting this will also trigger a flush of cache contents prior to writing to screen.", "false"},\
-            {"customCmdMemHandler", "(string) Name of the custom command handler to load", ""}
+            {"customCmdMemHandler", "(string) Name of the custom command handler to load", ""},\
+            {"writeback_acks",      "(bool) Acknowledge writebacks (PutM) with an AckPut response. Required by non-coherent (coherence_protocol=none) caches above a noninclusive level so a same-line read can be serialized behind an in-flight dirty writeback. Off by default; behavior is byte-identical for coherent configurations.", "false"}
 
     SST_ELI_DOCUMENT_PARAMS( MEMCONTROLLER_ELI_PARAMS )
 
@@ -182,6 +183,7 @@ private:
     void handleCustomEvent(MemEventBase* ev);
 
     bool backing_outscreen_;
+    bool sendWritebackAcks_;    // Ack writebacks (PutM) so a noninclusive incoherent cache above can serialize reads behind them
 };
 
 }}

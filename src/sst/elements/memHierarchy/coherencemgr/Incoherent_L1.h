@@ -143,6 +143,10 @@ public:
     bool handleFlushLineResp(MemEvent * event, bool in_mshr) override;
     bool handleNACK(MemEvent * event, bool in_mshr) override;
 
+    /* Handle a writeback acknowledgement (AckPut) from the level below so a
+       same-line request stalled behind an in-flight dirty writeback can be replayed. */
+    bool handleAckPut(MemEvent * event, bool in_mshr) override;
+
     Addr getBank(Addr addr) override { return cache_array_->getBank(addr); }
     void setSliceAware(uint64_t size, uint64_t step) override { cache_array_->setSliceAware(size, step); }
 

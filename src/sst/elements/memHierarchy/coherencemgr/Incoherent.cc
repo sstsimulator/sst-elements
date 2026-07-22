@@ -727,6 +727,12 @@ bool Incoherent::handleEviction(Addr addr, PrivateCacheLine* &line, dbgin &debug
             break;
         case M:
             sendWriteback(Command::PutM, line, true);
+            // Track the in-flight writeback so a subsequent request to this line stalls
+            // until memory has absorbed it (and acks). Without this, a racing read can reach
+            // memory before the writeback lands and, since incoherent caches never
+            // invalidate, the stale value is cached permanently.
+            if (recv_writeback_ack_)
+                mshr_->insertWriteback(line->getAddr(), false);
             line->setState(I);
             if (mem_h_is_debug_addr(line->getAddr()))
                 printDebugAlloc(false, line->getAddr(), "Writeback");
@@ -897,6 +903,14 @@ void Incoherent::forwardByAddress(MemEventBase* ev, Cycle_t timestamp) {
     CoherenceController::forwardByAddress(ev, timestamp);
 }
 
+/* Handle a writeback acknowledgement (AckPut) from memory. Clears the
+ * in-flight-writeback MSHR entry inserted at eviction time and replays any request
+ * that stalled behind it. */
+bool Incoherent::handleAckPut(MemEvent * event, bool in_mshr) {
+    cleanUpAfterResponse(event);
+    return true;
+}
+
 void Incoherent::forwardByDestination(MemEventBase* ev, Cycle_t timestamp) {
     stat_event_sent_[(int)ev->getCmd()]->addData(1);
     CoherenceController::forwardByDestination(ev, timestamp);
@@ -908,7 +922,11 @@ void Incoherent::forwardByDestination(MemEventBase* ev, Cycle_t timestamp) {
  *************************/
 
 MemEventInitCoherence * Incoherent::getInitCoherenceEvent() {
-    return new MemEventInitCoherence(cachename_, Endpoint::Cache, false, false, false, line_size_, true);
+    // (src, type, inclusive, sends WB Acks, expects WB Acks, line size, tracks presence)
+    // sends-WB-Acks = true: acknowledge dirty writebacks from the level above so it can serialize a
+    // same-line request behind an in-flight writeback (handlePutM already sends the ack when
+    // send_writeback_ack_ is negotiated on).
+    return new MemEventInitCoherence(cachename_, Endpoint::Cache, false, true, false, line_size_, true);
 }
 
 void Incoherent::recordPrefetchResult(PrivateCacheLine * line, Statistic<uint64_t>* stat) {
