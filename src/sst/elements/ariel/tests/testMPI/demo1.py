@@ -33,8 +33,11 @@ core.addParams({
     #"executable" : "./hello-nompi"
     "executable" : "./hello",
     #"executable" : "/home/prlavin/projects/reference-paper-2024/apps/install/bin/amg",
-    "arielmode" : 1,
+    "arielmode" : 0,
     "corecount" : ncores,
+    "envparamcount" : 1,
+    "envparamname0" : "OMP_NUM_THREADS",
+    "envparamval0": ncores,
 })
 
 if mpi_mode:
