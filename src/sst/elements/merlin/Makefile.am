@@ -94,6 +94,12 @@ libmerlin_la_SOURCES = \
 	pymerlin-router.py \
 	interfaces/pymerlin-interface.py \
 	target_generator/pymerlin-targetgen.py \
+	topology/anytopo_utility/DallyDragonfly.py \
+	topology/anytopo_utility/HPC_topos.py \
+	topology/anytopo_utility/__init__.py \
+	topology/anytopo_utility/Jellyfish.py \
+	topology/anytopo_utility/Polarfly.py \
+	topology/anytopo_utility/Slimfly.py \
 	topology/pymerlin-topo-any.py \
 	topology/pymerlin-topo-dragonfly.py \
 	topology/pymerlin-topo-polarfly.py \
