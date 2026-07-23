@@ -29,9 +29,6 @@
 
 #include "otfreader.h"
 
-using namespace std;
-using namespace SST::Hermes;
-
 namespace SST {
 namespace Zodiac {
 
@@ -54,7 +51,7 @@ private:
 
   ////////////////////////////////////////////////////////
 
-  MessageInterface* msgapi;
+  SST::Hermes::MP::Interface* msgapi;
   OTFReader* reader;
   std::queue<ZodiacEvent*>* eventQ;
 
