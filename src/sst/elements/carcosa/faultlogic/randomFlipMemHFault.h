@@ -16,12 +16,7 @@
 
 namespace SST::Carcosa {
 
-/**
- * MemHierarchy-aware variant of RandomFlipFault.
- * Safely skips events that are not MemEvents or carry no payload
- * (e.g. GetS requests, Inv, AckInv), avoiding the modulo-by-zero
- * that occurs when pickByteAndBit receives payload_sz == 0.
- */
+/** RandomFlipFault that skips non-MemEvent / empty-payload events. */
 class RandomFlipMemHFault : public RandomFlipFault {
 public:
     RandomFlipMemHFault(Params& params, FaultInjectorBase* injector);

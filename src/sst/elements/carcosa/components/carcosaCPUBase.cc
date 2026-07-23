@@ -65,8 +65,8 @@ CarcosaCPUBase::CarcosaCPUBase(ComponentId_t id, Params& params) :
     ops = params.find<uint64_t>("opCount", 0, found);
     sst_assert(found, CALL_INFO, -1, "%s, Error: parameter 'opCount' was not provided\n", getName().c_str());
 
-    unsigned readf    = params.find<unsigned>("read_freq",     25);
-    unsigned writef   = params.find<unsigned>("write_freq",    75);
+    unsigned readf    = params.find<unsigned>("read_freq",     75);
+    unsigned writef   = params.find<unsigned>("write_freq",    25);
     unsigned flushf   = params.find<unsigned>("flush_freq",     0);
     unsigned flushinvf = params.find<unsigned>("flushinv_freq", 0);
     unsigned customf  = params.find<unsigned>("custom_freq",    0);
@@ -177,7 +177,7 @@ bool CarcosaCPUBase::clockTic(Cycle_t)
 {
     if (clock_ticks % 1000 == 0) {
 #ifdef __SST_DEBUG_OUTPUT__
-        out.output("test1 open from carcosa\n");
+        out.output("test1 open from Carcosa\n");
 #endif
         Carcosa::CpuEvent *ev = new Carcosa::CpuEvent("test1.txt", 0, 200);
         HaliLink->send(ev);
@@ -188,7 +188,7 @@ bool CarcosaCPUBase::clockTic(Cycle_t)
         memory->send(req);
     } else if (clock_ticks % 500 == 0) {
 #ifdef __SST_DEBUG_OUTPUT__
-        out.output("test2 open from carcosa\n");
+        out.output("test2 open from Carcosa\n");
 #endif
         Carcosa::CpuEvent *ev = new Carcosa::CpuEvent("test2.txt", 0, 200);
         HaliLink->send(ev);
@@ -208,11 +208,41 @@ bool CarcosaCPUBase::clockTic(Cycle_t)
             if (reqsToSend > ops) reqsToSend = ops;
 
             for (int i = 0; i < (int)reqsToSend; i++) {
-                StandardMem::Addr addr = rng.generateNextUInt64() % 200;
-                rng.generateNextUInt32(); // consume RNG to maintain deterministic sequence
-                Interfaces::StandardMem::Request* req = createRead(addr);
+                StandardMem::Addr addr = rng.generateNextUInt64();
+                uint32_t instNum = rng.generateNextUInt32() % high_mark;
+                std::string cmdString = "Read";
+                Interfaces::StandardMem::Request* req;
+                if (ll_issued) {
+                    req = createSC();
+                    cmdString = "StoreConditional";
+                } else if (instNum < write_mark) {
+                    req = createWrite(addr);
+                    cmdString = "Write";
+                } else if (instNum < flush_mark) {
+                    req = createFlush(addr);
+                    cmdString = "Flush";
+                } else if (instNum < flushinv_mark) {
+                    req = createFlushInv(addr);
+                    cmdString = "FlushInv";
+                } else if (instNum < custom_mark) {
+                    // Custom requests are not implemented in this trimmed CPU.
+                    req = createRead(addr);
+                } else if (instNum < llsc_mark) {
+                    req = createLL(addr);
+                    cmdString = "LoadLink";
+                } else if (instNum < mmio_mark) {
+                    if (rng.generateNextUInt32() % 2) {
+                        req = createMMIORead();
+                        cmdString = "ReadMMIO";
+                    } else {
+                        req = createMMIOWrite();
+                        cmdString = "WriteMMIO";
+                    }
+                } else {
+                    req = createRead(addr);
+                }
                 if (req->needsResponse()) {
-                    requests[req->getID()] = std::make_pair(getCurrentSimTime(), std::string("Read"));
+                    requests[req->getID()] = std::make_pair(getCurrentSimTime(), cmdString);
                 }
                 memory->send(req);
                 ops--;

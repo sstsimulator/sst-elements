@@ -36,15 +36,7 @@ bool RandomDropFaultInjector::doInjection() {
     }
 }
 
-/**
- * Custom execution is required to ensure delivery is canceled
- *
- * In the base interceptHandler, a reference to a boolean called
- * 'cancel' is accepted as an argument. That function assigns the
- * injector's pointer (called 'cancel_') to that reference's address,
- * and that reference must be updated here after the event is destroyed
- * if the installation direction of this PortModule was set to 'Receive'.
- */
+/** Drop path must cancel delivery; base interceptHandler is not enough. */
 void RandomDropFaultInjector::executeFaults(Event*& ev) {
     if (fault[0]) {
         if (this->doInjection()) {

@@ -30,6 +30,7 @@
 #include <typeinfo>
 #include <climits>
 #include <cstring>
+#include <algorithm>
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -139,6 +140,17 @@ Hali::Hali(ComponentId_t id, Params& params) : Component(id) {
         primaryComponentDoNotEndSim();
     }
 
+    // Optional MMIO transport: control region arrives as StandardMem on a
+    // dedicated link; both transports dispatch to handleControlAccess.
+    mmioBase_    = params.find<uint64_t>("mmio_base", 0xBEEF0000);
+    mmioHandler_ = new MmioHandler(this, out_);
+    TimeConverter mmioTC = getTimeConverter(params.find<std::string>("clock", "1GHz"));
+    mmioIface_ = loadUserSubComponent<StandardMem>(
+        "mmio_iface", ComponentInfo::SHARE_NONE, mmioTC,
+        new StandardMem::Handler<Hali, &Hali::handleMmioRequest>(this));
+    if (interceptionAgent_)
+        interceptionAgent_->setControlChannel(this);
+
     eventsReceived_ = 0;
     eventsForwarded_ = 0;
     eventsSent_ = 0;
@@ -149,6 +161,11 @@ Hali::Hali(ComponentId_t id, Params& params) : Component(id) {
  * Lifecycle Phase #2: Init
  *****************************************************************************/
 void Hali::init(unsigned phase) {
+    if (mmioIface_) mmioIface_->init(phase);
+    // Forward the init phase to the interception agent so an agent that owns a
+    // memHierarchy StandardMem interface can complete its untimed init handshake
+    // (default agentInit is a no-op for ring-only agents).
+    if (interceptionAgent_) interceptionAgent_->agentInit(phase);
     if (verbose_) {
         out_->output("Phase: Init(%u), %s\n", phase, getName().c_str());
         out_->output("    %s: highlink_=%p, lowlink_=%p\n", getName().c_str(),
@@ -203,6 +220,8 @@ void Hali::init(unsigned phase) {
  *****************************************************************************/
 void Hali::setup() {
     out_->output("Phase: Setup, %s\n", getName().c_str());
+
+    if (mmioIface_) mmioIface_->setup();
 
     if (faultInjManager_) {
         faultInjManager_->processMessagesFromPMs();
@@ -321,8 +340,20 @@ void Hali::handleCpuEvent(SST::Event* ev) {
 
 void Hali::highlinkMemEvent(SST::Event* ev) {
     MemEvent* mevent = dynamic_cast<MemEvent*>(ev);
-    if (mevent && interceptionAgent_ && isInterceptedAddress(mevent->getAddr())) {
-        if (interceptionAgent_->handleInterceptedEvent(mevent, highlink_)) {
+    uint64_t base = 0;
+    if (mevent && interceptionAgent_ && interceptedRangeBase(mevent->getAddr(), base)) {
+        // Transport-neutral path first: normalize into a ControlAccess and let
+        // the agent's handleControlAccess consume it. Identical decode to the
+        // MMIO transport, so a driver runs unchanged under both.
+        ControlMemDispatch dispatch = dispatchControlMemEvent(mevent, base);
+        if (dispatch == ControlMemDispatch::Handled) {
+            return;
+        }
+        // Fall back only when dispatch explicitly permits it. In particular, a
+        // payload-less GetX must bypass both APIs and continue to memory as an
+        // ownership request, not be decoded by a legacy agent as a write of 0.
+        if (dispatch == ControlMemDispatch::LegacyFallback &&
+            interceptionAgent_->handleInterceptedEvent(mevent, highlink_)) {
             return;
         }
     }
@@ -375,12 +406,14 @@ void Hali::handleHaliEvent(SST::Event* ev) {
     HaliEvent* event = dynamic_cast<HaliEvent*>(ev);
 
     if (event) {
-        if (interceptionAgent_ && event->getStr() == "done") {
+        // With an interception agent, ring HaliEvents are sideband for that
+        // agent (self-named init tokens are drained in init()).
+        if (interceptionAgent_) {
             if (verbose_) {
-                out_->output("    %" PRIu64 " %s received done (iteration %u)\n",
-                             getCurrentSimCycle(), getName().c_str(), event->getNum());
+                out_->output("    %" PRIu64 " %s received %s\n",
+                             getCurrentSimCycle(), getName().c_str(), event->toString().c_str());
             }
-            interceptionAgent_->notifyPartnerDone(event->getNum());
+            interceptionAgent_->handleRingEvent(event);
             delete event;
             return;
         }
@@ -420,6 +453,16 @@ void Hali::handleHaliEvent(SST::Event* ev) {
 bool Hali::isInterceptedAddress(uint64_t addr) const {
     for (const auto& range : interceptRanges_) {
         if (addr >= range.first && addr < range.second) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Hali::interceptedRangeBase(uint64_t addr, uint64_t& base) const {
+    for (const auto& range : interceptRanges_) {
+        if (addr >= range.first && addr < range.second) {
+            base = range.first;
             return true;
         }
     }
@@ -496,6 +539,7 @@ void Hali::finish() {
  *****************************************************************************/
 Hali::~Hali() {
     out_->output("Phase: Destruction\n");
+    delete mmioHandler_;
     delete out_;
 }
 
@@ -509,4 +553,168 @@ void Hali::emergencyShutdown() {
 void Hali::printStatus(Output& sim_out) {
     sim_out.output("%s: sent %u, received %u, forwarded %u.\n",
                    getName().c_str(), eventsSent_, eventsReceived_, eventsForwarded_);
+}
+
+/*****************************************************************************
+ * MMIO-peripheral transport (optional; mirror of data-plane interception)
+ *****************************************************************************/
+void Hali::handleMmioRequest(StandardMem::Request* req) {
+    req->handle(mmioHandler_);
+}
+
+void Hali::MmioHandler::handle(StandardMem::Read* req) {
+    uint64_t offset = req->pAddr - hali_->mmioBase_;
+    if (hali_->interceptionAgent_) {
+        ControlAccess acc;
+        acc.isWrite = false;
+        acc.offset  = offset;
+        ControlResult r = hali_->interceptionAgent_->handleControlAccess(acc);
+        if (r == ControlResult::Handled) {
+            hali_->sendMmioReadResponse(req, acc.readValue);
+            return;
+        }
+        if (r == ControlResult::Deferred) {
+            // Park the read until the agent arms a value (e.g. command not ready).
+            hali_->parkGuard("mmio");
+            hali_->pendingTransport_ = PendingTransport::Mmio;
+            hali_->pendingMmioRead_  = req;
+            return;
+        }
+    }
+    // Ignored / no agent: complete the load with 0 so the CPU does not
+    // stall, but say so once -- a valid-looking 0 here usually means a
+    // missing interceptionAgent or a mistyped offset.
+    if (!hali_->warnedSilentControlRead_) {
+        hali_->warnedSilentControlRead_ = true;
+        hali_->out_->output("%s: WARNING un-handled control read at offset "
+                            "0x%" PRIx64 " answered with 0 (%s). Check the "
+                            "interceptionAgent wiring if this is unexpected; "
+                            "warning only prints once.\n",
+                            hali_->getName().c_str(), offset,
+                            hali_->interceptionAgent_ ? "agent returned Ignored"
+                                                      : "no agent attached");
+    }
+    hali_->sendMmioReadResponse(req, 0);
+}
+
+void Hali::MmioHandler::handle(StandardMem::Write* req) {
+    uint64_t offset = req->pAddr - hali_->mmioBase_;
+    uint32_t value = 0;
+    if (req->data.size() >= sizeof(uint32_t))
+        std::memcpy(&value, req->data.data(), sizeof(uint32_t));
+    if (hali_->interceptionAgent_) {
+        ControlAccess acc;
+        acc.isWrite = true;
+        acc.offset  = offset;
+        acc.value   = value;
+        acc.posted  = req->posted;
+        hali_->interceptionAgent_->handleControlAccess(acc);
+    }
+    if (!req->posted) {
+        StandardMem::WriteResp* resp =
+            static_cast<StandardMem::WriteResp*>(req->makeResponse());
+        hali_->mmioIface_->send(resp);
+    }
+    delete req;
+}
+
+void Hali::sendMmioReadResponse(StandardMem::Read* req, uint32_t value) {
+    StandardMem::ReadResp* resp = static_cast<StandardMem::ReadResp*>(req->makeResponse());
+    std::memcpy(resp->data.data(), &value, std::min(resp->data.size(), sizeof(uint32_t)));
+    mmioIface_->send(resp);
+    delete req;
+}
+
+void Hali::parkGuard(const char* transport) {
+    if (pendingMmioRead_ || pendingDataPlaneRead_) {
+        out_->fatal(CALL_INFO, -1,
+            "Error in %s: a second Deferred control read (%s transport) "
+            "arrived while one is already parked. The hub keeps exactly one "
+            "parked read; overwriting it would leak the first requester and "
+            "hang its core. Serialize control reads (single requester) or "
+            "extend Hali with a pending-read queue.\n",
+            getName().c_str(), transport);
+    }
+}
+
+void Hali::completePendingRead(uint32_t value) {
+    if (pendingTransport_ == PendingTransport::Mmio && pendingMmioRead_) {
+        StandardMem::Read* req = pendingMmioRead_;
+        pendingMmioRead_  = nullptr;
+        pendingTransport_ = PendingTransport::None;
+        sendMmioReadResponse(req, value);
+    } else if (pendingTransport_ == PendingTransport::DataPlane && pendingDataPlaneRead_) {
+        MemEvent* req = pendingDataPlaneRead_;
+        pendingDataPlaneRead_ = nullptr;
+        pendingTransport_     = PendingTransport::None;
+        sendDataPlaneReadResponse(req, value);
+    }
+}
+
+/*****************************************************************************
+ * Data-plane transport (CPU load/store interception; mirror of MMIO above)
+ *****************************************************************************/
+Hali::ControlMemDispatch Hali::dispatchControlMemEvent(MemEvent* mevent, uint64_t base) {
+    Command cmd = mevent->getCmd();
+    bool isWrite = (cmd == Command::Write || cmd == Command::GetX);
+    bool isRead  = (cmd == Command::GetS);
+    if (!isWrite && !isRead)
+        return ControlMemDispatch::LegacyFallback;
+    // Payload-less GetX is read-for-ownership, not a store of 0 — bypass both
+    // agent APIs and forward normally.
+    if (cmd == Command::GetX && mevent->getPayloadSize() == 0) {
+        if (!warnedPayloadlessControlGetX_) {
+            warnedPayloadlessControlGetX_ = true;
+            out_->output("%s: WARNING payload-less GetX at intercepted control "
+                         "offset 0x%" PRIx64 " bypassed control agents and was "
+                         "forwarded normally. Keep control ranges uncacheable "
+                         "so writes carry their payload; warning only prints once.\n",
+                         getName().c_str(), mevent->getAddr() - base);
+        }
+        return ControlMemDispatch::BypassLegacy;
+    }
+
+    ControlAccess acc;
+    acc.isWrite = isWrite;
+    acc.offset  = mevent->getAddr() - base;
+    if (isWrite) {
+        const std::vector<uint8_t>& payload = mevent->getPayload();
+        if (payload.size() >= sizeof(uint32_t))
+            std::memcpy(&acc.value, payload.data(), sizeof(uint32_t));
+    }
+
+    ControlResult r = interceptionAgent_->handleControlAccess(acc);
+    if (r == ControlResult::Ignored)
+        return ControlMemDispatch::LegacyFallback;
+
+    if (isWrite) {
+        // Writes are always Handled here; ack on the data plane like the CPU expects.
+        sendDataPlaneWriteAck(mevent);
+        return ControlMemDispatch::Handled;
+    }
+    // Read.
+    if (r == ControlResult::Handled) {
+        sendDataPlaneReadResponse(mevent, acc.readValue);
+        return ControlMemDispatch::Handled;
+    }
+    // Deferred: park the load until the agent arms a value.
+    parkGuard("data-plane");
+    pendingTransport_     = PendingTransport::DataPlane;
+    pendingDataPlaneRead_ = mevent;
+    return ControlMemDispatch::Handled;
+}
+
+void Hali::sendDataPlaneReadResponse(MemEvent* req, uint32_t value) {
+    MemEvent* resp = req->makeResponse();
+    std::vector<uint8_t> data(sizeof(uint32_t));
+    std::memcpy(data.data(), &value, sizeof(uint32_t));
+    resp->setPayload(data);
+    if (highlink_) highlink_->send(resp);
+    delete req;
+}
+
+void Hali::sendDataPlaneWriteAck(MemEvent* req) {
+    MemEvent* resp = req->makeResponse();
+    if (highlink_) highlink_->send(resp);
+    delete req;
 }

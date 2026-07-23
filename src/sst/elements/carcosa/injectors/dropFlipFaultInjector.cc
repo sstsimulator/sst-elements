@@ -68,10 +68,7 @@ bool DropFlipFaultInjector::doInjection() {
     return this->triggered_injection_[0] || this->triggered_injection_[1];
 }
 
-/**
- * Overridden execution function to cause faults to be chosen at random
- * from the vector once a fault has been triggered
- */
+/** On trigger, pick drop vs flip at random from the fault vector. */
 void DropFlipFaultInjector::executeFaults(Event*& ev) {
     if (this->triggered_injection_[0]) {
         // do drop

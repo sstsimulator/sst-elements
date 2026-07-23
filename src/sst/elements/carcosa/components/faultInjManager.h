@@ -34,7 +34,7 @@ public:
             "carcosa",
             "FaultInjManager",
             SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Manages fault injection for carcosa components",
+            "Manages fault injection for Carcosa components",
             SST::Carcosa::FaultInjManagerAPI
             )
 

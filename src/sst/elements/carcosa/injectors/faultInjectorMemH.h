@@ -22,11 +22,7 @@
 
 namespace SST::Carcosa {
 
-/**
- * PortModule for MemHierarchy fault injection with PMDataRegistry support.
- * Inherits from FaultInjectorBase; adds PM registry integration so events
- * carrying PM data skip fault injection.
- */
+/** MemHierarchy fault PortModule; skips events carrying PM registry data. */
 class FaultInjectorMemH : public FaultInjectorBase
 {
 public:

@@ -16,14 +16,12 @@
 #ifndef CARCOSA_HALI_COMPONENT_H
 #define CARCOSA_HALI_COMPONENT_H
 
-/**
- * Hali - interface layer between sensors/CPUs, the memory hierarchy (highlink/lowlink),
- * and other Hali instances on a ring. Provides fault-injection hooks via FaultInjManager.
- */
+/** Hali: CPU/sensors <-> memHierarchy and ring peers; FaultInjManager hooks. */
 
 #include <cstdint>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
+#include <sst/core/interfaces/stdMem.h>
 #include "sst/elements/carcosa/components/carcosaMemCtrl.h"
 #include "sst/elements/carcosa/components/faultInjManagerAPI.h"
 #include "sst/elements/carcosa/components/interceptionAgentAPI.h"
@@ -37,7 +35,7 @@ class MemEvent;
 
 namespace Carcosa {
 
-class Hali : public SST::Component {
+class Hali : public SST::Component, public ControlChannel {
 public:
     SST_ELI_REGISTER_COMPONENT(
         Hali,
@@ -52,11 +50,14 @@ public:
         {"Sensors", "Number of SensorComponents this interface receives from.", NULL},
         {"CPUs", "Number of Compute components the Hali sends to.", NULL},
         {"verbose", "Enable verbose output for debugging.", "false"},
-        {"intercept_ranges", "Semicolon-separated base,size pairs (e.g. '0xBEEF0000,4096') for addresses to hand to InterceptionAgent.", ""}
+        {"intercept_ranges", "Semicolon-separated base,size pairs (e.g. '0xBEEF0000,4096') for addresses to hand to InterceptionAgent.", ""},
+        {"clock", "Clock for the optional MMIO StandardMem interface.", "1GHz"},
+        {"mmio_base", "Base address of the MMIO control region (MMIO-peripheral transport).", "0xBEEF0000"}
     )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-        {"interceptionAgent", "Optional agent for intercepted memory accesses (e.g. carcosa.PingPongAgent). If unset, no interception.", "SST::Carcosa::InterceptionAgentAPI"}
+        {"interceptionAgent", "Optional agent for intercepted memory accesses (e.g. Carcosa.PingPongAgent). If unset, no interception.", "SST::Carcosa::InterceptionAgentAPI"},
+        {"mmio_iface", "Optional StandardMem interface delivering the control region as MMIO requests (MMIO-peripheral transport, e.g. from an MMIO region handler).", "SST::Interfaces::StandardMem"}
     )
 
     SST_ELI_DOCUMENT_PORTS(
@@ -89,6 +90,9 @@ public:
     /** Returns true if addr falls within any registered intercept range. */
     bool isInterceptedAddress(uint64_t addr) const;
 
+    // ControlChannel: complete a control read the agent previously Deferred.
+    void completePendingRead(uint32_t value) override;
+
 private:
     unsigned eventsToSend_;
     bool verbose_;
@@ -120,6 +124,51 @@ private:
 
     // Address ranges (base, end_exclusive) forwarded to the interception agent.
     std::vector<std::pair<uint64_t, uint64_t>> interceptRanges_;
+
+    // Base of the intercept range containing addr (data-plane transport), or
+    // false if addr is not intercepted. Used to compute the control offset.
+    bool interceptedRangeBase(uint64_t addr, uint64_t& base) const;
+
+    // Data-plane: MemEvent -> ControlAccess -> handleControlAccess.
+    // BypassLegacy forwards requests (e.g. payload-less GetX) without agent APIs.
+    enum class ControlMemDispatch { Handled, LegacyFallback, BypassLegacy };
+    ControlMemDispatch dispatchControlMemEvent(SST::MemHierarchy::MemEvent* mevent, uint64_t base);
+    void sendDataPlaneReadResponse(SST::MemHierarchy::MemEvent* req, uint32_t value);
+    void sendDataPlaneWriteAck(SST::MemHierarchy::MemEvent* req);
+
+    // --- Optional MMIO-peripheral transport (active when mmio_iface is connected) ---
+    void handleMmioRequest(SST::Interfaces::StandardMem::Request* req);
+    void sendMmioReadResponse(SST::Interfaces::StandardMem::Read* req, uint32_t value);
+
+    class MmioHandler : public SST::Interfaces::StandardMem::RequestHandler {
+    public:
+        MmioHandler(Hali* hali, SST::Output* out)
+            : SST::Interfaces::StandardMem::RequestHandler(out), hali_(hali) {}
+        void handle(SST::Interfaces::StandardMem::Read* req) override;
+        void handle(SST::Interfaces::StandardMem::Write* req) override;
+    private:
+        Hali* hali_;
+    };
+
+    SST::Interfaces::StandardMem* mmioIface_ = nullptr;
+    MmioHandler* mmioHandler_ = nullptr;
+    uint64_t mmioBase_ = 0xBEEF0000;
+
+    // Single parked Deferred control read. A second while one is parked is
+    // fatal (must not overwrite/leak the first requester); see parkGuard().
+    enum class PendingTransport { None, Mmio, DataPlane };
+    PendingTransport pendingTransport_ = PendingTransport::None;
+    SST::Interfaces::StandardMem::Read* pendingMmioRead_ = nullptr;
+    SST::MemHierarchy::MemEvent* pendingDataPlaneRead_ = nullptr;
+
+    // Fatal if a Deferred control read is already parked.
+    void parkGuard(const char* transport);
+
+    // Warn-once flag: an un-handled / agent-less control read answered with 0
+    // usually means a misconfiguration (missing interceptionAgent, mistyped
+    // offset), so say so instead of silently returning valid-looking data.
+    bool warnedSilentControlRead_ = false;
+    bool warnedPayloadlessControlGetX_ = false;
 };
 
 } // namespace Carcosa

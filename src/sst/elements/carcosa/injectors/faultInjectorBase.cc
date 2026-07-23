@@ -36,10 +36,7 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
     }
 }
 
-/**
- * Default behavior is to delete all fault objects in the order they were
- * added to the vector
- */
+/** Default: delete all fault objects in insertion order. */
 FaultInjectorBase::~FaultInjectorBase() {
     for (int i = 0; i < fault.size(); i++) {
         if (fault[i]) {
@@ -54,7 +51,7 @@ FaultInjectorBase::eventSent(uintptr_t key, Event*& ev)
     if (!valid_installs_set) {
         out_->fatal(CALL_INFO_LONG, -1, "Valid installation directions not set -- did you forget to call setValidInstallation() in your constructor?\n");
     }
-    if (doInjection()){
+    if (doInjection(ev)){
 #ifdef __SST_DEBUG_OUTPUT__
         dbg_->debug(CALL_INFO_LONG, 3, 0, "Injection triggered.\n");
 #endif
@@ -77,7 +74,7 @@ FaultInjectorBase::interceptHandler(uintptr_t key, Event*& ev, bool& cancel)
     cancel = false;
     cancel_ = &cancel;
 
-    if (doInjection()){
+    if (doInjection(ev)){
 #ifdef __SST_DEBUG_OUTPUT__
         dbg_->debug(CALL_INFO_LONG, 3, 0, "Injection triggered.\n");
 #endif
@@ -151,10 +148,7 @@ void FaultInjectorBase::setValidInstallation(Params& params, std::array<bool,2> 
     valid_installs_set = true;
 }
 
-/**
- * Default behavior is to execute faults in the order they were
- * added to the vector
- */
+/** Default: execute faults in insertion order. */
 void FaultInjectorBase::executeFaults(Event*& ev) {
     for (int i = 0; i < fault.size(); i++) {
         if (fault[i]) {

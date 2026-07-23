@@ -38,10 +38,7 @@ namespace SST {
 namespace MemHierarchy {
 using Req = SST::Interfaces::StandardMem::Request;
 
-/**
- * Shared base class for CarcosaCPU and FaultInjCPU.
- * Contains all common state and logic; not ELI-registered.
- */
+/** Shared base for CarcosaCPU / FaultInjCPU (not ELI-registered). */
 class CarcosaCPUBase : public SST::Component {
 public:
     CarcosaCPUBase(SST::ComponentId_t id, SST::Params& params);

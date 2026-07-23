@@ -25,10 +25,7 @@ public:
 
     bool faultLogic(Event*& ev) override;
 protected:
-    /**
-     * Randomly choose which bit in which byte to flip
-     * @return (byte, bit)
-     */
+    /** Pick a random (byte, bit) within the payload. */
     std::pair<uint32_t, uint32_t> pickByteAndBit(size_t payload_sz);
 protected:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
