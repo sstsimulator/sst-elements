@@ -26,6 +26,8 @@
 #include <sst/core/output.h>
 #include <vector>
 
+#include <iostream>
+
 using namespace SST::Vanadis;
 using namespace std;
 
@@ -834,7 +836,6 @@ void VanadisCore::printRob(int rob_num, VanadisCircularQueue<VanadisInstruction*
 int
 VanadisCore::performRetire(int rob_num, VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle)
 {
-
     #ifdef VANADIS_BUILD_DEBUG
     if ( output->getVerboseLevel() >= 8 ) {
         printRob( rob_num, rob );
@@ -855,6 +856,7 @@ VanadisCore::performRetire(int rob_num, VanadisCircularQueue<VanadisInstruction*
 
     // Instruction is flagging error, print out and halt
     if ( UNLIKELY(rob_front->trapsError()) ) {
+        std::cout << "Instruction error" << std::endl;
         output->verbose(CALL_INFO, 16, 0, "Error has been detected in retired instruction. Retired "
             "register status:\n");
 
@@ -875,6 +877,7 @@ VanadisCore::performRetire(int rob_num, VanadisCircularQueue<VanadisInstruction*
 
     // Instruction is done
     if ( rob_front->completedIssue() && rob_front->completedExecution() ) {
+        std::cout << "CompletedIssue and completedExecution" << std::endl;
         bool     perform_cleanup       = true;
         bool     perform_delay_cleanup = false;
         uint64_t pipeline_reset_addr   = 0;
