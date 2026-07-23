@@ -679,7 +679,7 @@ bool IncoherentL1::handleNULLCMD(MemEvent* event, bool in_mshr) {
     }
 
     if (evicted) {
-        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer());
+        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer(), event->getID());
         retry_buffer_.push_back(mshr_->getFrontEvent(newAddr));
         if (mshr_->removeEvictPointer(oldAddr, newAddr))
             retry(oldAddr);
@@ -786,7 +786,7 @@ L1CacheLine* IncoherentL1::allocateLine(MemEvent * event, L1CacheLine * line) {
     if (evicted) {
         if (mem_h_is_debug_event(event) || mem_h_is_debug_addr(event->getBaseAddr()))
             printDebugAlloc(true, event->getBaseAddr(), "");
-        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer());
+        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer(), event->getID());
         cache_array_->replace(event->getBaseAddr(), line);
         return line;
     } else {

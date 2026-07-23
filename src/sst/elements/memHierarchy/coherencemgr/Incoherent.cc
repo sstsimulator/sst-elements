@@ -602,7 +602,7 @@ bool Incoherent::handleNULLCMD(MemEvent* event, bool in_mshr) {
     printLine(event->getBaseAddr());
     bool evicted = handleEviction(newAddr, line, event_debuginfo_);
     if (evicted) {
-        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer());
+        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer(), event->getID());
         retry_buffer_.push_back(mshr_->getFrontEvent(newAddr));
         if (mshr_->removeEvictPointer(oldAddr, newAddr))
             retry(oldAddr);
@@ -671,7 +671,7 @@ MemEventStatus Incoherent::allocateLine(MemEvent * event, PrivateCacheLine* &lin
     }
 
     if (evicted) {
-        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer());
+        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer(), event->getID());
         cache_array_->replace(event->getBaseAddr(), line);
         if (mem_h_is_debug_event(event))
             printDebugAlloc(true, event->getBaseAddr(), "");
