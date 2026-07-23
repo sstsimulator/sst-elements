@@ -1,0 +1,4 @@
+CUDA memalloc: dptr: dptr-0, size: 4096
+CUDA memcpyH2D detected: device_ptr: dptr-0, host_ptr: 0x1000, size: 4096, data_file: cuMemcpyH2D-0-4096.data, addr: 0x0
+CUDA memcpyD2H detected: host_ptr: 0x2000, device_ptr: dptr-0, size: 4096, data_file: cuMemcpyD2H-0-4096.data
+CUDA free detected: dptr: dptr-0

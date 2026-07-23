@@ -35,6 +35,7 @@
 #include <cstring>
 #include <string>
 #include <map>
+#include <vector>
 
 #include <stdio.h>
 #include <stdint.h>
@@ -65,6 +66,7 @@ public:
         {"mmio_size",               "(uint) Size of the MMIO memory range (Bytes)", "512"},
         {"dma_addr",                "(uint) Starting addr mapped to the DMA Engine", "512"},
         {"cuda_executable",         "(string) CUDA executable file path to extract PTX info", ""},
+        {"compact_return_value",    "(bool) Return the primary CUDA result directly in the MMIO read payload instead of the return packet address", "false"},
     )
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         {"mmio_iface", "Command packet MMIO interface", "SST::Interfaces::StandardMem"},
@@ -151,6 +153,13 @@ private:
     // Last cuda function call packet
     BalarCudaCallPacket_t last_packet;
     Addr packet_scratch_mem_addr;
+    bool compact_return_value;
+    bool compact_return_pending = false;
+    std::vector<uint8_t> compact_d2h_data;
+    size_t compact_d2h_offset = 0;
+    // Owns the most recent D2H result so cuda_ret.cudamemcpy.sim_data stays
+    // valid for the testCPU to validate, without leaking the simulator buffer
+    std::vector<uint8_t> last_d2h_dst_buf;
 
     // Indicating that an API has been blocked from issuing
     // This should be marked for every CUDA API in GPGPU-Sim that
