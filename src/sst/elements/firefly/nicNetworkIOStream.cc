@@ -106,7 +106,7 @@ void Nic::RecvMachine::NetworkIOStream::processStorageOp(FireflyNetworkEvent* ev
     ev->bufPop(sizeof(respKey));
 
     m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,
-                "op=%u offset=%lu length=%lu respKey=%u\n",
+                "op=%u offset=%" PRIu64 " length=%zu respKey=%u\n",
                 netHdr.op, m_offset, m_length, respKey);
 
     // Submit DMA operation based on operation type

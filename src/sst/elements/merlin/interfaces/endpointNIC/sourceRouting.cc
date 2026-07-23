@@ -165,7 +165,7 @@ SourceRoutingPlugin::SourceRoutingPlugin(ComponentId_t cid, Params& params) :
 
     // Validate that this endpoint is in the mapping
     if (endpoint_to_router_shared[endpoint_id] == -1) {
-        output.fatal(CALL_INFO, -1, "Endpoint ID %d not found in endpoint-to-router mapping\n", endpoint_id);
+        output.fatal(CALL_INFO, -1, "Endpoint ID %" PRId64 " not found in endpoint-to-router mapping\n", endpoint_id);
     }
 
     myRtrID = endpoint_to_router_shared[endpoint_id];

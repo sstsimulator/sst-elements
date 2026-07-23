@@ -305,12 +305,12 @@ void VirtNic::setNotifyNeedRecv(
 
 void VirtNic::networkIORead( int targetNid, Hermes::Vaddr dest, size_t len, std::function<void(int)> callback )
 {
-    m_dbg.debug(CALL_INFO,2,0,"dest=%#lx len=%zu\n", dest, len);
+    m_dbg.debug(CALL_INFO,2,0,"dest=%#" PRIx64 " len=%zu\n", dest, len);
     sendCmd(0, new NicNetworkIOReadCmdEvent(  targetNid, dest, len, callback ) );
 }
 
 void VirtNic::networkIOWrite( int targetNid, Hermes::Vaddr src, size_t len, std::function<void(int)> callback )
 {
-    m_dbg.debug(CALL_INFO,2,0,"src=%#lx len=%zu\n", src, len);
+    m_dbg.debug(CALL_INFO,2,0,"src=%#" PRIx64 " len=%zu\n", src, len);
     sendCmd(0, new NicNetworkIOWriteCmdEvent(  targetNid, src, len, callback ) );
 }

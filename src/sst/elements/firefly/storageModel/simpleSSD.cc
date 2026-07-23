@@ -27,8 +27,8 @@ SimpleSSD::SimpleSSD(ComponentId_t id, Params &params)
     int verboseLevel = params.find<int>("verboseLevel", 0);
     int verboseMask = params.find<int>("verboseMask", -1);
     m_out.init("[SimpleSSD] ", verboseLevel, verboseMask, Output::STDOUT);
-    registerClock("1GHz", new Clock::Handler2<SimpleSSD, &SimpleSSD::clockTick>(this));
-    m_selfLink = configureSelfLink("ReadWriteLatency", "1 ns", new Event::Handler2<SimpleSSD, &SimpleSSD::handleEvent>(this));
+    registerClock("1GHz", new Clock::Handler<SimpleSSD, &SimpleSSD::clockTick>(this));
+    m_selfLink = configureSelfLink("ReadWriteLatency", "1 ns", new Event::Handler<SimpleSSD, &SimpleSSD::handleEvent>(this));
 }
 
 void SimpleSSD::read(int64_t offset, size_t bytes, const SsdReqCallback &callback)

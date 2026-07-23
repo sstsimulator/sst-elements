@@ -49,5 +49,4 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
 
 EmberMessagePassingGenerator::~EmberMessagePassingGenerator()
 {
-    verbose(CALL_INFO, 2, 0, "\n");
 }
