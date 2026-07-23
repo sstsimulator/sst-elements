@@ -53,7 +53,7 @@ void Nic::NetworkIO::handleNetworkIORead(NicNetworkIOReadCmdEvent* event, int id
     Hermes::Vaddr destAddr = event->getDest();
     size_t length = event->getLen();
     m_dbg.verbosePrefix(prefix().c_str(), CALL_INFO, 1, NIC_DBG_NETWORKIO,
-                       "READ core=%d targetNid=%d dest=%#lx len=%zu \n",
+                       "READ core=%d targetNid=%d dest=%#" PRIx64 " len=%zu \n",
                        id, targetNid, destAddr, length);
 
     auto callback = event->getCallback();
@@ -87,7 +87,7 @@ void Nic::NetworkIO::handleNetworkIOWrite(NicNetworkIOWriteCmdEvent* event, int 
     Hermes::Vaddr srcAddr = event->getSrc();
     size_t length = event->getLen();
     m_dbg.verbosePrefix(prefix().c_str(), CALL_INFO, 1, NIC_DBG_NETWORKIO,
-                       "WRITE core=%d targetNid=%d src=%#lx len=%zu \n",
+                       "WRITE core=%d targetNid=%d src=%#" PRIx64 " len=%zu \n",
                        id, targetNid, srcAddr, length);
 
     auto callback = event->getCallback();
