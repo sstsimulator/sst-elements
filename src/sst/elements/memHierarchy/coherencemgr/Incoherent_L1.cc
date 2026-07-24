@@ -832,6 +832,12 @@ bool IncoherentL1::handleEviction(Addr addr, L1CacheLine*& line) {
             if (mem_h_is_debug_addr(line->getAddr()))
                 printDebugAlloc(false, line->getAddr(), "Writeback");
             sendWriteback(Command::PutM, line, true);
+            // Track the in-flight writeback so a subsequent request to this line stalls
+            // until the lower level has absorbed it (and acks). Without this, a racing read
+            // can reach memory before the writeback lands and, since incoherent caches never
+            // invalidate, cache the stale value permanently.
+            if (recv_writeback_ack_)
+                mshr_->insertWriteback(line->getAddr(), false);
             cache_array_->deallocate(line);
             line->setState(I);
             break;
@@ -1061,8 +1067,19 @@ void IncoherentL1::forwardByDestination(MemEventBase* ev, Cycle_t timestamp) {
  ********************/
 
 MemEventInitCoherence* IncoherentL1::getInitCoherenceEvent() {
-    // Source, Endpoint type, inclusive, sends WB Acks, line size, tracks block presence
-    return new MemEventInitCoherence(cachename_, Endpoint::Cache, true, false, false, line_size_, true);
+    // Source, Endpoint type, inclusive, sends WB Acks, expects WB Acks, line size, tracks block presence
+    // expects-WB-Acks = true: a noninclusive lower level acks our dirty writebacks so we can serialize a
+    // same-line request behind an in-flight writeback (otherwise a read can race the writeback to memory
+    // and, since incoherent caches never invalidate, cache the stale value permanently).
+    return new MemEventInitCoherence(cachename_, Endpoint::Cache, true, false, true, line_size_, true);
+}
+
+/* Handle a writeback acknowledgement (AckPut) from the lower level. Clears the
+ * in-flight-writeback MSHR entry inserted at eviction time and replays any request
+ * that stalled behind it. */
+bool IncoherentL1::handleAckPut(MemEvent * event, bool in_mshr) {
+    cleanUpAfterResponse(event, in_mshr);
+    return true;
 }
 
 void IncoherentL1::printLine(Addr addr) {
@@ -1119,6 +1136,7 @@ std::set<Command> IncoherentL1::getValidReceiveEvents() {
         Command::GetXResp,
         Command::WriteResp,
         Command::FlushLineResp,
+        Command::AckPut,
         Command::NACK };
     return cmds;
 }
