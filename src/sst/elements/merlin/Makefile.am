@@ -94,6 +94,12 @@ libmerlin_la_SOURCES = \
 	pymerlin-router.py \
 	interfaces/pymerlin-interface.py \
 	target_generator/pymerlin-targetgen.py \
+	topology/anytopo_utility/DallyDragonfly.py \
+	topology/anytopo_utility/HPC_topos.py \
+	topology/anytopo_utility/__init__.py \
+	topology/anytopo_utility/Jellyfish.py \
+	topology/anytopo_utility/Polarfly.py \
+	topology/anytopo_utility/Slimfly.py \
 	topology/pymerlin-topo-any.py \
 	topology/pymerlin-topo-dragonfly.py \
 	topology/pymerlin-topo-polarfly.py \
@@ -104,6 +110,15 @@ libmerlin_la_SOURCES = \
 
 EXTRA_DIST = \
 	tests/testsuite_default_merlin.py \
+	tests/anytopo_complete_4_test.py \
+	tests/anytopo_cubical_test.py \
+	tests/anytopo_dallydragonfly_test.py \
+	tests/anytopo_ember_complete_4_test.py \
+	tests/anytopo_jellyfish_test.py \
+	tests/anytopo_polarfly_test.py \
+	tests/anytopo_slimfly_test.py \
+	tests/anytopo_slimfly_UGAL_test.py \
+	tests/anytopo_slimfly_UGAL_threshold_test.py \
 	tests/hyperx_128_test.py \
 	tests/dragon_128_test.py \
 	tests/dragon_72_test.py \
@@ -119,6 +134,15 @@ EXTRA_DIST = \
 	tests/dragon_128_test_deferred.py \
 	tests/polarfly_455_test.py \
 	tests/polarstar_504_test.py \
+	tests/refFiles/test_merlin_anytopo_complete_4_test.out \
+	tests/refFiles/test_merlin_anytopo_cubical_test.out \
+	tests/refFiles/test_merlin_anytopo_dallydragonfly_test.out \
+	tests/refFiles/test_merlin_anytopo_ember_complete_4_test.out \
+	tests/refFiles/test_merlin_anytopo_jellyfish_test.out \
+	tests/refFiles/test_merlin_anytopo_polarfly_test.out \
+	tests/refFiles/test_merlin_anytopo_slimfly_test.out \
+	tests/refFiles/test_merlin_anytopo_slimfly_UGAL_test.out \
+	tests/refFiles/test_merlin_anytopo_slimfly_UGAL_threshold_test.out \
 	tests/refFiles/test_merlin_dragon_128_platform_test.out \
 	tests/refFiles/test_merlin_dragon_128_platform_test_cm.out \
 	tests/refFiles/test_merlin_dragon_128_test.out \
