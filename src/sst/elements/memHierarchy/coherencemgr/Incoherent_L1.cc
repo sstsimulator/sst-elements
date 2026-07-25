@@ -680,7 +680,13 @@ bool IncoherentL1::handleNULLCMD(MemEvent* event, bool in_mshr) {
 
     if (evicted) {
         notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer());
-        retry_buffer_.push_back(mshr_->getFrontEvent(newAddr));
+        /* The waiter is only replayable if it is still the front entry for newAddr. A
+         * writeback of newAddr's own line is pushed in *front* of it (insertWriteback), and
+         * then getFrontEvent returns null -- a null in the retry buffer segfaults the cache
+         * on the next clock tick. Leave it parked: the AckPut pops the writeback and replays
+         * it (handleAckPut -> cleanUpAfterResponse -> retry), so no wakeup is lost. */
+        if (mshr_->getFrontType(newAddr) == MSHREntryType::Event)
+            retry_buffer_.push_back(mshr_->getFrontEvent(newAddr));
         if (mshr_->removeEvictPointer(oldAddr, newAddr))
             retry(oldAddr);
         if (mem_h_is_debug_addr(newAddr)) {
@@ -829,6 +835,18 @@ bool IncoherentL1::handleEviction(Addr addr, L1CacheLine*& line) {
             line->setState(I);
             break;
         case M:
+            /* A tracked writeback is push_fronted into this line's MSHR register. That is
+             * fine ahead of eviction pointers (removeEvictPointer expects it), but it must
+             * not displace a queued request: the front entry is what handleNULLCMD replays,
+             * what retry() wakes, and what carries the in-progress/stalled-for-evict state.
+             * Leave the line alone until the queue drains -- the requester parks on this
+             * address and the eviction is retried from its eviction pointer. */
+            if (recv_writeback_ack_ && mshr_->exists(line->getAddr()) &&
+                    mshr_->getFrontType(line->getAddr()) == MSHREntryType::Event) {
+                if (mem_h_is_debug_addr(line->getAddr()))
+                    printDebugAlloc(false, line->getAddr(), "InProg, queued request");
+                return false;
+            }
             if (mem_h_is_debug_addr(line->getAddr()))
                 printDebugAlloc(false, line->getAddr(), "Writeback");
             sendWriteback(Command::PutM, line, true);
@@ -906,7 +924,7 @@ void IncoherentL1::cleanUpAfterResponse(MemEvent* event, bool in_mshr) {
             if (!mshr_->getInProgress(addr)) {
                 retry_buffer_.push_back(mshr_->getFrontEvent(addr));
             }
-        } else {
+        } else if (mshr_->getFrontType(addr) == MSHREntryType::Evict) { // Only Evict entries carry pointers; a Writeback front waits for its AckPut
             std::list<Addr>* evictPointers = mshr_->getEvictPointers(addr);
             for (std::list<Addr>::iterator it = evictPointers->begin(); it != evictPointers->end(); it++) {
                 MemEvent * ev = new MemEvent(cachename_, addr, *it, Command::NULLCMD, getCurrentSimTimeNano());

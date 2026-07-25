@@ -419,6 +419,14 @@ bool Incoherent::handlePutE(MemEvent * event, bool in_mshr) {
     if (!in_mshr)
         stat_event_state_[(int)Command::PutE][state]->addData(1);
 
+    /* Our own writeback of this line may still be in flight to the next level. Serialize
+     * this writeback behind it rather than re-installing the line now; see handlePutM. */
+    if (!in_mshr && mshr_->pendingWriteback(addr)) {
+        if (allocateMSHR(event, false) == MemEventStatus::Reject)
+            sendNACK(event);
+        return true;
+    }
+
     switch (state) {
         case I:
             status = allocateLine(event, line, in_mshr);
@@ -461,6 +469,20 @@ bool Incoherent::handlePutM(MemEvent * event, bool in_mshr) {
 
     if (!in_mshr)
         stat_event_state_[(int)Command::PutM][state]->addData(1);
+
+    /* Our own dirty writeback of this line may still be in flight to the next level
+     * (tracked as a Writeback MSHR entry by handleEviction). Servicing this writeback now
+     * would re-install the line while that PutM is outstanding, so a later eviction could
+     * put a second PutM for the same address in flight and the level below may absorb the
+     * two out of order -- the stale-data race the writeback ack exists to prevent. It also
+     * leaves a Writeback at the MSHR front when cleanUpAfterRequest calls retry(), which
+     * treats any non-Event front as an eviction-pointer list. Stall behind the writeback
+     * instead; the AckPut pops it and replays this event. */
+    if (!in_mshr && mshr_->pendingWriteback(addr)) {
+        if (allocateMSHR(event, false) == MemEventStatus::Reject)
+            sendNACK(event);
+        return true;
+    }
 
     switch (state) {
         case I:
@@ -603,7 +625,13 @@ bool Incoherent::handleNULLCMD(MemEvent* event, bool in_mshr) {
     bool evicted = handleEviction(newAddr, line, event_debuginfo_);
     if (evicted) {
         notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer());
-        retry_buffer_.push_back(mshr_->getFrontEvent(newAddr));
+        /* The waiter is only replayable if it is still the front entry for newAddr. A
+         * writeback of newAddr's own line is pushed in *front* of it (insertWriteback), and
+         * then getFrontEvent returns null -- a null in the retry buffer segfaults the cache
+         * on the next clock tick. Leave it parked: the AckPut pops the writeback and replays
+         * it (handleAckPut -> cleanUpAfterResponse -> retry), so no wakeup is lost. */
+        if (mshr_->getFrontType(newAddr) == MSHREntryType::Event)
+            retry_buffer_.push_back(mshr_->getFrontEvent(newAddr));
         if (mshr_->removeEvictPointer(oldAddr, newAddr))
             retry(oldAddr);
     } else { // Could be stalling for a new address or locked line
@@ -726,6 +754,18 @@ bool Incoherent::handleEviction(Addr addr, PrivateCacheLine* &line, dbgin &debug
             line->setState(I);
             break;
         case M:
+            /* A tracked writeback is push_fronted into this line's MSHR register. That is
+             * fine ahead of eviction pointers (removeEvictPointer expects it), but it must
+             * not displace a queued request: the front entry is what handleNULLCMD replays,
+             * what retry() wakes, and what carries the in-progress/stalled-for-evict state.
+             * Leave the line alone until the queue drains -- the requester parks on this
+             * address and the eviction is retried from its eviction pointer. */
+            if (recv_writeback_ack_ && mshr_->exists(line->getAddr()) &&
+                    mshr_->getFrontType(line->getAddr()) == MSHREntryType::Event) {
+                if (mem_h_is_debug_addr(line->getAddr()))
+                    printDebugAlloc(false, line->getAddr(), "InProg, queued request");
+                return false;
+            }
             sendWriteback(Command::PutM, line, true);
             // Track the in-flight writeback so a subsequent request to this line stalls
             // until memory has absorbed it (and acks). Without this, a racing read can reach
@@ -790,7 +830,11 @@ void Incoherent::retry(Addr addr) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             if (!mshr_->getInProgress(addr))
                 retry_buffer_.push_back(mshr_->getFrontEvent(addr));
-        } else { // Pointer -> another request is waiting to evict this address
+        /* A Writeback at the front means our own writeback of this line is still in flight;
+         * it is not an eviction-pointer list. Anything queued behind it is replayed when the
+         * AckPut pops it (handleAckPut -> cleanUpAfterResponse -> retry), so skip it here.
+         * Matches IncoherentL1::retry and the MESI managers. */
+        } else if (!(mshr_->pendingWriteback(addr))) { // Pointer -> another request is waiting to evict this address
             std::list<Addr>* evictPointers = mshr_->getEvictPointers(addr);
             for (std::list<Addr>::iterator it = evictPointers->begin(); it != evictPointers->end(); it++) {
                 MemEvent * ev = new MemEvent(cachename_, addr, *it, Command::NULLCMD);
