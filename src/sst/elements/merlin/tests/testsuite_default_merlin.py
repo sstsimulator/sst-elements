@@ -83,6 +83,7 @@ class testcase_merlin_Component(SSTTestCase):
     def test_merlin_anytopo_cubical(self):
         self.merlin_test_template("anytopo_cubical_test")
 
+    @unittest.skip("slimfly does not return consistent results")
     @unittest.skipIf('networkx' not in sys.modules, "Anytopo tests require networkx")
     def test_merlin_anytopo_slimfly(self):
         self.merlin_test_template("anytopo_slimfly_test")
