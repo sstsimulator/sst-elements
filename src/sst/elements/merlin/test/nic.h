@@ -62,9 +62,6 @@ public:
 
 private:
 
-    // SST::Interfaces::SimpleNetwork::nid_t id;
-    int id;
-
     // passed in parameters
     int net_id;
     int num_peers;

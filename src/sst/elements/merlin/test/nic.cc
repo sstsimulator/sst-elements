@@ -92,7 +92,6 @@ nic::~nic()
 
 nic::nic() :
     Component(),
-    id(0),
     net_id(0),
     num_peers(0),
     msg_size(0),
@@ -120,7 +119,6 @@ nic::serialize_order(SST::Core::Serialization::serializer& ser)
 {
     Component::serialize_order(ser);
 
-    SST_SER(id);
     SST_SER(net_id);
     SST_SER(num_peers);
     SST_SER(msg_size);
@@ -183,7 +181,7 @@ void nic::setup()
     if ( init_broadcast_count != (num_peers -1 ) ) {
         output.output("NIC %d didn't receive all init broadcast messages.  Only recieved %d\n",net_id,init_broadcast_count);
     }
-    last_target = id;
+    last_target = net_id;
 }
 
 void nic::complete(unsigned int phase) {
@@ -309,7 +307,7 @@ nic::init_complete(unsigned int phase) {
     {
         SimpleNetwork::Request* req;
         while ( (req = link_control->recvUntimedData() ) != NULL ) {
-            // std::cout << "NIC " << id << " Received an init event in phase " << phase << "!" << std::endl;
+            // std::cout << "NIC " << net_id << " Received an init event in phase " << phase << "!" << std::endl;
             // Only point to points could arrive now
             // if ( req->dest != net_id ) output.output("%d: received event with dest %lld and src %lld\n",net_id,req->dest,req->src);
             init_count++;
@@ -330,7 +328,7 @@ nic::init_complete(unsigned int phase) {
     {
         SimpleNetwork::Request* req;
         while ( (req = link_control->recvUntimedData() ) != NULL ) {
-            // std::cout << "NIC " << id << " Received an init event in phase " << phase << "!" << std::endl;
+            // std::cout << "NIC " << net_id << " Received an init event in phase " << phase << "!" << std::endl;
 
             // It's possible some of the point to point will overlap
             // some of the broadcasts, so we need to check to see
