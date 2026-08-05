@@ -39,24 +39,34 @@ ramulator2Memory::ramulator2Memory(ComponentId_t id, Params &params) :
     ramulator2_frontend->connect_memory_system(ramulator2_memorysystem);
     ramulator2_memorysystem->connect_frontend(ramulator2_frontend);
 
+    int32_t admission_queue_size = params.find<int32_t>("admission_queue_size", 0);
+    admission_queue_size_ = static_cast<int64_t>(admission_queue_size);
+    if (admission_queue_size_ < 0) admission_queue_size_ = -1;
+    admission_issue_budget_per_cycle_ = params.find<int32_t>("admission_issue_budget_per_cycle", -1);
+    if (admission_issue_budget_per_cycle_ == 0) admission_issue_budget_per_cycle_ = -1;
+    admission_queue_enable_ = (admission_queue_size_ != 0);
+
     output->output(CALL_INFO, "Instantiated Ramulator2 from config file %s\n", config_path);
+    output->verbose(CALL_INFO, 1, 0,
+        "[ramu2] admission_queue enable=%d size=%" PRId64 " issue_budget_per_cycle=%" PRId32 "\n",
+        admission_queue_enable_ ? 1 : 0, admission_queue_size_, admission_issue_budget_per_cycle_);
 }
 
-bool ramulator2Memory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes){
+bool ramulator2Memory::issueToRamulator_(const PendingReq& req){
     output->verbose(CALL_INFO, 1, 0,
         "[ramu2] issueRequest id=%" PRIu64 " addr=0x%" PRIx64 " isWrite=%d size=%u\n",
-        (uint64_t)reqId, (uint64_t)addr, (int)isWrite, numBytes);
+        (uint64_t)req.reqId, (uint64_t)req.addr, (int)req.isWrite, req.numBytes);
 
     bool enqueue_success = false;
 
-    if (isWrite) {
-        enqueue_success = ramulator2_frontend->receive_external_requests(1, addr, 0,
+    if (req.isWrite) {
+        enqueue_success = ramulator2_frontend->receive_external_requests(1, req.addr, 0,
             [this](Ramulator::Request& req) {});
         if (enqueue_success) {
-            writes.insert(reqId);
+            writes.insert(req.reqId);
         }
     } else {
-        enqueue_success = ramulator2_frontend->receive_external_requests(0, addr, 0,
+        enqueue_success = ramulator2_frontend->receive_external_requests(0, req.addr, 0,
             [this](Ramulator::Request& req) {
                 output->verbose(CALL_INFO, 1, 0,
                     "[ramu2] Read callback addr=0x%" PRIx64 " outstanding=%zu\n",
@@ -74,25 +84,60 @@ bool ramulator2Memory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsign
                 handleMemResponse(memreq);
         });
         if (enqueue_success) {
-            if (dramReqs.find(addr) != dramReqs.end()) dramReqs[addr].push_back(reqId);
+            if (dramReqs.find(req.addr) != dramReqs.end()) dramReqs[req.addr].push_back(req.reqId);
             else {
                 std::deque<ReqId> reqs;
-                reqs.push_back(reqId);
-                dramReqs.insert(std::make_pair(addr,reqs));
+                reqs.push_back(req.reqId);
+                dramReqs.insert(std::make_pair(req.addr,reqs));
             }
         }
     }
     output->verbose(CALL_INFO, 1, 0,
-        "[ramu2] enqueue %s (queue size=%zu writes=%zu)\n",
-        enqueue_success ? "successful" : "unsuccessful", dramReqs.size(), writes.size());
+        "[ramu2] backend enqueue %s (dramReqMap=%zu writes=%zu admissionQ=%zu)\n",
+        enqueue_success ? "successful" : "unsuccessful", dramReqs.size(), writes.size(), admission_queue_.size());
 
     return enqueue_success;
 }
 
+bool ramulator2Memory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes){
+    PendingReq req{reqId, addr, isWrite, numBytes};
+    if (!admission_queue_enable_) {
+        return issueToRamulator_(req);
+    }
+
+    if (admission_queue_size_ >= 0 && admission_queue_.size() >= static_cast<size_t>(admission_queue_size_)) {
+        output->verbose(CALL_INFO, 1, 0,
+            "[ramu2] admission queue full, reject id=%" PRIu64 " size=%zu cap=%" PRId64 "\n",
+            (uint64_t)reqId, admission_queue_.size(), admission_queue_size_);
+        return false;
+    }
+
+    admission_queue_.push_back(req);
+    output->verbose(CALL_INFO, 2, 0,
+        "[ramu2] admission enqueue ok id=%" PRIu64 " qsize=%zu\n",
+        (uint64_t)reqId, admission_queue_.size());
+    return true;
+}
+
 bool ramulator2Memory::clock(Cycle_t cycle){
     output->verbose(CALL_INFO, 2, 0,
-        "[ramu2] clock cycle=%" PRIu64 " pending_reads=%zu pending_writes=%zu\n",
-        (uint64_t)cycle, dramReqs.size(), writes.size());
+        "[ramu2] clock cycle=%" PRIu64 " pending_reads=%zu pending_writes=%zu admission_q=%zu\n",
+        (uint64_t)cycle, dramReqs.size(), writes.size(), admission_queue_.size());
+
+    int issued_this_cycle = 0;
+    while (admission_queue_enable_ && !admission_queue_.empty()) {
+        if (admission_issue_budget_per_cycle_ > 0 &&
+            issued_this_cycle >= admission_issue_budget_per_cycle_) {
+            break;
+        }
+        const PendingReq& req = admission_queue_.front();
+        if (!issueToRamulator_(req)) {
+            break;
+        }
+        admission_queue_.pop_front();
+        issued_this_cycle++;
+    }
+
     ramulator2_frontend->tick();
     // Ack writes since ramulator won't
     while (!writes.empty()) {

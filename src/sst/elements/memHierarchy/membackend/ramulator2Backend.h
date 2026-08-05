@@ -19,6 +19,7 @@
 
 #include "sst/elements/memHierarchy/membackend/memBackend.h"
 
+#include <deque>
 
 #include "base/base.h"
 #include "base/request.h"
@@ -42,7 +43,9 @@ public:
 
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
-            {"configFile",  "Name of the Ramulator2 Device config file", NULL} )
+            {"configFile",  "Name of the Ramulator2 Device config file", NULL},
+            {"admission_queue_size", "(int) Local backend admission queue depth in requests. 0 keeps legacy direct-inject behavior; -1 means unbounded.", "0"},
+            {"admission_issue_budget_per_cycle", "(int) Max queued requests to attempt injecting into Ramulator2 each backend cycle. 0 or negative is unlimited.", "-1"} )
 
 /* Begin class definition */
     ramulator2Memory(ComponentId_t id, Params &params);
@@ -60,6 +63,19 @@ protected:
     std::set<ReqId> writes;
 
 private:
+    struct PendingReq {
+        ReqId reqId;
+        Addr addr;
+        bool isWrite;
+        unsigned numBytes;
+    };
+
+    bool issueToRamulator_(const PendingReq& req);
+
+    bool admission_queue_enable_;
+    int64_t admission_queue_size_;
+    int32_t admission_issue_budget_per_cycle_;
+    std::deque<PendingReq> admission_queue_;
 };
 
 }
