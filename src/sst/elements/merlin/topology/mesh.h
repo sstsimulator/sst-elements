@@ -155,7 +155,11 @@ public:
 
     virtual void getVCsPerVN(std::vector<int>& vcs_per_vn) {
         for ( int i = 0; i < num_vns; ++i ) {
-            vcs_per_vn[i] = 1;
+            // Mesh routing reserves a pair of VCs per VN: the dateline
+            // transition toggles the low bit and later clears it when the
+            // packet changes dimension.  Advertise that pair so Merlin's
+            // port queues cover the VC values produced by process_input().
+            vcs_per_vn[i] = 2;
         }
     }
     
