@@ -64,22 +64,24 @@ public:
 
         if ( fd < 0 ) {
             // we need to save this because any other library calls could change it
-            auto myErrno = errno;
+            auto my_errno = errno;
+            if ( my_errno == EROFS ) {
+                my_errno = EACCES;
+            }
+            #ifdef VANADIS_BUILD_DEBUG
+
             char buf[100];
             char* str = buf;
-#ifdef SST_COMPILE_MACOSX
-            if ( myErrno == EROFS ) {
-                myErrno = EACCES;
-            }
-            strerror_r(myErrno,buf,100);
-#else
-            str = strerror_r(myErrno,buf,100);
-#endif
-            #ifdef VANADIS_BUILD_DEBUG
-            m_output->verbose(CALL_INFO, 16, 0, "[syscall-openat] open of %s failed, errno=%d `%s`\n", m_filename.c_str(), myErrno, str );
+            #ifdef SST_COMPILE_MACOSX
+                strerror_r(my_errno,buf,100);
+            #else
+                str = strerror_r(my_errno,buf,100);
+            #endif
+            m_output->verbose(CALL_INFO, 16, 0, "[syscall-openat] open of %s failed, errno=%d `%s`\n", m_filename.c_str(), my_errno, str );
+
             #endif
 
-            setReturnFail( -myErrno );
+            setReturnFail( -my_errno );
         } else {
             setReturnSuccess( fd );
         }
