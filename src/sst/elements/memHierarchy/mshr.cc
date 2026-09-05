@@ -416,7 +416,16 @@ bool MSHR::insertEviction(Addr oldAddr, Addr newAddr) {
     } else {
         list<MSHREntry>* entries = &(mshr_.find(oldAddr)->second.entries_);
         if (!entries->empty() && entries->back().getType() == MSHREntryType::Evict) { // MSHR entry for oldAddr is an Evict
-            entries->back().getPointers()->push_back(newAddr);
+            std::list<Addr>* pts = entries->back().getPointers();
+            // An eviction-pointer list is a set: newAddr is one waiter needing one wake-up.
+            // A request that is retried while already parked behind this eviction re-enters
+            // allocateLine and re-registers, so without this check the same waiter is
+            // appended twice. One generation step then emits one NULLCMD per copy; the first
+            // NULLCMD's removeEvictPointer clears all copies (std::list::remove) and may erase
+            // oldAddr's register, and the next dereferences a dead register (fatal in
+            // MSHR::getFrontType). Keep exactly one entry per waiter.
+            if (std::find(pts->begin(), pts->end(), newAddr) == pts->end())
+                pts->push_back(newAddr);
         } else { // MSHR entry for oldAddr is not an Evict (or no entry exists)
             entries->push_back(MSHREntry(newAddr, getCurrentSimCycle()));
         }
