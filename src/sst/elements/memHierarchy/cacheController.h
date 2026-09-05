@@ -304,6 +304,7 @@ private:
     int                         requestsThisCycle_;
     std::vector<bool>           bankStatus_;
     std::set<Addr>              addrsThisCycle_;
+    std::set<Addr>              rejectedAddrsThisCycle_; // Requests rejected this cycle; later same-address requests must also reject to preserve program order
     std::list<MemEventBase*>    retryBuffer_;
     std::list<MemEventBase*>    eventBuffer_;
     std::queue<MemEventBase*>   prefetchBuffer_;

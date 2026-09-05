@@ -119,6 +119,7 @@ bool Cache::clockTick(Cycle_t time) {
         bankStatus_[bank] = false;
 
     addrsThisCycle_.clear();
+    rejectedAddrsThisCycle_.clear();
 
     // Handle events from each of the buffers
     // 1. Retry buffer      -> Events that need to be retried, e.g., were stalled due to a pending action that is now resolved
@@ -253,6 +254,22 @@ bool Cache::processEvent(MemEventBase* ev, bool retry) {
 
     Addr addr = event->getBaseAddr();
 
+    /* Preserve program order among same-address requests within a cycle.
+     * The event buffer is scanned front-to-back each cycle; an event that
+     * cannot be accepted is skipped and retried, so a later event in the scan
+     * can be accepted ahead of an earlier one. That is harmless in general,
+     * but if an earlier request to a line was rejected (e.g. MSHR full) and a
+     * response frees the resource mid-scan, a later same-address request could
+     * be accepted out of order -- inverting two same-address requests from one
+     * source. For writes this silently drops an update. So: once any request
+     * to an address is rejected this cycle, hold all later same-address
+     * requests until the next cycle, where the buffer's FIFO order lets the
+     * earlier request claim the resource first. Responses are exempt so
+     * MSHR-draining events always flow and forward progress is preserved. */
+    bool isRequest = CommandClassArr[(int)event->getCmd()] == CommandClass::Request;
+    if (isRequest && rejectedAddrsThisCycle_.find(addr) != rejectedAddrsThisCycle_.end())
+        return false;
+
     /* Arbitrate cache access - bank/link. Reject request on failure */
     if (!arbitrateAccess(addr)) { // Disallow multiple requests to same line and/or bank in a single cycle
         if (mem_h_is_debug_addr(addr)) {
@@ -262,6 +279,8 @@ bool Cache::processEvent(MemEventBase* ev, bool retry) {
                     getCurrentSimCycle(), timestamp_, getName().c_str(), CommandString[(int)event->getCmd()],
                     addr, id.str().c_str(), "", "", "Stall", "(bank busy)");
         }
+        if (isRequest)
+            rejectedAddrsThisCycle_.insert(addr);
         return false;
     }
 
@@ -369,6 +388,8 @@ bool Cache::processEvent(MemEventBase* ev, bool retry) {
 
     if (accepted)
         updateAccessStatus(addr);
+    else if (isRequest)
+        rejectedAddrsThisCycle_.insert(addr); // Preserve same-address order for the rest of this cycle's scan
 
     return accepted;
 }
