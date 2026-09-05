@@ -55,15 +55,18 @@ exe = f'./{args.program}'
 
 # 2.4GHz cores. One for each omp thread
 core.addParams({
-    "clock"        : "2.4GHz",
-    "verbose"      : 1,
-    "frontend"     : frontend,
-    "executable"   : exe,
-    "arielmode"    : 0, # Disable tracing at start
-    "corecount"    : ncores,
-    "mpimode"      : 1,
-    "mpiranks"     : mpiranks,
-    "mpitracerank" : tracerank,
+    "clock"         : "2.4GHz",
+    "verbose"       : 1,
+    "frontend"      : frontend,
+    "executable"    : exe,
+    "arielmode"     : 0, # Disable tracing at start
+    "corecount"     : ncores,
+    "mpimode"       : 1,
+    "mpiranks"      : mpiranks,
+    "mpitracerank"  : tracerank,
+    "envparamcount" : 1,
+    "envparamname0" : "OMP_NUM_THREADS",
+    "envparamval0"  : ncores,
 })
 
 # This should be detected in Ariel but checking here allows us to fail

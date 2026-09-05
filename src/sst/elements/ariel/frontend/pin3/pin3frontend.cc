@@ -15,13 +15,9 @@
 
 
 #include <sst_config.h>
-
 #include "pin3frontend.h"
-
 #include <signal.h>
-#if !defined(SST_COMPILE_MACOSX)
 #include <sys/prctl.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -30,10 +26,9 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <fcntl.h>
-
 #include <time.h>
-
 #include <string.h>
+#include <sstream>
 
 #define ARIEL_INNER_STRINGIZE(input) #input
 #define ARIEL_STRINGIZE(input) ARIEL_INNER_STRINGIZE(input)
@@ -66,7 +61,8 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores,
     // Put together execute_args for fork
     setForkArguments();
     // If mpi, use mpi launcher. Otherwise launch pin
-    app_name = (mpimode == 1) ? mpilauncher : applauncher;
+    //app_name = (mpimode == 1) ? mpilauncher : applauncher;
+    app_name = applauncher;
 
     // Remember that the list of arguments must be NULL terminated for execution
     //execute_args[(pin_arg_count - 1) + appargcount] = NULL;
@@ -86,13 +82,129 @@ void Pin3Frontend::emergencyShutdown() {
     ArielFrontendCommon::emergencyShutdown();
 }
 
+int LaunchMPIChild(char** pin_command, const int ranks, const int tracerank, const char* env)
+{
+
+    // We have one command for ranks before the traced rank, one
+    // for the ranks after it, and one for the traced rank itself
+    int cmd_count = 1;
+    if ( tracerank > 0 ) {
+        cmd_count++;
+    }
+    if ( tracerank < (ranks - 1) ) {
+        cmd_count++;
+    }
+
+    // Ariel has already formed the entire string to launch PIN + the app.
+    // Find where the PIN arguments end and the app starts. The traced rank will
+    // launch with pin and the other ranks will launch normally.
+    int app_idx = -1;
+    for ( int i = 0; pin_command[i] != NULL; i++ ) {
+        if ( strcmp(pin_command[i], "--") == 0 ) {
+            app_idx = i + 1;
+            break;
+        }
+    }
+
+    if ( app_idx == -1 ) {
+        return 1;
+    }
+
+    int*    array_of_maxprocs = (int*)malloc(sizeof(int) * cmd_count);
+    char**  array_of_commands = (char**)malloc(sizeof(char*) * cmd_count);
+    char*** array_of_argv     = (char***)malloc(sizeof(char**) * cmd_count);
+    const char**  array_of_env      = (const char**)malloc(sizeof(char*) * cmd_count);
+
+    if ( cmd_count == 1 ) {
+        array_of_maxprocs[0] = 1;
+        array_of_commands[0] = pin_command[0];
+        array_of_argv[0]     = pin_command + 1;
+    }
+    else if ( cmd_count == 2 ) {
+        if ( tracerank == 0 ) {
+            array_of_maxprocs[0] = 1;
+            array_of_maxprocs[1] = ranks - 1;
+
+            array_of_commands[0] = pin_command[0];
+            array_of_commands[1] = pin_command[app_idx];
+
+            array_of_argv[0] = pin_command + 1;
+            array_of_argv[1] = pin_command + app_idx + 1;
+        }
+        else {
+            array_of_maxprocs[0] = ranks - 1;
+            array_of_maxprocs[1] = 1;
+
+            array_of_commands[0] = pin_command[app_idx];
+            array_of_commands[1] = pin_command[0];
+
+            array_of_argv[0] = pin_command + app_idx + 1;
+            array_of_argv[1] = pin_command + 1;
+        }
+    }
+    else if ( cmd_count == 3 ) {
+        array_of_maxprocs[0] = tracerank;
+        array_of_maxprocs[1] = 1;
+        array_of_maxprocs[2] = ranks - tracerank - 1;
+
+        array_of_commands[0] = pin_command[app_idx];
+        array_of_commands[1] = pin_command[0];
+        array_of_commands[2] = pin_command[app_idx];
+
+        array_of_argv[0] = pin_command + app_idx + 1;
+        array_of_argv[1] = pin_command + 1;
+        array_of_argv[2] = pin_command + app_idx + 1;
+    }
+
+    for (int i = 0; i < cmd_count; i++) {
+        array_of_env[i] = env;
+    }
+
+    int ret = SST::Core::Interprocess::SST_MPI_Comm_spawn_multiple(cmd_count, array_of_commands,
+                          array_of_argv, array_of_maxprocs, array_of_env);
+
+    free(array_of_maxprocs);
+    free(array_of_commands);
+    free(array_of_argv);
+    free(array_of_env);
+
+    return ret;
+}
+
+int Pin3Frontend::forkPINChildMPI(char** args, std::map<std::string, std::string>& app_env, ariel_redirect_info_t redirect_info) {
+
+    // NOTE: Env var stuff is not yet implemented in the core
+ 	std::ostringstream envstring;
+    for (const auto& entry : app_env) {
+        envstring << entry.first << "=" << entry.second << "\n";
+    }
+
+    int ret = LaunchMPIChild(
+            args,
+            mpiranks,
+            mpitracerank,
+            envstring.str().c_str()
+            );
+
+    if (ret) {
+        output->fatal(CALL_INFO, 1, 0, "Non-zero return from LaunchMPIChild\n");
+    }
+
+    return 1;
+}
+
 int Pin3Frontend::forkChildProcess(const char* app, char** args,
     std::map<std::string, std::string>& app_env,
     ariel_redirect_info_t redirect_info) {
 
+
     // If user only wants to init the simulation then we do NOT fork the binary
     if(isSimulationRunModeInit())
         return 0;
+
+	if (mpimode) {
+		return forkPINChildMPI(execute_args, execute_env, redirect_info);
+	}
 
     int next_arg_index = 0;
     int next_line_index = 0;
@@ -203,21 +315,12 @@ int Pin3Frontend::forkChildProcess(const char* app, char** args,
         output->verbose(CALL_INFO, 1, 0, "Launching executable: %s...\n", app);
 
         if(0 == app_env.size()) {
-#if defined(SST_COMPILE_MACOSX)
-        char *dyldpath = getenv("DYLD_LIBRARY_PATH");
-
-        if(dyldpath) {
-            setenv("PIN_APP_DYLD_LIBRARY_PATH", dyldpath, 1);
-            setenv("PIN_DYLD_RESTORE_REQUIRED", "t", 1);
-            unsetenv("DYLD_LIBRARY_PATH");
-        }
-#else
 #if defined(HAVE_SET_PTRACER)
-        prctl(PR_SET_PTRACER, getppid(), 0, 0 ,0);
+            prctl(PR_SET_PTRACER, getppid(), 0, 0 ,0);
 #endif // End of HAVE_SET_PTRACER
-#endif // End SST_COMPILE_MACOSX (else branch)
+
             int ret_code = execvp(app, args);
-            perror("execve");
+            perror("execvp");
 
             output->verbose(CALL_INFO, 1, 0,
                 "Call to execvp returned: %d\n", ret_code);
@@ -225,6 +328,7 @@ int Pin3Frontend::forkChildProcess(const char* app, char** args,
             output->fatal(CALL_INFO, -1,
                 "Error executing: %s under a PIN fork\n",
                 app);
+
         } else {
             char** execute_env_cp = (char**) malloc(sizeof(char*) * (app_env.size() + 1));
             uint32_t next_env_cp_index = 0;
@@ -246,15 +350,17 @@ int Pin3Frontend::forkChildProcess(const char* app, char** args,
             execute_env_cp[app_env.size()] = NULL;
 
             int ret_code = execve(app, args, execute_env_cp);
-            perror("execvep");
+            perror("execve");
 
-            output->verbose(CALL_INFO, 1, 0, "Call to execvpe returned %d\n", ret_code);
+            output->verbose(CALL_INFO, 1, 0, "Call to execve returned %d\n", ret_code);
             output->fatal(CALL_INFO, -1, "Error executing %s under a PIN fork\n", app);
         }
     }
 
     return 0;
 }
+
+
 
 
 void Pin3Frontend::setForkArguments() {
@@ -267,22 +373,19 @@ void Pin3Frontend::setForkArguments() {
     //
     // MPI: We need one argument for the launcher, one for the number of ranks,
     //      and one for the rank to trace
-    uint32_t mpi_arg_count = 0;
-    if (mpimode == 1)
-        mpi_arg_count = 3;
 
     // PIN: magic number 37 + the arguments for pin
     const uint32_t pin_arg_count = 37 + launch_param_count;
 
     // Allocate
-    execute_args = (char**) malloc(sizeof(char*) * (mpi_arg_count +
-      pin_arg_count + appargcount));
+    execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + appargcount));
 
 
     uint32_t arg = 0; // Track current arg
 
     // Next, set the arguments.
     // Start with MPI
+    /*
     if (mpimode == 1) {
         // Prepend mpilauncher to execute_args
         output->verbose(CALL_INFO, 1, 0, "Processing mpilauncher arguments...\n");
@@ -304,6 +407,7 @@ void Pin3Frontend::setForkArguments() {
         snprintf(execute_args[arg], mpitracerank_str_size, "%s", mpitracerank_str.c_str());
         arg++;
     }
+    */
 
     // Pin + pin arguments:
     //    pin -follow_execv [other launch args] -t arieltool
@@ -423,11 +527,7 @@ void Pin3Frontend::parsePin3Params(Params& params) {
     // Parse pintool
     size_t tool_path_size = sizeof(char) * 1024;
     char* tool_path = (char*) malloc(tool_path_size);
-#ifdef SST_COMPILE_MACOSX
-    snprintf(tool_path, tool_path_size, "%s/fesimple.dylib", ARIEL_STRINGIZE(ARIEL_TOOL_DIR));
-#else
     snprintf(tool_path, tool_path_size, "%s/fesimple.so", ARIEL_STRINGIZE(ARIEL_TOOL_DIR));
-#endif
     arieltool = params.find<std::string>("arieltool", tool_path);
     if("" == arieltool) {
         output->fatal(CALL_INFO, -1, "The arieltool parameter specifying which PIN tool to run was not specified\n");
