@@ -361,7 +361,6 @@ protected:
 
         bool decode_fault = true;
 
-
         // if the last two bits that are set are 11, then we are performing at least 32bit instruction formats,
         // otherwise we are performing decodes on the C-extension (16b) formats
         if ( (ins & 0x3) == 0x3 ) {
@@ -3458,6 +3457,7 @@ protected:
                     "[decode] -> decode fault detected at 0x%" PRI_ADDR " / thr: %" PRIu32 ", set to fatal on detect\n",
                     ins_address, hw_thr);
             }
+
             bundle->addInstruction(new VanadisInstructionDecodeFault(ins_address, hw_thr, options));
         }
     }

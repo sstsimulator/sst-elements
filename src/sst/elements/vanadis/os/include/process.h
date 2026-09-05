@@ -18,7 +18,6 @@
 
 #include <math.h>
 #include <sys/mman.h>
-//#include <iostream>
 //#include <fstream>
 
 #include <cstdint>
@@ -183,13 +182,14 @@ class ProcessInfo {
         assert( 1 == fscanf(fp,"hw_thread_: %" SCNu32 "\n",&hw_thread_) );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"hw_thread_: %" PRIu32 "\n",hw_thread_);
 
-        assert( 1 == fscanf(fp,"thread_id_address: %" SCNx64 "\n",&thread_id_address_) );
+        assert( 1 == fscanf(fp,"thread_id_address_: %" SCNx64 "\n",&thread_id_address_) );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"thread_id_address: %#" PRIx64 "\n",thread_id_address_);
 
         virtual_memory_map_ = new VirtMemMap(output,fp,phys_mem_mgr,elf_info);
         file_table_ = new FileDescriptorTable(output,fp);
 
         thread_group_ = new ThreadGrp;
+        thread_group_->add( this, gettid() );
         futex_ = new Futex;
 
         cpu_mask_.resize( 128, 0 );

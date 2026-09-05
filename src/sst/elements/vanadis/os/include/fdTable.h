@@ -119,9 +119,10 @@ public:
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"path: %s\n",str );
         path = str;
 
-        f = fscanf(fp,"fd: %d\n", &fd);
+        int saved_fd;
+        f = fscanf(fp,"fd: %d\n", &saved_fd);
         assert( 1 == f );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"fd: %d\n", fd);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"fd: %d (from checkpoint)\n", saved_fd);
 
         f = fscanf(fp,"flags: %d\n", &flags );
         assert( 1 == f );
@@ -130,6 +131,17 @@ public:
         f = fscanf(fp,"mode: %" PRIuMAX "\n", (uintmax_t*)&mode);
         assert( 1 == f );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"mode: %" PRIuMAX "\n", (uintmax_t)mode);
+
+        // Re-open the file - the saved fd is not valid in this process
+        fd = open(path.c_str(), flags, mode);
+        if ( -1 == fd ) {
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,
+                "WARNING: Failed to re-open file '%s' flags=%#x mode=%#" PRIxMAX ", errno=%d\n",
+                path.c_str(), flags, (uintmax_t)mode, errno);
+        } else {
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,
+                "Re-opened file '%s' with new fd=%d (was %d)\n", path.c_str(), fd, saved_fd);
+        }
     }
 
     void checkpoint( FILE* fp) {

@@ -249,7 +249,7 @@ MemoryRegion::MemoryRegion( SST::Output* output, FILE* fp, PhysMemManager* mem_m
 
     for ( auto i = 0; i < size; i++ ) {
         int vpn,ppn,ref_cnt;
-        assert( 3 == fscanf(fp,"vpn: %d, ppn: %d, refCnt: %d\n", &vpn, &ppn, &ref_cnt ) );
+        assert( 3 == fscanf(fp,"vpn: %d, ppn: %d, ref_cnt: %d\n", &vpn, &ppn, &ref_cnt ) );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"vpn: %d, ppn: %d, refCnt: %d\n", vpn, ppn, ref_cnt );
         virt_to_phys_page_map_[vpn] = new OS::Page( mem_manager, ppn, ref_cnt );
     }
@@ -551,7 +551,9 @@ void VirtMemMap::snapshot( FILE* fp ) {
     fprintf(fp,"#VirtMemMap end\n");
 }
 
-VirtMemMap::VirtMemMap( SST::Output* output, FILE* fp, PhysMemManager* mem_manager, VanadisELFInfo* elf_info) {
+VirtMemMap::VirtMemMap( SST::Output* output, FILE* fp, PhysMemManager* mem_manager, VanadisELFInfo* elf_info) 
+    : heap_region_(nullptr)
+{
     char* str = nullptr;
     size_t num = 0;
     (void) !getline( &str, &num, fp );
@@ -559,9 +561,8 @@ VirtMemMap::VirtMemMap( SST::Output* output, FILE* fp, PhysMemManager* mem_manag
     assert( 0 == strcmp(str,"#VirtMemMap start\n"));
     free(str);
 
-    uint64_t foo;
-    assert( 1 == fscanf(fp,"m_brk: %" PRIx64 "\n",&foo));
-    output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"m_brk: %#" PRIx64"\n",foo);
+    assert( 1 == fscanf(fp,"m_brk: %" PRIx64 "\n",&brk_));
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"m_brk: %#" PRIx64"\n",brk_);
 
     assert( 1 == fscanf(fp,"m_refCnt: %d\n",&ref_cnt_));
     output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"m_refCnt: %d\n",ref_cnt_);
@@ -575,6 +576,22 @@ VirtMemMap::VirtMemMap( SST::Output* output, FILE* fp, PhysMemManager* mem_manag
         output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"addr: %#" PRIx64 "\n",addr);
 
         region_map_[addr] = new MemoryRegion( output, fp, mem_manager, elf_info );
+
+        // Check if this is the heap region and set heap_region_ pointer
+        if ( region_map_[addr]->name_ == "heap" ) {
+            heap_region_ = region_map_[addr];
+        }
+    }
+
+    // Initialize the free list - start with the full range, then mark allocated regions as used
+    free_list_ = new FreeList( 0x1000, 0x80000000 );
+
+    // Mark all existing regions as allocated in the free list
+    for ( const auto& kv : region_map_ ) {
+        auto region = kv.second;
+        if ( region->length_ > 0 ) {
+            free_list_->alloc( region->addr_, region->length_ );
+        }
     }
 
     str = nullptr;

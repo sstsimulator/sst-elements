@@ -62,6 +62,8 @@
 #include "os/syscall/prlimit.h"
 #include "os/syscall/schedyield.h"
 
+#include <iostream>
+
 using namespace SST::Vanadis;
 
 static const char* SyscallName[] = {
@@ -86,8 +88,20 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
     // ***********************************
     switch (sys_ev->getOperation()) {
         case SYSCALL_OP_CHECKPOINT: {
-            assert ( CHECKPOINT_SAVE == enable_checkpoint_ );
-            syscall = new VanadisCheckpointSyscall( this, core_link, process, convertEvent<VanadisSyscallCheckpointEvent*>( "checkpoint", sys_ev ) );
+            if (CHECKPOINT_SAVE == enable_checkpoint_)
+            {
+                syscall = new VanadisCheckpointSyscall( this, core_link, process, convertEvent<VanadisSyscallCheckpointEvent*>( "checkpoint", sys_ev ) );
+            }
+            else 
+            {
+                output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL, "Checkpointing is not enabled. Ignoring checkpoint syscall.\n");
+                // Send a success response back to the core so it doesn't hang waiting for a reply
+                VanadisSyscallResponse* resp = new VanadisSyscallResponse(0);  // Return 0 (success)
+                resp->setHWThread(sys_ev->getThreadID());
+                core_link->send(resp);
+                delete sys_ev;
+                syscall = nullptr;
+            }
         } break;
         case SYSCALL_OP_SET_ROBUST_LIST: {
             syscall = new VanadisSetRobustListSyscall( this, core_link, process, convertEvent<VanadisSyscallSetRobustListEvent*>( "set_robust_list", sys_ev ) );

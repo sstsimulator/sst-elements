@@ -26,6 +26,8 @@
 #include <sst/core/output.h>
 #include <vector>
 
+#include <iostream>
+
 using namespace SST::Vanadis;
 using namespace std;
 
@@ -834,7 +836,6 @@ void VanadisCore::printRob(int rob_num, VanadisCircularQueue<VanadisInstruction*
 int
 VanadisCore::performRetire(int rob_num, VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle)
 {
-
     #ifdef VANADIS_BUILD_DEBUG
     if ( output->getVerboseLevel() >= 8 ) {
         printRob( rob_num, rob );
