@@ -65,8 +65,7 @@ bool PingPongAgent::handleInterceptedEvent(MemEvent* ev, Link* highlink)
         checkBothDone();
         return true;
     }
-    delete ev;
-    return true;
+    return warnAndDropUnknownIntercept(ev, controlAddrBase_);
 }
 
 void PingPongAgent::notifyPartnerDone(unsigned iteration)
