@@ -24,7 +24,13 @@ namespace SST::Carcosa {
 typedef std::vector<uint8_t> dataVec;
 typedef SST::MemHierarchy::Addr Addr;
 
-/** Corrupt payloads whose addresses fall in configured regions. */
+/**
+ * This fault is intended to be placed on the input/output ports
+ * of memory components such as DRAM or HBM. Events that pass through
+ * it, and whose data addresses fall within the ranges set in this
+ * module's parameters, will have their payloads randomly altered
+ * to simulate corruption in the affected region of memory.
+ */
 class CorruptMemFault : public FaultBase
 {
 public:
@@ -34,6 +40,12 @@ public:
     CorruptMemFault() = default;
     ~CorruptMemFault() {}
 
+    /**
+     * 1. Read in event
+     * 2. Test if event is in specified region
+     * 3. Corrupt event payload if necessary
+     * 4. Replace payload
+     */
     bool faultLogic(Event*& ev) override;
 
     std::vector<uint32_t>* checkAddrUsage(Event*& ev);

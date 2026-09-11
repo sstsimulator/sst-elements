@@ -63,10 +63,13 @@ public:
     InterceptionAgentAPI(ComponentId_t id, Params& params) : SubComponent(id) {}
     virtual ~InterceptionAgentAPI() {}
 
-    /** Intercepted MemEvent: respond on highlink; return true if handled (not forwarded). */
+    /** Called when Hali intercepts a MemEvent whose address falls in a registered range.
+     * The agent must produce and send the response (via the provided highlink).
+     * Returns true if the agent handled the event (Hali will not forward it). */
     virtual bool handleInterceptedEvent(SST::MemHierarchy::MemEvent* ev, SST::Link* highlink) = 0;
 
-    virtual void notifyPartnerDone(unsigned iteration) { (void)iteration; }
+    /** Called when a partner Hali signals "done" via the ring. Not all agents need this. */
+    virtual void notifyPartnerDone(unsigned iteration) {}
 
     // Default: RingTag::Done -> notifyPartnerDone. Accelerator agents override
     // for Cmd/SeqLen/Exit/Done (ringProtocol.h).
@@ -76,16 +79,20 @@ public:
         }
     }
 
+    /** Called during setup phase to allow the agent to initialize. */
     virtual void agentSetup() {}
 
     // Init-phase hook for agents that own a StandardMem iface (untimed handshake).
     // Default no-op for ring-only agents.
     virtual void agentInit(unsigned phase) { (void)phase; }
 
+    /** Optional: set the Hali ring link for sending "done" to partner. Default no-op. */
     virtual void setRingLink(SST::Link* leftLink) { (void)leftLink; }
 
+    /** Optional: set the base address of the intercepted region (e.g. first range). Default no-op. */
     virtual void setInterceptBase(uint64_t base) { (void)base; }
 
+    /** Optional: set the highlink for sending responses (e.g. command read response). Default no-op. */
     virtual void setHighlink(SST::Link* highlink) { (void)highlink; }
 
     // Receive the hub's control channel (for completing Deferred reads). Mirrors

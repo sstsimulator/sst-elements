@@ -21,7 +21,10 @@
 namespace SST {
 namespace Carcosa {
 
-/** Fault-injection parameters passed between CPU and Hali. */
+/**
+ * Fault Injection Event for passing fault injection parameters
+ * between CPU and Hali components.
+ */
 class FaultInjEvent : public SST::Event {
 public:
     FaultInjEvent() : SST::Event(), fname_(""), probability_(0.0f), rate_(0.0f), str_(""), num_(0) {}

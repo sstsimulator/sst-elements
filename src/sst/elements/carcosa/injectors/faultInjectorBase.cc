@@ -36,7 +36,10 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
     }
 }
 
-/** Default: delete all fault objects in insertion order. */
+/**
+ * Default behavior is to delete all fault objects in the order they were
+ * added to the vector
+ */
 FaultInjectorBase::~FaultInjectorBase() {
     for (int i = 0; i < fault.size(); i++) {
         if (fault[i]) {
@@ -148,7 +151,10 @@ void FaultInjectorBase::setValidInstallation(Params& params, std::array<bool,2> 
     valid_installs_set = true;
 }
 
-/** Default: execute faults in insertion order. */
+/**
+ * Default behavior is to execute faults in the order they were
+ * added to the vector
+ */
 void FaultInjectorBase::executeFaults(Event*& ev) {
     for (int i = 0; i < fault.size(); i++) {
         if (fault[i]) {

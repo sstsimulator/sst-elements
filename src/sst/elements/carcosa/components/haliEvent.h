@@ -25,7 +25,8 @@ namespace SST {
 namespace Carcosa {
 
 /**
- * Ring event: tag + num (+ optional opaque Cmd payload; partners agree on layout).
+ * Hali Event for communication between Hali components in a ring.
+ * Optional command payloads carry opaque bytes whose layout is agreed by the partners.
  */
 class HaliEvent : public SST::Event {
 public:

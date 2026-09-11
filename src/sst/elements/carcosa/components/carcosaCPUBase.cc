@@ -177,7 +177,7 @@ bool CarcosaCPUBase::clockTic(Cycle_t)
 {
     if (clock_ticks % 1000 == 0) {
 #ifdef __SST_DEBUG_OUTPUT__
-        out.output("test1 open from Carcosa\n");
+        out.output("test1 open from carcosa\n");
 #endif
         Carcosa::CpuEvent *ev = new Carcosa::CpuEvent("test1.txt", 0, 200);
         HaliLink->send(ev);
@@ -188,7 +188,7 @@ bool CarcosaCPUBase::clockTic(Cycle_t)
         memory->send(req);
     } else if (clock_ticks % 500 == 0) {
 #ifdef __SST_DEBUG_OUTPUT__
-        out.output("test2 open from Carcosa\n");
+        out.output("test2 open from carcosa\n");
 #endif
         Carcosa::CpuEvent *ev = new Carcosa::CpuEvent("test2.txt", 0, 200);
         HaliLink->send(ev);

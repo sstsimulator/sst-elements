@@ -21,5 +21,5 @@ AC_DEFUN([SST_carcosa_CONFIG], [
 			[Define if balar/GPGPU-Sim headers are available for the carcosa ring bridge])])
 	AM_CONDITIONAL([SST_CARCOSA_HAVE_BALAR], [test "x$carcosa_have_balar" = "x1"])
 
-	AS_IF([test "$carcosa_happy" = "yes"], [$1], [$2])
+  AS_IF([test "$carcosa_happy" = "yes"], [$1], [$2])
 ])

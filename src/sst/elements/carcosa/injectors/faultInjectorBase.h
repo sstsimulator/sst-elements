@@ -42,7 +42,14 @@ enum installDirection {
 };
 
 /**
- * Port fault-injector base: decide inject, then run FaultBase on the message.
+ * Base class containing required functions and basic data for
+ * creating fault injection on component ports.
+ *
+ * Injectors are used to execute the logic that tests for
+ * whether or not an injection should occur. Upon triggering
+ * an injection, a fault object which inherits from the
+ * FaultBase class but be used to execute the fault logic
+ * on the triggering message.
  */
 class FaultInjectorBase : public SST::PortModule
 {
@@ -148,7 +155,10 @@ protected:
     virtual void executeFaults(Event*& ev);
 
     /**
-     * MUST be called from derived ctor with params + SEND/RECEIVE validity.
+     * This function MUST be called by the derived class constructor
+     * @arg params pass the same params object to this function
+     * @arg valid_install_ pass either SEND_VALID, RECEIVE_VALID,
+     *      or SEND_RECEIVE_VALID
      */
     void setValidInstallation(Params& params, std::array<bool,2> valid_install);
 

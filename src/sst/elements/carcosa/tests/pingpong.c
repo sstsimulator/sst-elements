@@ -13,7 +13,16 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-/* Ping-pong workload for Vanadis + Hali MMIO (via hyades.h). */
+/*
+ * Ping-pong executable for Vanadis + Hali MMIO coordination.
+ * Uses hyades.h for all Vanadis control logic (MMIO and run loop).
+ *
+ * Build from tests/ with -I.. so hyades.h (in parent carcosa/) is found.
+ * Example (from carcosa/tests): run from tests/ with parent mounted:
+ *   docker run --rm -v "$(pwd)/..:/src" -w /src/tests ubuntu:22.04 bash -c \
+ *     'apt-get update -qq && apt-get install -y -qq gcc-riscv64-linux-gnu && \
+ *      riscv64-linux-gnu-gcc -static -I.. -o pingpong pingpong.c'
+ */
 #include "hyades.h"
 #include <unistd.h>
 

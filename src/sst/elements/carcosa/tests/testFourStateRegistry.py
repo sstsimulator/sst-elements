@@ -2,7 +2,7 @@
 Vanadis + memHierarchy + Hali + FourStateAgent stack, demonstrating
 PipelineStateRegistry publishing from a full-stack simulation.
 
-This is the same wiring as testCarcosaPingPong.py, with the PingPongAgent
+This is the same wiring as testcarcosaPingPong.py, with the PingPongAgent
 replaced by FourStateAgent on each Hali. The binary, hyades.h ABI, and
 ring-coordination behavior are unchanged: each core runs pingpong.c, reads
 commands from MMIO, executes ping/pong, and writes status. What's new is

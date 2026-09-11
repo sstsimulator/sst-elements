@@ -91,9 +91,9 @@ public:
     typedef uint64_t ReqId;
 
     CarcosaMemCtrl(ComponentId_t id, Params &params);
-    virtual void init(unsigned int phase) override;
-    virtual void setup() override;
-    virtual void complete(unsigned int phase) override;
+    void init(unsigned int phase) override;
+    void setup() override;
+    void complete(unsigned int phase) override;
     void finish() override;
 
     virtual void handleMemResponse( SST::Event::id_type id, uint32_t flags );

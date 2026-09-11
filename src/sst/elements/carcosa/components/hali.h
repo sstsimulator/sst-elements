@@ -16,7 +16,10 @@
 #ifndef CARCOSA_HALI_COMPONENT_H
 #define CARCOSA_HALI_COMPONENT_H
 
-/** Hali: CPU/sensors <-> memHierarchy and ring peers; FaultInjManager hooks. */
+/**
+ * Hali - interface layer between sensors/CPUs, the memory hierarchy (highlink/lowlink),
+ * and other Hali instances on a ring. Provides fault-injection hooks via FaultInjManager.
+ */
 
 #include <cstdint>
 #include <sst/core/component.h>
@@ -57,7 +60,7 @@ public:
     )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-        {"interceptionAgent", "Optional agent for intercepted memory accesses (e.g. Carcosa.PingPongAgent). If unset, no interception.", "SST::Carcosa::InterceptionAgentAPI"},
+        {"interceptionAgent", "Optional agent for intercepted memory accesses (e.g. carcosa.PingPongAgent). If unset, no interception.", "SST::Carcosa::InterceptionAgentAPI"},
         {"mmio_iface", "Optional StandardMem interface delivering the control region as MMIO requests (MMIO-peripheral transport, e.g. from an MMIO region handler).", "SST::Interfaces::StandardMem"}
     )
 

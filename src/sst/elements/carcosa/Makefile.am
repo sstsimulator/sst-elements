@@ -80,7 +80,7 @@ libcarcosa_la_SOURCES =                     \
     components/carcosaMemCtrl.cc            \
     components/carcosaMemCtrl.h             \
     components/sensorComponent.cc           \
-    components/sensorComponent.h            \
+    components/sensorComponent.h           \
     components/sensorEvent.h                \
     components/haliEvent.h                  \
     components/ringProtocol.h               \
@@ -111,7 +111,7 @@ EXTRA_DIST = \
     hyades.h                                      \
     tests/pingpong.c                              \
     tests/fourstate.c                             \
-    tests/testCarcosaPingPong.py                  \
+    tests/testcarcosaPingPong.py                  \
     tests/testFourStateRegistry.py                \
     tests/testFourStateRegistryGated.py           \
     examples/SimplePipeline/tests/testSimplePipeline.py \
@@ -127,7 +127,7 @@ EXTRA_DIST = \
     tests/testStuckAtOverlap.py                   \
     tests/testStuckAtSameByte.py                  \
     tests/mhlib.py                                \
-    tests/testDynamicPM.py                        \
+    tests/testdynamicPM.py                        \
     tests/testEccGuardJedecMix.py                 \
     tests/testEccGuardRegionPolicy.py             \
     tests/testEccGuardResident.py                 \
@@ -163,10 +163,10 @@ EXTRA_DIST = \
     tests/testHaliPayloadGetX.py                  \
     tests/testHaliPostedWrite.py                  \
     tests/testHaliMmioRouting.py                  \
-    tests/testHaliBacking.py                      \
-    tests/testHaliMemH.py                         \
-    tests/testHaliPM.py                           \
-    tests/testManagerLogic.py
+    tests/testhaliBacking.py                      \
+    tests/testhaliMemH.py                         \
+    tests/testhaliPM.py                           \
+    tests/testmanagerLogic.py
 
 sstdir = $(includedir)/sst/elements/carcosa
 nobase_sst_HEADERS =                        \
@@ -195,8 +195,8 @@ nobase_sst_HEADERS =                        \
     components/memEventPayload.h            \
     components/criticalActionWatcher.h      \
     components/actionScorer.h               \
-    components/faultInjManagerAPI.h         \
-    components/interceptionAgentAPI.h       \
+    components/faultInjManagerAPI.h        \
+    components/interceptionAgentAPI.h      \
     components/ringProtocol.h               \
     components/hyadesProtocol.h             \
     components/carcosaHash.h                \
@@ -209,6 +209,7 @@ nobase_sst_HEADERS =                        \
     components/vlaRegions.h
 
 libcarcosa_la_LDFLAGS = -module -avoid-version
+libcarcosa_la_LIBADD =
 
 AM_CPPFLAGS += $(HMC_FLAG)
 install-exec-hook:
