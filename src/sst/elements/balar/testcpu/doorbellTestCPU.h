@@ -90,6 +90,10 @@ private:
     void sendDoorbell();
     void sendStartCudaRetRead();
     void sendReadRetPacket(uint64_t ret_addr);
+    void beginCacheRead(uint64_t addr, size_t size, const std::string& type);
+    void sendNextCacheRead();
+    uint64_t scratchDataAddr() const;
+    size_t cacheChunkSize(uint64_t addr, size_t remaining) const;
 
     void onCacheWriteResp(Interfaces::StandardMem::WriteResp* resp);
     void onCacheWriteReq(Interfaces::StandardMem::Write* write);
@@ -100,6 +104,7 @@ private:
     void onMmioReadResp(Interfaces::StandardMem::ReadResp* resp);
 
     void completeCudaCall(const BalarCudaCallReturnPacket_t* ret_pack);
+    void finishCudaCall();
     void tryFinishSimulation();
 
     static void uint64ToData(uint64_t num, std::vector<uint8_t>* data);
@@ -134,6 +139,12 @@ private:
     size_t flushes_outstanding_;
     bool packet_issue_active_;
     std::vector<uint8_t> scratch_append_payload_;
+    BalarCudaCallPacket_t active_packet_{};
+    BalarCudaCallReturnPacket_t return_packet_{};
+    uint64_t cache_read_addr_;
+    size_t cache_read_offset_;
+    std::string cache_read_type_;
+    std::vector<uint8_t> cache_read_buffer_;
 
     class CudaAPITraceParser;
     CudaAPITraceParser* trace_parser_;

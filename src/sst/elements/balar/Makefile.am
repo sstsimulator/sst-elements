@@ -73,6 +73,7 @@ EXTRA_DIST = \
 	tests/gpu-v100-mem.cfg \
 	tests/memory.py \
 	tests/testBalar_testsuite_util.py \
+	tests/test_balar_packet_wire.py \
 	tests/testBalar-testcpu.py \
 	tests/testBalar-vanadis.py \
 	tests/testBalar-doorbell.py \

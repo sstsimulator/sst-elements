@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <sstream>
 #include <stdexcept>
@@ -281,7 +282,7 @@ public:
                 pack.cuda_memcpy.dst = *it->second;
                 pack.cuda_memcpy.count = size;
                 pack.cuda_memcpy.payload = (uint64_t)real_data;
-                pack.cuda_memcpy.src = cpu_->scratchMemAddr_ + sizeof(BalarCudaCallPacket_t);
+                pack.cuda_memcpy.src = cpu_->scratchDataAddr();
                 cpu_->scratch_append_payload_ = std::move(file_data);
             } else {
                 uint8_t* buf = (uint8_t*)malloc(size);
@@ -293,7 +294,7 @@ public:
                 pack.cuda_memcpy.payload = (uint64_t)real_data;
                 if (size >= cpu_->cacheLineSize_) {
                     pack.isSSTmem = true;
-                    pack.cuda_memcpy.dst = cpu_->scratchMemAddr_ + sizeof(BalarCudaCallPacket_t);
+                    pack.cuda_memcpy.dst = cpu_->scratchDataAddr();
                     pack.cuda_memcpy.dst_buf = buf;
                 }
             }
@@ -541,11 +542,15 @@ uint64_t DoorbellTestCPU::dataToUInt64(std::vector<uint8_t>* data)
 
 void DoorbellTestCPU::beginPacketIssue(const BalarCudaCallPacket_t& pack)
 {
+    active_packet_ = pack;
     BalarCudaCallPacket_t pack_copy = pack;
     vector<uint8_t>* encoded = encode_balar_packet<BalarCudaCallPacket_t>(&pack_copy);
     packet_buffer_.assign(encoded->begin(), encoded->end());
     delete encoded;
     if (!scratch_append_payload_.empty()) {
+        // The return packet is written back over the request. Keep memcpy data
+        // beyond both packet layouts, on a separate cache line.
+        packet_buffer_.resize(scratchDataAddr() - scratchMemAddr_, 0);
         packet_buffer_.insert(packet_buffer_.end(), scratch_append_payload_.begin(), scratch_append_payload_.end());
         scratch_append_payload_.clear();
     }
@@ -559,12 +564,31 @@ void DoorbellTestCPU::beginPacketIssue(const BalarCudaCallPacket_t& pack)
     sendNextScratchChunk();
 }
 
+uint64_t DoorbellTestCPU::scratchDataAddr() const
+{
+    const size_t header_size = std::max(sizeof(BalarCudaCallPacket_t), sizeof(BalarCudaCallReturnPacket_t));
+    if (scratchMemAddr_ > std::numeric_limits<uint64_t>::max() - header_size) {
+        out.fatal(CALL_INFO, -1, "Scratch packet address overflows\n");
+    }
+    const uint64_t header_end = scratchMemAddr_ + header_size;
+    const uint64_t padding = (cacheLineSize_ - header_end % cacheLineSize_) % cacheLineSize_;
+    if (header_end > std::numeric_limits<uint64_t>::max() - padding) {
+        out.fatal(CALL_INFO, -1, "Scratch payload address overflows\n");
+    }
+    return header_end + padding;
+}
+
+size_t DoorbellTestCPU::cacheChunkSize(uint64_t addr, size_t remaining) const
+{
+    return std::min<size_t>(remaining, cacheLineSize_ - addr % cacheLineSize_);
+}
+
 void DoorbellTestCPU::sendNextScratchChunk()
 {
     if (scratch_bytes_remaining_ == 0) {
         return;
     }
-    size_t chunk = std::min(scratch_bytes_remaining_, cacheLineSize_);
+    size_t chunk = cacheChunkSize(scratchMemAddr_ + scratch_write_offset_, scratch_bytes_remaining_);
     std::vector<uint8_t> payload(packet_buffer_.begin() + scratch_write_offset_,
         packet_buffer_.begin() + scratch_write_offset_ + chunk);
     auto* req = new StandardMem::Write(scratchMemAddr_ + scratch_write_offset_, chunk, payload, false);
@@ -581,7 +605,8 @@ void DoorbellTestCPU::sendNextFlush()
         sendDoorbell();
         return;
     }
-    StandardMem::Addr line_addr = scratchMemAddr_ + (flushes_outstanding_ * cacheLineSize_);
+    StandardMem::Addr line_addr = scratchMemAddr_ - scratchMemAddr_ % cacheLineSize_ +
+        (flushes_outstanding_ * cacheLineSize_);
     auto* req = new StandardMem::FlushAddr(line_addr, cacheLineSize_, true, 1);
     requests_[req->getID()] = std::make_pair("ScratchFlush", IfacePath::CACHE);
     stat_flush_count_->addData(1);
@@ -608,8 +633,27 @@ void DoorbellTestCPU::sendStartCudaRetRead()
 
 void DoorbellTestCPU::sendReadRetPacket(uint64_t ret_addr)
 {
-    auto* req = new StandardMem::Read(ret_addr, sizeof(BalarCudaCallReturnPacket_t));
-    requests_[req->getID()] = std::make_pair("Read_CUDA_ret_packet", IfacePath::CACHE);
+    beginCacheRead(ret_addr, sizeof(BalarCudaCallReturnPacket_t), "Read_CUDA_ret_packet");
+}
+
+void DoorbellTestCPU::beginCacheRead(uint64_t addr, size_t size, const std::string& type)
+{
+    if (size == 0 || addr > std::numeric_limits<uint64_t>::max() - (size - 1)) {
+        out.fatal(CALL_INFO, -1, "Invalid %s range at 0x%lx with size %zu\n", type.c_str(), addr, size);
+    }
+    cache_read_addr_ = addr;
+    cache_read_offset_ = 0;
+    cache_read_type_ = type;
+    cache_read_buffer_.assign(size, 0);
+    sendNextCacheRead();
+}
+
+void DoorbellTestCPU::sendNextCacheRead()
+{
+    const uint64_t addr = cache_read_addr_ + cache_read_offset_;
+    const size_t chunk = cacheChunkSize(addr, cache_read_buffer_.size() - cache_read_offset_);
+    auto* req = new StandardMem::Read(addr, chunk);
+    requests_[req->getID()] = std::make_pair(cache_read_type_, IfacePath::CACHE);
     cache_link_->send(req);
 }
 
@@ -627,12 +671,15 @@ void DoorbellTestCPU::onCacheWriteResp(StandardMem::WriteResp* resp)
     if (it == requests_.end()) {
         out.fatal(CALL_INFO, -1, "Unknown cache WriteResp %ld\n", resp->getID());
     }
+    if (resp->getFail()) {
+        out.fatal(CALL_INFO, -1, "Scratch write failed\n");
+    }
     if (it->second.first == "ScratchWrite") {
         if (scratch_bytes_remaining_ > 0) {
             sendNextScratchChunk();
         } else {
             size_t packet_size = packet_buffer_.size();
-            flushes_remaining_ = (packet_size + cacheLineSize_ - 1) / cacheLineSize_;
+            flushes_remaining_ = (scratchMemAddr_ % cacheLineSize_ + packet_size + cacheLineSize_ - 1) / cacheLineSize_;
             flushes_outstanding_ = 0;
             sendNextFlush();
         }
@@ -648,6 +695,9 @@ void DoorbellTestCPU::onCacheFlushResp(StandardMem::FlushResp* resp)
     auto it = requests_.find(resp->getID());
     if (it == requests_.end()) {
         out.fatal(CALL_INFO, -1, "Unknown cache FlushResp %ld\n", resp->getID());
+    }
+    if (resp->getFail()) {
+        out.fatal(CALL_INFO, -1, "Scratch flush failed\n");
     }
     if (flushes_remaining_ > 0) {
         flushes_remaining_--;
@@ -667,19 +717,40 @@ void DoorbellTestCPU::onCacheReadResp(StandardMem::ReadResp* resp)
     if (it == requests_.end()) {
         out.fatal(CALL_INFO, -1, "Unknown cache ReadResp %ld\n", resp->getID());
     }
-    if (it->second.first == "Read_CUDA_ret_packet") {
-        auto* ret = decode_balar_packet<BalarCudaCallReturnPacket_t>(&(resp->data));
-        completeCudaCall(ret);
-        delete ret;
-        packet_issue_active_ = false;
-        ++calls_completed_;
-        requests_.erase(it);
-        tryFinishSimulation();
-    } else {
+    if (it->second.first != cache_read_type_) {
         out.fatal(CALL_INFO, -1, "Unexpected cache ReadResp %s\n", it->second.first.c_str());
-        requests_.erase(it);
     }
+    const uint64_t addr = cache_read_addr_ + cache_read_offset_;
+    const size_t chunk = cacheChunkSize(addr, cache_read_buffer_.size() - cache_read_offset_);
+    if (resp->getFail() || resp->pAddr != addr || resp->data.size() != chunk) {
+        out.fatal(CALL_INFO, -1, "Invalid %s response at 0x%lx: expected %zu bytes, received %zu\n",
+            cache_read_type_.c_str(), addr, chunk, resp->data.size());
+    }
+    std::copy(resp->data.begin(), resp->data.end(), cache_read_buffer_.begin() + cache_read_offset_);
+    cache_read_offset_ += chunk;
+    requests_.erase(it);
     delete resp;
+
+    if (cache_read_offset_ < cache_read_buffer_.size()) {
+        sendNextCacheRead();
+        return;
+    }
+    if (cache_read_type_ == "Read_CUDA_ret_packet") {
+        memcpy(&return_packet_, cache_read_buffer_.data(), sizeof(return_packet_));
+        if (return_packet_.cuda_call_id != active_packet_.cuda_call_id || return_packet_.cuda_error != cudaSuccess) {
+            out.fatal(CALL_INFO, -1, "CUDA call %s returned type %s with error %d\n",
+                CudaAPIEnumToString(active_packet_.cuda_call_id), CudaAPIEnumToString(return_packet_.cuda_call_id),
+                return_packet_.cuda_error);
+        }
+        if (active_packet_.cuda_call_id == CUDA_MEMCPY && active_packet_.isSSTmem &&
+            active_packet_.cuda_memcpy.kind == cudaMemcpyDeviceToHost && active_packet_.cuda_memcpy.count > 0) {
+            // Validate what the CPU can actually read after DMA, not the
+            // simulator-side buffer used as the source of the DMA write.
+            beginCacheRead(active_packet_.cuda_memcpy.dst, active_packet_.cuda_memcpy.count, "Read_D2H_data");
+            return;
+        }
+    }
+    finishCudaCall();
 }
 
 void DoorbellTestCPU::onMmioWriteReq(StandardMem::Write* write)
@@ -732,10 +803,11 @@ void DoorbellTestCPU::completeCudaCall(const BalarCudaCallReturnPacket_t* ret_pa
             *(CUdeviceptr*)ret_pack->cudamalloc.devptr_addr = ret_pack->cudamalloc.malloc_addr;
         }
     } else if (ret_pack->cuda_call_id == CUDA_MEMCPY && ret_pack->cudamemcpy.kind == cudaMemcpyDeviceToHost) {
-        size_t tot = ret_pack->cudamemcpy.size;
+        size_t tot = active_packet_.cuda_memcpy.count;
         size_t correct = 0;
-        volatile uint8_t* sim_ptr = ret_pack->cudamemcpy.sim_data;
-        volatile uint8_t* real_ptr = ret_pack->cudamemcpy.real_data;
+        const volatile uint8_t* sim_ptr = active_packet_.isSSTmem ?
+            cache_read_buffer_.data() : ret_pack->cudamemcpy.sim_data;
+        const volatile uint8_t* real_ptr = (const volatile uint8_t*)active_packet_.cuda_memcpy.payload;
         if (sim_ptr && real_ptr) {
             for (size_t i = 0; i < tot; i++) {
                 if (real_ptr[i] == sim_ptr[i]) {
@@ -768,6 +840,15 @@ void DoorbellTestCPU::completeCudaCall(const BalarCudaCallReturnPacket_t* ret_pa
             }
         }
     }
+}
+
+void DoorbellTestCPU::finishCudaCall()
+{
+    completeCudaCall(&return_packet_);
+    cache_read_buffer_.clear();
+    packet_issue_active_ = false;
+    ++calls_completed_;
+    tryFinishSimulation();
 }
 
 void DoorbellTestCPU::tryFinishSimulation()

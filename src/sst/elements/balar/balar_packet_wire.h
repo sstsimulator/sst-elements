@@ -14,7 +14,9 @@
 
 #include "balar_consts.h"
 
-#if defined(__has_include)
+// A firmware peer may already have supplied its own CUDA-compatible types.
+// Honor those definitions even if a host toolkit is also on the include path.
+#if !defined(CUDA_RUNTIME_TYPES_FIRMWARE_H) && defined(__has_include)
 #if __has_include("builtin_types.h") && __has_include("driver_types.h")
 #include "builtin_types.h"
 #include "driver_types.h"
@@ -284,7 +286,12 @@ typedef struct BalarCudaCallPacket {
         } cudaEventDestroy;
 
         struct {
+#ifdef BALAR_PACKET_WIRE_HAS_CUDA_TYPES
+            // CUDA declares an enum tag, which needs the tag keyword in C.
+            enum cudaDeviceAttr attr;
+#else
             cudaDeviceAttr attr;
+#endif
             int device;
         } cudaDeviceGetAttribute;
     };

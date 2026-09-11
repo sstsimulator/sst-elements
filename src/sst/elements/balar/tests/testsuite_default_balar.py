@@ -7,9 +7,14 @@ import os
 import shutil
 
 from testBalar_testsuite_util import *
+import test_balar_packet_wire as wire_tests
 
 ## Balar integration tests
 ## Requires: CUDA_INSTALL_PATH, GPGPUSIM_ROOT, NVCC
+
+
+class testcase_balar_wire(wire_tests.TestBalarPacketWire, SSTTestCase):
+    """Compile the shared header without requiring a Balar/GPGPU-Sim build."""
 
 
 class testcase_balar_smoke(SSTTestCase):
