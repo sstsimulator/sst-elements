@@ -57,8 +57,17 @@ def pattern_byte(seed, frame, addr):
     return (seed + 29 * frame + (addr & 0xFF)) & 0xFF
 
 
-def expected_checksum(frame, corrupt=False):
+def expected_checksum(frame, corrupt=False, cached_responses=False):
     snap = bytearray(REGION_SIZE)
+    if cached_responses:
+        # The unaligned ACTUATE request retains B+16 in its address metadata,
+        # but memory returns the complete line beginning at B. The following
+        # straddling request returns the preceding line, outside this region.
+        for i in range(REGION_SIZE):
+            snap[i] = pattern_byte(_SEED_ACTUATE_IN, frame, REGION_BASE + i)
+        if corrupt:
+            snap[0] ^= 0x80
+        return fnv1a64(bytes(snap))
     for i in range(16):
         snap[i] = pattern_byte(_SEED_STRADDLE, frame, REGION_BASE + i)
     for j in range(32):
@@ -82,7 +91,9 @@ def _write_golden(rows):
 def build(frames=3, corrupt_frame=-1, close_kernel_id=1, golden_kernel_id=None,
           drop_golden_frames=(), expect_argmax_diff=0, expect_unsafe=0,
           expect_corrupted=0, verbose=False, extra_region=None,
-          mem_side_gate=None, check_exact_checksums=True):
+          mem_side_gate=None, check_exact_checksums=True,
+          cached_responses=False, virtual_address_offset=0,
+          watcher_responses_only=True):
     """Wire up driver/watcher/scorer for one scenario.
 
     golden_kernel_id: kernel_at_close written into the golden CSV. Defaults
@@ -100,14 +111,21 @@ def build(frames=3, corrupt_frame=-1, close_kernel_id=1, golden_kernel_id=None,
     check_exact_checksums: pass expect_checksums to the driver. Disable for
     gate-flip runs where the corrupted values are RNG-dependent and only
     the classification counts are deterministic.
+    cached_responses: return full memory-side cache lines, preserving the
+    unaligned request address in response metadata.
+    virtual_address_offset: difference between published virtual addresses
+    and the physical addresses sent to memory.
+    watcher_responses_only: when false, also exercise observation of empty
+    read requests; the watcher must not create a payload for them.
     """
     gk = close_kernel_id if golden_kernel_id is None else golden_kernel_id
-    golden_rows = [(f, gk, expected_checksum(f))
+    golden_rows = [(f, gk, expected_checksum(f, cached_responses=cached_responses))
                    for f in range(frames) if f not in drop_golden_frames]
     golden_path = _write_golden(golden_rows)
 
     # What the run should actually record (corruption is deterministic).
-    actual = [expected_checksum(f, corrupt=(f == corrupt_frame))
+    actual = [expected_checksum(f, corrupt=(f == corrupt_frame),
+                                cached_responses=cached_responses)
               for f in range(frames)]
 
     driver = sst.Component("driver", "carcosa.FramePipelineDriver")
@@ -116,6 +134,8 @@ def build(frames=3, corrupt_frame=-1, close_kernel_id=1, golden_kernel_id=None,
         "region_name": "action_queue",
         "region_base": REGION_BASE,
         "region_size": REGION_SIZE,
+        "cached_responses": cached_responses,
+        "virtual_address_offset": virtual_address_offset,
         "frames": frames,
         "corrupt_frame": corrupt_frame,
         "close_kernel_id": close_kernel_id,
@@ -135,6 +155,7 @@ def build(frames=3, corrupt_frame=-1, close_kernel_id=1, golden_kernel_id=None,
         "state_key": STATE_KEY,
         "critical_region": "action_queue",
         "critical_len": REGION_SIZE,
+        "apply_on_responses_only": watcher_responses_only,
         "golden_log": golden_path,
         "golden_required": "true",
         "verbose": "true" if verbose else "false",

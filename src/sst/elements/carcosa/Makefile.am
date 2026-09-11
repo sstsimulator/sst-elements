@@ -16,6 +16,7 @@ libcarcosa_la_SOURCES =                     \
     components/eccPayloadCorruptor.cc       \
     components/eccPayloadCorruptor.h        \
     components/eccModelMath.h               \
+    components/memEventPayload.h            \
     components/criticalActionWatcher.cc     \
     components/criticalActionWatcher.h      \
     components/eccScheme.h                  \
@@ -132,16 +133,21 @@ EXTRA_DIST = \
     tests/testEccGuardResident.py                 \
     tests/testEccGuardSmoke.py                    \
     tests/testEccModelDeterministic.py            \
+    tests/testBalarRingBridgeStandalone.py        \
     tests/eccRuntimeCommon.py                     \
     tests/testEccRuntimeCorrectable.py            \
     tests/testEccRuntimeDueDrop.py                \
     tests/testEccRuntimeEscape.py                 \
     tests/testEccCampaignReentry.py               \
+    tests/testEccCampaignFilterLength.py          \
+    tests/testEccCampaignPayloadlessRead.py       \
+    tests/testEccResidentPayloadAddress.py        \
     tests/testEccPoissonDistribution.py           \
     tests/testEccJedecDistribution.py             \
     tests/testEccResidentDistribution.py          \
     tests/framePipelineCommon.py                  \
     tests/testFramePipelineClean.py               \
+    tests/testFramePipelineCachedResponse.py      \
     tests/testFramePipelineCorrupt.py             \
     tests/testFramePipelineFallback.py            \
     tests/testFramePipelineMissingGolden.py       \
@@ -155,6 +161,8 @@ EXTRA_DIST = \
     tests/testHaliDoubleDeferred.py               \
     tests/testHaliDeferredComplete.py             \
     tests/testHaliPayloadGetX.py                  \
+    tests/testHaliPostedWrite.py                  \
+    tests/testHaliMmioRouting.py                  \
     tests/testHaliBacking.py                      \
     tests/testHaliMemH.py                         \
     tests/testHaliPM.py                           \
@@ -184,6 +192,7 @@ nobase_sst_HEADERS =                        \
     components/eccGuard.h                   \
     components/eccPayloadCorruptor.h        \
     components/eccModelMath.h               \
+    components/memEventPayload.h            \
     components/criticalActionWatcher.h      \
     components/actionScorer.h               \
     components/faultInjManagerAPI.h         \

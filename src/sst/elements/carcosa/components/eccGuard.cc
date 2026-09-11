@@ -12,6 +12,7 @@
 #include "sst_config.h"
 #include "sst/elements/carcosa/components/eccGuard.h"
 #include "sst/elements/carcosa/components/eccModelMath.h"
+#include "sst/elements/carcosa/components/memEventPayload.h"
 #include <algorithm>
 #include <cinttypes>
 #include <cstring>
@@ -612,23 +613,19 @@ bool EccGuard::shouldApplyPolicy(MemEvent* mev) {
     if (mev->isResponse()) return true;
     if (fault_model_ != FaultModel::Campaign || addr_filter_region_.empty())
         return false;
-    return eventOverlapsAddrFilter(mev) && !mev->getPayload().empty();
+    // getPayload() would allocate the requested read size and make a
+    // payload-less request consume the campaign budget before its response.
+    return mev->getPayloadSize() != 0 && eventOverlapsAddrFilter(mev);
 }
 
 bool EccGuard::eventOverlapsAddrFilter(MemEvent* mev) const {
     if (addr_filter_region_.empty() || !mev) return true;
-    if (state_ptr_) {
-        int rid = resolveRegionIdForEvent(mev);
-        if (rid >= 0 && regionNameForId(rid) == addr_filter_region_) return true;
-    }
     uint64_t fbase = 0, flen = 0;
     if (!resolveAddrFilterBounds(fbase, flen)) return false;
-    uint64_t vaddr = mev->getVirtualAddress();
-    uint64_t addr  = (vaddr != 0) ? vaddr : mev->getAddr();
-    uint64_t size  = mev->getPayload().empty() ? 64u : mev->getPayload().size();
-    uint64_t end   = addr + size;
-    uint64_t fend  = fbase + flen;
-    return addr < fend && end > fbase;
+    const uint64_t addr = memEventPayloadAddress(*mev);
+    const uint64_t size = mev->getPayloadSize() != 0
+        ? mev->getPayloadSize() : mev->getSize();
+    return size != 0 && (addr < fbase ? fbase - addr < size : addr - fbase < flen);
 }
 
 void EccGuard::noteCampaignKernelEntry(const std::string& kernel_name) {
@@ -1276,10 +1273,9 @@ EccGuard::FaultDraw EccGuard::drawFaultResident(MemEvent* mev,
     d.per_word_errors.assign(nwords, 0u);
     if (resident_mask_.empty()) return d;
 
-    // Same address-space preference as the window filters: the preserved
-    // virtual address when present, else the physical/SST address.
-    uint64_t a = mev->getVirtualAddress();
-    if (a == 0) a = mev->getAddr();
+    // Cached responses contain the entire line, even when the original
+    // request (and its preserved virtual address) starts inside that line.
+    const uint64_t a = memEventPayloadAddress(*mev);
 
     const uint32_t wb = eccWordBytes(scheme);
     const bool need_chips = (scheme == EccScheme::CHIPKILL_x4);
@@ -1350,11 +1346,12 @@ uint64_t EccGuard::applyPolicy(MemEvent* mev) {
     // Raw inject window (no region registry): confine to [start, start+len).
     // Prefer preserved vAddr; fall back to physical (e.g. balar H2D path).
     if (inject_addr_len_ > 0) {
-        uint64_t a = mev->getVirtualAddress();
-        if (a == 0) a = mev->getAddr();
-        uint64_t sz = mev->getPayload().empty() ? 64u : mev->getPayload().size();
-        if (a + sz <= inject_addr_start_ ||
-            a >= inject_addr_start_ + inject_addr_len_) {
+        const uint64_t a = memEventPayloadAddress(*mev);
+        const uint64_t sz = mev->getPayloadSize() != 0
+            ? mev->getPayloadSize() : mev->getSize();
+        const bool overlaps = sz != 0 && (a < inject_addr_start_
+            ? inject_addr_start_ - a < sz : a - inject_addr_start_ < inject_addr_len_);
+        if (!overlaps) {
             if (stat_total_) stat_total_->addData(1);
             if (stat_clean_) stat_clean_->addData(1);
             return 0;
@@ -1384,13 +1381,12 @@ uint64_t EccGuard::applyPolicy(MemEvent* mev) {
         return 0;
     }
 
-    auto& payload = mev->getPayload();
-    if (payload.empty()) {
+    if (mev->getPayloadSize() == 0) {
         countClean();
         return 0;
     }
 
-    uint32_t payload_bytes = static_cast<uint32_t>(payload.size());
+    uint32_t payload_bytes = static_cast<uint32_t>(mev->getPayloadSize());
 
     FaultDraw draw;
     if (fault_model_ == FaultModel::JedecMix) {

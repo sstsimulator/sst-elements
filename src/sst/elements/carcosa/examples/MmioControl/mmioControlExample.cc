@@ -52,7 +52,11 @@ ExampleMmioDriver::~ExampleMmioDriver()
 
 void ExampleMmioDriver::init(unsigned phase) { iface_->init(phase); }
 void ExampleMmioDriver::setup()              { iface_->setup(); }
-void ExampleMmioDriver::finish()             {}
+void ExampleMmioDriver::finish() {
+    if (!gotReadResp_ || readValue_ != armValue_)
+        out_->fatal(CALL_INFO, -1,
+                    "MMIO control exchange did not complete with the expected value.\n");
+}
 
 void ExampleMmioDriver::sendRead(uint64_t offset)
 {

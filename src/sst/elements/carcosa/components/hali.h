@@ -52,7 +52,8 @@ public:
         {"verbose", "Enable verbose output for debugging.", "false"},
         {"intercept_ranges", "Semicolon-separated base,size pairs (e.g. '0xBEEF0000,4096') for addresses to hand to InterceptionAgent.", ""},
         {"clock", "Clock for the optional MMIO StandardMem interface.", "1GHz"},
-        {"mmio_base", "Base address of the MMIO control region (MMIO-peripheral transport).", "0xBEEF0000"}
+        {"mmio_base", "Base address of the MMIO control region (MMIO-peripheral transport).", "0xBEEF0000"},
+        {"mmio_size", "Size in bytes of the MMIO control region advertised to the memory hierarchy.", "4096"}
     )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(

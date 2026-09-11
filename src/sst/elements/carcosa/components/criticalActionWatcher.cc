@@ -8,6 +8,7 @@
 #include "sst_config.h"
 #include "sst/elements/carcosa/components/criticalActionWatcher.h"
 #include "sst/elements/carcosa/components/carcosaHash.h"
+#include "sst/elements/carcosa/components/memEventPayload.h"
 #include <algorithm>
 #include <cinttypes>
 #include <fstream>
@@ -150,9 +151,9 @@ bool CriticalActionWatcher::eventOverlapsCritical(MemEvent* mev,
     uint64_t fbase = crit_base_, flen = crit_len_;
     if (fbase == 0 && flen == 0 && !resolveCriticalBounds(fbase, flen))
         return false;
-    uint64_t vaddr = mev->getVirtualAddress();
-    uint64_t addr  = (vaddr != 0) ? vaddr : mev->getAddr();
-    uint64_t size  = mev->getPayload().empty() ? 64u : mev->getPayload().size();
+    uint64_t size = mev->getPayloadSize();
+    if (size == 0) return false;
+    uint64_t addr = memEventPayloadAddress(*mev);
     uint64_t end   = addr + size;
     uint64_t fend  = fbase + flen;
     if (!(addr < fend && end > fbase)) return false;

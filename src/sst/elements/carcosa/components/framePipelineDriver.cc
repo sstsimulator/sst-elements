@@ -27,6 +27,8 @@ FramePipelineDriver::FramePipelineDriver(ComponentId_t id, Params& params)
     region_name_     = params.find<std::string>("region_name", "action_queue");
     region_base_     = params.find<uint64_t>("region_base", 8192);
     region_size_     = params.find<uint64_t>("region_size", 64);
+    cached_responses_ = params.find<bool>("cached_responses", false);
+    virtual_address_offset_ = params.find<uint64_t>("virtual_address_offset", 0);
     frames_          = params.find<int>("frames", 3);
     corrupt_frame_   = params.find<int>("corrupt_frame", -1);
     close_kernel_id_ = params.find<int>("close_kernel_id", 1);
@@ -60,6 +62,13 @@ FramePipelineDriver::FramePipelineDriver(ComponentId_t id, Params& params)
         out_->fatal(CALL_INFO, -1,
             "FramePipelineDriver '%s': region_size must be >= 48 (the script "
             "covers [0,48) and leaves the rest as an unread hole).\n",
+            getName().c_str());
+    }
+    if (virtual_address_offset_ > region_base_ - 16 ||
+        virtual_address_offset_ % 64 != 0) {
+        out_->fatal(CALL_INFO, -1,
+            "FramePipelineDriver '%s': virtual_address_offset must be a "
+            "multiple of 64 and leave nonnegative physical addresses.\n",
             getName().c_str());
     }
 
@@ -151,8 +160,11 @@ bool FramePipelineDriver::clockTick(Cycle_t) {
         case Op::Kind::Read: {
             cur_seed_    = op.seed;
             cur_corrupt_ = op.corrupt;
-            MemEvent* req = new MemEvent(getName(), op.addr, op.addr & ~63ull,
+            const uint64_t paddr = op.addr - virtual_address_offset_;
+            MemEvent* req = new MemEvent(getName(), paddr, paddr & ~63ull,
                                          Command::GetS, op.size);
+            req->setVirtualAddress(op.addr);
+            if (!cached_responses_) req->setFlag(MemEvent::F_NONCACHEABLE);
             cpu_side_->send(req);
             awaiting_ = true;
             return false;
@@ -201,10 +213,18 @@ void FramePipelineDriver::handleMemSide(Event* ev) {
             "FramePipelineDriver '%s': non-MemEvent on mem_side.\n",
             getName().c_str());
     }
+    if (req->getPayloadSize() != 0) {
+        out_->fatal(CALL_INFO, -1,
+            "FramePipelineDriver '%s': watcher materialized a read request's "
+            "payload.\n", getName().c_str());
+    }
     MemEvent* resp = req->makeResponse();
-    std::vector<uint8_t> payload(req->getSize());
+    std::vector<uint8_t> payload(cached_responses_ ? 64 : req->getSize());
+    const uint64_t payload_base =
+        (cached_responses_ ? req->getBaseAddr() : req->getAddr()) +
+        virtual_address_offset_;
     for (size_t i = 0; i < payload.size(); ++i) {
-        payload[i] = patternByte(cur_seed_, cur_frame_, req->getAddr() + i);
+        payload[i] = patternByte(cur_seed_, cur_frame_, payload_base + i);
     }
     if (cur_corrupt_ && !payload.empty()) payload[0] ^= 0x80;
     resp->setPayload(payload);

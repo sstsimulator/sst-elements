@@ -148,6 +148,13 @@ Hali::Hali(ComponentId_t id, Params& params) : Component(id) {
     mmioIface_ = loadUserSubComponent<StandardMem>(
         "mmio_iface", ComponentInfo::SHARE_NONE, mmioTC,
         new StandardMem::Handler<Hali, &Hali::handleMmioRequest>(this));
+    if (mmioIface_) {
+        uint64_t mmioSize = params.find<uint64_t>("mmio_size", 4096);
+        if (mmioSize == 0 || mmioSize - 1 > UINT64_MAX - mmioBase_)
+            out_->fatal(CALL_INFO, -1, "%s: MMIO region must be nonempty and must not wrap the address space.\n",
+                        getName().c_str());
+        mmioIface_->setMemoryMappedAddressRegion(mmioBase_, mmioSize);
+    }
     if (interceptionAgent_)
         interceptionAgent_->setControlChannel(this);
 
@@ -677,6 +684,7 @@ Hali::ControlMemDispatch Hali::dispatchControlMemEvent(MemEvent* mevent, uint64_
     ControlAccess acc;
     acc.isWrite = isWrite;
     acc.offset  = mevent->getAddr() - base;
+    acc.posted  = mevent->queryFlag(MemEventBase::F_NORESPONSE);
     if (isWrite) {
         const std::vector<uint8_t>& payload = mevent->getPayload();
         if (payload.size() >= sizeof(uint32_t))
@@ -688,7 +696,7 @@ Hali::ControlMemDispatch Hali::dispatchControlMemEvent(MemEvent* mevent, uint64_
         return ControlMemDispatch::LegacyFallback;
 
     if (isWrite) {
-        // Writes are always Handled here; ack on the data plane like the CPU expects.
+        // Only non-posted writes expect an acknowledgment.
         sendDataPlaneWriteAck(mevent);
         return ControlMemDispatch::Handled;
     }
@@ -714,7 +722,9 @@ void Hali::sendDataPlaneReadResponse(MemEvent* req, uint32_t value) {
 }
 
 void Hali::sendDataPlaneWriteAck(MemEvent* req) {
-    MemEvent* resp = req->makeResponse();
-    if (highlink_) highlink_->send(resp);
+    if (!req->queryFlag(MemEventBase::F_NORESPONSE)) {
+        MemEvent* resp = req->makeResponse();
+        if (highlink_) highlink_->send(resp);
+    }
     delete req;
 }

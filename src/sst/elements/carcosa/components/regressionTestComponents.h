@@ -35,6 +35,7 @@ private:
     std::string mode_;
     ControlChannel* channel_ = nullptr;
     Link* self_ = nullptr;
+    bool posted_write_seen_ = false;
 };
 
 class HaliTestDriver : public SST::Component {
@@ -70,6 +71,13 @@ public:
         {"requests", "Number of serialized reads.", "1"},
         {"payload_size", "Response payload bytes.", "8"},
         {"kernel_sequence", "Optional CSV kernel name per request.", ""},
+        {"request_addresses", "Optional CSV physical addresses, repeated as needed.", ""},
+        {"virtual_offset", "If nonzero, stamp virtual address as physical plus offset.", "0"},
+        {"region_name", "Optional published region name.", ""},
+        {"region_base", "Published region base.", "16384"},
+        {"region_size", "Published region bytes.", "4096"},
+        {"expect_same_payload", "Require every response to match the first response byte for byte.", "false"},
+        {"expect_mutated_sequence", "Optional CSV 0/1 mutation expectation for each response.", ""},
         {"expect_mutated", "Expected mutated responses (-1 disables).", "-1"},
         {"expect_abort", "Expected frameAbortRequested (-1 disables).", "-1"},
         {"expect_escapes", "Expected cumulative escapes (-1 disables).", "-1"})
@@ -88,6 +96,11 @@ private:
     PipelineStateBase* state_ = nullptr;
     std::string state_key_;
     std::vector<std::string> kernels_;
+    std::vector<uint64_t> request_addresses_;
+    std::vector<int> expect_mutated_sequence_;
+    std::vector<uint8_t> reference_payload_;
+    uint64_t virtual_offset_ = 0;
+    bool expect_same_payload_ = false;
     int requests_ = 1, payload_size_ = 8, issued_ = 0, completed_ = 0;
     int mutated_ = 0, expect_mutated_ = -1, expect_abort_ = -1;
     int64_t expect_escapes_ = -1;

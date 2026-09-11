@@ -44,6 +44,8 @@ public:
         {"region_name",     "Name of the published critical region.", "action_queue"},
         {"region_base",     "Base address of the critical region (must be >= 16 so the straddling read has room below).", "8192"},
         {"region_size",     "Size in bytes of the critical region.", "64"},
+        {"cached_responses", "Return full cache lines from memory instead of noncacheable byte ranges.", "false"},
+        {"virtual_address_offset", "Subtract this offset from scripted virtual addresses to produce physical request addresses.", "0"},
         {"frames",          "Number of pipeline frames to run.", "3"},
         {"corrupt_frame",   "Frame index whose in-region ACTUATE read payload gets one bit flipped (-1 = none).", "-1"},
         {"close_kernel_id", "Kernel id stamped into FrameRecord::kernelAtClose (set differently from the golden log's kernel_at_close to exercise the cycle-only fallback).", "1"},
@@ -94,6 +96,8 @@ private:
     std::string region_name_;
     uint64_t    region_base_ = 8192;
     uint64_t    region_size_ = 64;
+    bool        cached_responses_ = false;
+    uint64_t    virtual_address_offset_ = 0;
     int         frames_      = 3;
     int         corrupt_frame_   = -1;
     int         close_kernel_id_ = 1;

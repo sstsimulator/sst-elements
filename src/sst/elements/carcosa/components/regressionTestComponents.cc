@@ -1,6 +1,7 @@
 #include "sst_config.h"
 #include "sst/elements/carcosa/components/regressionTestComponents.h"
 #include "sst/elements/carcosa/components/eccModelMath.h"
+#include "sst/elements/carcosa/components/configParse.h"
 #include <cmath>
 #include <sstream>
 
@@ -54,6 +55,18 @@ bool HaliTestAgent::handleInterceptedEvent(MemEvent*, Link*) {
 }
 
 ControlResult HaliTestAgent::handleControlAccess(ControlAccess& acc) {
+    if (mode_ == "posted_write") {
+        if (acc.isWrite) {
+            if (!acc.posted || acc.value != 0x12345678u)
+                out_->fatal(CALL_INFO, -1, "HaliTestAgent: posted write decoded incorrectly.\n");
+            posted_write_seen_ = true;
+        } else {
+            if (!posted_write_seen_)
+                out_->fatal(CALL_INFO, -1, "HaliTestAgent: read overtook posted write.\n");
+            acc.readValue = 0x12345678u;
+        }
+        return ControlResult::Handled;
+    }
     if (mode_ == "payloadless_getx")
         out_->fatal(CALL_INFO, -1, "HaliTestAgent: payload-less GetX reached neutral API.\n");
     if (mode_ == "payload_getx") {
@@ -94,6 +107,13 @@ bool HaliTestDriver::tick(Cycle_t) {
         cpu_->send(new MemEvent(getName(), base_ + 4, base_ & ~63ull, Command::GetS, 4));
     } else if (mode_ == "deferred_complete") {
         cpu_->send(new MemEvent(getName(), base_, base_ & ~63ull, Command::GetS, 4));
+    } else if (mode_ == "posted_write") {
+        std::vector<uint8_t> payload = {0x78, 0x56, 0x34, 0x12};
+        auto* write = new MemEvent(getName(), base_ + 4, base_ & ~63ull,
+                                   Command::Write, payload);
+        write->setFlag(MemEventBase::F_NORESPONSE);
+        cpu_->send(write);
+        cpu_->send(new MemEvent(getName(), base_, base_ & ~63ull, Command::GetS, 4));
     } else if (mode_ == "payload_getx") {
         std::vector<uint8_t> payload = {0x78, 0x56, 0x34, 0x12};
         cpu_->send(new MemEvent(getName(), base_, base_ & ~63ull,
@@ -122,6 +142,11 @@ void HaliTestDriver::memEvent(Event* ev) {
 void HaliTestDriver::cpuEvent(Event* ev) {
     auto* resp = dynamic_cast<MemEvent*>(ev);
     if (!resp) out_->fatal(CALL_INFO, -1, "HaliTestDriver: non-MemEvent response.\n");
+    if (mode_ == "posted_write") {
+        if (resp->getCmd() != Command::GetSResp ||
+            resp->getPayload() != std::vector<uint8_t>({0x78, 0x56, 0x34, 0x12}))
+            out_->fatal(CALL_INFO, -1, "HaliTestDriver: posted write produced an acknowledgment or read returned wrong data.\n");
+    }
     if (mode_ == "deferred_complete") {
         auto& p = resp->getPayload();
         if (p.size() < 4 || p[0] != 0xDD || p[1] != 0xCC ||
@@ -134,7 +159,7 @@ void HaliTestDriver::cpuEvent(Event* ev) {
 void HaliTestDriver::finish() {
     if (!defer_ && !passed_)
         out_->fatal(CALL_INFO, -1, "HaliTestDriver: mode %s did not complete.\n", mode_.c_str());
-    if ((mode_ == "payload_getx" || mode_ == "deferred_complete") && downstream_seen_)
+    if ((mode_ == "payload_getx" || mode_ == "deferred_complete" || mode_ == "posted_write") && downstream_seen_)
         out_->fatal(CALL_INFO, -1, "HaliTestDriver: handled control access leaked downstream.\n");
     if (!defer_) out_->output("HaliTestDriver: PASS mode=%s.\n", mode_.c_str());
     delete out_; out_ = nullptr;
@@ -149,11 +174,36 @@ EccRuntimeTestDriver::EccRuntimeTestDriver(ComponentId_t id, Params& params)
     expect_mutated_ = params.find<int>("expect_mutated", -1);
     expect_abort_ = params.find<int>("expect_abort", -1);
     expect_escapes_ = params.find<int64_t>("expect_escapes", -1);
+    virtual_offset_ = params.find<uint64_t>("virtual_offset", 0);
+    expect_same_payload_ = params.find<bool>("expect_same_payload", false);
     std::stringstream ss(params.find<std::string>("kernel_sequence", ""));
     std::string tok;
     while (std::getline(ss, tok, ',')) kernels_.push_back(tok);
+    ss.clear();
+    ss.str(params.find<std::string>("request_addresses", ""));
+    while (std::getline(ss, tok, ',')) {
+        uint64_t address = 0;
+        if (!ConfigParse::parseUint64(tok, address))
+            out_->fatal(CALL_INFO, -1, "EccRuntimeTestDriver: invalid request address '%s'.\n", tok.c_str());
+        request_addresses_.push_back(address);
+    }
+    ss.clear();
+    ss.str(params.find<std::string>("expect_mutated_sequence", ""));
+    while (std::getline(ss, tok, ',')) {
+        int expected = 0;
+        if (!ConfigParse::parseInt(tok, expected) || (expected != 0 && expected != 1))
+            out_->fatal(CALL_INFO, -1, "EccRuntimeTestDriver: mutation expectations must be 0 or 1.\n");
+        expect_mutated_sequence_.push_back(expected);
+    }
+    if (!expect_mutated_sequence_.empty() && expect_mutated_sequence_.size() != static_cast<size_t>(requests_))
+        out_->fatal(CALL_INFO, -1, "EccRuntimeTestDriver: mutation sequence must cover every request.\n");
     state_ = PipelineStateRegistry<PipelineStateBase>::getOrCreate(state_key_);
     state_->currentKernelName = "TEST";
+    const std::string region_name = params.find<std::string>("region_name", "");
+    if (!region_name.empty()) {
+        state_->publishRegion(0, params.find<uint64_t>("region_base", 0x4000),
+                              params.find<uint64_t>("region_size", 4096), region_name);
+    }
     cpu_ = configureLink("cpu_side", new Event::Handler<EccRuntimeTestDriver,
                          &EccRuntimeTestDriver::cpuEvent>(this));
     mem_ = configureLink("mem_side", new Event::Handler<EccRuntimeTestDriver,
@@ -172,15 +222,21 @@ void EccRuntimeTestDriver::issue() {
     if (issued_ >= requests_) return;
     if (issued_ < static_cast<int>(kernels_.size()))
         state_->currentKernelName = kernels_[issued_];
-    const uint64_t addr = 0x4000 + static_cast<uint64_t>(issued_ % 64) * 64;
-    cpu_->send(new MemEvent(getName(), addr, addr & ~63ull,
-                           Command::GetS, payload_size_));
+    const uint64_t addr = request_addresses_.empty()
+        ? 0x4000 + static_cast<uint64_t>(issued_ % 64) * 64
+        : request_addresses_[issued_ % request_addresses_.size()];
+    auto* request = new MemEvent(getName(), addr, addr & ~63ull,
+                                 Command::GetS, payload_size_);
+    if (virtual_offset_ != 0) request->setVirtualAddress(addr + virtual_offset_);
+    cpu_->send(request);
     ++issued_;
 }
 
 void EccRuntimeTestDriver::memEvent(Event* ev) {
     auto* req = dynamic_cast<MemEvent*>(ev);
     if (!req) out_->fatal(CALL_INFO, -1, "EccRuntimeTestDriver: non-MemEvent request.\n");
+    if (req->getPayloadSize() != 0)
+        out_->fatal(CALL_INFO, -1, "EccRuntimeTestDriver: guard fabricated a read-request payload.\n");
     MemEvent* resp = req->makeResponse();
     std::vector<uint8_t> payload(payload_size_, 0xA5);
     resp->setPayload(payload);
@@ -190,8 +246,15 @@ void EccRuntimeTestDriver::memEvent(Event* ev) {
 void EccRuntimeTestDriver::cpuEvent(Event* ev) {
     auto* resp = dynamic_cast<MemEvent*>(ev);
     if (!resp) out_->fatal(CALL_INFO, -1, "EccRuntimeTestDriver: non-MemEvent response.\n");
+    if (expect_same_payload_) {
+        if (completed_ == 0) reference_payload_ = resp->getPayload();
+        else if (resp->getPayload() != reference_payload_)
+            out_->fatal(CALL_INFO, -1, "EccRuntimeTestDriver: resident corruption changed with request offset.\n");
+    }
     bool changed = false;
     for (uint8_t b : resp->getPayload()) if (b != 0xA5) { changed = true; break; }
+    if (!expect_mutated_sequence_.empty() && changed != (expect_mutated_sequence_[completed_] != 0))
+        out_->fatal(CALL_INFO, -1, "EccRuntimeTestDriver: response %d has unexpected mutation state.\n", completed_);
     if (changed) ++mutated_;
     delete resp;
     ++completed_;

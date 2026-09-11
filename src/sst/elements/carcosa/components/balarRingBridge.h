@@ -103,6 +103,7 @@ public:
 
 private:
     enum class IfacePath { CACHE, MMIO };
+    enum class CudaCallResult { Complete, ReadD2H, Retry };
 
     // StandardMem response demux.
     void handleCacheEvent(SST::Interfaces::StandardMem::Request* req);
@@ -117,7 +118,10 @@ private:
     void sendDoorbell();
     void sendStartCudaRetRead();
     void sendReadRetPacket(uint64_t ret_addr);
+    void sendNextRetPacketRead();
     void sendNextD2HRead();
+    void retryCudaCall(SST::Event* ev);
+    void addFlushRange(uint64_t addr, size_t bytes);
 
     void onCacheWriteResp(SST::Interfaces::StandardMem::WriteResp* resp);
     void onCacheFlushResp(SST::Interfaces::StandardMem::FlushResp* resp);
@@ -125,8 +129,7 @@ private:
     void onMmioWriteResp(SST::Interfaces::StandardMem::WriteResp* resp);
     void onMmioReadResp(SST::Interfaces::StandardMem::ReadResp* resp);
 
-    // Returns false when an SST-memory D2H readback must finish asynchronously.
-    bool completeCudaCall(const SST::BalarComponent::BalarCudaCallReturnPacket_t* ret_pack);
+    CudaCallResult completeCudaCall(const SST::BalarComponent::BalarCudaCallReturnPacket_t* ret_pack);
     void finishCudaCall();
     void releasePendingD2H();
     void finishReplay();               // publish checksum + send Done, arm for next Cmd
@@ -136,12 +139,14 @@ private:
 
     SST::Output*                  out_       = nullptr;
     SST::Link*                    ring_link_  = nullptr;
+    SST::Link*                    retry_link_ = nullptr;
     SST::Interfaces::StandardMem* cache_link_ = nullptr;
     SST::Interfaces::StandardMem* mmio_link_  = nullptr;
 
     std::string state_key_;
     uint64_t    mmio_addr_         = 0;
     uint64_t    scratch_mem_addr_  = 0;
+    uint64_t    d2h_stage_addr_    = 0;
     uint64_t    weight_stage_addr_ = 0x20000000;
     uint64_t    cache_line_size_   = 64;
     std::string trace_file_;
@@ -165,6 +170,12 @@ private:
     // Staged regions plus any D2H destination that must be invalidated pre-DMA.
     std::vector<std::pair<uint64_t, size_t>> flush_ranges_;  // (base, bytes)
     bool     packet_issue_active_ = false;
+    SST::BalarComponent::BalarCudaCallPacket_t active_packet_{};
+
+    // Return packets can exceed one cache line and are assembled before decoding.
+    uint64_t ret_packet_addr_ = 0;
+    size_t ret_packet_chunk_ = 0;
+    std::vector<uint8_t> ret_packet_data_;
 
     // Replay lifecycle.
     bool     replay_active_ = false;   // a trace replay is in flight for the current Cmd

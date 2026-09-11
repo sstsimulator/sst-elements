@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <cinttypes>
 #include <cstring>
+#include <limits>
 
 using namespace SST;
 using namespace SST::Interfaces;
@@ -74,6 +75,21 @@ BalarRingBridge::BalarRingBridge(ComponentId_t id, Params& params)
         out_->fatal(CALL_INFO, -1, "BalarRingBridge: 'cuda_executable' is required (fatbin registration)\n");
     if (cache_line_size_ == 0)
         out_->fatal(CALL_INFO, -1, "BalarRingBridge: cache_line_size must be > 0\n");
+
+    // Balar writes its return packet over the command scratch area. Reserve
+    // enough for either ABI structure, then give the D2H payload its own lines.
+    uint64_t packet_bytes = std::max(sizeof(BalarCudaCallPacket_t),
+                                     sizeof(BalarCudaCallReturnPacket_t));
+    if (scratch_mem_addr_ > std::numeric_limits<uint64_t>::max() - packet_bytes)
+        out_->fatal(CALL_INFO, -1, "BalarRingBridge: scratch packet address overflows\n");
+    d2h_stage_addr_ = scratch_mem_addr_ + packet_bytes;
+    uint64_t padding = (cache_line_size_ - d2h_stage_addr_ % cache_line_size_) % cache_line_size_;
+    if (d2h_stage_addr_ > std::numeric_limits<uint64_t>::max() - padding)
+        out_->fatal(CALL_INFO, -1, "BalarRingBridge: aligned D2H address overflows\n");
+    d2h_stage_addr_ += padding;
+
+    retry_link_ = configureSelfLink("cuda_retry", "1ns",
+        new Event::Handler<BalarRingBridge, &BalarRingBridge::retryCudaCall>(this));
 
     TimeConverter tc = getTimeConverter(params.find<std::string>("clock", "1GHz"));
     cache_link_ = loadUserSubComponent<StandardMem>(
@@ -179,7 +195,7 @@ void BalarRingBridge::issueNextPacket()
             pending_d2h_bytes_ = trace_packet.d2h_bytes;
             if (trace_packet.d2h_bytes >= cache_line_size_) {
                 pack.isSSTmem = true;
-                pack.cuda_memcpy.dst = scratch_mem_addr_ + sizeof(BalarCudaCallPacket_t);
+                pack.cuda_memcpy.dst = d2h_stage_addr_;
                 pack.cuda_memcpy.dst_buf = nullptr;
                 pending_d2h_is_sst_ = true;
                 pending_d2h_sst_addr_ = pack.cuda_memcpy.dst;
@@ -197,8 +213,8 @@ void BalarRingBridge::issueNextPacket()
 
 void BalarRingBridge::beginPacketIssue(const BalarCudaCallPacket_t& pack)
 {
-    BalarCudaCallPacket_t pack_copy = pack;
-    std::vector<uint8_t>* encoded = encode_balar_packet<BalarCudaCallPacket_t>(&pack_copy);
+    active_packet_ = pack;
+    std::vector<uint8_t>* encoded = encode_balar_packet<BalarCudaCallPacket_t>(&active_packet_);
 
     stage_segments_.clear();
     flush_ranges_.clear();
@@ -232,7 +248,8 @@ void BalarRingBridge::sendNextStageChunk()
     while (seg_index_ < stage_segments_.size()) {
         StageSegment& seg = stage_segments_[seg_index_];
         if (seg_offset_ >= seg.bytes.size()) { ++seg_index_; seg_offset_ = 0; continue; }
-        size_t chunk = std::min<size_t>(seg.bytes.size() - seg_offset_, cache_line_size_);
+        size_t line_remaining = cache_line_size_ - ((seg.addr + seg_offset_) % cache_line_size_);
+        size_t chunk = std::min(seg.bytes.size() - seg_offset_, line_remaining);
         std::vector<uint8_t> payload(seg.bytes.begin() + seg_offset_,
                                      seg.bytes.begin() + seg_offset_ + chunk);
         auto* req = new StandardMem::Write(seg.addr + seg_offset_, chunk, payload, false);
@@ -257,17 +274,18 @@ void BalarRingBridge::onCacheWriteResp(StandardMem::WriteResp* resp)
         if (more) {
             sendNextStageChunk();
         } else if (writes_outstanding_ == 0) {
-            // All segments staged; build per-region flush ranges and flush.
+            // Flush the full command/return scratch area: return reads may have
+            // cached lines beyond the end of the smaller command structure.
             flush_ranges_.clear();
-            for (auto& seg : stage_segments_) flush_ranges_.push_back({seg.addr, seg.bytes.size()});
+            addFlushRange(scratch_mem_addr_, std::max(sizeof(BalarCudaCallPacket_t),
+                                                      sizeof(BalarCudaCallReturnPacket_t)));
+            for (size_t i = 1; i < stage_segments_.size(); ++i)
+                addFlushRange(stage_segments_[i].addr, stage_segments_[i].bytes.size());
             // A prior replay may have cached the D2H destination. Invalidate its
             // lines before balar's DMA writes beneath this interface so the
             // completion readback cannot observe stale cache data.
             if (pending_d2h_is_sst_ && pending_d2h_bytes_ > 0) {
-                uint64_t first_line = pending_d2h_sst_addr_ - (pending_d2h_sst_addr_ % cache_line_size_);
-                uint64_t last_addr = pending_d2h_sst_addr_ + pending_d2h_bytes_ - 1;
-                uint64_t last_line = last_addr - (last_addr % cache_line_size_);
-                flush_ranges_.push_back({first_line, (size_t)(last_line - first_line + cache_line_size_)});
+                addFlushRange(pending_d2h_sst_addr_, pending_d2h_bytes_);
             }
             size_t total_lines = 0;
             for (auto& r : flush_ranges_)
@@ -281,6 +299,17 @@ void BalarRingBridge::onCacheWriteResp(StandardMem::WriteResp* resp)
     }
     requests_.erase(it);
     delete resp;
+}
+
+void BalarRingBridge::addFlushRange(uint64_t addr, size_t bytes)
+{
+    if (!bytes) return;
+    if (addr > std::numeric_limits<uint64_t>::max() - (bytes - 1))
+        out_->fatal(CALL_INFO, -1, "BalarRingBridge: flush range overflows\n");
+    uint64_t first = addr - addr % cache_line_size_;
+    uint64_t last = addr + bytes - 1;
+    last -= last % cache_line_size_;
+    flush_ranges_.push_back({first, static_cast<size_t>(last - first + cache_line_size_)});
 }
 
 void BalarRingBridge::sendNextFlush()
@@ -353,7 +382,19 @@ void BalarRingBridge::onMmioReadResp(StandardMem::ReadResp* resp)
 
 void BalarRingBridge::sendReadRetPacket(uint64_t ret_addr)
 {
-    auto* req = new StandardMem::Read(ret_addr, sizeof(BalarCudaCallReturnPacket_t));
+    ret_packet_addr_ = ret_addr;
+    ret_packet_data_.clear();
+    ret_packet_data_.reserve(sizeof(BalarCudaCallReturnPacket_t));
+    sendNextRetPacketRead();
+}
+
+void BalarRingBridge::sendNextRetPacketRead()
+{
+    uint64_t addr = ret_packet_addr_ + ret_packet_data_.size();
+    size_t remaining = sizeof(BalarCudaCallReturnPacket_t) - ret_packet_data_.size();
+    size_t line_remaining = cache_line_size_ - addr % cache_line_size_;
+    ret_packet_chunk_ = std::min(remaining, line_remaining);
+    auto* req = new StandardMem::Read(addr, ret_packet_chunk_);
     requests_[req->getID()] = std::make_pair("Read_CUDA_ret_packet", IfacePath::CACHE);
     cache_link_->send(req);
 }
@@ -375,13 +416,24 @@ void BalarRingBridge::onCacheReadResp(StandardMem::ReadResp* resp)
     auto it = requests_.find(resp->getID());
     if (it == requests_.end()) out_->fatal(CALL_INFO, -1, "BalarRingBridge: unknown cache ReadResp\n");
     if (it->second.first == "Read_CUDA_ret_packet") {
-        auto* ret = decode_balar_packet<BalarCudaCallReturnPacket_t>(&(resp->data));
-        bool complete = completeCudaCall(ret);
-        delete ret;
+        if (resp->data.size() != ret_packet_chunk_)
+            out_->fatal(CALL_INFO, -1,
+                        "BalarRingBridge: return read returned %zu bytes, expected %zu\n",
+                        resp->data.size(), ret_packet_chunk_);
+        ret_packet_data_.insert(ret_packet_data_.end(), resp->data.begin(), resp->data.end());
         requests_.erase(it);
         delete resp;
-        if (complete) finishCudaCall();
-        else sendNextD2HRead();
+        if (ret_packet_data_.size() < sizeof(BalarCudaCallReturnPacket_t)) {
+            sendNextRetPacketRead();
+            return;
+        }
+        BalarCudaCallReturnPacket_t ret;
+        memcpy(&ret, ret_packet_data_.data(), sizeof(ret));
+        switch (completeCudaCall(&ret)) {
+            case CudaCallResult::Complete: finishCudaCall(); break;
+            case CudaCallResult::ReadD2H: sendNextD2HRead(); break;
+            case CudaCallResult::Retry: retry_link_->send(new Event()); break;
+        }
         return;
     }
     if (it->second.first == "Read_D2H_payload") {
@@ -412,8 +464,17 @@ void BalarRingBridge::onCacheReadResp(StandardMem::ReadResp* resp)
     delete resp;
 }
 
-bool BalarRingBridge::completeCudaCall(const BalarCudaCallReturnPacket_t* ret_pack)
+BalarRingBridge::CudaCallResult BalarRingBridge::completeCudaCall(const BalarCudaCallReturnPacket_t* ret_pack)
 {
+    if (ret_pack->cuda_call_id != active_packet_.cuda_call_id)
+        out_->fatal(CALL_INFO, -1, "BalarRingBridge: CUDA return does not match the active call\n");
+    // Rejected calls leave Balar's return union unchanged. Do not interpret it
+    // as a malloc result or D2H completion until the call has actually succeeded.
+    if (ret_pack->cuda_error == cudaErrorNotReady) return CudaCallResult::Retry;
+    if (ret_pack->cuda_error != cudaSuccess)
+        out_->fatal(CALL_INFO, -1, "BalarRingBridge: %s failed with CUDA error %d\n",
+                    CudaAPIEnumToString(active_packet_.cuda_call_id),
+                    static_cast<int>(ret_pack->cuda_error));
     if (ret_pack->cuda_call_id == CUDA_REG_FAT_BINARY && trace_parser_) {
         trace_parser_->setFatbinHandle(ret_pack->fat_cubin_handle);
     } else if (ret_pack->cuda_call_id == CUDA_MALLOC) {
@@ -440,7 +501,7 @@ bool BalarRingBridge::completeCudaCall(const BalarCudaCallReturnPacket_t* ret_pa
         } else if (pending_d2h_is_sst_ && n) {
             pending_d2h_read_bytes_ = n;
             pending_d2h_read_offset_ = 0;
-            return false;
+            return CudaCallResult::ReadD2H;
         } else if (n) {
             out_->fatal(CALL_INFO, -1,
                         "BalarRingBridge: D2H completion returned no data for a non-SST copy\n");
@@ -448,7 +509,16 @@ bool BalarRingBridge::completeCudaCall(const BalarCudaCallReturnPacket_t* ret_pa
             releasePendingD2H();
         }
     }
-    return true;
+    return CudaCallResult::Complete;
+}
+
+void BalarRingBridge::retryCudaCall(Event* ev)
+{
+    delete ev;
+    // The return DMA overwrote the command, so restore and flush that packet.
+    // The H2D payload is already staged (pending_weight_payload_ is empty);
+    // rewriting it would inject faults again into a call Balar never accepted.
+    beginPacketIssue(active_packet_);
 }
 
 void BalarRingBridge::finishCudaCall()
