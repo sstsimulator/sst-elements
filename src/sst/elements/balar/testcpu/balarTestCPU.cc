@@ -686,7 +686,16 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
                 Interfaces::StandardMem::Request* launch_req = cpu->createGPUReqFromPacket(launch_pack);
                 initReqs->push(launch_req);
             } else if (cudaCallType.find("free") != std::string::npos) {
-                // Future: Remove device pointer from hashmap as cleanup task?
+                pack.cuda_call_id = CUDA_FREE;
+
+                std::string dptr_name = trim(params_map.find(std::string("dptr"))->second);
+                auto pair = dptr_map->find(dptr_name);
+                if (pair == dptr_map->end()) {
+                    out->fatal(CALL_INFO, -1,"Error: device pointer: '%s' not exist in hashmap\n", dptr_name.c_str());
+                }
+                pack.cuda_free.devPtr = (void*) *(pair->second);
+                out->verbose(CALL_INFO, 2, 0, "Free Device pointer (%s) val: 0x%llx\n", dptr_name.c_str(), (unsigned long long)*(pair->second));
+                req = cpu->createGPUReqFromPacket(pack);
             }
         }
         return req;

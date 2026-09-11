@@ -1,0 +1,2 @@
+CUDA memalloc: dptr: dptr-0, size: 256
+CUDA free detected: dptr: dptr-0

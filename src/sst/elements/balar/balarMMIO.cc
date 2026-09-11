@@ -51,6 +51,7 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
     // Memory address
     mmio_addr = params.find<uint64_t>("base_addr", 0);
     dma_addr = params.find<uint64_t>("dma_addr", 0);
+    compact_return_value = params.find<bool>("compact_return_value", false);
 
     std::string clockfreq = params.find<std::string>("clock", "1GHz");
     UnitAlgebra clock_ua(clockfreq);
@@ -620,6 +621,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::Write* write
     // On calling a new cuda call, we set the cuda return packet status
     // to be not done so that our CUDA runtime lib will sync the cudaMemcpy
     balar->cuda_ret.is_cuda_call_done = false;
+    balar->compact_return_pending = balar->compact_return_value;
 
     // Create a DMA request to read the cuda call packet from cache to balar
     DMAEngine::DMAEngineControlRegisters dma_registers;
@@ -661,6 +663,20 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::Write* write
  */
 void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::Read* read) {
     out->verbose(_INFO_, "%s: receiving incoming read (%ld) to vaddr: %lx and paddr: %lx with size %ld\n", balar->getName().c_str(), read->getID(), read->vAddr, read->pAddr, read->size);
+
+    if (balar->compact_return_value && !balar->compact_return_pending &&
+        balar->compact_d2h_offset < balar->compact_d2h_data.size()) {
+        StandardMem::ReadResp* read_resp = static_cast<StandardMem::ReadResp*>(read->makeResponse());
+        vector<uint8_t> payload(read->size, 0);
+        for (size_t i = 0; i < read->size &&
+             balar->compact_d2h_offset < balar->compact_d2h_data.size(); i++) {
+            payload[i] = balar->compact_d2h_data[balar->compact_d2h_offset++];
+        }
+        read_resp->data = payload;
+        balar->mmio_iface->send(read_resp);
+        delete read;
+        return;
+    }
 
     out->verbose(_INFO_, "Handling Read for return value for a %s request\n", CudaAPIEnumToString(balar->cuda_ret.cuda_call_id));
 
@@ -1413,11 +1429,27 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
             // Return the scratch memory address as the read result
             out->verbose(_INFO_, "%s: handling previous read request (%ld) for CUDA return packet to vaddr: %lx and paddr: %lx with size %ld at inst: %lx, returning the address of the packet: %lx\n", balar->getName().c_str(), read->getID(), read->vAddr, read->pAddr, read->size, read->iPtr, balar->packet_scratch_mem_addr);
 
+            uint64_t ret_value = balar->packet_scratch_mem_addr;
+            if (balar->compact_return_value) {
+                switch (balar->cuda_ret.cuda_call_id) {
+                    case CUDA_REG_FAT_BINARY:
+                        ret_value = balar->cuda_ret.fat_cubin_handle;
+                        break;
+                    case CUDA_MALLOC:
+                        ret_value = balar->cuda_ret.cudamalloc.malloc_addr;
+                        break;
+                    default:
+                        ret_value = (uint64_t)balar->cuda_ret.cuda_error;
+                        break;
+                }
+            }
+
             vector<uint8_t> payload;
-            UInt64ToData(balar->packet_scratch_mem_addr, &payload);
+            UInt64ToData(ret_value, &payload);
             payload.resize(read->size, 0);
             read_resp->data = payload;
             balar->mmio_iface->send(read_resp);
+            balar->compact_return_pending = false;
 
 
             // Clean pending read
@@ -1429,11 +1461,27 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
             // Send the blocked response aved in the previous
             // request handler for memcpyD2H to notify CPU we are done with memcpyD2H
             // Since we get this request only after all data have been copied into host memory
+            uint8_t* dst_buf = request_associated_packet->cuda_memcpy.dst_buf;
+            size_t count = request_associated_packet->cuda_memcpy.count;
 
+            // Copy the D2H result into a balar-owned buffer so the testCPU can
+            // validate sim vs real data after the blocked response is released,
+            // then free the simulator-side buffer to avoid leaking it per copy.
+            balar->last_d2h_dst_buf.assign(dst_buf, dst_buf + count);
+            if (balar->compact_return_value) {
+                balar->compact_d2h_data = balar->last_d2h_dst_buf;
+                balar->compact_d2h_offset = 0;
+            }
+            balar->cuda_ret.cudamemcpy.sim_data =
+                (volatile uint8_t*)balar->last_d2h_dst_buf.data();
+            balar->cuda_ret.cudamemcpy.real_data =
+                (volatile uint8_t*)request_associated_packet->cuda_memcpy.payload;
+            balar->cuda_ret.cudamemcpy.size = count;
+            balar->cuda_ret.cudamemcpy.kind = request_associated_packet->cuda_memcpy.kind;
             // Free temp buffer to hold memcpyD2H data
+            free(dst_buf);
             out->verbose(_INFO_, "%s: done with a memcpyD2H\n", balar->getName().c_str());
 
-            free(request_associated_packet->cuda_memcpy.dst_buf);
             balar->mmio_iface->send(balar->blocked_response);
             balar->has_blocked_response = false;
 
