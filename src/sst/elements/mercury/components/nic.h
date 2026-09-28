@@ -27,7 +27,6 @@
 #include <mercury/common/node_address.h>
 #include <mercury/common/timestamp.h>
 #include <mercury/common/event_handler.h>
-#include <mercury/common/connection.h>
 #include <mercury/hardware/common/packet_fwd.h>
 #include <mercury/hardware/common/recv_cq.h>
 #include <mercury/hardware/common/flow_fwd.h>
