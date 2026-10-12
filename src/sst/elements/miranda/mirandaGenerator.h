@@ -24,6 +24,7 @@
 #include <sst/core/interfaces/stdMem.h>
 
 #include <queue>
+#include <stdexcept>
 
 namespace SST {
 namespace Miranda {
@@ -78,6 +79,14 @@ public:
         return issueTime;
     }
 
+    static uint64_t getNextGeneratorRequestID() {
+        return nextGeneratorRequestID.load(std::memory_order_relaxed);
+    }
+
+    static void setNextGeneratorRequestID(uint64_t nextID) {
+        nextGeneratorRequestID.store(nextID, std::memory_order_relaxed);
+    }
+
     void setIssueTime(const uint64_t now) {
         issueTime = now;
     }
@@ -86,7 +95,6 @@ public:
         SST_SER(reqID);
         SST_SER(issueTime);
         SST_SER(dependsOn);
-        SST_SER(nextGeneratorRequestID);
         SST_SER(op);
     }
 
@@ -183,10 +191,23 @@ public:
     }
 
     void serialize_order(SST::Core::Serialization::serializer& ser) {
-        //int theQ_size = sizeof(QueueType) * curSize;
-        SST_SER(SST::Core::Serialization::array(theQ, curSize));
         SST_SER(maxCapacity);
         SST_SER(curSize);
+
+        if (ser.mode() == SST::Core::Serialization::serializer::UNPACK) {
+            if (maxCapacity < curSize) {
+                throw std::runtime_error("MirandaRequestQueue unpack failed: curSize exceeds maxCapacity");
+            }
+
+            free(theQ);
+            uint32_t allocSize = std::max<uint32_t>(1, maxCapacity);
+            theQ = (QueueType*) malloc(sizeof(QueueType) * allocSize);
+            if (!theQ) {
+                throw std::bad_alloc();
+            }
+        }
+
+        SST_SER(SST::Core::Serialization::array(theQ, curSize));
     }
 
 private:

@@ -173,6 +173,16 @@ public:
         SST_SER(statCyclesHitReorderLimit);
         SST_SER(statCycles);
 
+        if (ser.mode() != SST::Core::Serialization::serializer::UNPACK) {
+            nextGeneratorRequestIDCheckpoint_ = GeneratorRequest::getNextGeneratorRequestID();
+        }
+
+        SST_SER(nextGeneratorRequestIDCheckpoint_);
+
+        if (ser.mode() == SST::Core::Serialization::serializer::UNPACK) {
+            GeneratorRequest::setNextGeneratorRequestID(nextGeneratorRequestIDCheckpoint_);
+        }
+
     }
 
     ImplementSerializable(SST::Miranda::RequestGenCPU)
@@ -218,11 +228,13 @@ private:
 	Statistic<uint64_t>* statMaxIssuePerCycle = nullptr;
 	Statistic<uint64_t>* statCyclesWithoutIssue = nullptr;
 	Statistic<uint64_t>* statBytes[OPCOUNT] = {nullptr, nullptr, nullptr, nullptr};
-	Statistic<uint64_t>* statReqLatency = nullptr;
-	Statistic<uint64_t>* statTime = nullptr;
-	Statistic<uint64_t>* statCyclesHitFence = nullptr;
-	Statistic<uint64_t>* statCyclesHitReorderLimit = nullptr;
-	Statistic<uint64_t>* statCycles = nullptr;
+    Statistic<uint64_t>* statReqLatency = nullptr;
+    Statistic<uint64_t>* statTime = nullptr;
+    Statistic<uint64_t>* statCyclesHitFence = nullptr;
+    Statistic<uint64_t>* statCyclesHitReorderLimit = nullptr;
+    Statistic<uint64_t>* statCycles = nullptr;
+
+    uint64_t nextGeneratorRequestIDCheckpoint_ = 0;
 };
 
 }
