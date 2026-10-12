@@ -72,7 +72,12 @@ public:
         virtual void handle(SST::Interfaces::StandardMem::WriteResp* rsp) override;
         virtual void handle(SST::Interfaces::StandardMem::CustomResp* rsp) override;
 
-        void serialize_order(SST::Core::Serialization::serializer& ser) override;
+        void serialize_order(SST::Core::Serialization::serializer& ser) override {
+            SST::Interfaces::StandardMem::RequestHandler::serialize_order(ser);
+            SST_SER(cpu);
+        }
+
+        ImplementSerializable(SST::Miranda::RequestGenCPU::StdMemHandler)
 
         RequestGenCPU* cpu = nullptr;
     };
