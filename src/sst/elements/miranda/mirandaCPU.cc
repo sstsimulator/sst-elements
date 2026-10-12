@@ -479,6 +479,10 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
     	}
 
 		GeneratorRequest* nxtRq = pendingRequests.at(i);
+		if (nullptr == nxtRq) {
+			out->fatal(CALL_INFO, -1, "Null request in pendingRequests at index=%" PRIu32 " (size=%" PRIu32 ", capacity=%" PRIu32 ")\n",
+				i, pendingRequests.size(), pendingRequests.capacity());
+		}
 		ReqOperation op = nxtRq->getOperation();
 
 		if(op == REQ_FENCE) {

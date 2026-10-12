@@ -31,7 +31,7 @@ using namespace SST::Statistics;
 namespace SST {
 namespace Miranda {
 
-class CPURequest {
+class CPURequest : public SST::Core::Serialization::serializable {
 public:
     CPURequest(const uint64_t origID) :
         originalID(origID), issueTime(0), outstandingParts(0) {}
@@ -43,11 +43,13 @@ public:
     uint64_t getIssueTime() const { return issueTime; }
     uint64_t getOriginalReqID() const { return originalID; }
     uint32_t countParts() const { return outstandingParts; }
-    void serialize_order(SST::Core::Serialization::serializer& ser) {
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
         SST_SER(originalID);
         SST_SER(issueTime);
         SST_SER(outstandingParts);
     }
+
+    ImplementSerializable(SST::Miranda::CPURequest)
 protected:
     uint64_t originalID;
     uint64_t issueTime;
