@@ -28,12 +28,16 @@
 namespace SST {
 namespace Miranda {
 
+// OPCOUNT is used to by stats to know how many distinct types
+// of operations to track. INVALID is placed after OPCOUNT
+// as these operations should never be tracked.
 typedef enum {
     READ,
     WRITE,
     REQ_FENCE,
     CUSTOM,
-    OPCOUNT
+    OPCOUNT,
+    INVALID
 } ReqOperation;
 
 
@@ -44,7 +48,7 @@ public:
     }
 
     virtual ~GeneratorRequest() {}
-    virtual ReqOperation getOperation() const = 0;
+    virtual ReqOperation getOperation() const { return op; }
     uint64_t getRequestID() const { return reqID; }
 
     void addDependency(uint64_t depReq) {
@@ -83,6 +87,7 @@ public:
         SST_SER(issueTime);
         SST_SER(dependsOn);
         SST_SER(nextGeneratorRequestID);
+        SST_SER(op);
     }
 
     ImplementVirtualSerializable(SST::Miranda::GeneratorRequest)
@@ -91,6 +96,7 @@ protected:
     uint64_t reqID;
     uint64_t issueTime;
     std::vector<uint64_t> dependsOn;
+    ReqOperation op = INVALID;
 private:
     static std::atomic<uint64_t> nextGeneratorRequestID;
 };
@@ -195,8 +201,9 @@ public:
             const uint64_t cLength,
             const ReqOperation cOpType) :
         GeneratorRequest(),
-        addr(cAddr), length(cLength), op(cOpType)
+        addr(cAddr), length(cLength)
     {
+        op = cOpType;
         assert (op == READ || op == WRITE);
     }
     MemoryOpRequest() = default;
@@ -212,7 +219,6 @@ public:
         SST::Miranda::GeneratorRequest::serialize_order(ser);
         SST_SER(addr);
         SST_SER(length);
-        SST_SER(op);
     }
 
     ImplementSerializable(SST::Miranda::MemoryOpRequest)
@@ -220,13 +226,12 @@ public:
 protected:
     uint64_t addr;
     uint64_t length;
-    ReqOperation op;
 };
 
 class CustomOpRequest : public GeneratorRequest {
 public:
     CustomOpRequest(Interfaces::StandardMem::CustomData* cData) :
-    GeneratorRequest(), data(cData) {}
+    GeneratorRequest(), data(cData) { op = CUSTOM; }
     CustomOpRequest() = default;
     ~CustomOpRequest() {}
 
@@ -246,7 +251,7 @@ protected:
 
 class FenceOpRequest : public GeneratorRequest {
 public:
-    FenceOpRequest() : GeneratorRequest() {}
+    FenceOpRequest() : GeneratorRequest() { op = REQ_FENCE; }
     ~FenceOpRequest() {}
     ReqOperation getOperation() const override { return REQ_FENCE; }
 

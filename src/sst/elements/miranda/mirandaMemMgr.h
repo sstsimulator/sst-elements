@@ -129,6 +129,14 @@ public:
 
 		return physAddress;
 	}
+    void serialize_order(SST::Core::Serialization::serializer& ser) {
+        SST_SER(pageSize);
+        SST_SER(pageCount);
+        SST_SER(maxMemoryAddress);
+        SST_SER(output);
+        SST_SER(pageMap);
+    }
+
 
     void serialize_order(SST::Core::Serialization::serializer& ser) {
         SST_SER(pageSize);
@@ -146,8 +154,6 @@ private:
 	SST::Output* output = nullptr;
 
     Shared::SharedArray<uint64_t> pageMap;
-	// const uint64_t * pageMap;
-
 };
 
 }
