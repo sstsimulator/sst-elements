@@ -31,7 +31,6 @@ libhg_la_SOURCES = \
   common/output.cc \
   common/util.cc \
   common/timestamp.cc \
-  common/connection.cc \
   common/skeleton.cc \
   common/hgcc_wrappers.cc \
   components/compute_library/node_cl.cc \
@@ -115,8 +114,6 @@ nobase_library_include_HEADERS = \
   common/appLoader.h \
   common/loader.h \
   common/loaderAPI.h \
-  common/connection.h \
-  common/connection_fwd.h \
   common/event_link.h \
   common/events.h \
   common/hg_printf.h \
