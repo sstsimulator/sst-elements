@@ -6,6 +6,7 @@ sst.setProgramOption("timebase", "1ps")
 
 app = os.getenv("ARIEL_EXE")
 if app == None or not os.path.exists(app):
+        print("ERROR: Environment variable ARIEL_EXE not set")
         sys.exit(os.EX_CONFIG)
 
 frontend_type = os.getenv("ARIEL_TEST_FRONTEND")

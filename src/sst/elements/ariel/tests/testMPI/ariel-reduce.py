@@ -1,6 +1,7 @@
 import sst
 import sys
 import os
+from pathlib import Path
 
 # Detect if we will use MPI mode or not
 mpi_mode = True
@@ -39,11 +40,13 @@ bus = sst.Component("bus", "memHierarchy.Bus")
 ## Set component parameters and fill subcomponent slots
 #########################################################################
 # Core: 2.4GHz, 2 accesses/cycle, STREAM (triad) pattern generator with 1000 elements per array
+exe = "./reduce"
+full_exe = str(Path(exe).resolve())
 core.addParams({
     "clock" : "2.4GHz",
     "verbose" : 1,
     #"executable" : "./hello-nompi"
-    "executable" : "./reduce",
+    "executable" : full_exe,
     #"executable" : "/home/prlavin/projects/reference-paper-2024/apps/install/bin/amg",
     "arielmode" : 0,
     "corecount" : ncores,
