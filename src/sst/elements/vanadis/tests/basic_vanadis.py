@@ -60,6 +60,8 @@ parser.add_argument("--cpu-clock", help="Core clock frequency. Default is 2.3GHz
 parser.add_argument("--library", help="Which vanadis library to use, 'vanadis' or 'vanadisdbg'. Default is vanadis.")
 parser.add_argument("--halt-at-address", help="An optional instruction address at which to end simulation. 0 indicates none (default).")
 parser.add_argument("--tlb-iface", help="Whether to put TLBs in the core's memory interface (1) or place them between the interface and L1 (0, default).")
+parser.add_argument("--snapshot", help="vanadis snapshot. save or load or nothing")
+parser.add_argument("--snapshotdir", help="vanadis snapshot directory")
 args = parser.parse_args()
 
 
@@ -109,8 +111,13 @@ mh_debug=0
 l1_debug=0
 dbgAddr="0"
 stopDbg="0"
-checkpointDir = ""
-checkpoint = ""
+snapshotDir = "" if args.snapshotdir == None else args.snapshotdir
+snapshot = ""
+if args.snapshot == "save":
+    snapshot = "save"
+elif args.snapshot == "load":
+    snapshot = "load"
+
 pythonDebug=False
 
 #exe = "hello-world-cpp"
@@ -143,7 +150,7 @@ pythonDebug=False
 #exe = "openmp2"
 #exe = "uname"
 #exe = "mem-test"
-#exe = "checkpoint"
+#exe = "snapshot"
 
 physMemSize = "4GiB"
 
@@ -202,8 +209,8 @@ osParams = {
     "page_size"  : 4096,
     "physMemSize" : physMemSize,
     "useMMU" : True,
-    "checkpointDir" : checkpointDir,
-    "checkpoint" : checkpoint
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot
 }
 
 processList = (
@@ -228,6 +235,8 @@ osl1cacheParams = {
     "L1" : "1",
     "debug" : mh_debug,
     "debug_level" : mh_debug_level,
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot,
 }
 
 mmuParams = {
@@ -254,7 +263,9 @@ dirCtrlParams = {
       "debug" : mh_debug,
       "debug_level" : mh_debug_level,
       "addr_range_start" : "0x0",
-      "addr_range_end" : "0xFFFFFFFF"
+      "addr_range_end" : "0xFFFFFFFF",
+      "snapshotDir" : snapshotDir,
+      "snapshot" : snapshot,
 }
 
 dirNicParams = {
@@ -269,11 +280,15 @@ memCtrlParams = {
       "initBacking": 1,
       "addr_range_start": 0,
       "addr_range_end": 0xffffffff,
-      "debug_level" : mh_debug_level,
-      "debug" : mh_debug,
-      "checkpointDir" : checkpointDir,
-      "checkpoint" : checkpoint
+      "debug_level" : 10, #mh_debug_level,
+      "debug" : 1, #mh_debug,
+      "snapshotDir" : snapshotDir,
+      "snapshot" : snapshot
 }
+if snapshot == "save":
+    memCtrlParams["backing_out_file"] = snapshotDir + "/" + "memory.out"
+elif snapshot == "load":
+    memCtrlParams["backing_in_file"] = snapshotDir + "/" + "memory.out"
 
 memParams = {
       "mem_size" : "4GiB",
@@ -327,8 +342,8 @@ cpuParams = {
     "start_verbose_when_issue_address": dbgAddr,
     "stop_verbose_when_retire_address": stopDbg,
     "print_rob" : False,
-    "checkpointDir" : checkpointDir,
-    "checkpoint" : checkpoint
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot
 }
 
 lsqParams = {
@@ -349,6 +364,8 @@ l1dcacheParams = {
     "L1" : "1",
     "debug" : l1_debug | mh_debug,
     "debug_level" : mh_debug_level,
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot,
 }
 
 l1icacheParams = {
@@ -364,6 +381,8 @@ l1icacheParams = {
     "L1" : "1",
     "debug" : l1_debug | mh_debug,
     "debug_level" : mh_debug_level,
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot,
 }
 
 l2cacheParams = {
@@ -377,6 +396,8 @@ l2cacheParams = {
     "mshr_latency_cycles": 3,
     "debug" : mh_debug,
     "debug_level" : mh_debug_level,
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot,
 }
 busParams = {
     "bus_frequency" : cpu_clock,

@@ -13,20 +13,20 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _H_VANADIS_CHECKPOINT_REQ
-#define _H_VANADIS_CHECKPOINT_REQ
+#ifndef _H_VANADIS_SNAPSHOT_REQ
+#define _H_VANADIS_SNAPSHOT_REQ
 
 #include <sst/core/event.h>
 
 namespace SST {
 namespace Vanadis {
 
-class VanadisCheckpointReq : public SST::Event {
+class VanadisSnapshotReq : public SST::Event {
 public:
-    VanadisCheckpointReq() : SST::Event(), coreId(-1), hwThread(-1) { }
-    VanadisCheckpointReq(int coreId, int hwThread) : SST::Event(), coreId(coreId), hwThread(hwThread) { }
+    VanadisSnapshotReq() : SST::Event(), coreId(-1), hwThread(-1) { }
+    VanadisSnapshotReq(int coreId, int hwThread) : SST::Event(), coreId(coreId), hwThread(hwThread) { }
 
-    ~VanadisCheckpointReq() {}
+    ~VanadisSnapshotReq() {}
 
     int hwThread;
     int coreId;
@@ -39,17 +39,17 @@ private:
     }
 
 
-    ImplementSerializable(SST::Vanadis::VanadisCheckpointReq);
+    ImplementSerializable(SST::Vanadis::VanadisSnapshotReq);
 };
 
-class VanadisCheckpointResp : public SST::Event {
+class VanadisSnapshottResp : public SST::Event {
 public:
-    VanadisCheckpointResp() : SST::Event(), coreId(-1) { }
+    VanadisSnapshottResp() : SST::Event(), coreId(-1) { }
 
-    VanadisCheckpointResp( int coreId ) :
+    VanadisSnapshottResp( int coreId ) :
         SST::Event(), coreId(coreId) {}
 
-    ~VanadisCheckpointResp() {}
+    ~VanadisSnapshottResp() {}
 
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
@@ -57,7 +57,7 @@ private:
         SST_SER(coreId);
     }
 
-    ImplementSerializable(SST::Vanadis::VanadisCheckpointResp);
+    ImplementSerializable(SST::Vanadis::VanadisSnapshottResp);
 
     int coreId;
 };

@@ -264,7 +264,7 @@ private:
         void clearSyscall( ) { assert(syscall_); syscall_ = nullptr; }
         OS::ProcessInfo* getProcess() { return process_info_; }
         VanadisSyscall* getSyscall() { return syscall_; }
-        void checkpoint( FILE* fp ) {
+        void snapshot( FILE* fp ) {
             if ( process_info_ ) {
                 fprintf(fp,"pid,tid: %" PRIu32 ",%" PRIu32 "\n",process_info_->getpid(), process_info_->gettid());
             } else {
@@ -287,14 +287,14 @@ private:
         OS::ProcessInfo* getProcess( uint32_t hw_thread ) { return hw_thread_map_.at(hw_thread).getProcess(); }
         VanadisSyscall* getSyscall( uint32_t hw_thread ) { return hw_thread_map_.at(hw_thread).getSyscall(); }
 
-        void checkpoint( FILE* fp ) {
+        void snapshot( FILE* fp ) {
             fprintf(fp, "m_hwThreadMap.size(): %zu\n",hw_thread_map_.size());
             for ( auto i = 0; i < hw_thread_map_.size(); i++ ) {
                 fprintf(fp, "hwThread: %" PRIu32 "\n",i);
-                hw_thread_map_[i].checkpoint( fp );
+                hw_thread_map_[i].snapshot( fp );
             }
         }
-        void checkpointLoad( FILE* fp ) {
+        void snapshotLoad( FILE* fp ) {
         }
       private:
         std::vector< HardwareThreadInfo > hw_thread_map_;
@@ -423,11 +423,11 @@ private:
         return page;
     }
 
-    std::string checkpoint_dir_;
-    enum { NO_CHECKPOINT, CHECKPOINT_LOAD, CHECKPOINT_SAVE }  enable_checkpoint_;
+    std::string snapshot_dir_;
+    enum { NO_SNAPSHOT, SNAPSHOT_LOAD, SNAPSHOT_SAVE }  enable_snapshot_;
 
-    void checkpoint( std::string dir );
-    int checkpointLoad( std::string dir );
+    void snapshot( std::string dir );
+    int snapshotLoad( std::string dir );
     std::deque<uint64_t> flush_pages_;
 };
 

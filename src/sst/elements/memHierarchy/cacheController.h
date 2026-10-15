@@ -88,7 +88,9 @@ public:
             {"force_noncacheable_reqs", "(bool) Used for verification purposes. All requests are considered to be 'noncacheable'. Options: 0[off], 1[on]", "false"},
             {"min_packet_size",         "(string) Number of bytes in a request/response not including payload (e.g., addr + cmd). Specify in B.", "8B"},
             {"banks",                   "(uint) Number of cache banks: One access per bank per cycle. Use '0' to simulate no bank limits (only limits on bandwidth then are max_requests_per_cycle and *_link_width", "0"},
-            {"node",			        "(uint) Node number in multinode environment", "0"})
+            {"node",			        "(uint) Node number in multinode environment", "0"},
+            {"snapshotDir",             "(string) Directory for snapshot output files. Leave empty to disable.", ""},
+            {"snapshot",                "(string) Snapshot mode. Options: ''[disabled], 'save'[write cache contents at finish], 'load'[restore cache contents at setup]", ""})
 
     SST_ELI_DOCUMENT_PORTS(
             {"highlink",        "Non-network upper/processor-side link (i.e., link towards the core/accelerator/etc.). This port loads the 'memHierarchy.MemLink' manager. "
@@ -290,6 +292,10 @@ private:
     SimTime_t           timeout_;
     uint64_t            maxOutstandingPrefetch_;
     bool                banked_;
+
+    /** Snapshot configuration *************************************************/
+    std::string         snapshot_dir_;
+    std::string         snapshot_;
 
     /** Clocks *****************************************************************/
     Clock::HandlerBase*     clockHandler_;

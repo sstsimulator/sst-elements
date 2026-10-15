@@ -3835,6 +3835,20 @@ void MESISharNoninclusive::printStatus(Output &out) {
     data_array_->printCacheArray(out);
 }
 
+void MESISharNoninclusive::snapshotCache(const std::string& dir, const std::string& cacheName) {
+    std::string filename = dir + "/" + cacheName;
+    FILE* fp = fopen(filename.c_str(), "w");
+    if (!fp) {
+        output_->fatal(CALL_INFO, -1, "Failed to open snapshot file: %s\n", filename.c_str());
+    }
+    fprintf(fp, "# Cache Snapshot: %s\n", cacheName.c_str());
+    fprintf(fp, "# Directory Array\n");
+    dir_array_->snapshotToFile(fp);
+    fprintf(fp, "# Data Array\n");
+    data_array_->snapshotToFile(fp);
+    fclose(fp);
+}
+
 void MESISharNoninclusive::recordLatency(Command cmd, int type, uint64_t latency) {
     if (type == -1)
         return;

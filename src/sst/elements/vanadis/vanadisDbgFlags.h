@@ -23,7 +23,7 @@
 #define VANADIS_DBG_RETIRE_FLG  (1<<4)
 // Change 'checkpoint' to 'snapshot' to
 // indicate this is not the same as SST's checkpoint
-#define VANADIS_DBG_CHECKPOINT  (1<<5)
+#define VANADIS_DBG_SNAPSHOT  (1<<5)
 #define VANADIS_DBG_SNAPSHOT  (1<<5)
 
 #endif

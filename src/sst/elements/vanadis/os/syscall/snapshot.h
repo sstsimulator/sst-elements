@@ -13,24 +13,24 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _H_VANADIS_OS_SYSCALL_CHECKPOINT
-#define _H_VANADIS_OS_SYSCALL_CHECKPOINT
+#ifndef _H_VANADIS_OS_SYSCALL_SNAPSHOT
+#define _H_VANADIS_OS_SYSCALL_SNAPSHOT
 
 #include "os/syscall/syscall.h"
-#include "os/callev/voscallcheckpoint.h"
-#include "os/vcheckpointreq.h"
+#include "os/callev/voscallsnapshot.h"
+#include "os/vsnapshotreq.h"
 
 namespace SST {
 namespace Vanadis {
 
-class VanadisCheckpointSyscall : public VanadisSyscall {
+class VanadisSnapshotSyscall : public VanadisSyscall {
 public:
-    VanadisCheckpointSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallCheckpointEvent* event )
+    VanadisSnapshotSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallSnapshotEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "brk" )
     {
         printf("%s() core=%d thread=%d\n", __func__, event->getCoreID(), event->getThreadID());
 
-        coreLink->send( new VanadisCheckpointReq( event->getCoreID(), event->getThreadID()) );
+        coreLink->send( new VanadisSnapshotReq( event->getCoreID(), event->getThreadID()) );
 
         setReturnSuccess(0);
     }

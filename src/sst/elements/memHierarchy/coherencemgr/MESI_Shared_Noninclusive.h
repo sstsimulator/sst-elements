@@ -367,6 +367,9 @@ private:
 /* Miscellaneous */
     void printLine(Addr addr);
     void printStatus(Output &out) override;
+
+    /** Snapshot support */
+    void snapshotCache(const std::string& dir, const std::string& cacheName) override;
     void beginCompleteStage() override;
     void processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) override;
 

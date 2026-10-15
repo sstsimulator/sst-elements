@@ -18,7 +18,6 @@
 
 #include <math.h>
 #include <sys/mman.h>
-//#include <iostream>
 //#include <fstream>
 
 #include <cstdint>
@@ -137,14 +136,14 @@ class ProcessInfo {
         printRegions("after text/bss setup");
     }
 
-    ProcessInfo( SST::Output* output, std::string checkpoint_dir,
+    ProcessInfo( SST::Output* output, std::string snapshot_dir,
         MMU_Lib::MMU* mmu, PhysMemManager* phys_mem_mgr, int node, unsigned pid, VanadisELFInfo* elf_info, int debug_level, unsigned page_size , uint32_t num_logical_cores)
         : mmu_(mmu), physical_memory_mgr_(phys_mem_mgr), process_id_(pid), process_group_id_(pid), thread_id_(pid), elf_info_(elf_info), page_size_(page_size), num_logical_cores_(num_logical_cores)
     {
         std::stringstream filename;
-        filename << checkpoint_dir << "/process-"  << getpid();
+        filename << snapshot_dir << "/process-"  << getpid();
 
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"Checkpoint load process %" PRIu32 " %s\n",getpid(), filename.str().c_str());
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"Snapshot load process %" PRIu32 " %s\n",getpid(), filename.str().c_str());
 
         auto fp = fopen(filename.str().c_str(),"r");
         assert(fp);
@@ -154,42 +153,43 @@ class ProcessInfo {
         uint32_t val;
         assert( 1 == fscanf(fp,"page_size_: %" SCNu32 "\n",&val) );
         assert( val == page_size_ );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"page_size_: %" PRIu32 "\n",page_size_);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"page_size_: %" PRIu32 "\n",page_size_);
 
         assert( 1 == fscanf(fp,"process_id_: %" SCNu32 "\n",&val) );
         assert( val == process_id_ );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"process_id_: %" PRIu32 "\n",process_id_);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"process_id_: %" PRIu32 "\n",process_id_);
 
         assert( 1 == fscanf(fp,"thread_id_: %" SCNu32 "\n",&val) );
         assert( val == thread_id_ );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"thread_id_: %" PRIu32 "\n",thread_id_);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"thread_id_: %" PRIu32 "\n",thread_id_);
 
         assert( 1 == fscanf(fp,"parent_pid_: %" SCNu32 "\n", &parent_pid_) );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"parent_pid_: %" PRIu32 "\n", parent_pid_);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"parent_pid_: %" PRIu32 "\n", parent_pid_);
 
         assert( 1 == fscanf(fp,"process_group_id_: %" SCNu32 "\n", &val) );
         assert( val == process_group_id_ );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"process_group_id_: %" PRIu32 "\n", process_group_id_);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"process_group_id_: %" PRIu32 "\n", process_group_id_);
 
         assert( 1 == fscanf(fp,"user_id_: %" SCNu32 "\n",&user_id_) );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"user_id_: %" PRIu32 "\n",user_id_);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"user_id_: %" PRIu32 "\n",user_id_);
 
         assert( 1 == fscanf(fp,"group_id_: %" SCNu32 "\n",&group_id_) );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"group_id_: %" PRIu32 "\n",group_id_);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"group_id_: %" PRIu32 "\n",group_id_);
 
         assert( 1 == fscanf(fp,"core_: %" SCNu32 "\n",&core_) );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"core_: %" PRIu32 "\n",core_);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"core_: %" PRIu32 "\n",core_);
 
         assert( 1 == fscanf(fp,"hw_thread_: %" SCNu32 "\n",&hw_thread_) );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"hw_thread_: %" PRIu32 "\n",hw_thread_);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"hw_thread_: %" PRIu32 "\n",hw_thread_);
 
-        assert( 1 == fscanf(fp,"thread_id_address: %" SCNx64 "\n",&thread_id_address_) );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"thread_id_address: %#" PRIx64 "\n",thread_id_address_);
+        assert( 1 == fscanf(fp,"thread_id_address_: %" SCNx64 "\n",&thread_id_address_) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"thread_id_address: %#" PRIx64 "\n",thread_id_address_);
 
         virtual_memory_map_ = new VirtMemMap(output,fp,phys_mem_mgr,elf_info);
         file_table_ = new FileDescriptorTable(output,fp);
 
         thread_group_ = new ThreadGrp;
+        thread_group_->add( this, gettid() );
         futex_ = new Futex;
 
         cpu_mask_.resize( 128, 0 );
@@ -199,12 +199,12 @@ class ProcessInfo {
 
         size_t size;
         assert( 1 == fscanf(fp,"params_.size() %zu\n",&size) );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"params_.size() %zu\n",size);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"params_.size() %zu\n",size);
 
         char* tmp = nullptr;
         size_t num = 0;
         (void) !getline( &tmp, &num, fp );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",tmp);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"%s",tmp);
         assert( 0 == strcmp(tmp,"Local params:\n") );
         free(tmp);
 
@@ -216,7 +216,7 @@ class ProcessInfo {
             std::string value = tmp2;
             auto pos1 = key.find_first_of('=' ) + 1;
             auto pos2 = value.find_first_of('=' ) + 1;
-            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s %s\n",key.c_str(),value.c_str());
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"%s %s\n",key.c_str(),value.c_str());
             params_.insert(key.substr(pos1).c_str(),value.substr(pos2).c_str());
         }
     #if 0
@@ -241,11 +241,11 @@ class ProcessInfo {
         }
     }
 
-    void checkpoint( SST::Output* output, std::string checkpointDir ) {
+    void snapshot( SST::Output* output, std::string snapshotDir ) {
         std::stringstream filename;
-        filename << checkpointDir << "/process-"  << getpid();
+        filename << snapshotDir << "/process-"  << getpid();
 
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"dump process %" PRIu32 " %s\n",getpid(), filename.str().c_str());
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"dump process %" PRIu32 " %s\n",getpid(), filename.str().c_str());
 
         auto fp = fopen(filename.str().c_str(),"w+");
         assert(fp);
@@ -261,7 +261,7 @@ class ProcessInfo {
         fprintf(fp,"thread_id_address_: %#" PRIx64 "\n",thread_id_address_);
 
         virtual_memory_map_->snapshot(fp);
-        file_table_->checkpoint(fp);
+        file_table_->snapshot(fp);
 
         #if 0
         fprintf(fp,"#ThreadGrp start\n");

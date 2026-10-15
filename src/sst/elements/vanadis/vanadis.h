@@ -32,7 +32,7 @@
 
 #include "os/vgetthreadstate.h"
 #include "os/vdumpregsreq.h"
-#include "os/vcheckpointreq.h"
+#include "os/vsnapshotreq.h"
 
 #include <array>
 #include <limits>
@@ -359,11 +359,11 @@ private:
     std::vector<VanadisFloatingPointFlags*> fp_flags;
     SST::Link* os_link = nullptr;
 
-    bool* m_checkpointing = nullptr;
-    std::string m_checkpointDir;
-    enum { NO_CHECKPOINT, CHECKPOINT_LOAD, CHECKPOINT_SAVE } m_checkpoint;
-    void checkpoint(FILE*);
-    void checkpointLoad(FILE*);
+    bool* m_snapshotting = nullptr;
+    std::string m_snapshotDir;
+    enum { NO_SNAPSHOT, SNAPSHOT_LOAD, SNAPSHOT_SAVE } m_snapshot;
+    void snapshot(FILE*);
+    void snapshotLoad(FILE*);
 };
 
 } // namespace Vanadis

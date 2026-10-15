@@ -176,8 +176,8 @@ osParams = {
     "page_size"  : 4096,
     "physMemSize" : physMemSize,
     "useMMU" : True,
-    "checkpointDir" : checkpointDir,
-    "checkpoint" : checkpoint
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot
 }
 
 processList = (

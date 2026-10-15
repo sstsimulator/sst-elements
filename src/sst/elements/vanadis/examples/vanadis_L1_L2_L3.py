@@ -152,8 +152,8 @@ mh_debug=0
 dbgAddr="0"
 stopDbg="0"
 
-checkpointDir = ""
-checkpoint = ""
+snapshotDir = ""
+snapshot = ""
 
 pythonDebug=False
 
@@ -222,8 +222,8 @@ osParams = {
     "page_size"  : 4096,
     "physMemSize" : physMemSize,
     "useMMU" : True,
-    "checkpointDir" : checkpointDir,
-    "checkpoint" : checkpoint
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot
 }
 
 # Parameters for the Node OS's L1 cache
@@ -238,6 +238,8 @@ osl1cacheParams = {
     "L1" : "1",
     "debug" : mh_debug,
     "debug_level" : mh_debug_level,
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot,
 }
 
 # Parameters for the memory management unit
@@ -267,7 +269,9 @@ dirCtrlParams = {
       "debug" : mh_debug,
       "debug_level" : mh_debug_level,
       "addr_range_start" : "0x0",
-      "addr_range_end" : "0xFFFFFFFF"
+      "addr_range_end" : "0xFFFFFFFF",
+      "snapshotDir" : snapshotDir,
+      "snapshot" : snapshot,
 }
 
 # Dorectpru NIC parameters
@@ -286,8 +290,8 @@ memCtrlParams = {
       "addr_range_end": 0xffffffff,
       "debug_level" : mh_debug_level,
       "debug" : mh_debug,
-      "checkpointDir" : checkpointDir,
-      "checkpoint" : checkpoint
+      "snapshotDir" : snapshotDir,
+      "snapshot" : snapshot
 }
 
 # Memory parameters
@@ -347,8 +351,8 @@ cpuParams = {
     "start_verbose_when_issue_address": dbgAddr,
     "stop_verbose_when_retire_address": stopDbg,
     "print_rob" : False,
-    "checkpointDir" : checkpointDir,
-    "checkpoint" : checkpoint
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot
 }
 
 # Load store queue parameters
@@ -371,6 +375,8 @@ l1dcacheParams = {
     "L1" : "1",
     "debug" : mh_debug,
     "debug_level" : mh_debug_level,
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot,
 }
 
 # L1 I cache parameters
@@ -387,6 +393,8 @@ l1icacheParams = {
     "L1" : "1",
     "debug" : mh_debug,
     "debug_level" : mh_debug_level,
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot,
 }
 
 # L2 cache parameters
@@ -401,6 +409,8 @@ l2cacheParams = {
     "mshr_latency_cycles": 3,
     "debug" : mh_debug,
     "debug_level" : mh_debug_level,
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot,
 }
 
 # Bus paremeters (connecting L1 caches to L2 cache)
@@ -596,6 +606,8 @@ cpu_l3cache.addParams({
     "mshr_latency_cycles": 3,
     "debug" : mh_debug,
     "debug_level" : mh_debug_level,
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot,
 })
 
 # Define how the L3 cache will connect towards the CPU. In this case the next component

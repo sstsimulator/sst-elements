@@ -110,12 +110,12 @@ mh_debug=0
 dbgAddr="0"
 stopDbg="0"
 
-checkpointDir = ""
-checkpoint = ""
+snapshotDir = ""
+snapshot = ""
 
-#checkpointDir = "checkpoint0"
-#checkpoint = "load"
-#checkpoint = "save"
+#snapshotDir = "snapshot0"
+#snapshot = "load"
+#snapshot = "save"
 
 pythonDebug=False
 
@@ -206,8 +206,8 @@ osParams = {
     "page_size"  : 4096,
     "physMemSize" : physMemSize,
     "useMMU" : True,
-    "checkpointDir" : checkpointDir,
-    "checkpoint" : checkpoint
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot
 }
 
 processList = (
@@ -275,8 +275,8 @@ memCtrlParams = {
       "addr_range_end": 0xffffffff,
       "debug_level" : mh_debug_level,
       "debug" : mh_debug,
-      "checkpointDir" : checkpointDir,
-      "checkpoint" : checkpoint
+      "snapshotDir" : snapshotDir,
+      "snapshot" : snapshot
 }
 
 memParams = {
@@ -331,8 +331,8 @@ cpuParams = {
     "start_verbose_when_issue_address": dbgAddr,
     "stop_verbose_when_retire_address": stopDbg,
     "print_rob" : False,
-    "checkpointDir" : checkpointDir,
-    "checkpoint" : checkpoint
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot
 }
 
 lsqParams = {

@@ -20,7 +20,7 @@
 #include "os/callev/voscallsetaffinity.h"
 #include "os/callev/voscallgetaffinity.h"
 #include "os/callev/voscallschedyield.h"
-#include "os/callev/voscallcheckpoint.h"
+#include "os/callev/voscallsnapshot.h"
 #include "os/callev/voscallbrk.h"
 #include "os/callev/voscallclose.h"
 #include "os/callev/voscallexit.h"
