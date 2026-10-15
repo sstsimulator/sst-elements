@@ -152,6 +152,9 @@ public:
     bool handleGetSResp(MemEvent * event, bool in_mshr) override;
     bool handleGetXResp(MemEvent * event, bool in_mshr) override;
     bool handleFlushLineResp(MemEvent * event, bool in_mshr) override;
+    /* Handle a writeback acknowledgement (AckPut) from memory so a same-line request
+       stalled behind an in-flight dirty writeback can be replayed. */
+    bool handleAckPut(MemEvent * event, bool in_mshr) override;
     bool handleNULLCMD(MemEvent * event, bool in_mshr) override;
     bool handleNACK(MemEvent * event, bool in_mshr)override ;
 

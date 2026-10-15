@@ -102,6 +102,11 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
     backing_outscreen_ = params.find<bool>("backing_out_screen", false);
 
+    // When true, the controller acknowledges writebacks (PutM) with an AckPut so a
+    // non-coherent (noninclusive) cache above can serialize a same-line read behind an
+    // in-flight dirty writeback. Off by default to preserve behavior for all existing configs.
+    sendWritebackAcks_ = params.find<bool>("writeback_acks", false);
+
     string link_lat         = params.find<std::string>("direct_link_latency", "10 ns");
 
     /* MemController supports multiple ways of loading in backends:
@@ -430,7 +435,11 @@ void MemController::handleEvent(SST::Event* event) {
 
     switch (cmd) {
         case Command::PutM:
-            ev->setFlag(MemEvent::F_NORESPONSE);
+            // Writebacks are normally silent; when writeback acks are enabled leave the
+            // response in place so the sender receives an AckPut and can release a request
+            // stalled behind the in-flight writeback.
+            if (!sendWritebackAcks_)
+                ev->setFlag(MemEvent::F_NORESPONSE);
         case Command::GetS:
         case Command::GetX:
         case Command::GetSX:
@@ -608,7 +617,7 @@ void MemController::init(unsigned int phase) {
 
     if (!phase) {
         /* Announce our presence on link */
-        link_->sendUntimedData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
+        link_->sendUntimedData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, sendWritebackAcks_, memBackendConvertor_->getRequestWidth(), false));
         link_->sendUntimedData(new MemEventInitEndpoint(getName().c_str(), Endpoint::Memory, region_, true));
     }
 
