@@ -479,6 +479,10 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
     	}
 
 		GeneratorRequest* nxtRq = pendingRequests.at(i);
+		if (nullptr == nxtRq) {
+			out->fatal(CALL_INFO, -1, "Null request in pendingRequests at index=%" PRIu32 " (size=%" PRIu32 ", capacity=%" PRIu32 ")\n",
+				i, pendingRequests.size(), pendingRequests.capacity());
+		}
 		ReqOperation op = nxtRq->getOperation();
 
 		if(op == REQ_FENCE) {
@@ -559,3 +563,50 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 
     return false;
 }
+
+//void RequestGenCPU::serialize_order(SST::Core::Serialization::serializer& ser) {
+	//SST::Component::serialize_order(ser);
+	//SST_SER(out);
+//}
+	//SST_SER(clockHandler);
+	//SST_SER(reqGen);
+	//SST_SER(requestsInFlight);
+	//SST_SER(cache_link);
+	//SST_SER(srcLink);
+	//SST_SER(srcReqEvent);
+	
+
+/*
+    Output* out;
+
+    TimeConverter timeConverter;
+    Clock::HandlerBase* clockHandler;
+    RequestGenerator* reqGen;
+    std::map<StandardMem::Request::id_t, CPURequest*> requestsInFlight;
+    StandardMem* cache_link;
+    Link* srcLink;
+    MirandaReqEvent* srcReqEvent;
+    StdMemHandler* stdMemHandlers;
+
+    MirandaRequestQueue<GeneratorRequest*> pendingRequests;
+    MirandaMemoryManager* memMgr;
+
+    uint32_t maxRequestsPending[OPCOUNT];
+    uint32_t requestsPending[OPCOUNT];
+    uint32_t reqMaxPerCycle;
+    uint64_t cacheLine;
+    uint32_t maxOpLookup;
+
+    Statistic<uint64_t>* statReqs[OPCOUNT];
+    Statistic<uint64_t>* statSplitReqs[OPCOUNT];
+    Statistic<uint64_t>* statCyclesWithIssue;
+    Statistic<uint64_t>* statMaxIssuePerCycle;
+    Statistic<uint64_t>* statCyclesWithoutIssue;
+    Statistic<uint64_t>* statBytes[OPCOUNT];
+    Statistic<uint64_t>* statReqLatency;
+    Statistic<uint64_t>* statTime;
+    Statistic<uint64_t>* statCyclesHitFence;
+    Statistic<uint64_t>* statCyclesHitReorderLimit;
+    Statistic<uint64_t>* statCycles;
+
+*/

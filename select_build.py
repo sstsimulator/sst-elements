@@ -111,13 +111,6 @@ if "memhierarchy" in libs:
               "If a CPU model is desired, add one of [ariel, miranda, prospero, vanadis] or 'cpu' for all.")
 
 
-
-# Make sure user is happy with the proposed build before actually modifying it
-choice = input("Press ENTER to continue or type 'q' and press ENTER to quit without modifying the build: ").strip().lower()
-
-if choice == 'q':
-    sys.exit()
-
 # Iterate through elements, add .ignore if not in libs, remove .ignore if in libs
 dir_path = Path("src/sst/elements")
 
@@ -133,4 +126,4 @@ for elem in avail_elements:
         file_path.touch()
 
 # Run autogen.sh to generate the build
-subprocess.run(["sh", "autogen.sh"])
+subprocess.run(["./autogen.sh"], check=True)

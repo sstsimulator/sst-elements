@@ -115,7 +115,9 @@ public:
     }
 
     ~BackingMMAP() {
-        munmap( buffer_, size_ );
+        if (buffer_ && buffer_ != MAP_FAILED) {
+            munmap(buffer_, size_);
+        }
     }
 
     void set( Addr addr, uint8_t value ) override {
@@ -179,81 +181,63 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Backing::serialize_order(ser);
-        SST_SER(buffer_);
         SST_SER(size_);
         SST_SER(offset_);
         SST_SER(mmapfile_);
 
-     /*   if ( ser.mode() == SST::Core::Serialization::serializer::PACK ) {
-            // If mmap is anonymous -> we need to write the whole thing to a file
-            // Register mmap filename with manifest under memHierarchy_backing_mmap_outfile
+        bool hasBuffer = (buffer_ != nullptr);
+        SST_SER(hasBuffer);
 
-            std::string outputfile = addFileToCheckpoint(getName() + "_backing_mmap", mmapfile_);
-            if ( mmapfile == "" ) {
-                // Copy buffer_ to outputfile
+        switch (ser.mode()) {
+        case SST::Core::Serialization::serializer::SIZER:
+        case SST::Core::Serialization::serializer::PACK:
+            if (hasBuffer) {
+                SST_SER(SST::Core::Serialization::array(buffer_, size_));
             }
-        }
-        if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
-        */
-            // get the file associated with memHierarchy_backing_mmap_outfile; use as infile
-            // create a new output file => use mmapfile if relative, otherwise?
-                    /*
-        mmap="" -> push buffer to a new file in cpt, reload from it into anon mapping
-        mmap!="", mmap != infile -> cp mmap file to new file in cpt, reload from it into a new file on restart
-        mmap == infile -> cp mmap file to new file in cpt, reload from it into a new file on restart
-        if mmap file == infile or mmap file is a relative path - need to make up a new name for restart
-        */
-       /*
-            int flags = MAP_SHARED;
-            int fd = -1;
-            if ( mmapfile_ != "" ) {
-                    int fd_flags = O_RDWR | O_CREAT;
-                    if (mmapfile != infile)
-                        fd_flags |= O_TRUNC; // Overwrite output file if it exists
-                    fd = open(mmapfile.c_str(), fd_flags, S_IRUSR | S_IWUSR);
+            break;
+
+        case SST::Core::Serialization::serializer::UNPACK:
+            if (hasBuffer) {
+                int flags = MAP_SHARED;
+                int fd = -1;
+
+                if (!mmapfile_.empty()) {
+                    fd = open(mmapfile_.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
                     if (fd < 0) {
-                        Output out("", 1, 0, Output::STDOUT);
-                        out.output("Error: fd=%d, %s\n", fd, strerror(errno));
                         throw 1;
                     }
-                    (void) !ftruncate(fd, size); // Extend file to needed size
+                    (void)!ftruncate(fd, size_);
                 } else {
                     flags |= MAP_ANON;
                 }
 
-                buffer_ = (uint8_t*)mmap(NULL, size, PROT_READ|PROT_WRITE, flags, fd, 0);
+                buffer_ = (uint8_t*)mmap(NULL, size_, PROT_READ | PROT_WRITE, flags, fd, 0);
 
-                if ( mmapfile != "" ) {
+                if (!mmapfile_.empty()) {
                     close(fd);
                 }
 
-                if ( buffer_ == MAP_FAILED) {
+                if (buffer_ == MAP_FAILED) {
+                    buffer_ = nullptr;
                     throw 2;
                 }
 
-                if ( infile != "" && infile != mmapfile ) {
-                    fd = open(infile.c_str(), O_RDONLY);
-                    if (fd < 0) { throw 3; }
+                SST_SER(SST::Core::Serialization::array(buffer_, size_));
+            } else {
+                buffer_ = nullptr;
+            }
+            break;
 
-                    uint8_t* tmp_buffer = (uint8_t*)mmap(NULL, size, PROT_READ, flags, fd, 0);
-                    close(fd);
-
-                    if ( tmp_buffer == MAP_FAILED ) { throw 4; }
-
-                    memcpy(buffer_, tmp_buffer, size);
-                    munmap(tmp_buffer, size);
-                }
+        case SST::Core::Serialization::serializer::MAP:
+            break;
         }
-                */
-
-
     }
     ImplementSerializable(SST::MemHierarchy::Backend::BackingMMAP)
 
 private:
-    uint8_t* buffer_;
-    size_t size_;
-    size_t offset_;
+    uint8_t* buffer_ = nullptr;
+    size_t size_ = 0;
+    size_t offset_ = 0;
 
     // Needed for checkpoint/restart only
     std::string mmapfile_; // Name of output file

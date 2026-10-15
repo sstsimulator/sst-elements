@@ -62,6 +62,7 @@ public:
     /* Serialization **/
     // Must be serializable so that CustomMemEvent can be serialized
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::Interfaces::StandardMem::CustomData::serialize_order(ser);
         SST_SER(addr_);
         SST_SER(bytes_);
         SST_SER(opcode_);

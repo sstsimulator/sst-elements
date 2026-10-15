@@ -31,7 +31,7 @@ using namespace SST::Statistics;
 namespace SST {
 namespace Miranda {
 
-class CPURequest {
+class CPURequest : public SST::Core::Serialization::serializable {
 public:
     CPURequest(const uint64_t origID) :
         originalID(origID), issueTime(0), outstandingParts(0) {}
@@ -43,13 +43,13 @@ public:
     uint64_t getIssueTime() const { return issueTime; }
     uint64_t getOriginalReqID() const { return originalID; }
     uint32_t countParts() const { return outstandingParts; }
-
-	void serialize_order(SST::Core::Serialization::serializer& ser) {
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
         SST_SER(originalID);
         SST_SER(issueTime);
         SST_SER(outstandingParts);
-	}
+    }
 
+    ImplementSerializable(SST::Miranda::CPURequest)
 protected:
     uint64_t originalID;
     uint64_t issueTime;
@@ -74,7 +74,7 @@ public:
         virtual void handle(SST::Interfaces::StandardMem::WriteResp* rsp) override;
         virtual void handle(SST::Interfaces::StandardMem::CustomResp* rsp) override;
 
-        virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        void serialize_order(SST::Core::Serialization::serializer& ser) override {
             SST::Interfaces::StandardMem::RequestHandler::serialize_order(ser);
             SST_SER(cpu);
         }
@@ -83,6 +83,9 @@ public:
 
         RequestGenCPU* cpu = nullptr;
     };
+
+    //void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    //ImplementSerializable(SST::Miranda::RequestGenCPU);
 
 	SST_ELI_REGISTER_COMPONENT(
         RequestGenCPU,
@@ -172,6 +175,16 @@ public:
         SST_SER(statCyclesHitReorderLimit);
         SST_SER(statCycles);
 
+        if (ser.mode() != SST::Core::Serialization::serializer::UNPACK) {
+            nextGeneratorRequestIDCheckpoint_ = GeneratorRequest::getNextGeneratorRequestID();
+        }
+
+        SST_SER(nextGeneratorRequestIDCheckpoint_);
+
+        if (ser.mode() == SST::Core::Serialization::serializer::UNPACK) {
+            GeneratorRequest::setNextGeneratorRequestID(nextGeneratorRequestIDCheckpoint_);
+        }
+
     }
 
     ImplementSerializable(SST::Miranda::RequestGenCPU)
@@ -217,14 +230,15 @@ private:
 	Statistic<uint64_t>* statMaxIssuePerCycle = nullptr;
 	Statistic<uint64_t>* statCyclesWithoutIssue = nullptr;
 	Statistic<uint64_t>* statBytes[OPCOUNT] = {nullptr, nullptr, nullptr, nullptr};
-	Statistic<uint64_t>* statReqLatency = nullptr;
-	Statistic<uint64_t>* statTime = nullptr;
-	Statistic<uint64_t>* statCyclesHitFence = nullptr;
-	Statistic<uint64_t>* statCyclesHitReorderLimit = nullptr;
-	Statistic<uint64_t>* statCycles = nullptr;
+    Statistic<uint64_t>* statReqLatency = nullptr;
+    Statistic<uint64_t>* statTime = nullptr;
+    Statistic<uint64_t>* statCyclesHitFence = nullptr;
+    Statistic<uint64_t>* statCyclesHitReorderLimit = nullptr;
+    Statistic<uint64_t>* statCycles = nullptr;
+
+    uint64_t nextGeneratorRequestIDCheckpoint_ = 0;
 };
 
 }
 }
 #endif /* _RequestGenCPU_H */
-

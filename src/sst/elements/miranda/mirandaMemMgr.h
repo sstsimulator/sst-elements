@@ -33,7 +33,7 @@ enum MirandaPageMappingPolicy {
 	RANDOMIZED
 };
 
-class MirandaMemoryManager {
+class MirandaMemoryManager : public SST::Core::Serialization::serializable {
 
 public:
 	MirandaMemoryManager(SST::Output* mgrOutput,
@@ -129,15 +129,15 @@ public:
 
 		return physAddress;
 	}
-
-    void serialize_order(SST::Core::Serialization::serializer& ser) {
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
         SST_SER(pageSize);
         SST_SER(pageCount);
         SST_SER(maxMemoryAddress);
         SST_SER(output);
-
         SST_SER(pageMap);
     }
+
+    ImplementSerializable(SST::Miranda::MirandaMemoryManager)
 
 private:
 	uint64_t pageSize;
@@ -146,8 +146,6 @@ private:
 	SST::Output* output = nullptr;
 
     Shared::SharedArray<uint64_t> pageMap;
-	// const uint64_t * pageMap;
-
 };
 
 }
