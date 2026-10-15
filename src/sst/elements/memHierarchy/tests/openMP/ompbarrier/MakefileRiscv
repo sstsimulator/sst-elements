@@ -1,0 +1,32 @@
+# LLVM_INSTALL_PATH should point to the install directory for LLVM                                                        
+# RISCV_TOOLCHAIN_INSTALL_PATH should point to the install directory for the RISC-V GNU Toolchain                         
+
+CC = $(LLVM_INSTALL_PATH)/bin/clang
+
+RISCV_SYSROOT := $(RISCV_TOOLCHAIN_INSTALL_PATH)/sysroot/
+CFLAGS_RV = --target=riscv64-unknown-linux-gnu -march=rv64gc -static-libgcc --gcc-toolchain=$(RISCV_TOOLCHAIN_INSTALL_PATH) --sysroot=$(RISCV_SYSROOT) -fopenmp=libgomp
+
+.PHONY: check_rvtools all clean
+
+# Check to make sure LLVM_INSTALL_PATH and RISCV_TOOLCHAIN_INSTALL_PATH are defined                                       
+# 'else' is just to suppress the 'nothing to be done' message from make if the check passes                               
+check_llvm:
+ifndef LLVM_INSTALL_PATH
+    $(error env LLVM_INSTALL_PATH is not set)
+else
+	@echo > /dev/null
+endif
+
+check_rvtools:
+ifndef RISCV_TOOLCHAIN_INSTALL_PATH
+    $(error env RISCV_TOOLCHAIN_INSTALL_PATH is not set)
+else
+	@echo > /dev/null
+endif
+
+ompbarrier: ompbarrier.c check_llvm check_rvtools
+	    $(CC) -static -mno-relax $(CFLAGS_RV) -fopenmp ompbarrier.c -o ompbarrier-riscv 
+
+clean:
+	rm ompbarrier-riscv
+
