@@ -77,7 +77,7 @@ public:
     SST_ELI_DOCUMENT_PORTS({ "core%(cores)d", "Connects to a CPU core", {} })
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-        { "mem_interface", "Interface to memory system for data access", "SST::Interface::StandardMem" },
+        { "mem_interface", "Interface to memory system for data access", "SST::Interfaces::StandardMem" },
         { "mmu", "Memory management unit for virtual-to-physical address translation", "SST::MMU_Lib::MMU" }
     )
 
