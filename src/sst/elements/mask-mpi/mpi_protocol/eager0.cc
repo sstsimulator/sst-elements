@@ -86,7 +86,7 @@ Eager0::incoming(MpiMessage *msg, MpiQueueRecvRequest *req)
 {
   //1 = stage, TimeDelay() = time since last quiesce
   logRecvDelay(1, SST::Hg::TimeDelta(), msg, req);
-  if (req->recv_buffer_){
+  if (isNonNullBuffer(req->recv_buffer_)){
 #if SST_HG_SANITY_CHECK
     if (!msg->smsgBuffer()){
       spkt_abort_printf("have receive buffer, but no send buffer on %s", msg->toString().c_str());
