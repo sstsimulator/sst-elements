@@ -37,7 +37,7 @@ rtl.addParams({
         "maxCycles" : "100"
 	})
 
-rtlmemmgr = rtl.setSubComponent("memmgr", "rtlaximodel.MemoryManagerSimple")
+rtlmemmgr = rtl.setSubComponent("memmgr", "rtl.MemoryManagerSimple")
 
 l1cpucache = sst.Component("l1cpucache", "memHierarchy.Cache")
 l1cpucache.addParams({

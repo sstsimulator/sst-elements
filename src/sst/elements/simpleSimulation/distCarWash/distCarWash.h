@@ -40,7 +40,7 @@ SST_ELI_DOCUMENT_PARAMS(
 )
 
 SST_ELI_DOCUMENT_PORTS(
-    { "car", "Car events will be sent out of this port", { "simpleSimulation.CarEvent" } }
+    { "car", "Car events are received on this port", { "simpleSimulation.CarEvent" } }
 )
 
 /******** Class member functions - public **********/

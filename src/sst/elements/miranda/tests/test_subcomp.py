@@ -7,7 +7,6 @@ sst.setProgramOption("timebase", "1ps")
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 0,
-	"printStats" : 1,
 })
 
 gen = comp_cpu.setSubComponent("generator", "miranda.CopyGenerator")
