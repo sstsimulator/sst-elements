@@ -136,8 +136,8 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
                 break
         if file_found == True:
             filepath = "{0}/{1}".format(testMemHSieveDir, filename)
-            file = open(filepath, "rt")
-            data = file.read()
+            with open(filepath, "rt") as file:
+                data = file.read()
             words = data.split()
 
             if len(words) > 0:
