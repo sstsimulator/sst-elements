@@ -43,8 +43,8 @@ public:
   )
 
   SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-      {"os_slot", "The operating system", "hg.operating_system"},
-      {"nic_slot", "The nic", "hg.nic"},
+      {"os_slot", "The operating system", "SST::Hg::OperatingSystemAPI"},
+      {"nic_slot", "The nic", "SST::Hg::NicAPI"},
       {"link_control_slot", "Slot for a link control", "SST::Interfaces::SimpleNetwork" }
       )
 
