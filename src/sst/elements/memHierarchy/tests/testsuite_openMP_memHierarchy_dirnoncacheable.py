@@ -72,10 +72,9 @@ class testcase_memH_openMP_dirnoncacheable(SSTTestCase):
         # and verify it exists
         ompapppath = "{0}/openMP/{1}/{1}".format(test_path, omp_app)
         self.assertTrue(os.path.isfile(ompapppath), "openMP dirnoncacheable Test; ompfile {0} - not found".format(ompapppath))
-        os.environ["OMP_EXE"] = ompapppath
 
         # Run SST
-        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
+        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, timeout_sec=testtimeout, env={"OMP_EXE": ompapppath})
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
