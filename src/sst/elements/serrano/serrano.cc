@@ -242,7 +242,7 @@ int SerranoComponent::read_line( FILE* file_h, char* buffer, const size_t buffer
 			keep_looping = false;
 			break;
 		default:
-			if( index < (int)buffer_max - 1 )
+			if( index < (int)(buffer_max - 1) )
 				buffer[index++] = nxt_c;
 			break;
 		}
