@@ -361,6 +361,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     mshrLatency     = params.find<uint64_t>("mshr_latency_cycles", 0);
 
     flush_state_ = FlushState::Ready;
+
+    snapshot_dir_ = params.find<std::string>("snapshotDir", "");
+    snapshot_ = params.find<std::string>("snapshot", "");
 }
 
 
@@ -807,10 +810,127 @@ void DirectoryController::complete(unsigned int phase) {
 
 void DirectoryController::finish(void){
     linkUp_->finish();
+
+    if (snapshot_ == "save" && !snapshot_dir_.empty()) {
+        std::string filename = snapshot_dir_ + "/" + getName();
+        FILE* fp = fopen(filename.c_str(), "w");
+        if (!fp) {
+            out.fatal(CALL_INFO, -1, "Failed to open directory snapshot file: %s\n", filename.c_str());
+        }
+        fprintf(fp, "# Directory Snapshot: %s\n", getName().c_str());
+        size_t count = 0;
+        for (auto& kv : directory) {
+            if (kv.second->getState() != I) count++;
+        }
+        fprintf(fp, "num_entries: %zu\n", count);
+        for (auto& kv : directory) {
+            DirEntry* de = kv.second;
+            if (de->getState() == I) continue;
+            fprintf(fp, "entry: 0x%" PRIx64 " %s\n",
+                (uint64_t)de->getBaseAddr(), StateString[de->getState()]);
+            fprintf(fp, "owner: %s\n", de->hasOwner() ? de->getOwner().c_str() : "");
+            std::set<std::string>* sharers = de->getSharers();
+            fprintf(fp, "sharers: %zu", sharers->size());
+            for (auto& shr : *sharers) {
+                fprintf(fp, " %s", shr.c_str());
+            }
+            fprintf(fp, "\n");
+        }
+        fclose(fp);
+    }
 }
 
 
 void DirectoryController::setup(void){
+    if (snapshot_ == "load" && !snapshot_dir_.empty()) {
+        std::string filename = snapshot_dir_ + "/" + getName();
+        FILE* fp = fopen(filename.c_str(), "r");
+        if (!fp) {
+            out.fatal(CALL_INFO, -1, "Failed to open directory snapshot for loading: %s\n", filename.c_str());
+        }
+        char buf[512];
+        if (!fgets(buf, sizeof(buf), fp)) {
+            out.fatal(CALL_INFO, -1, "Failed to read directory snapshot header from: %s\n", filename.c_str());
+        }
+
+        unsigned int num_entries;
+        if (1 != fscanf(fp, "num_entries: %u\n", &num_entries)) {
+            out.fatal(CALL_INFO, -1, "Failed to parse num_entries from directory snapshot: %s\n", filename.c_str());
+        }
+
+        for (unsigned int i = 0; i < num_entries; i++) {
+            uint64_t addr;
+            char state_str[64];
+            if (2 != fscanf(fp, "entry: 0x%" PRIx64 " %63s\n", &addr, state_str)) {
+                out.fatal(CALL_INFO, -1, "Failed to parse entry %u from directory snapshot\n", i);
+            }
+
+            // Read owner line with fgets, parse after "owner:" prefix
+            if (!fgets(buf, sizeof(buf), fp)) {
+                out.fatal(CALL_INFO, -1, "Failed to read owner for entry %u from directory snapshot\n", i);
+            }
+            std::string owner_line(buf);
+            std::string owner_val;
+            size_t opos = owner_line.find("owner: ");
+            if (opos != std::string::npos) {
+                owner_val = owner_line.substr(opos + 7);
+            } else {
+                opos = owner_line.find("owner:");
+                if (opos != std::string::npos)
+                    owner_val = owner_line.substr(opos + 6);
+            }
+            while (!owner_val.empty() && (owner_val.back() == '\n' || owner_val.back() == '\r' || owner_val.back() == ' '))
+                owner_val.pop_back();
+            while (!owner_val.empty() && owner_val.front() == ' ')
+                owner_val.erase(owner_val.begin());
+
+            // Read sharers
+            unsigned int num_sharers;
+            if (1 != fscanf(fp, "sharers: %u", &num_sharers)) {
+                out.fatal(CALL_INFO, -1, "Failed to parse sharers count for entry %u from directory snapshot\n", i);
+            }
+            std::vector<std::string> sharer_names;
+            for (unsigned int s = 0; s < num_sharers; s++) {
+                char shr_buf[256];
+                if (1 != fscanf(fp, " %255s", shr_buf)) {
+                    out.fatal(CALL_INFO, -1, "Failed to parse sharer %u for entry %u from directory snapshot\n", s, i);
+                }
+                sharer_names.push_back(std::string(shr_buf));
+            }
+            fscanf(fp, "\n");
+
+            // Create and populate DirEntry
+            State state = stringToState(state_str);
+            DirEntry* de = new DirEntry(addr);
+            de->setState(state);
+            if (!owner_val.empty()) {
+                de->setOwner(owner_val);
+            }
+            for (auto& shr : sharer_names) {
+                de->addSharer(shr);
+            }
+
+            directory[addr] = de;
+
+            // Add to entryCache
+            de->setCached(true);
+            entryCache.push_front(de);
+            de->cacheIter = entryCache.begin();
+            entryCacheSize++;
+        }
+
+        // Evict excess entries from entryCache if needed
+        while (entryCacheSize > entryCacheMaxSize) {
+            DirEntry* oldEntry = entryCache.back();
+            entryCache.pop_back();
+            entryCacheSize--;
+            oldEntry->cacheIter = entryCache.end();
+            oldEntry->setCached(false);
+        }
+
+        fclose(fp);
+    }
+
     linkUp_->setup();
     if (linkUp_ != linkDown_)
         linkDown_->setup();
@@ -2880,6 +3000,8 @@ void DirectoryController::serialize_order(SST::Core::Serialization::serializer& 
     SST_SER(sendWBAck);
     SST_SER(incoherentSrc);
     SST_SER(init_requests_); // Not strictly neccessary to save
+    SST_SER(snapshot_dir_);
+    SST_SER(snapshot_);
 
     // Reconstruct DirEntry iterators
     if (ser.mode() == SST::Core::Serialization::serializer::UNPACK) {

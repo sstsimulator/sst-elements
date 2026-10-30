@@ -26,13 +26,15 @@
 #include <sst/core/output.h>
 #include <vector>
 
+#include <iostream>
+
 using namespace SST::Vanadis;
 using namespace std;
 
 
 
 VanadisCore::VanadisCore(SST::ComponentId_t id, SST::Params& params) : Component(id), current_cycle(0),
-    m_curRetireHwThread(0), m_curIssueHwThread(0), m_checkpointing(nullptr)
+    m_curRetireHwThread(0), m_curIssueHwThread(0), m_snapshotting(nullptr)
 {
     #ifdef VANADIS_BUILD_DEBUG
     inst_print_buffer_ = new char[1024];
@@ -59,19 +61,19 @@ VanadisCore::VanadisCore(SST::ComponentId_t id, SST::Params& params) : Component
     output = new SST::Output(output_prefix, verbosity, dbg_mask, Output::STDOUT);
     free(output_prefix);
 
-    m_checkpointDir = params.find<std::string>("checkpointDir", "");
-    auto tmp = params.find<std::string>("checkpoint", "" );
+    m_snapshotDir = params.find<std::string>("snapshotDir", "");
+    auto tmp = params.find<std::string>("snapshot", "" );
     if ( ! tmp.empty( ) ) {
-        assert( ! m_checkpointDir.empty() );
+        assert( ! m_snapshotDir.empty() );
         if ( 0 == tmp.compare( "load" ) ) {
-            m_checkpoint = CHECKPOINT_LOAD;
+            m_snapshot = SNAPSHOT_LOAD;
         } else if ( 0 == tmp.compare( "save" ) ) {
-            m_checkpoint = CHECKPOINT_SAVE;
+            m_snapshot = SNAPSHOT_SAVE;
         } else {
             assert(0);
         }
     } else {
-        m_checkpoint = NO_CHECKPOINT;
+        m_snapshot = NO_SNAPSHOT;
     }
 
     std::string clock_rate = params.find<std::string>("clock", "1GHz");
@@ -834,7 +836,6 @@ void VanadisCore::printRob(int rob_num, VanadisCircularQueue<VanadisInstruction*
 int
 VanadisCore::performRetire(int rob_num, VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle)
 {
-
     #ifdef VANADIS_BUILD_DEBUG
     if ( output->getVerboseLevel() >= 8 ) {
         printRob( rob_num, rob );
@@ -1379,7 +1380,7 @@ VanadisCore::tick(SST::Cycle_t cycle)
     ins_decoded_this_cycle = 0;
 
 
-    if ( UNLIKELY( nullptr != m_checkpointing ) ) {
+    if ( UNLIKELY( nullptr != m_snapshotting ) ) {
         bool should_process = false;
         for ( uint32_t i = 0; i < hw_threads; ++i ) {
             should_process = should_process | ! halted_masks[i];
@@ -1388,13 +1389,13 @@ VanadisCore::tick(SST::Cycle_t cycle)
         if ( ! should_process ) {
             lsq->tick((uint64_t)cycle);
             #ifdef VANADIS_BUILD_DEBUG
-            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT, "checkpointing store=%zu load=%zu\n", lsq->storeSize(), lsq->loadSize());
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT, "snapshotting store=%zu load=%zu\n", lsq->storeSize(), lsq->loadSize());
             #endif
             if ( 0 == lsq->storeSize() && 0 == lsq->loadSize() ) {
                 #ifdef VANADIS_BUILD_DEBUG
-                output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"checkingpoint core %d all threads have halted\n",core_id);
+                output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"checkingpoint core %d all threads have halted\n",core_id);
                 #endif
-                VanadisCheckpointResp* resp = new VanadisCheckpointResp( core_id );
+                VanadisSnapshottResp* resp = new VanadisSnapshottResp( core_id );
                 os_link->send( resp );
                 return true;
             }
@@ -1997,13 +1998,13 @@ VanadisCore::recoverRetiredRegisters(
 void
 VanadisCore::setup()
 {
-    if ( CHECKPOINT_LOAD == m_checkpoint ) {
+    if ( SNAPSHOT_LOAD == m_snapshot ) {
         std::stringstream filename;
-        filename << m_checkpointDir << "/" << getName();
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"checkpoint file %s\n",filename.str().c_str());
+        filename << m_snapshotDir << "/" << getName();
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"snapshot file %s\n",filename.str().c_str());
         auto fp = fopen(filename.str().c_str(),"r");
         assert(fp);
-        checkpointLoad(fp);
+        snapshotLoad(fp);
     }
 }
 
@@ -2011,19 +2012,19 @@ void
 VanadisCore::finish()
 {
 
-    if ( LIKELY( nullptr == m_checkpointing ) ) return;
+    if ( LIKELY( nullptr == m_snapshotting ) ) return;
 
-    if ( CHECKPOINT_SAVE == m_checkpoint ) {
-        assert( ! m_checkpointDir.empty() );
+    if ( SNAPSHOT_SAVE == m_snapshot ) {
+        assert( ! m_snapshotDir.empty() );
 
         std::stringstream filename;
-        filename << m_checkpointDir << "/" << getName();
+        filename << m_snapshotDir << "/" << getName();
         auto fp = fopen(filename.str().c_str(),"w+");
         assert(fp);
 
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"Checkpoint component `%s` %s\n",getName().c_str(), filename.str().c_str());
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"Snapshot component `%s` %s\n",getName().c_str(), filename.str().c_str());
 
-        checkpoint(fp);
+        snapshot(fp);
     }
 }
 
@@ -2206,9 +2207,9 @@ VanadisCore::syscallReturn(uint32_t thr)
     #endif
     syscall_ins->markExecuted();
 
-    if ( UNLIKELY( nullptr != m_checkpointing ) ) {
-        if ( m_checkpointing[thr] ) {
-            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s() checkpoint halt thread %d\n",__func__,thr);
+    if ( UNLIKELY( nullptr != m_snapshotting ) ) {
+        if ( m_snapshotting[thr] ) {
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"%s() snapshot halt thread %d\n",__func__,thr);
             halted_masks[thr]            = true;
         }
     }
@@ -2294,21 +2295,21 @@ void VanadisCore::recvOSEvent(SST::Event* ev) {
         dumpRegs(req);
     } else { // Case 8
 
-    VanadisCheckpointReq* req = dynamic_cast<VanadisCheckpointReq*>(ev);
+    VanadisSnapshotReq* req = dynamic_cast<VanadisSnapshotReq*>(ev);
     if ( nullptr != req ) {
         #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,
-            " checkpoing core=%d thread=%d checkpointing\n", req->coreId, req->hwThread );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,
+            " checkpoing core=%d thread=%d snapshotting\n", req->coreId, req->hwThread );
         #endif
 
-        if ( nullptr == m_checkpointing ) {
-            m_checkpointing = new bool[hw_threads];
+        if ( nullptr == m_snapshotting ) {
+            m_snapshotting = new bool[hw_threads];
             for ( auto i = 0; i < hw_threads; i++ ) {
-                m_checkpointing[i] = false;
+                m_snapshotting[i] = false;
             }
         }
 
-        m_checkpointing[req->hwThread] = true;
+        m_snapshotting[req->hwThread] = true;
     } else { // Case 9
         assert(0);
     } // Case 9
@@ -2468,12 +2469,12 @@ void VanadisCore::startThreadFork( VanadisStartThreadForkReq* req )
 }
 
 void
-VanadisCore::checkpoint(FILE* fp )
+VanadisCore::snapshot(FILE* fp )
 {
 
     for ( auto i = 0; i < hw_threads; i++ ) {
         fprintf(fp,"Hardware thread: %d\n",i);
-        if ( m_checkpointing[i] ) {
+        if ( m_snapshotting[i] ) {
             fprintf(fp,"active: yes\n");
             fprintf(fp,"rob[0] %#" PRIx64 " %s\n", rob[i]->peekAt(0)->getInstructionAddress(), rob[i]->peekAt(0)->getInstCode()  );
             fprintf(fp,"rob[1] %#" PRIx64 " %s\n", rob[i]->peekAt(1)->getInstructionAddress(), rob[i]->peekAt(1)->getInstCode() );
@@ -2504,7 +2505,7 @@ VanadisCore::checkpoint(FILE* fp )
 }
 
 void
-VanadisCore::checkpointLoad(FILE* fp)
+VanadisCore::snapshotLoad(FILE* fp)
 {
     for ( auto hw_thr = 0; hw_thr < hw_threads; hw_thr++ ) {
         uint64_t value;
@@ -2514,7 +2515,7 @@ VanadisCore::checkpointLoad(FILE* fp)
         auto thr_decoder = thread_decoders[hw_thr];
 
         assert( 1 == fscanf(fp,"Hardware thread: %d\n",&hw_thr) );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"Hardware thread: %d\n",hw_thr);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"Hardware thread: %d\n",hw_thr);
 
         char str[80];
         assert( 1 ==  fscanf(fp,"active: %s\n",str) );
@@ -2524,26 +2525,26 @@ VanadisCore::checkpointLoad(FILE* fp)
             char str1[40],str2[40];
             assert( 3 == fscanf(fp,"%s %" PRIx64 " %s\n",str1,&value,str2) );
             startAddr = value + 4;
-            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s %#" PRIx64 " %s\n",str1,value,str2 );
-            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"set thread %d start address %#" PRIx64 "\n",hw_thr,startAddr);
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"%s %#" PRIx64 " %s\n",str1,value,str2 );
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"set thread %d start address %#" PRIx64 "\n",hw_thr,startAddr);
 
             assert( 3 == fscanf(fp,"%s %" PRIx64 " %s\n",str1,&value,str2) );
-            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s %#" PRIx64 " %s\n",str1,value,str2 );
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"%s %#" PRIx64 " %s\n",str1,value,str2 );
 
             assert( 1 == fscanf(fp,"tlsPtr: %" PRIx64 "\n",&value) );
-            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"tlsPtr: %" PRIx64 "\n", value);
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"tlsPtr: %" PRIx64 "\n", value);
             thr_decoder->setThreadLocalStoragePointer( value );
 
             for ( auto i = 0; i < 35; i++ ) {
                 int reg;
                 assert( 3 == fscanf(fp,"%s %d %" PRIx64 "\n",str1,&reg,&value) );
-                output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"INT %d %" PRIx64 "\n",reg,value);
+                output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"INT %d %" PRIx64 "\n",reg,value);
                 reg_file->setIntReg<uint64_t>(isa_table->getIntPhysReg(i), value);
             }
             for ( int i = 0; i < 32; i++ ) {
                 int reg;
                 assert( 3 == fscanf(fp,"%s %d %" PRIx64 "\n",str1,&reg,&value) );
-                output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"FP %d %" PRIx64 "\n",reg,value);
+                output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"FP %d %" PRIx64 "\n",reg,value);
                 if ( VANADIS_REGISTER_MODE_FP32 == thr_decoder->getFPRegisterMode() ) {
                     reg_file->setFPReg<uint32_t>(isa_table->getFPPhysReg(i), value);
                 } else {

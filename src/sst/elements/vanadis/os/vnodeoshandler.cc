@@ -40,7 +40,7 @@
 #include "os/syscall/openat.h"
 #include "os/syscall/close.h"
 #include "os/syscall/lseek.h"
-#include "os/syscall/checkpoint.h"
+#include "os/syscall/snapshot.h"
 #include "os/syscall/brk.h"
 #include "os/syscall/mmap.h"
 #include "os/syscall/unmap.h"
@@ -61,6 +61,8 @@
 #include "os/syscall/setaffinity.h"
 #include "os/syscall/prlimit.h"
 #include "os/syscall/schedyield.h"
+
+#include <iostream>
 
 using namespace SST::Vanadis;
 
@@ -85,9 +87,21 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
     // for now we will leave this inconsistency
     // ***********************************
     switch (sys_ev->getOperation()) {
-        case SYSCALL_OP_CHECKPOINT: {
-            assert ( CHECKPOINT_SAVE == enable_checkpoint_ );
-            syscall = new VanadisCheckpointSyscall( this, core_link, process, convertEvent<VanadisSyscallCheckpointEvent*>( "checkpoint", sys_ev ) );
+        case SYSCALL_OP_SNAPSHOT: {
+            if (SNAPSHOT_SAVE == enable_snapshot_)
+            {
+                syscall = new VanadisSnapshotSyscall( this, core_link, process, convertEvent<VanadisSyscallSnapshotEvent*>( "snapshot", sys_ev ) );
+            }
+            else 
+            {
+                output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL, "Snapshotting is not enabled. Ignoring snapshot syscall.\n");
+                // Send a success response back to the core so it doesn't hang waiting for a reply
+                VanadisSyscallResponse* resp = new VanadisSyscallResponse(0);  // Return 0 (success)
+                resp->setHWThread(sys_ev->getThreadID());
+                core_link->send(resp);
+                delete sys_ev;
+                syscall = nullptr;
+            }
         } break;
         case SYSCALL_OP_SET_ROBUST_LIST: {
             syscall = new VanadisSetRobustListSyscall( this, core_link, process, convertEvent<VanadisSyscallSetRobustListEvent*>( "set_robust_list", sys_ev ) );
