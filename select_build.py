@@ -83,6 +83,14 @@ if len(sys.argv) == 1 or sys.argv[1] == "--help" or sys.argv[1] == "help" or sys
     )
     sys.exit()
 
+# Iterate through elements, add .ignore if not in libs, remove .ignore if in libs
+dir_path = Path("src/sst/elements")
+
+if (not dir_path.is_dir()):
+    print(f'Error: {dir_path.resolve()} not found. Please run this script from the sst-elements root directory')
+    sys.exit()
+
+
 # Parse arguments and build list of requested libraries
 
 args = sys.argv[1:]
@@ -110,16 +118,11 @@ if "memhierarchy" in libs:
         print("\nDetected memHierarchy but no CPU models in the enable list. "
               "If a CPU model is desired, add one of [ariel, miranda, prospero, vanadis] or 'cpu' for all.")
 
-
-
 # Make sure user is happy with the proposed build before actually modifying it
 choice = input("Press ENTER to continue or type 'q' and press ENTER to quit without modifying the build: ").strip().lower()
 
 if choice == 'q':
     sys.exit()
-
-# Iterate through elements, add .ignore if not in libs, remove .ignore if in libs
-dir_path = Path("src/sst/elements")
 
 avail_elements = [x.name for x in dir_path.iterdir() if x.is_dir()]
 
@@ -133,4 +136,5 @@ for elem in avail_elements:
         file_path.touch()
 
 # Run autogen.sh to generate the build
-subprocess.run(["sh", "autogen.sh"])
+script_dir = Path(os.path.dirname(os.path.realpath(__file__)))
+subprocess.run([ script_dir / "autogen.sh"])
