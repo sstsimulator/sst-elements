@@ -29,7 +29,7 @@ public:
         "golem",
         "CrossSimFloatArray",
         SST_ELI_ELEMENT_VERSION(1, 0, 0),
-        "Implements a Compute array using manual MVM with floating-point representation",
+        "Implements a Compute array using CrossSim with floating-point representation",
         SST::Golem::CrossSimComputeArray<float>
     )
 

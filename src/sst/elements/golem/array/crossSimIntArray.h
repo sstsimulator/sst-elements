@@ -29,7 +29,7 @@ public:
         "golem",
         "CrossSimIntArray",
         SST_ELI_ELEMENT_VERSION(1, 0, 0),
-        "Implements a Compute array using manual MVM with int64_ting-point representation",
+        "Implements a Compute array using CrossSim with integer representation",
         SST::Golem::CrossSimComputeArray<int64_t>
     )
 

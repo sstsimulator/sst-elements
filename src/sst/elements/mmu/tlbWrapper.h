@@ -54,6 +54,7 @@ class TLB_Wrapper : public SST::Component {
       )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+        { "tlb", "The TLB subcomponent", "SST::MMU_Lib::TLB" }
     )
 
     TLB_Wrapper(SST::ComponentId_t id, SST::Params& params);

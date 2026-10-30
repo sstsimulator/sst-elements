@@ -59,11 +59,11 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
 	{ "clock", "Frequency, same as system clock frequency", "1 GHz" },
     	{ "statsPrefix", "writes stats to statsPrefix file", "" },
-    	{ "tracePrefix", "writes trace to tracePrefix tracing is enable", "" },
+    	{ "tracePrefix", "Enables tracing; writes trace entries to files with this prefix", "" },
     	{ "debug", "Print debug statements with increasing verbosity [0-10]", "0" },
     	{ "statistics", "0-No-stats, 1-print-stats", "0" },
     	{ "pageSize", "Page Size (bytes), used for selecting number of bins for address histogram ", "4096" },
-    	{"accessLatencyBins", "Number of bins for access latency histogram" "10" }
+    	{"accessLatencyBins", "Number of bins for access latency histogram", "10" }
     )
 
     SST_ELI_DOCUMENT_PORTS(

@@ -50,7 +50,9 @@ public:
 		)
 
 	SST_ELI_DOCUMENT_PARAMS(
-
+		{ "verbose",   "Verbosity of output (0=none)", "0" },
+		{ "clock",     "Clock frequency for the CGRA", "1GHz" },
+		{ "kernel%d",  "Path to kernel graph file for kernel index d", "" }
 		)
 
 	SST_ELI_DOCUMENT_STATISTICS(

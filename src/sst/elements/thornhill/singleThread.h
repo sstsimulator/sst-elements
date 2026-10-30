@@ -38,6 +38,10 @@ class SingleThread : public DetailedCompute {
 		{"portName","Sets the portname of the detailed compute model","detailed0"}
 	)
 
+	SST_ELI_DOCUMENT_PORTS(
+		{"detailed0", "Link to the detailed compute model (port name set by portName param)", {}}
+	)
+
 	struct Entry {
       Entry( std::function<int()>& _finiHandler ) : finiHandler( _finiHandler ) {}
     	std::function<int()> finiHandler;

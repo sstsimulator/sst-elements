@@ -38,6 +38,10 @@ class MemoryHeapLink : public SubComponent {
 		SST::Thornhill::MemoryHeapLink
     )
 
+	SST_ELI_DOCUMENT_PORTS(
+		{"memoryHeap", "Link to the memory heap allocator", {}}
+	)
+
 	struct Entry {
 		Entry( std::function<void(uint64_t)> _fini ) : fini( _fini ) {}
 		std::function<void(uint64_t)> fini;
