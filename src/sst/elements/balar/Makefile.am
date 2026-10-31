@@ -13,6 +13,7 @@ comp_LTLIBRARIES = libbalar.la
 libbalar_la_SOURCES = \
 	balar_consts.h \
 	balar_packet.h \
+	balar_packet_wire.h \
 	balarMMIO.cc \
 	balarMMIO.h \
 	cuda_runtime_api.h \
@@ -70,6 +71,8 @@ EXTRA_DIST = \
 	tests/gpu-v100-mem.cfg \
 	tests/memory.py \
 	tests/testBalar_testsuite_util.py \
+	tests/test_balar_packet_wire.py \
+	tests/testsuite_default_balar_wire.py \
 	tests/testBalar-testcpu.py \
 	tests/testBalar-vanadis.py \
 	tests/testsuite_default_balar.py \
