@@ -105,7 +105,7 @@ Eager1::incoming(MpiMessage *msg, MpiQueueRecvRequest* req)
 {
   //1 = stage, TimeDelay() = time since last quiesce
   logRecvDelay(1, SST::Hg::TimeDelta(), msg, req);
-  if (req->recv_buffer_){
+  if (isNonNullBuffer(req->recv_buffer_)){
     char* temp_recv_buf = (char*) msg->localBuffer();
 #if SST_HG_SANITY_CHECK
     if (!temp_recv_buf){
