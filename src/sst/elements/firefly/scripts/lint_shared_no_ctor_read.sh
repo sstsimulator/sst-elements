@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# PR 6c CI lint: forbid SharedArray/SharedSet reads inside _componentConstructor
+# Lint: forbid SharedArray/SharedSet reads inside _componentConstructor
 # bodies in firefly NetworkIO sources.  Reads must happen at _componentSetup or
-# later (after SharedObjectManager's all-published gate releases).  See
-# pr-6-design.md §6 and §7 R-01 for rationale.
+# later, after SharedObjectManager's all-published gate releases; reading
+# earlier may observe a partially-published shared object.
 #
 # Exits 0 when clean; non-zero with offending lines otherwise.
 set -euo pipefail

@@ -238,7 +238,7 @@ class VirtNic : public SST::SubComponent {
         m_networkIoCbMap.erase(it);
         cb(retval);
     }
-    
+
     bool isBlocked() {
 		m_dbg.debug(CALL_INFO,2,0,"%d %d\n", m_curNicQdepth, m_maxNicQdepth);
         return m_curNicQdepth == m_maxNicQdepth;
