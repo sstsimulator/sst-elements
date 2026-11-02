@@ -36,7 +36,7 @@ public:
         "merlin",
         "simple_patterns.empty",
         SST_ELI_ELEMENT_VERSION(0,9,0),
-        ".",
+        "Empty NIC for merlin network tests; does nothing.",
         COMPONENT_CATEGORY_NETWORK)
 
     SST_ELI_DOCUMENT_PARAMS(

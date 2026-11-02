@@ -4,7 +4,6 @@ import sst
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 0,
-	"printStats" : 1,
 })
 
 # Put the miranda.CopyGenerator subcomponent into comp_cpu's 'generator' slot

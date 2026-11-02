@@ -232,7 +232,7 @@ int SerranoComponent::read_line( FILE* file_h, char* buffer, const size_t buffer
 	bool keep_looping = true;
 
 	while( keep_looping ) {
-		char nxt_c = (char) fgetc( file_h );
+		int nxt_c = fgetc( file_h );
 
 		switch( nxt_c ) {
 		case EOF:
@@ -242,7 +242,8 @@ int SerranoComponent::read_line( FILE* file_h, char* buffer, const size_t buffer
 			keep_looping = false;
 			break;
 		default:
-			buffer[index++] = nxt_c;
+			if( index < (int)(buffer_max - 1) )
+				buffer[index++] = nxt_c;
 			break;
 		}
 	}

@@ -34,7 +34,7 @@ public:
         "merlin",
         "targetgen.shift",
         SST_ELI_ELEMENT_VERSION(0,0,1),
-        "Generates a generalized bit complement pattern.  Returns the same value of num_peers - 1 - id.",
+        "Generates a shift pattern.  Returns (id + shift) % num_peers.",
         SST::Merlin::TargetGenerator
     )
 
