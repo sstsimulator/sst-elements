@@ -36,11 +36,12 @@ class testcase_miranda_checkpoint(SSTTestCase):
         checkpoint_args = "--checkpoint-sim-period={0} --checkpoint-prefix={1}".format(
             checkpoint_period, checkpoint_prefix
         )
+        sdl_args = " --model-options=\"--niter 10000 --mem_size 500000\""
         self.run_sst(
             sdlfile,
             generate_outfile,
             generate_errfile,
-            other_args=checkpoint_args,
+            other_args=checkpoint_args + sdl_args,
             set_cwd=outdir,
             timeout_sec=testtimeout,
         )
