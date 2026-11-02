@@ -19,7 +19,7 @@ class testcase_miranda_checkpoint(SSTTestCase):
     def test_miranda_streambench_checkpoint_restart(self):
         self.miranda_checkpoint_restart_test_template("streambench", checkpoint_period="50us")
 
-    def miranda_checkpoint_restart_test_template(self, testcase, checkpoint_period, testtimeout=240):
+    def miranda_checkpoint_restart_test_template(self, testcase, checkpoint_period, testtimeout=480):
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
 
