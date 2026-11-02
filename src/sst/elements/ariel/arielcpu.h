@@ -114,7 +114,8 @@ class ArielCPU : public SST::Component {
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"memmgr", "Memory manager to translate virtual addresses to physical, handle malloc/free, etc.", "SST::ArielComponent::ArielMemoryManager"},
-            {"memory", "Interface to the memoryHierarchy (e.g., caches)", "SST::Interfaces::StandardMem" }
+            {"memory", "Interface to the memoryHierarchy (e.g., caches)", "SST::Interfaces::StandardMem" },
+            {"frontend", "Ariel frontend (instruction source), defaults to ariel.frontend.pin", "SST::ArielComponent::ArielFrontend"}
     )
 
         /* Ariel class */

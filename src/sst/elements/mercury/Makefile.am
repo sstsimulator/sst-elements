@@ -15,6 +15,13 @@ compdir = $(pkglibdir)
 ext_LTLIBRARIES = libcomputelibrary.la libostest.la libostest-nano.la
 extdir = $(pkglibdir)/ext
 
+ext_LTLIBRARIES += libfcontext_fp_preservation.la
+
+libfcontext_fp_preservation_la_SOURCES = \
+  tests/fcontext_fp_preservation.cc
+
+libfcontext_fp_preservation_la_LDFLAGS = -module -avoid-version -shared
+
 libhg_la_SOURCES = \
   common/event_link.cc \
   common/component.cc \
@@ -24,7 +31,6 @@ libhg_la_SOURCES = \
   common/output.cc \
   common/util.cc \
   common/timestamp.cc \
-  common/connection.cc \
   common/skeleton.cc \
   common/hgcc_wrappers.cc \
   components/compute_library/node_cl.cc \
@@ -108,8 +114,6 @@ nobase_library_include_HEADERS = \
   common/appLoader.h \
   common/loader.h \
   common/loaderAPI.h \
-  common/connection.h \
-  common/connection_fwd.h \
   common/event_link.h \
   common/events.h \
   common/hg_printf.h \
@@ -215,6 +219,10 @@ EXTRA_DIST = \
     tests/ostest-nano.py \
     tests/refFiles/ostest.out \
     tests/refFiles/ostest-nano.out
+
+EXTRA_DIST += \
+    tests/fcontext_fp_preservation.py \
+    tests/testsuite_default_hg_fcontext.py
 
 deprecated_EXTRA_DIST =
 
