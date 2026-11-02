@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
+import argparse
 import sys
 import os
 import subprocess
 from pathlib import Path
 
 # This script modifies the sst-elements build system using .ignore files
-# and reruns autogen.sh. Run with no arguments or 'help' to see usage.
+# and reruns autogen.sh. Run with no arguments or --help to see usage.
 
 
 # Map dependencies between libraries where:
@@ -65,72 +66,124 @@ deps["node-all"] = deps["cpu"] | deps["accel"] | deps["mem"] | deps["cachetracer
 
 ###### Main
 
-if len(sys.argv) == 1 or sys.argv[1] == "--help" or sys.argv[1] == "help" or sys.argv[1] == "-h":
-    print("This script will modify the sst-elements build so that only selected libraries are built.\n"
-          "Pass the list of desired libraries to this script as space-separated names. Names are *not* case-sensitive.\n"
-          "Dependencies or libraries commonly needed for the requested libraries will also be built. All others will be disabled.\n"
-          "This script will rerun autogen.sh once the build is modified and therefore requires autotools to be installed.\n"
-          "In addition to library names, the following categories can be requested:\n"
-          "  example     - all example libraries\n"
-          "  network     - basic libraries needed for an ember-based system network simulation\n"
-          "  network-ext - libraries needed for ember- and mercury-based system simulations\n"
-          "  network-all - all libraries that can be used for system network simulations\n"
-          "  node        - CPU, NoC, and basic memory models\n"
-          "  accel       - accelerator models, memory system, NoC, and Vanadis CPU model\n"
-          "  mem         - various main memory models\n"
-          "  node-all    - all libraries that can be used for node-level simulation\n"
-          "  all         - enable all available libraries"
+HELP_TEXT = (
+    "This script will modify the sst-elements build so that only selected libraries are built.\n"
+    "Pass the list of desired libraries to this script as space-separated names. Names are not case-sensitive.\n"
+    "Dependencies or libraries commonly needed for the requested libraries will also be built. All others will be disabled.\n"
+    "This script will rerun autogen.sh once the build is modified and therefore requires autotools to be installed.\n"
+    "\n"
+    "In addition to library names, the following categories can be requested:\n"
+    "  example     - all example libraries\n"
+    "  network     - basic libraries needed for an ember-based system network simulation\n"
+    "  network-ext - libraries needed for ember- and mercury-based system simulations\n"
+    "  network-all - all libraries that can be used for system network simulations\n"
+    "  node        - CPU, NoC, and basic memory models\n"
+    "  accel       - accelerator models, memory system, NoC, and Vanadis CPU model\n"
+    "  mem         - various main memory models\n"
+    "  node-all    - all libraries that can be used for node-level simulation\n"
+    "  all         - enable all available libraries"
+)
+
+def build_parser():
+    parser = argparse.ArgumentParser(
+        description=HELP_TEXT,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    sys.exit()
+    parser.add_argument(
+        "-y",
+        "--yes",
+        action="store_true",
+        help="skip the confirmation prompt and continue",
+    )
+    parser.add_argument(
+        "elements",
+        nargs="*",
+        help="library names or categories to enable",
+    )
+    return parser
 
-# Parse arguments and build list of requested libraries
 
-args = sys.argv[1:]
-libs = set()
-for arg in args:
-    arglow = arg.lower()
-    if arglow == "all":
-        libs = set(list(deps))
-    else:
-        new_deps = deps[arglow]
-        if new_deps == None:
-            print("Error: requested library '{}' is not found in the dependencies list. Build will not be modified.".format(arg))
-            sys.exit()
+def parse_args(argv=None):
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    if not args.elements:
+        parser.print_help()
+        sys.exit()
+
+    return args
+
+
+def resolve_libraries(requested_elements):
+    libs = set()
+    for element in requested_elements:
+        element_name = element.lower()
+        if element_name == "all":
+            libs = set(deps)
+            continue
+
+        new_deps = deps.get(element_name)
+        if new_deps is None:
+            raise ValueError(
+                "requested library '{}' is not found in the dependencies list. "
+                "Build will not be modified.".format(element)
+            )
         libs.update(new_deps)
-
-print("Script will enable the following libraries: ")
-print(*libs, sep=", ")
-
-# Warnings about possibly missing libraries
-# Maybe these are intentional but maybe not
-## Check: Detect presence of memHierarchy without a CPU model
-if "memhierarchy" in libs:
-    cpus = libs & { "ariel", "miranda", "prospero", "vanadis" }
-    if not len(cpus):
-        print("\nDetected memHierarchy but no CPU models in the enable list. "
-              "If a CPU model is desired, add one of [ariel, miranda, prospero, vanadis] or 'cpu' for all.")
+    return libs
 
 
+def main(argv=None):
+    args = parse_args(argv)
 
-# Make sure user is happy with the proposed build before actually modifying it
-choice = input("Press ENTER to continue or type 'q' and press ENTER to quit without modifying the build: ").strip().lower()
+    # Iterate through elements, add .ignore if not in libs, remove .ignore if in libs
+    dir_path = Path("src/sst/elements")
+    if not dir_path.is_dir():
+        print(f"Error: {dir_path.resolve()} not found. Please run this script from the sst-elements root directory")
+        sys.exit(1)
 
-if choice == 'q':
-    sys.exit()
+    try:
+        libs = resolve_libraries(args.elements)
+    except ValueError as exc:
+        print(f"Error: {exc}")
+        sys.exit(1)
 
-# Iterate through elements, add .ignore if not in libs, remove .ignore if in libs
-dir_path = Path("src/sst/elements")
+    print("Script will enable the following libraries: ")
+    print(*libs, sep=", ")
 
-avail_elements = [x.name for x in dir_path.iterdir() if x.is_dir()]
+    # Warnings about possibly missing libraries
+    # Maybe these are intentional but maybe not
+    ## Check: Detect presence of memHierarchy without a CPU model
+    if "memhierarchy" in libs:
+        cpus = libs & {"ariel", "miranda", "prospero", "vanadis"}
+        if not len(cpus):
+            print(
+                "\nDetected memHierarchy but no CPU models in the enable list. "
+                "If a CPU model is desired, add one of [ariel, miranda, prospero, vanadis] or 'cpu' for all."
+            )
 
-for elem in avail_elements:
-    file_path = Path("src/sst/elements/" + elem + "/.ignore")
-    if elem.lower() in libs:
-        # Enable (remove .ignore if it exists)
-        file_path.unlink(missing_ok=True)
-    else:
-        # Disable (add .ignore if it doesn't already exist)
-        file_path.touch()
+    # Make sure user is happy with the proposed build before actually modifying it
+    if not args.yes:
+        choice = input(
+            "Press ENTER to continue or type 'q' and press ENTER to quit without modifying the build: "
+        ).strip().lower()
+        if choice == "q":
+            sys.exit()
 
-# Run autogen.sh to generate the build
-subprocess.run(["sh", "autogen.sh"])
+    avail_elements = [x.name for x in dir_path.iterdir() if x.is_dir()]
+
+    for elem in avail_elements:
+        file_path = Path("src/sst/elements/" + elem + "/.ignore")
+        if elem.lower() in libs:
+            # Enable (remove .ignore if it exists)
+            file_path.unlink(missing_ok=True)
+        else:
+            # Disable (add .ignore if it doesn't already exist)
+            file_path.touch()
+
+    # Run autogen.sh to generate the build
+    script_dir = Path(os.path.dirname(os.path.realpath(__file__)))
+    subprocess.run([script_dir / "autogen.sh"])
+
+
+if __name__ == "__main__":
+    main()
