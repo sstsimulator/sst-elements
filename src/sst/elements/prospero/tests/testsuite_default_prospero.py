@@ -79,10 +79,6 @@ class testcase_prospero(SSTTestCase):
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        # Set the paths to the various directories
-        self.testProsperoPINTracesDir = "{0}/testProsperoPINTraces".format(tmpdir)
-        self.testProsperoTARTracesDir = "{0}/testProsperoTARTraces".format(tmpdir)
-
         if use_pin_traces:
             prospero_trace_dir = self.testProsperoPINTracesDir
         else:
@@ -172,8 +168,8 @@ class testcase_prospero(SSTTestCase):
         tmpdir = self.get_test_output_tmp_dir()
 
         # Set the paths to the various directories
-        self.testProsperoPINTracesDir = "{0}/testProsperoPINTraces".format(tmpdir)
-        self.testProsperoTARTracesDir = "{0}/testProsperoTARTraces".format(tmpdir)
+        self.testProsperoPINTracesDir = "{0}/testProsperoPINTraces/{1}".format(tmpdir, self.testname)
+        self.testProsperoTARTracesDir = "{0}/testProsperoTARTraces/{1}".format(tmpdir, self.testname)
         ProsperoElementDir = os.path.abspath("{0}/../".format(test_path))
         sst_elements_parent_dir = os.path.abspath("{0}/../../../../../".format(ProsperoElementDir))
         memHElementsTestsDir = os.path.abspath("{0}/../memHierarchy/tests".format(ProsperoElementDir))

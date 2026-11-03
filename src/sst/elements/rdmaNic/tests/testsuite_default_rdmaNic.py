@@ -106,28 +106,29 @@ class testcase_rdmaNic(SSTTestCase):
 
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
 
-        node0_os_outfile = "{0}/stdout-0-100".format(test_path)
-        node0_os_errfile = "{0}/stderr-0-100".format(test_path)
+        # Run in the per-test output directory, so that concurrent tests do
+        # not write the same OS output files.  Link in the SDL modules and the
+        # input files that the applications open by relative path.
+        for f in os.listdir(test_path):
+            if f.endswith(".py") or f == "msglen.txt":
+                os_symlink_file(test_path, outdir, f)
+
+        node0_os_outfile = "{0}/stdout-0-100".format(outdir)
+        node0_os_errfile = "{0}/stderr-0-100".format(outdir)
         ref_node0_os_outfile = "{0}/{1}/{2}/{3}.stdout-node0.cpu0.os.gold".format(test_path, elftestdir, arch, elffile)
         ref_node0_os_errfile = "{0}/{1}/{2}/{3}.stderr-node0.cpu0.os.gold".format(test_path, elftestdir, arch, elffile)
 
-        node1_os_outfile = "{0}/stdout-1-100".format(test_path)
-        node1_os_errfile = "{0}/stderr-1-100".format(test_path)
+        node1_os_outfile = "{0}/stdout-1-100".format(outdir)
+        node1_os_errfile = "{0}/stderr-1-100".format(outdir)
         ref_node1_os_outfile = "{0}/{1}/{2}/{3}.stdout-node1.cpu0.os.gold".format(test_path, elftestdir, arch, elffile)
         ref_node1_os_errfile = "{0}/{1}/{2}/{3}.stderr-node1.cpu0.os.gold".format(test_path, elftestdir, arch, elffile)
 
         # Set the RdmaNic EXE path
         testfilepath = "{0}/{1}/{2}/{3}".format(test_path, elftestdir, arch, elffile)
 
-        for key, value in env.items():
-            os.environ[key]=value
+        env = dict(env, RDMANIC_EXE=testfilepath)
 
-        os.environ['RDMANIC_EXE'] = testfilepath
-
-        oscmd = self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, set_cwd=test_path, timeout_sec=testtimeout)
-
-        for key, value in env.items():
-            os.unsetenv( key )
+        oscmd = self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, set_cwd=outdir, timeout_sec=testtimeout, env=env)
 
         # Perform the tests
         # Verify that the errfile from SST is empty

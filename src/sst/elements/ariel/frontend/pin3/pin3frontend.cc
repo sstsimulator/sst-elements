@@ -177,7 +177,7 @@ int Pin3Frontend::forkChildProcess(const char* app, char** args,
         if ("" != redirect_info.stdin_file){
             output->verbose(CALL_INFO, 1, 0, "Redirecting child stdin from file %s\n", redirect_info.stdin_file.c_str());
             if (!freopen(redirect_info.stdin_file.c_str(), "r", stdin)) {
-                output->fatal(CALL_INFO, 1, 0, "Failed to redirect stdin\n");
+                output->fatal(CALL_INFO, 1, "Failed to redirect stdin\n");
             }
         }
         if ("" != redirect_info.stdout_file){
@@ -187,7 +187,7 @@ int Pin3Frontend::forkChildProcess(const char* app, char** args,
                 mode = "a+";
             }
             if (!freopen(redirect_info.stdout_file.c_str(), mode.c_str(), stdout)) {
-                output->fatal(CALL_INFO, 1, 0, "Failed to redirect stdout\n");
+                output->fatal(CALL_INFO, 1, "Failed to redirect stdout\n");
             }
         }
         if ("" != redirect_info.stderr_file){
@@ -197,7 +197,7 @@ int Pin3Frontend::forkChildProcess(const char* app, char** args,
                 mode = "a+";
             }
             if (!freopen(redirect_info.stderr_file.c_str(), mode.c_str(), stderr)) {
-                output->fatal(CALL_INFO, 1, 0, "Failed to redirect stderr\n");
+                output->fatal(CALL_INFO, 1, "Failed to redirect stderr\n");
             }
         }
         output->verbose(CALL_INFO, 1, 0, "Launching executable: %s...\n", app);

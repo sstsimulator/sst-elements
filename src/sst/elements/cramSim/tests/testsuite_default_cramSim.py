@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
 
+import fcntl
 import os
 import shutil
-import tempfile
 
 from sst_unittest import *
 from sst_unittest_support import *
 
 
 class testcase_cramSim_Component(SSTTestCase):
-
-    tmp_dir = None
-    tmp_file = None
 
     def setUp(self):
         super(type(self), self).setUp()
@@ -20,22 +17,6 @@ class testcase_cramSim_Component(SSTTestCase):
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test
         super(type(self), self).tearDown()
-
-    @classmethod
-    def setUpClass(cls):
-        # wget a test file tar.gz
-        cls.tmp_dir = tempfile.TemporaryDirectory()
-        testfile = "sst-cramSim_trace_verimem_trace_files.tar.gz"
-        fileurl = f"https://github.com/sstsimulator/sst-downloads/releases/download/TestFiles/{testfile}"
-        if not os_wget(fileurl, cls.tmp_dir.name):
-            raise unittest.SkipTest(f"Failed to download {testfile}")
-        else:
-            cls.tmp_file = os.path.join(cls.tmp_dir.name, testfile)
-
-    @classmethod
-    def tearDownClass(cls):
-        if cls.tmp_dir:
-            cls.tmp_dir.cleanup()
 
 #####
 
@@ -79,12 +60,6 @@ class testcase_cramSim_Component(SSTTestCase):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
-        tmpdir = self.get_test_output_tmp_dir()
-
-        self.cramSimElementDir = os.path.abspath("{0}/../".format(test_path))
-        self.cramSimElementTestsDir = "{0}/tests".format(self.cramSimElementDir)
-        self.testcramSimDir = "{0}/testcramSim".format(tmpdir)
-        self.testcramSimTestsDir = "{0}/tests".format(self.testcramSimDir)
 
         # Set the various file paths
         testDataFileName="test_cramSim_{0}".format(testcase)
@@ -132,19 +107,18 @@ class testcase_cramSim_Component(SSTTestCase):
 #####
 
     def _setupcramSimTestFiles(self):
-        if not self.__class__.tmp_file:
-            # if tmp_file is None setUpClass() never ran
-            self.skipTest(f"{self} cannot be run concurrently")
-        # NOTE: This routine is called a single time at module startup, so it
-        #       may have some redunant
+        # NOTE: This routine is called before every test, so each test gets
+        #       its own copy of the test files
         log_debug("_setupcramSimTestFiles() Running")
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
+        tarfile = self._download_cramSim_trace_files()
+
         self.cramSimElementDir = os.path.abspath("{0}/../".format(test_path))
         self.cramSimElementTestsDir = "{0}/tests".format(self.cramSimElementDir)
-        self.testcramSimDir = "{0}/testcramSim".format(tmpdir)
+        self.testcramSimDir = "{0}/testcramSim/{1}".format(tmpdir, self.testname)
         self.testcramSimTestsDir = "{0}/tests".format(self.testcramSimDir)
 
         # Create a clean version of the testcramSim Directory
@@ -161,4 +135,25 @@ class testcase_cramSim_Component(SSTTestCase):
             os_symlink_file(self.cramSimElementTestsDir, self.testcramSimTestsDir, f)
 
         # Extract the test file
-        os_extract_tar(self.__class__.tmp_file, self.testcramSimTestsDir)
+        os_extract_tar(tarfile, self.testcramSimTestsDir)
+
+    def _download_cramSim_trace_files(self):
+        # Concurrent tests share one download, so only one test at a time
+        # may check for it and download it.
+        tmpdir = self.get_test_output_tmp_dir()
+        testfile = "sst-cramSim_trace_verimem_trace_files.tar.gz"
+        fileurl = "https://github.com/sstsimulator/sst-downloads/releases/download/TestFiles/{0}".format(testfile)
+        downloaddir = "{0}/cramSim_download".format(tmpdir)
+        tarfile = "{0}/{1}".format(downloaddir, testfile)
+
+        lockfile = "{0}/cramSim_download.lock".format(tmpdir)
+        with open(lockfile, "w") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            if not os.path.isfile(tarfile):
+                os.makedirs(downloaddir, exist_ok=True)
+                if not os_wget(fileurl, downloaddir):
+                    # Remove a partial file, so the next test tries again
+                    if os.path.isfile(tarfile):
+                        os.remove(tarfile)
+                    self.skipTest("Failed to download {0}".format(testfile))
+        return tarfile

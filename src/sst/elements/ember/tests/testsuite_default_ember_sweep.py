@@ -167,7 +167,6 @@ class testcase_EmberSweep(SSTTestCase):
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        self.emberSweep_Folder = "{0}/embersweep_folder".format(tmpdir)
         self.emberelement_testdir = "{0}/../test/".format(test_path)
 
         # Set the various file paths
@@ -249,7 +248,7 @@ class testcase_EmberSweep(SSTTestCase):
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        self.emberSweep_Folder = "{0}/embersweep_folder".format(tmpdir)
+        self.emberSweep_Folder = "{0}/embersweep_folder/{1}".format(tmpdir, self.testname)
         self.emberelement_testdir = "{0}/../test/".format(test_path)
 
         # Create a clean version of the emberSweep_folder Directory

@@ -173,11 +173,12 @@ class testcase_golem(SSTTestCase):
 
         # Set the Vanadis EXE path
         testfilepath = "{0}/{1}/{2}/{3}/{2}".format(test_path, elftestdir, elffile, isa )
-        os.environ['VANADIS_EXE'] = testfilepath
-        os.environ['VANADIS_ISA'] = "RISCV64"
-
-        os.environ['VANADIS_NUM_CORES'] = str(numCores)
-        os.environ['VANADIS_NUM_HW_THREADS'] = str(numHwThreads)
+        env = {
+            'VANADIS_EXE': testfilepath,
+            'VANADIS_ISA': "RISCV64",
+            'VANADIS_NUM_CORES': str(numCores),
+            'VANADIS_NUM_HW_THREADS': str(numHwThreads),
+        }
 
         array_types = ["crosssim_float", "crosssim_int", "mvm_float", "mvm_int"]
         arraytype_exists = arrayType in array_types
@@ -200,14 +201,14 @@ class testcase_golem(SSTTestCase):
             arrayType = "golem.MVMIntArray"
 
 
-        os.environ["GOLEM_ROCC_TYPE"] = roccType
-        os.environ["GOLEM_ARRAY_TYPE"] = arrayType
-        os.environ["GOLEM_NUM_ARRAYS"] = str(numArrays)
+        env["GOLEM_ROCC_TYPE"] = roccType
+        env["GOLEM_ARRAY_TYPE"] = arrayType
+        env["GOLEM_NUM_ARRAYS"] = str(numArrays)
 
         testfile_exists = os.path.exists(testfilepath) and os.path.isfile(testfilepath)
         self.assertTrue(testfile_exists, "Golem test {0} does not exist".format(testfilepath))
 
-        oscmd = self.run_sst(sdlfile, sst_outfile, sst_errfile, mpi_out_files=mpioutfiles, set_cwd=outdir, timeout_sec=testtimeout)
+        oscmd = self.run_sst(sdlfile, sst_outfile, sst_errfile, mpi_out_files=mpioutfiles, set_cwd=outdir, timeout_sec=testtimeout, env=env)
 
         # Perform the tests
         # Verify that the errfile from SST is empty
