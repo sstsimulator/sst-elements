@@ -1,4 +1,20 @@
 import sst
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+  "--niter",
+  type=int,
+  default=10000,
+  help="Number of iterations (default: 10000)"
+)
+parser.add_argument(
+  "--mem_size",
+  type=int,
+  default=4096 * 1024 * 1024,
+  help="Memory size in bytes (default: 4096*1024*1024)"
+)
+args = parser.parse_args()
 
 # Tell SST what statistics handling we want
 sst.setStatisticLoadLevel(6)
@@ -13,8 +29,8 @@ comp_cpu.addParams({
 gen = comp_cpu.setSubComponent("generator", "miranda.STREAMBenchGenerator")
 gen.addParams({
 	"verbose" : 0,
-	"n" : 10000,
-        "operandwidth" : 16,
+	"n" : args.niter,
+    "operandwidth" : 16,
 })
 
 # Enable statistics outputs
@@ -40,12 +56,12 @@ comp_l1cache.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 comp_memctrl = sst.Component("memory", "memHierarchy.MemController")
 comp_memctrl.addParams({
       "clock" : "1GHz",
-      "addr_range_end" : 4096 * 1024 * 1024 - 1
+      "addr_range_end" : args.mem_size - 1
 })
 memory = comp_memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
 memory.addParams({
       "access_time" : "100 ns",
-      "mem_size" : "4096MiB",
+      "mem_size" : str(args.mem_size) + "B",
 })
 
 # Define the simulation links
