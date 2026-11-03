@@ -92,7 +92,7 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
             {
                 syscall = new VanadisSnapshotSyscall( this, core_link, process, convertEvent<VanadisSyscallSnapshotEvent*>( "snapshot", sys_ev ) );
             }
-            else 
+            else
             {
                 output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL, "Snapshotting is not enabled. Ignoring snapshot syscall.\n");
                 // Send a success response back to the core so it doesn't hang waiting for a reply

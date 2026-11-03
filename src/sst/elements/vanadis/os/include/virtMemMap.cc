@@ -551,7 +551,7 @@ void VirtMemMap::snapshot( FILE* fp ) {
     fprintf(fp,"#VirtMemMap end\n");
 }
 
-VirtMemMap::VirtMemMap( SST::Output* output, FILE* fp, PhysMemManager* mem_manager, VanadisELFInfo* elf_info) 
+VirtMemMap::VirtMemMap( SST::Output* output, FILE* fp, PhysMemManager* mem_manager, VanadisELFInfo* elf_info)
     : heap_region_(nullptr)
 {
     char* str = nullptr;

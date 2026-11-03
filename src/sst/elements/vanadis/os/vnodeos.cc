@@ -661,7 +661,7 @@ VanadisNodeOSComponent::handleIncomingSyscallEvent(SST::Event* ev) {
 		    auto syscall = handleIncomingSyscall( process, sys_ev, core_links_[ sys_ev->getCoreID() ] );
             if (syscall != nullptr)
             {
-    		    processSyscallPost( syscall );                
+    		    processSyscallPost( syscall );
             }
 	    } else {
             // Probable error, do not ifdef
