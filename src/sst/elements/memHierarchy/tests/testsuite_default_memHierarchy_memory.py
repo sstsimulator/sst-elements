@@ -80,6 +80,30 @@ class testcase_memHierarchy_memory(SSTTestCase):
         self.memh_template_backing(teststr="init", testnum=5, seed0=20, seed1=21, seed2=22, seed3=23, backing_infile=None, backing_reffile=ref_file, backing_outfile=out_file)
 
 
+    # Test custom commands (StandardMem::CustomReq/CustomResp) through a cache and bus to memory
+    # Pass if all custom requests are issued and the simulation completes without error output
+    def test_memory_customcmd(self):
+        test_path = self.get_testsuite_dir()
+        test_run_dir = self.get_test_output_run_dir()
+
+        test_config = "{}/test_customcmd.py".format(test_path)
+        test_output = "{}/test_memHierarchy_memory_customcmd.out".format(test_run_dir)
+        test_err    = "{}/test_memHierarchy_memory_customcmd.err".format(test_run_dir)
+        test_mpi_output = "{}/test_memHierarchy_memory_customcmd.testfile".format(test_run_dir)
+
+        self.run_sst(test_config, test_output, test_err, set_cwd=test_path, mpi_out_files=test_mpi_output)
+
+        with open(test_output) as fn:
+            output = fn.read()
+        self.assertIn("Simulation is complete", output, "No end of simulation detected in output file {}".format(test_output))
+
+        # 1000 iterations x (2 custom reads + 1 custom write)
+        match = re.search(r"cpu\.custom_reqs : Accumulator : Sum\.u64 = (\d+);", output)
+        self.assertIsNotNone(match, "custom_reqs statistic not found in output file {}".format(test_output))
+        self.assertEqual(int(match.group(1)), 3000, "Unexpected number of custom requests in output file {}".format(test_output))
+
+        self.assertFalse(os_test_file(test_err, "-s"), "Error file is non-empty {}".format(test_err))
+
 #####
 
     def memh_template_backing(self, teststr, testnum, seed0, seed1, seed2, seed3, backing_infile=None, backing_reffile=None, backing_outfile=None, ignore_err_file=False, testtimeout=240):
