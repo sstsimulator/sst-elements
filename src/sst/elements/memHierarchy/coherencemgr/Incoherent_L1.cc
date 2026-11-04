@@ -1123,6 +1123,31 @@ std::set<Command> IncoherentL1::getValidReceiveEvents() {
     return cmds;
 }
 
+void IncoherentL1::snapshotCache(const std::string& dir, const std::string& cacheName) {
+    std::string filename = dir + "/" + cacheName;
+    FILE* fp = fopen(filename.c_str(), "w");
+    if (!fp) {
+        output_->fatal(CALL_INFO, -1, "Failed to open snapshot file: %s\n", filename.c_str());
+    }
+    fprintf(fp, "# Cache Snapshot: %s\n", cacheName.c_str());
+    cache_array_->snapshotToFile(fp);
+    fclose(fp);
+}
+
+void IncoherentL1::snapshotLoadCache(const std::string& dir, const std::string& cacheName) {
+    std::string filename = dir + "/" + cacheName;
+    FILE* fp = fopen(filename.c_str(), "r");
+    if (!fp) {
+        output_->fatal(CALL_INFO, -1, "Failed to open snapshot file for loading: %s\n", filename.c_str());
+    }
+    char buf[512];
+    if (!fgets(buf, sizeof(buf), fp)) {
+        output_->fatal(CALL_INFO, -1, "Failed to read snapshot header from: %s\n", filename.c_str());
+    }
+    cache_array_->snapshotLoadFromFile(fp);
+    fclose(fp);
+}
+
 
 void IncoherentL1::serialize_order(SST::Core::Serialization::serializer& ser) {
     CoherenceController::serialize_order(ser);

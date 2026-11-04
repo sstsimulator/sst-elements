@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _H_VANADIS_SYSCALL_CHECKPOINT
-#define _H_VANADIS_SYSCALL_CHECKPOINT
+#ifndef _H_VANADIS_SYSCALL_SNAPSHOT
+#define _H_VANADIS_SYSCALL_SNAPSHOT
 
 #include "os/voscallev.h"
 #include "os/vosbittype.h"
@@ -22,20 +22,20 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisSyscallCheckpointEvent : public VanadisSyscallEvent {
+class VanadisSyscallSnapshotEvent : public VanadisSyscallEvent {
 public:
-    VanadisSyscallCheckpointEvent() : VanadisSyscallEvent() {}
-    VanadisSyscallCheckpointEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype)
+    VanadisSyscallSnapshotEvent() : VanadisSyscallEvent() {}
+    VanadisSyscallSnapshotEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype)
         : VanadisSyscallEvent(core, thr, bittype) {}
 
-    VanadisSyscallOp getOperation() override { return SYSCALL_OP_CHECKPOINT; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_SNAPSHOT; }
 
 private:
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
     }
-    ImplementSerializable(SST::Vanadis::VanadisSyscallCheckpointEvent);
+    ImplementSerializable(SST::Vanadis::VanadisSyscallSnapshotEvent);
 };
 
 } // namespace Vanadis

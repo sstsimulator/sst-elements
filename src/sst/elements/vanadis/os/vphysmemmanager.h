@@ -70,7 +70,7 @@ class PhysMemManager {
             assert(0);
         }
 
-        void checkpoint( FILE* fp ) {
+        void snapshot( FILE* fp ) {
             fprintf(fp,"BitMap size: %zu\n",m_bitMap.size());
             for ( auto i = 0; i < m_bitMap.size(); i++ ) {
                 if ( m_bitMap[i] ) {
@@ -79,15 +79,15 @@ class PhysMemManager {
             }
         }
 
-        void checkpointLoad( SST::Output* output, FILE* fp ) {
+        void snapshotLoad( SST::Output* output, FILE* fp ) {
             int size;
             assert( 1 == fscanf(fp,"BitMap size: %d\n",&size) );
-            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"BitMap size: %d\n",size);
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"BitMap size: %d\n",size);
             m_bitMap.resize(size,0);
             int index;
             uint64_t value;
             while ( 2 == fscanf( fp, "%d %" PRIx64 "\n", &index, &value ) ) {
-                output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%d %#018" PRIx64 "\n",index,value);
+                output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"%d %#018" PRIx64 "\n",index,value);
                 m_bitMap[index] = value;
             }
         }
@@ -138,25 +138,25 @@ class PhysMemManager {
         }
     }
 
-    void checkpoint( SST::Output* output, std::string dir ) {
+    void snapshot( SST::Output* output, std::string dir ) {
         std::stringstream filename;
         filename << dir << "/" << "PhysMemManager";
         auto fp = fopen(filename.str().c_str(),"w+");
 
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"PhysMemManager %s\n", filename.str().c_str());
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"PhysMemManager %s\n", filename.str().c_str());
 
         fprintf(fp,"m_numAllocated %" PRIu64 "\n",m_numAllocated);
-        m_bitMap.checkpoint(fp);
+        m_bitMap.snapshot(fp);
     }
-    void checkpointLoad( SST::Output* output , std::string dir ) {
+    void snapshotLoad( SST::Output* output , std::string dir ) {
         std::stringstream filename;
         filename << dir << "/" << "PhysMemManager";
         auto fp = fopen(filename.str().c_str(),"r");
         assert(fp);
 
         assert( 1 == fscanf(fp,"m_numAllocated %" SCNu64 "\n",&m_numAllocated) );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_numAllocated %" PRIu64 "\n",m_numAllocated);
-        m_bitMap.checkpointLoad(output,fp);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"m_numAllocated %" PRIu64 "\n",m_numAllocated);
+        m_bitMap.snapshotLoad(output,fp);
     }
 
   private:
