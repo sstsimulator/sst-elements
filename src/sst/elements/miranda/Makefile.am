@@ -38,6 +38,7 @@ libmiranda_la_SOURCES = \
 
 EXTRA_DIST = \
 	tests/testsuite_default_miranda.py \
+	tests/testsuite_default_miranda_checkpoint.py \
 	tests/randomgen.py \
 	tests/singlestream.py \
 	tests/revsinglestream.py \

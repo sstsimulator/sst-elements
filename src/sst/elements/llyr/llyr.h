@@ -82,7 +82,7 @@ public:
     )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-        { "memory",         "The memory interface to use (e.g., interface to caches)", "Interfaces::SST::StandardMem" }
+        { "iface",          "The memory interface to use (e.g., interface to caches)", "SST::Interfaces::StandardMem" }
     )
 
     LlyrComponent(SST::ComponentId_t id, SST::Params& params);

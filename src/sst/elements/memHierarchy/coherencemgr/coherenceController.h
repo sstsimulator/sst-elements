@@ -200,6 +200,12 @@ public:
     // Called by owner during printStatus/emergencyShutdown
     virtual void printStatus(Output &out) override;
 
+    // Called by owner during snapshot save to write cache contents to a file
+    virtual void snapshotCache(const std::string& dir, const std::string& cacheName);
+
+    // Called by owner during snapshot load to restore cache contents from a file
+    virtual void snapshotLoadCache(const std::string& dir, const std::string& cacheName);
+
     // Serialization
     CoherenceController() : SubComponent() {}
     void serialize_order(SST::Core::Serialization::serializer& ser) override;

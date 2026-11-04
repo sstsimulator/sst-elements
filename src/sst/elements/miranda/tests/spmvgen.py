@@ -6,7 +6,6 @@ cpu1 = sst.Component("cpu1", "miranda.BaseCPU")
 cpu_params = {
 	"verbose" : 0,
 	"clock" : "2GHz",
-	"printStats" : 1,
 }
 cpu0.addParams(cpu_params)
 cpu1.addParams(cpu_params)

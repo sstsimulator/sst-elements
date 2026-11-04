@@ -2,25 +2,11 @@
 import os
 import subprocess
 import unittest
-from contextlib import contextmanager
 
 from sst_unittest import *
 from sst_unittest_support import *
 
 ################################################################################
-
-@contextmanager
-def temporary_environment(values):
-    old_values = {key: os.environ.get(key) for key in values}
-    os.environ.update(values)
-    try:
-        yield
-    finally:
-        for key, value in old_values.items():
-            if value is None:
-                os.environ.pop(key, None)
-            else:
-                os.environ[key] = value
 
 class testcase_mask_mpi(SSTTestCase):
 
@@ -127,20 +113,19 @@ class testcase_mask_mpi(SSTTestCase):
                         legacy, replacement))
 
     def test_unknown_param_outside_collective_namespace(self):
-        with temporary_environment({"ALG": "ring",
-                                    "ALG_PARAM": "unrelated_param"}):
-            self.mask_mpi_template(
-                "test_unknown_param_outside_collective_namespace",
-                sdl="test_allreduce", ref="test_allreduce")
+        self.mask_mpi_template(
+            "test_unknown_param_outside_collective_namespace",
+            sdl="test_allreduce", ref="test_allreduce",
+            env={"ALG": "ring", "ALG_PARAM": "unrelated_param"})
 
     def mask_mpi_param_error_template(self, testcase, param, expected):
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
         outfile = os.path.join(outdir, testcase + ".out")
         errfile = os.path.join(outdir, testcase + ".err")
-        with temporary_environment({"ALG": "ring", "ALG_PARAM": param}):
-            self.run_sst(os.path.join(test_path, "test_allreduce.py"),
-                         outfile, errfile, set_cwd=test_path, expected_rc=1)
+        self.run_sst(os.path.join(test_path, "test_allreduce.py"),
+                     outfile, errfile, set_cwd=test_path, expected_rc=1,
+                     env={"ALG": "ring", "ALG_PARAM": param})
         with open(errfile) as error_file:
             self.assertIn(expected, error_file.read())
 
@@ -180,7 +165,7 @@ class testcase_mask_mpi(SSTTestCase):
 
     def mask_mpi_template(self, testcase, striptotail=0, sdl=None, ref=None,
                           model_args=None, expected_stderr=None,
-                          expected_rank_passes=None):
+                          expected_rank_passes=None, env=None):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
@@ -202,7 +187,7 @@ class testcase_mask_mpi(SSTTestCase):
         if model_args:
             run_args["other_args"] = '--model-options="{}"'.format(model_args)
         self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles,
-                     set_cwd=test_path, **run_args)
+                     set_cwd=test_path, env=env, **run_args)
 
         testing_remove_component_warning_from_file(outfile)
 

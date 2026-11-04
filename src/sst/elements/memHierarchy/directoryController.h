@@ -66,6 +66,8 @@ public:
             {"interleave_size",         "Size of interleaved chunks. E.g., to interleave 8B chunks among 3 directories, set size=8B, step=24B", "0B"},
             {"interleave_step",         "Distance between interleaved chunks. E.g., to interleave 8B chunks among 3 directories, set size=8B, step=24B", "0B"},
             {"node",					"Node number in multinode environment"},
+            {"snapshotDir",             "(string) Directory for snapshot output files. Leave empty to disable.", ""},
+            {"snapshot",                "(string) Snapshot mode. Options: ''[disabled], 'save'[write directory state at finish], 'load'[restore directory state at setup]", ""},
             /* Old parameters - deprecated or moved */
             {"network_bw",                  "MOVED. Now a member of the MemNIC subcomponent.", "80GiB/s"}, // Remove SST 9.0
             {"network_input_buffer_size",   "MOVED. Now a member of the MemNIC subcomponent.", "1KiB"}, // Remove SST 9.0
@@ -482,6 +484,10 @@ private:
 
     // During init() we need to store routing for requests that get a response
     std::map<MemEventBase::id_type, std::string> init_requests_;
+
+    // Snapshot configuration
+    std::string snapshot_dir_;
+    std::string snapshot_;
 };
 
 }

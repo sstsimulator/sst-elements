@@ -162,7 +162,6 @@ class testcase_memH_sweep_dirsweepB(SSTTestCase):
         # and verify it exists
         ompapppath = "{0}/openMP/{1}/{1}".format(test_path, omp_app)
         self.assertTrue(os.path.isfile(ompapppath), "Sweep dirsweepB Test; ompfile {0} - not found".format(ompapppath))
-        os.environ["OMP_EXE"] = ompapppath
 
         # Set the model options for the test (This is what we sweep)
         otherargs = '--model-options="--L1cachesz={0} --L1assoc={1} --L2cachesz={2} --L2assoc={3} --L2MSHR={4} --Replacp={5} --MSIMESI={6} --Pref2={7}" '.format(
@@ -176,7 +175,7 @@ class testcase_memH_sweep_dirsweepB(SSTTestCase):
                     prefetch)
 
         # Run SST
-        self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
+        self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, mpi_out_files=mpioutfiles, timeout_sec=testtimeout, env={"OMP_EXE": ompapppath})
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE

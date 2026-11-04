@@ -72,7 +72,8 @@ public:
    )
 
    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-           {"memory", "Interface to the memory hierarchy (e.g., cache)", "SST::Interfaces::StandardMem" }
+           {"memory", "Interface to the memory hierarchy (e.g., cache)", "SST::Interfaces::StandardMem" },
+           {"reader", "Trace reader subcomponent", "SST::Prospero::ProsperoTraceReader" }
     )
 
 private:

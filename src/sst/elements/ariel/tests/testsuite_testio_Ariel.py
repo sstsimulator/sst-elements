@@ -145,17 +145,17 @@ class testcase_Ariel(SSTTestCase):
             ArielElementTestIOApp = ArielElementTestIOApp + ".arielinst"
 
         # Set the Path to the stream applications
-        os.environ["ARIEL_EXE"] = ArielElementTestIOApp
+        env = {"ARIEL_EXE": ArielElementTestIOApp}
         log_debug("ARIEL_EXE = {0}".format(ArielElementTestIOApp))
 
         libpath = os.environ.get("LD_LIBRARY_PATH")
         if libpath:
-            os.environ["LD_LIBRARY_PATH"] = ArielElementAPIDir + ":" + libpath
+            env["LD_LIBRARY_PATH"] = ArielElementAPIDir + ":" + libpath
         else:
-            os.environ["LD_LIBRARY_PATH"] = ArielElementAPIDir
+            env["LD_LIBRARY_PATH"] = ArielElementAPIDir
 
         # Set the frontend (epa or pin)
-        os.environ["ARIEL_TEST_FRONTEND"] = frontend
+        env["ARIEL_TEST_FRONTEND"] = frontend
 
         # Set the various file paths
         testDataFileName=("test_Ariel_{0}".format(testcase))
@@ -173,7 +173,7 @@ class testcase_Ariel(SSTTestCase):
 
         # Run SST in the tests directory
         self.run_sst(sdlfile, outfile, errfile, set_cwd=ArielElementTestIODir,
-                     mpi_out_files=mpioutfiles, timeout_sec=testtimeout, other_args=other_args)
+                     mpi_out_files=mpioutfiles, timeout_sec=testtimeout, other_args=other_args, env=env)
 
         testing_remove_component_warning_from_file(outfile)
 

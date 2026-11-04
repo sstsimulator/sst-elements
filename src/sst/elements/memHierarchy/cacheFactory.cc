@@ -67,6 +67,10 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
     maxRequestsPerCycle_        = params.find<int>("max_requests_per_cycle",-1);
     string packetSize           = params.find<std::string>("min_packet_size", "8B");
 
+    /* Snapshot configuration */
+    snapshot_dir_               = params.find<std::string>("snapshotDir", "");
+    snapshot_                   = params.find<std::string>("snapshot", "");
+
     try {
         UnitAlgebra packetSize_ua(packetSize);
 

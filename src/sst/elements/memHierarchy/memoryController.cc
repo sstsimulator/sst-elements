@@ -933,4 +933,6 @@ void MemController::serialize_order(SST::Core::Serialization::serializer& ser) {
     SST_SER(customCommandHandler_);
 
     SST_SER(outstandingEvents_);
+    SST_SER(backing_outscreen_);
+
 }

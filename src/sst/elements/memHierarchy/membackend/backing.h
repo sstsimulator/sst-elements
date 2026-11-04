@@ -67,55 +67,13 @@ class BackingMMAP : public Backing {
 public:
     BackingMMAP( std::string mmapfile, std::string infile, size_t size, size_t offset = 0 ) :
         Backing(), size_(size), offset_(offset), mmapfile_(mmapfile) {
-
-        // mmapfile = file to write out to, place in output dir *IF* not the same as infile
-        // infile = file to initialize from
-
-        int flags = MAP_SHARED;
-        int fd = -1;
-        if ( mmapfile != "" ) {
-            int fd_flags = O_RDWR | O_CREAT;
-            if (mmapfile != infile) {
-                fd_flags |= O_TRUNC; // Overwrite output file if it exists
-            }
-
-            fd = open(mmapfile.c_str(), fd_flags, S_IRUSR | S_IWUSR);
-            if (fd < 0) {
-                Output out("", 1, 0, Output::STDOUT);
-                out.output("Error: fd=%d, %s\n", fd, strerror(errno));
-                throw 1;
-            }
-            (void) !ftruncate(fd, size); // Extend file to needed size
-        } else {
-            flags |= MAP_ANON;
-        }
-
-        buffer_ = (uint8_t*)mmap(NULL, size, PROT_READ|PROT_WRITE, flags, fd, 0);
-
-        if ( mmapfile != "" ) {
-            close(fd);
-        }
-
-        if ( buffer_ == MAP_FAILED) {
-            throw 2;
-        }
-
-        if ( infile != "" && infile != mmapfile ) {
-            fd = open(infile.c_str(), O_RDONLY);
-            if (fd < 0) { throw 3; }
-
-            uint8_t* tmp_buffer = (uint8_t*)mmap(NULL, size, PROT_READ, flags, fd, 0);
-            close(fd);
-
-            if ( tmp_buffer == MAP_FAILED ) { throw 4; }
-
-            memcpy(buffer_, tmp_buffer, size);
-            munmap(tmp_buffer, size);
-        }
+        mapMemory(mmapfile, infile, size_);
     }
 
     ~BackingMMAP() {
-        munmap( buffer_, size_ );
+        if ( buffer_ ) {
+            munmap( buffer_, size_ );
+        }
     }
 
     void set( Addr addr, uint8_t value ) override {
@@ -179,81 +137,80 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Backing::serialize_order(ser);
-        SST_SER(buffer_);
         SST_SER(size_);
         SST_SER(offset_);
         SST_SER(mmapfile_);
 
-     /*   if ( ser.mode() == SST::Core::Serialization::serializer::PACK ) {
-            // If mmap is anonymous -> we need to write the whole thing to a file
-            // Register mmap filename with manifest under memHierarchy_backing_mmap_outfile
-
-            std::string outputfile = addFileToCheckpoint(getName() + "_backing_mmap", mmapfile_);
-            if ( mmapfile == "" ) {
-                // Copy buffer_ to outputfile
-            }
+        // Manually serialize buffer_ because the backing bytes must be restored
+        // into a recreated mmap region rather than a heap allocation.
+        switch ( ser.mode() ) {
+        case SST::Core::Serialization::serializer::SIZER:
+        case SST::Core::Serialization::serializer::PACK:
+            ser.raw(buffer_, size_);
+            break;
+        case SST::Core::Serialization::serializer::UNPACK:
+            // Recreate the mapping before restoring the serialized bytes.
+            mapMemory(mmapfile_, "", size_);
+            ser.raw(buffer_, size_);
+            break;
+        case SST::Core::Serialization::serializer::MAP:
+            break;
         }
-        if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
-        */
-            // get the file associated with memHierarchy_backing_mmap_outfile; use as infile
-            // create a new output file => use mmapfile if relative, otherwise?
-                    /*
-        mmap="" -> push buffer to a new file in cpt, reload from it into anon mapping
-        mmap!="", mmap != infile -> cp mmap file to new file in cpt, reload from it into a new file on restart
-        mmap == infile -> cp mmap file to new file in cpt, reload from it into a new file on restart
-        if mmap file == infile or mmap file is a relative path - need to make up a new name for restart
-        */
-       /*
-            int flags = MAP_SHARED;
-            int fd = -1;
-            if ( mmapfile_ != "" ) {
-                    int fd_flags = O_RDWR | O_CREAT;
-                    if (mmapfile != infile)
-                        fd_flags |= O_TRUNC; // Overwrite output file if it exists
-                    fd = open(mmapfile.c_str(), fd_flags, S_IRUSR | S_IWUSR);
-                    if (fd < 0) {
-                        Output out("", 1, 0, Output::STDOUT);
-                        out.output("Error: fd=%d, %s\n", fd, strerror(errno));
-                        throw 1;
-                    }
-                    (void) !ftruncate(fd, size); // Extend file to needed size
-                } else {
-                    flags |= MAP_ANON;
-                }
-
-                buffer_ = (uint8_t*)mmap(NULL, size, PROT_READ|PROT_WRITE, flags, fd, 0);
-
-                if ( mmapfile != "" ) {
-                    close(fd);
-                }
-
-                if ( buffer_ == MAP_FAILED) {
-                    throw 2;
-                }
-
-                if ( infile != "" && infile != mmapfile ) {
-                    fd = open(infile.c_str(), O_RDONLY);
-                    if (fd < 0) { throw 3; }
-
-                    uint8_t* tmp_buffer = (uint8_t*)mmap(NULL, size, PROT_READ, flags, fd, 0);
-                    close(fd);
-
-                    if ( tmp_buffer == MAP_FAILED ) { throw 4; }
-
-                    memcpy(buffer_, tmp_buffer, size);
-                    munmap(tmp_buffer, size);
-                }
-        }
-                */
-
-
     }
     ImplementSerializable(SST::MemHierarchy::Backend::BackingMMAP)
 
 private:
-    uint8_t* buffer_;
-    size_t size_;
-    size_t offset_;
+    void mapMemory(const std::string& mmapfile, const std::string& infile, size_t size) {
+        // mmapfile is the backing file to write to, if any.
+        // infile is an optional file used to initialize the mapping.
+
+        int flags = MAP_SHARED;
+        int fd = -1;
+        if ( mmapfile != "" ) {
+            int fd_flags = O_RDWR | O_CREAT;
+            if (mmapfile != infile) {
+                fd_flags |= O_TRUNC; // Overwrite output file if it exists
+            }
+
+            fd = open(mmapfile.c_str(), fd_flags, S_IRUSR | S_IWUSR);
+            if (fd < 0) {
+                Output out("", 1, 0, Output::STDOUT);
+                out.output("Error: fd=%d, %s\n", fd, strerror(errno));
+                throw 1;
+            }
+            (void) !ftruncate(fd, size);
+        } else {
+            flags |= MAP_ANON;
+        }
+
+        buffer_ = reinterpret_cast<uint8_t*>(mmap(NULL, size, PROT_READ|PROT_WRITE, flags, fd, 0));
+
+        if ( mmapfile != "" ) {
+            close(fd);
+        }
+
+        if ( buffer_ == MAP_FAILED ) {
+            buffer_ = nullptr;
+            throw 2;
+        }
+
+        if ( infile != "" && infile != mmapfile ) {
+            fd = open(infile.c_str(), O_RDONLY);
+            if (fd < 0) { throw 3; }
+
+            uint8_t* tmp_buffer = reinterpret_cast<uint8_t*>(mmap(NULL, size, PROT_READ, flags, fd, 0));
+            close(fd);
+
+            if ( tmp_buffer == MAP_FAILED ) { throw 4; }
+
+            memcpy(buffer_, tmp_buffer, size);
+            munmap(tmp_buffer, size);
+        }
+    }
+
+    uint8_t* buffer_ = nullptr;
+    size_t size_ = 0;
+    size_t offset_ = 0;
 
     // Needed for checkpoint/restart only
     std::string mmapfile_; // Name of output file
