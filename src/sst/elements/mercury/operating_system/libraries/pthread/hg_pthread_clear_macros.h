@@ -1,4 +1,4 @@
-// Copyright 2009-2025 NTESS. All rights reserved.
+// Copyright 2009-2026 NTESS. All rights reserved.
 // Undef system pthread macros so mercury's can be used.
 // If the macro guard is set, clear it so hg_pthread_macro.h can be re-included.
 // No include guard: this file is meant to be re-included (e.g. before each system header).
