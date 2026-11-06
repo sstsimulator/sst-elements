@@ -52,9 +52,14 @@ EPAFrontend::EPAFrontend(ComponentId_t id, Params& params, uint32_t cores,
     // Put together execute_args for fork
     setForkArguments();
     // If mpi, use mpi launcher. Otherwise launch instrumented app
-    app_name = (mpimode == 1) ? mpilauncher : executable;
+    //app_name = (mpimode == 1) ? mpilauncher : executable;
+    app_name = executable;
 
-//    output->verbose(CALL_INFO, 1, 0, "Processing application arguments...\n");
+    if (mpimode == 1) {
+        output->fatal(CALL_INFO, -1, "Error: Running the EPA frontend with MPI is currently not supported. The code needs to be adapted to use SST_MPI_Comm_spawn_multiple() to launch the app.\n");
+    }
+
+    //output->verbose(CALL_INFO, 1, 0, "Processing application arguments...\n");
 
 
     // Remember that the list of arguments must be NULL terminated for execution
@@ -75,7 +80,7 @@ int EPAFrontend::forkChildProcess(const char* app, char** args, std::map<std::st
     char* full_execute_line = (char*) malloc(sizeof(char) * 16384);
 
     memset(full_execute_line, 0, sizeof(char) * 16384);
-// TODO Why is no command appearing?
+    // TODO Why is no command appearing?
     while (NULL != args[next_arg_index]) {
         int copy_char_index = 0;
 
@@ -94,7 +99,6 @@ int EPAFrontend::forkChildProcess(const char* app, char** args, std::map<std::st
 
     output->verbose(CALL_INFO, 1, 0, "Executing command: %s\n", full_execute_line);
     free(full_execute_line);
-
 
     // Fork this binary, then exec to get around waiting for
     // child to exit.

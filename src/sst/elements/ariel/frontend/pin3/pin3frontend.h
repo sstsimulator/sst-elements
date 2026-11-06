@@ -84,6 +84,7 @@ class Pin3Frontend : public ArielFrontendCommon {
         int forkChildProcess(const char* app, char** args,
             std::map<std::string, std::string>& app_env,
             ariel_redirect_info_t redirect_info);
+        int forkPINChildMPI(char** args, std::map<std::string, std::string>& app_env, ariel_redirect_info_t redirect_info);
         virtual void setForkArguments();  // set execute_args
 
         // Other functions
