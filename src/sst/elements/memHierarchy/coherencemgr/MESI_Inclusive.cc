@@ -2153,7 +2153,7 @@ bool MESIInclusive::handleNULLCMD(MemEvent* event, bool in_mshr) {
         event_debuginfo_.verbose_line = line->getString();
     }
     if (evicted) {
-        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer());
+        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer(), event->getID());
         cache_array_->deallocate(line);
 
         if (oldAddr != newAddr) { /* Reallocating a line to a new address */
@@ -2275,7 +2275,7 @@ MemEventStatus MESIInclusive::processCacheMiss(MemEvent * event, SharedCacheLine
 SharedCacheLine * MESIInclusive::allocateLine(MemEvent * event, SharedCacheLine * line) {
     bool evicted = handleEviction(event->getBaseAddr(), line);
     if (evicted) {
-        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer());
+        notifyListenerOfEvict(line->getAddr(), line_size_, event->getInstructionPointer(), event->getID());
         cache_array_->replace(event->getBaseAddr(), line);
         if (mem_h_is_debug_event(event))
             printDebugAlloc(true, event->getBaseAddr(), "");
