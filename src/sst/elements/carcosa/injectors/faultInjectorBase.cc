@@ -54,7 +54,7 @@ FaultInjectorBase::eventSent(uintptr_t key, Event*& ev)
     if (!valid_installs_set) {
         out_->fatal(CALL_INFO_LONG, -1, "Valid installation directions not set -- did you forget to call setValidInstallation() in your constructor?\n");
     }
-    if (doInjection()){
+    if (doInjection(ev)){
 #ifdef __SST_DEBUG_OUTPUT__
         dbg_->debug(CALL_INFO_LONG, 3, 0, "Injection triggered.\n");
 #endif
@@ -77,7 +77,7 @@ FaultInjectorBase::interceptHandler(uintptr_t key, Event*& ev, bool& cancel)
     cancel = false;
     cancel_ = &cancel;
 
-    if (doInjection()){
+    if (doInjection(ev)){
 #ifdef __SST_DEBUG_OUTPUT__
         dbg_->debug(CALL_INFO_LONG, 3, 0, "Injection triggered.\n");
 #endif

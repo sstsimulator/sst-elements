@@ -146,6 +146,12 @@ private:
 protected:
 
     virtual bool doInjection();
+
+    /**
+     * Event-aware inject decision; default forwards to parameterless doInjection().
+     */
+    virtual bool doInjection(Event* ev) { (void)ev; return doInjection(); }
+
     virtual void executeFaults(Event*& ev);
 
     /**
