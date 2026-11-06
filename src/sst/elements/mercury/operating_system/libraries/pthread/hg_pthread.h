@@ -1,4 +1,4 @@
-// Copyright 2009-2025 NTESS. All rights reserved.
+// Copyright 2009-2026 NTESS. All rights reserved.
 //
 // Mercury simulated pthread API for use when building applications
 // for SST (simulator) with SST_HG_USE_MERCURY_PTHREAD defined.

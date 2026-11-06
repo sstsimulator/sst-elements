@@ -1,4 +1,4 @@
-// Copyright 2009-2025 NTESS. All rights reserved.
+// Copyright 2009-2026 NTESS. All rights reserved.
 // Map standard pthread names to mercury (HG_) implementation.
 // Guard allows re-inclusion after hg_pthread_clear_macros.h has cleared it.
 
