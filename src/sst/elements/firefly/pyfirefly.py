@@ -184,6 +184,72 @@ class SimpleMemoryNicConfiguration(BasicNicConfiguration):
         # pick up any parameters that just got defined
         self._subscribeToPlatformParamSet("nic")
 
+class StorageNicConfiguration(BasicNicConfiguration):
+    # NIC configuration for storage (I/O) nodes: enables the SimpleSSD
+    # storage-model subcomponent so receive-side NetworkIO traffic is timed
+    # through the SSD model instead of the raw DMA path. Compute-node NICs
+    # keep using BasicNicConfiguration so they don't carry an unused SSD.
+    def __init__(self):
+        BasicNicConfiguration.__init__(self)
+
+        self._declareParams("main", ["useSimpleSSD"])
+        self.addParam("useSimpleSSD", 1)
+        self._lockVariable("useSimpleSSD")
+
+        self._declareParamsWithUserPrefix(
+            "main",
+            "simpleSSD",
+            ["nSSDsPerNode", "queuesCountPerSSD",
+             "readBandwidthPerSSD_GBps", "writeBandwidthPerSSD_GBps",
+             "readOverheadLatency_ns", "writeOverheadLatency_ns",
+             "verboseLevel", "verboseMask"],
+            "simpleSSD."
+        )
+
+        # PR 6c: HadesStorageController publishes this NID's slot in the
+        # IoPool.<poolName> SharedArray that compute-side HadesNetworkIO
+        # subscribers consume.  Always enabled on storage NICs; per-NID
+        # poolName / storageRankInPool / poolSize / nid params are injected
+        # by IoNodeJob (see ember/pyember.py); poolName/poolSize are
+        # job-wide, while storageRankInPool depends on the NID.
+        self._declareParams("main", ["useStorageController"])
+        self.addParam("useStorageController", 1)
+        self._lockVariable("useStorageController")
+
+        self._declareParamsWithUserPrefix(
+            "main",
+            "storageController",
+            ["poolName", "storageRankInPool", "poolSize", "nid",
+             "verboseLevel", "verboseMask"],
+            "storageController."
+        )
+
+        # Set by IoNodeJob; consumed in build() below.
+        # _nid_map: dict {node_id -> storage_rank_in_pool}
+        self._declareClassVariables(["_pool_name", "_pool_size", "_nid_map"])
+        self._pool_name = None
+        self._pool_size = None
+        self._nid_map = None
+
+        self._subscribeToPlatformParamSet("nic")
+
+    def build(self, nID, num_vNics=1):
+        nic, slot_name = BasicNicConfiguration.build(self, nID, num_vNics)
+        if self._pool_name is not None:
+            if self._nid_map is None or nID not in self._nid_map:
+                # The job forgot to wire the rank map for this NID; refuse
+                # to publish into IoPool.<name> rather than corrupting slot 0.
+                raise RuntimeError(
+                    "StorageNicConfiguration: pool '%s' has no rank for NID %d "
+                    "(IoNodeJob.build must populate self.nic._nid_map)"
+                    % (self._pool_name, nID))
+            nic.addParam("storageController.poolName", self._pool_name)
+            nic.addParam("storageController.storageRankInPool",
+                         self._nid_map[nID])
+            nic.addParam("storageController.poolSize", self._pool_size)
+            nic.addParam("storageController.nid", nID)
+        return nic, slot_name
+
 class FireflyOS(TemplateBase):
     def __init__(self):
         TemplateBase.__init__(self)

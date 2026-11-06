@@ -40,6 +40,7 @@
 #include "memoryModel/detailedInterface.h"
 
 #include "storageModel/simpleSSD.h"
+#include "hadesStorageController.h"
 
 #define CALL_INFO_LAMBDA     __LINE__, __FILE__
 
@@ -134,6 +135,10 @@ public:
         { "useDetailed", "Use detailed compute model", "false"},
 
         { "useSimpleSSD", "Use simple SSD model for Network I/O simulations", "false"},
+
+        { "useStorageController", "Load firefly.HadesStorageController to publish "
+          "this NID into the IoPool.<poolName> SharedArray. Storage-side NICs "
+          "only; see pyfirefly.StorageNicConfiguration.", "false"},
     )
 
 	/* PARAMS
@@ -156,6 +161,11 @@ public:
         { "detailed_num_reads",                "total number of loads", "count", 1},
         { "detailed_num_writes",               "total number of stores", "count", 1},
         { "detailed_req_latency",              "Running total of all latency for all requests", "count", 1},
+
+        { "networkIoReadTargetNid",   "target NID of each NetworkIO READ dispatch",     "nid", 1},
+        { "networkIoWriteTargetNid",  "target NID of each NetworkIO WRITE dispatch",    "nid", 1},
+        { "networkIoReadLatency_ns",  "end-to-end NetworkIO READ latency (ns)",         "ns",  1},
+        { "networkIoWriteLatency_ns", "end-to-end NetworkIO WRITE latency (ns)",        "ns",  1},
     )
 
     SST_ELI_DOCUMENT_PORTS(
@@ -225,7 +235,21 @@ private:
     };
 
     struct __attribute__ ((packed)) NetworkIOMsgHdr {
-        enum Op { Read, Write };
+        // H4: explicit ACK type tag.  ACK was previously distinguished from
+        // Read/Write by an exact 5-byte payload size + a leading bool flag,
+        // which is fragile (any 5-byte payload starting with a true byte
+        // would be misclassified).  By giving Ack its own enum value the
+        // receive-side dispatcher (NetworkIOStream::ctor) can branch on
+        // NetworkIOMsgHdr.op unambiguously for every packet kind.
+        // PR 6d: AckDeny is a permit-deny ACK returned by the storage NIC
+        // receive-path when the sender NID is not in the pool's permit set.
+        // No poolId on wire: each storage NIC serves exactly one pool (v1)
+        // and consults its own permit set keyed by sender NID alone.
+        // PR 9: Open/OpenAck/Close/CloseAck extend the op set for the
+        // file-handle API. They fit alongside Read/Write/Ack/AckDeny in
+        // the existing 1-byte enum (8 values << 256). Wire payload after
+        // the netHdr is op-specific (see nicNetworkIOSendEntry.h).
+        enum Op { Read, Write, Ack, AckDeny, Open, OpenAck, Close, CloseAck };
         unsigned char op;
     };
 
@@ -381,6 +405,12 @@ public:
     Statistic<uint64_t>* m_hostStall;
     Statistic<uint64_t>* m_recvStreamPending;
     Statistic<uint64_t>* m_sendStreamPending;
+
+	// NetworkIO stats live on Nic so Nic::NetworkIO (inner class) accesses directly.
+	Statistic<uint64_t>* m_statNetworkIoReadTargetNid;
+	Statistic<uint64_t>* m_statNetworkIoWriteTargetNid;
+	Statistic<uint64_t>* m_statNetworkIoReadLatency;
+	Statistic<uint64_t>* m_statNetworkIoWriteLatency;
 
     void detailedMemOp( Thornhill::DetailedCompute* detailed,
             std::vector<MemOp>& vec, std::string op, Callback callback );
@@ -685,10 +715,15 @@ struct X {
     size_t m_shmemPutThresholdLength;
 
   private:
-    SimpleSSD* m_simpleSSDPtr;
+    SimpleSSD*               m_simpleSSDPtr           = nullptr;
+    HadesStorageController*  m_storageControllerPtr   = nullptr;
 
   public:
     SimpleSSD* getSimpleSSDPtr() { return m_simpleSSDPtr; }
+    HadesStorageController* getStorageControllerPtr() { return m_storageControllerPtr; }
+
+    bool networkIOPoolEnabled() const { return m_storageControllerPtr != nullptr; }
+    bool permittedSender( int srcNid ) const;
 
 };
 
