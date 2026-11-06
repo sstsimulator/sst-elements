@@ -11,7 +11,7 @@ class JellyfishTopo(HPC_topo):
             super(JellyfishTopo, self).__init__("jellyfish")
             degree=args[1]
             num_vertices=args[0]
-            self.nx_graph = nx.random_regular_graph(degree, num_vertices, seed=0)
+            self.nx_graph = nx.random_regular_graph(degree, num_vertices, seed=10)
 
         elif len(args) == 3 and isinstance(args[0], int) and isinstance(args[1], int) and isinstance(args[2], int):
             super(JellyfishTopo, self).__init__("jellyfish")
