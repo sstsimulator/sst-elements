@@ -68,8 +68,13 @@ GlobalVariableContext::append(const int size, const char*  /*name*/)
 {
   int offset = stackOffset;
 
-  int rem = size % 4;
-  int offsetIncrement = rem ? (size + (4-rem)) : size; //align on 32-bits
+  // Keep every global at 16-byte alignment (alignof(max_align_t) on x86-64).
+  // The segment base comes from new char[], which is 16-byte aligned, and
+  // compilers emit aligned SSE stores (movaps) for 16-byte-aligned types; with
+  // only 4-byte packing those faulted (e.g. MVAPICH2 2.3.7 MPID_Request_direct).
+  const int align = 16;
+  int rem = size % align;
+  int offsetIncrement = rem ? (size + (align-rem)) : size;
 
   bool realloc = false;
   while ((offsetIncrement + stackOffset) > allocSize_){
