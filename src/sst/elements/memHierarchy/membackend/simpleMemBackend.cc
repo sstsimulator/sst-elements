@@ -49,3 +49,11 @@ bool SimpleMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned numB
     return true;
 }
 
+bool SimpleMemory::issueCustomRequest(ReqId id, Interfaces::StandardMem::CustomData* UNUSED(data)) {
+#ifdef __SST_DEBUG_OUTPUT__
+    output->debug(_L10_, "%s: Issued custom transaction id %" PRIx64 " (%s)\n", getName().c_str(), id, data->getString().c_str());
+#endif
+    self_link->send(1, new MemCtrlEvent(id));
+    return true;
+}
+

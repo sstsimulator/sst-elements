@@ -111,10 +111,7 @@ void Bus::sendSingleEvent(SST::Event* ev) {
     }
 #endif
     SST::Link* dstLink = lookupNode(event->getDst());
-    MemEventBase* forwardEvent = event->clone();
-    dstLink->send(forwardEvent);
-
-    delete event;
+    dstLink->send(event);
 }
 
 /*----------------------------------------

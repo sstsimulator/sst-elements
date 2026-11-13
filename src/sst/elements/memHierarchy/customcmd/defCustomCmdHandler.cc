@@ -38,14 +38,11 @@ MemEventBase* DefCustomCmdMemHandler::finish(MemEventBase *ev, uint32_t flags){
     if(ev->queryFlag(MemEventBase::F_NORESPONSE)||
          ((flags & MemEventBase::F_NORESPONSE)>0)){
         // posted request
-        // We need to delete the CustomData structure
-        CustomMemEvent * cme = static_cast<CustomMemEvent*>(ev);
-        if (cme->getCustomData() != nullptr)
-            delete cme->getCustomData();
-        cme->setCustomData(nullptr); // Just in case someone attempts to access it...
+        // The CustomData structure is owned by the event and deleted with it
         return nullptr;
     }
 
+    // The response takes ownership of the event's CustomData structure
     MemEventBase *MEB = ev->makeResponse();
     return MEB;
 }

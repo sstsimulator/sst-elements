@@ -172,6 +172,7 @@ EXTRA_DIST = \
 	tests/test_coherence_4core_5level.py \
 	tests/test_coherence_none.py \
 	tests/test_backing.py \
+	tests/test_customcmd.py \
 	tests/testBackendChaining.py \
 	tests/testBackendDelayBuffer.py \
 	tests/testBackendGoblinHMC.py \

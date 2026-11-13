@@ -266,6 +266,11 @@ StandardMem::Request* StandardInterface::recvUntimedData() {
 
 /* This could be a request or a response. */
 void StandardInterface::send(StandardMem::Request* req) {
+    /* Query the request before converting it; converting a CustomReq transfers its CustomData to the event */
+    bool needs_response = req->needsResponse();
+#ifdef __SST_DEBUG_OUTPUT__
+    std::string req_string = req->getString();
+#endif
     MemEventBase *me = static_cast<MemEventBase*>(req->convert(converter_));
     if ( me == nullptr ) {
 #ifdef __SST_DEBUG_OUTPUT__
@@ -275,7 +280,7 @@ void StandardInterface::send(StandardMem::Request* req) {
         return;
     }
 #ifdef __SST_DEBUG_OUTPUT__
-      debug_.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Convert   EventID: <%" PRIu64", %" PRIu32 "> (%s)\n", getCurrentSimCycle(), getName().c_str(), me->getID().first, me->getID().second, req->getString().c_str());
+      debug_.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Convert   EventID: <%" PRIu64", %" PRIu32 "> (%s)\n", getCurrentSimCycle(), getName().c_str(), me->getID().first, me->getID().second, req_string.c_str());
       if (me->getCmd() == Command::Write) {
         MemEvent* mev = static_cast<MemEvent*>(me);
         debug_.debug(_L11_, "V: %-40" PRIu64 " %-20s  WRITE         0x%-16" PRIx64 "              B: %-3" PRIu32 "   %s\n", getCurrentSimCycle(), getName().c_str(), mev->getAddr(), mev->getSize(), getDataString(&(mev->getPayload())).c_str() );
@@ -283,7 +288,7 @@ void StandardInterface::send(StandardMem::Request* req) {
     fflush(stdout);
 #endif
 
-    if (req->needsResponse())
+    if (needs_response)
         requests_[me->getID()] = std::make_pair(req,me->getCmd());   /* Save this request so we can use it when a response is returned */
     else
         delete req;
@@ -302,6 +307,7 @@ void StandardInterface::handleTLBResponse(uintptr_t request_id, Addr physical_ad
     if( physical_address == std::numeric_limits<uint64_t>::max() ) { // Error condition, no translation
         auto resp = req->makeResponse();
         resp->setFail();
+        delete req;
         (*recv_handler_)(resp); // Return fail indicator to CPU
         return;
     }
@@ -767,8 +773,10 @@ SST::Event* StandardInterface::MemEventTLBResponseConverter::convert(StandardMem
 }
 
 Event* StandardInterface::MemEventConverter::convert(StandardMem::CustomReq* req) {
-    CustomMemEvent* creq = new CustomMemEvent(iface->getName(), Command::CustomReq, req->data);
-    if (!req->needsResponse())
+    bool needs_response = req->needsResponse();
+    /* Ownership of the CustomData object is transferred from the request to the event */
+    CustomMemEvent* creq = new CustomMemEvent(iface->getName(), Command::CustomReq, req->releaseData());
+    if (!needs_response)
         creq->setFlag(MemEventBase::F_NORESPONSE);
 
     return creq;
@@ -982,12 +990,12 @@ StandardMem::Request* StandardInterface::convertResponseAckMove(StandardMem::Req
 }
 
 StandardMem::Request* StandardInterface::convertResponseCustomResp(StandardMem::Request* req, MemEventBase* meb) {
-    StandardMem::Request* resp = req->needsResponse() ? req->makeResponse() : nullptr;
-    StandardMem::CustomResp* cresp = static_cast<StandardMem::CustomResp*>(resp);
-    if (cresp) {
-        cresp->data = static_cast<CustomMemEvent*>(meb)->getCustomData();
-    }
-    return cresp;
+    /* The request's CustomData was transferred to the outgoing event when the request was sent and the
+     * request was only saved because it needed a response. Ownership of the response's CustomData
+     * object is transferred from the event to the CustomResp. */
+    StandardMem::CustomReq* creq = static_cast<StandardMem::CustomReq*>(req);
+    return new StandardMem::CustomResp(creq->getID(), static_cast<CustomMemEvent*>(meb)->releaseCustomData(),
+        creq->getAllFlags(), creq->iPtr, creq->tid);
 }
 
 

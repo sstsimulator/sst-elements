@@ -89,6 +89,9 @@ public:
      * The handler should return a CustomData* which will be sent to the memBackendConvertor.
      * The memBackendConvertor will then issue the unmodified CustomCmdReq* to the backend.
      * CustomCmdReq is intended as a base class for custom commands to define as needed.
+     * The memBackendConvertor and backend do not take ownership of the returned CustomData*.
+     * If the handler returns the CustomData owned by ev (see CustomMemEvent), it remains owned by ev.
+     * If the handler returns a different CustomData object, the handler is responsible for deleting it.
      */
     virtual Interfaces::StandardMem::CustomData* ready(MemEventBase* ev) =0;
 
@@ -98,6 +101,8 @@ public:
      *  writeData(): Update the backing store if this custom command wrote data
      *  readData(): Read the backing store if the response needs data
      *  translateLocalT
+     * The memController deletes ev after this function returns, which also deletes any CustomData
+     * still owned by ev. CustomMemEvent::makeResponse() transfers ev's CustomData to the response.
      */
     virtual MemEventBase* finish(MemEventBase *ev, uint32_t flags) =0;
 

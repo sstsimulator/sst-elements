@@ -26,7 +26,7 @@ class SimpleMemory : public SimpleMemBackend {
 public:
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT(SimpleMemory, "memHierarchy", "simpleMem", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Basic constant-access-time memory timing model", SST::MemHierarchy::SimpleMemBackend)
+            "Basic constant-access-time memory timing model. Custom requests are supported and complete with the same latency.", SST::MemHierarchy::SimpleMemBackend)
 
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
@@ -35,6 +35,8 @@ public:
 /* Begin class definition */
     SimpleMemory(ComponentId_t id, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned ) override;
+    /* Custom requests are completed after the same constant latency as other requests */
+    bool issueCustomRequest(ReqId, Interfaces::StandardMem::CustomData*) override;
     virtual bool isClocked() override { return false; }
 
     // Serialization
