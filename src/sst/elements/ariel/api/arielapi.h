@@ -48,6 +48,13 @@ uint64_t ariel_cycles();
 /* Trigger the simulation to output statistics */
 void ariel_output_stats();
 
+/* Trigger the simulation to output statistics along with a region name.
+ * This interface may be changed or removed in the future if named
+ * regions are added to sst-core.
+ */
+void ariel_output_stats_begin_region(const char *name);
+void ariel_output_stats_end_region(const char *name);
+
 /* Control which memory pool (level) the next 'count' allocations encountered should map to
  *
  */

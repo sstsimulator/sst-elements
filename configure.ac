@@ -54,8 +54,6 @@ LTDL_INIT([recursive])
 
 AC_CACHE_SAVE
 
-SST_CHECK_ARIEL_MPI([], [AC_MSG_ERROR([Can't enable Ariel MPI])])
-
 SST_CORE_CHECK_INSTALL()
 
 # -g1 by default, -g if SST-Core uses full debug symbols or --enable-debug-symbols
