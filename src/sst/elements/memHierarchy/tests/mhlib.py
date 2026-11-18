@@ -44,7 +44,6 @@ componentlist = (
     "memHierarchy.extMemBackendConvertor",
     "memHierarchy.fifoTransactionQ",
     "memHierarchy.flagMemBackendConvertor",
-    "memHierarchy.goblinHMCSim",
     "memHierarchy.hash.linear",
     "memHierarchy.hash.none",
     "memHierarchy.hash.xor",

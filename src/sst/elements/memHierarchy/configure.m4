@@ -11,9 +11,6 @@ AC_DEFUN([SST_memHierarchy_CONFIG], [
   # Use global Ramulator2 check
   SST_CHECK_RAMULATOR2([],[],[AC_MSG_ERROR([Ramulator2 requested but could not be found])])
 
-  # Use GOBLIN HMC Sim
-  SST_CHECK_GOBLIN_HMCSIM([],[],[AC_MSG_ERROR([GOBLIN HMC Sim requested but could not be found])])
-
   # Use LIBZ
   SST_CHECK_LIBZ()
 

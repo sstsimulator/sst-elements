@@ -69,23 +69,6 @@ class testcase_memHierarchy_memHA(SSTTestCase):
     def test_memHA_CoherenceDomains(self):
         self.memHA_Template("CoherenceDomains")
 
-    @skip_on_sstsimulator_conf_empty_str("GOBLIN_HMCSIM", "LIBDIR", "GOBLIN_HMCSIM is not included as part of this build")
-    @categorize("nightly")
-    def test_memHA_BackendGoblinHMC(self):
-        self.memHA_Template("BackendGoblinHMC", testtimeout=400)
-
-    @skip_on_sstsimulator_conf_empty_str("GOBLIN_HMCSIM", "LIBDIR", "GOBLIN_HMCSIM is not included as part of this build")
-    def test_memHA_CustomCmdGoblin_1(self):
-        self.memHA_Template("CustomCmdGoblin_1")
-
-    @skip_on_sstsimulator_conf_empty_str("GOBLIN_HMCSIM", "LIBDIR", "GOBLIN_HMCSIM is not included as part of this build")
-    def test_memHA_CustomCmdGoblin_2(self):
-        self.memHA_Template("CustomCmdGoblin_2")
-
-    @skip_on_sstsimulator_conf_empty_str("GOBLIN_HMCSIM", "LIBDIR", "GOBLIN_HMCSIM is not included as part of this build")
-    def test_memHA_CustomCmdGoblin_3(self):
-        self.memHA_Template("CustomCmdGoblin_3")
-
     @skip_on_sstsimulator_conf_empty_str("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
     def test_memHierarchy_BackendRamulator_1(self):
         self.memHA_Template("BackendRamulator_1")

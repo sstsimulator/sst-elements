@@ -29,7 +29,6 @@ wait
 echo "Backend..."
 sst testBackendChaining.py > refFiles/test_memHA_BackendChaining.out &
 sst testBackendDelayBuffer.py > refFiles/test_memHA_BackendDelayBuffer.out &
-sst testBackendGoblinHMC.py > refFiles/test_memHA_BackendGoblinHMC.out &
 sst testBackendPagedMulti.py > refFiles/test_memHA_BackendPagedMulti.out &
 sst testBackendReorderRow.py > refFiles/test_memHA_BackendReorderRow.out &
 sst testBackendReorderSimple.py > refFiles/test_memHA_BackendReorderSimple.out &
@@ -46,7 +45,6 @@ wait
 echo "MC..."
 sst -n2 testBackendChaining.py > refFiles/test_memHA_BackendChaining_MC.out &
 sst -n2 testBackendDelayBuffer.py > refFiles/test_memHA_BackendDelayBuffer_MC.out &
-sst -n2 testBackendGoblinHMC.py > refFiles/test_memHA_BackendGoblinHMC_MC.out &
 sst -n2 testBackendPagedMulti.py > refFiles/test_memHA_BackendPagedMulti_MC.out &
 sst -n2 testBackendReorderRow.py > refFiles/test_memHA_BackendReorderRow_MC.out &
 sst -n2 testBackendReorderSimple.py > refFiles/test_memHA_BackendReorderSimple_MC.out &
@@ -57,9 +55,6 @@ wait
 
 # Misc tests
 echo "Misc..."
-sst testCustomCmdGoblin-1.py > refFiles/test_memHA_CustomCmdGoblin_1.out &
-sst testCustomCmdGoblin-2.py > refFiles/test_memHA_CustomCmdGoblin_2.out &
-sst testCustomCmdGoblin-3.py > refFiles/test_memHA_CustomCmdGoblin_3.out &
 sst testDistributedCaches.py > refFiles/test_memHA_DistributedCaches.out &
 sst testFlushes.py > refFiles/test_memHA_Flushes.out &
 sst testFlushes-2.py > refFiles/test_memHA_Flushes_2.out &
@@ -73,9 +68,6 @@ wait
 
 # Misc multithread
 echo "MC..."
-sst -n2 testCustomCmdGoblin-1.py > refFiles/test_memHA_CustomCmdGoblin_1_MC.out &
-sst -n2 testCustomCmdGoblin-2.py > refFiles/test_memHA_CustomCmdGoblin_2_MC.out &
-sst -n2 testCustomCmdGoblin-3.py > refFiles/test_memHA_CustomCmdGoblin_3_MC.out &
 sst -n2 testDistributedCaches.py > refFiles/test_memHA_DistributedCaches_MC.out &
 sst -n2 testFlushes.py > refFiles/test_memHA_Flushes_MC.out &
 sst -n2 testFlushes-2.py > refFiles/test_memHA_Flushes_2_MC.out &
