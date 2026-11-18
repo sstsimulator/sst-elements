@@ -152,7 +152,6 @@ EXTRA_DIST = \
 	Sieve/tests/ompsievetest.c \
 	Sieve/tests/sieve-test.py \
 	Sieve/tests/refFiles/test_memHSieve.out \
-	tests/miranda.cfg \
 	tests/sdl2-1.py \
 	tests/sdl-2.py \
 	tests/sdl3-1.py \
@@ -174,7 +173,6 @@ EXTRA_DIST = \
 	tests/test_backing.py \
 	tests/testBackendChaining.py \
 	tests/testBackendDelayBuffer.py \
-	tests/testBackendGoblinHMC.py \
 	tests/testBackendRamulator-1.py \
 	tests/testBackendRamulator-2.py \
 	tests/testBackendRamulator2.py \
@@ -188,9 +186,6 @@ EXTRA_DIST = \
 	tests/testBackendTimingDRAM-4.py \
 	tests/testBackendVaultSim.py \
 	tests/testCoherenceDomains.py \
-	tests/testCustomCmdGoblin-1.py \
-	tests/testCustomCmdGoblin-2.py \
-	tests/testCustomCmdGoblin-3.py \
 	tests/testDistributedCaches.py \
 	tests/testFlushes.py \
 	tests/testFlushes-2.py \
@@ -217,11 +212,9 @@ EXTRA_DIST = \
 	tests/testStdMem-mmio3.py \
 	tests/ramulator-ddr3.cfg \
 	tests/ramulator2-ddr4.cfg \
-	tests/utils.py \
 	tests/mhlib.py \
 	tests/refFiles/test_memHA_BackendChaining.out \
 	tests/refFiles/test_memHA_BackendDelayBuffer.out \
-	tests/refFiles/test_memHA_BackendGoblinHMC.out \
 	tests/refFiles/test_memHA_BackendRamulator_1.out \
 	tests/refFiles/test_memHA_BackendRamulator_2.out \
 	tests/refFiles/test_memHA_BackendRamulator2.out \
@@ -235,9 +228,6 @@ EXTRA_DIST = \
 	tests/refFiles/test_memHA_BackendTimingDRAM_4.out \
 	tests/refFiles/test_memHA_BackendVaultSim.out \
 	tests/refFiles/test_memHA_CoherenceDomains.out \
-	tests/refFiles/test_memHA_CustomCmdGoblin_1.out \
-	tests/refFiles/test_memHA_CustomCmdGoblin_2.out \
-	tests/refFiles/test_memHA_CustomCmdGoblin_3.out \
 	tests/refFiles/test_memHA_DistributedCaches.out \
 	tests/refFiles/test_memHA_Flushes.out \
 	tests/refFiles/test_memHA_Flushes_2.out \
@@ -438,22 +428,10 @@ libmemHierarchy_la_LIBADD += $(LIBZ_LIB)
 AM_CPPFLAGS += $(LIBZ_CPPFLAGS)
 endif
 
-if USE_GOBLIN_HMCSIM
-libmemHierarchy_la_SOURCES += \
-	membackend/goblinHMCBackend.cc \
-	membackend/goblinHMCBackend.h
-nobase_sst_HEADERS += membackend/goblinHMCBackend.h
-libmemHierarchy_la_LDFLAGS += $(GOBLIN_HMCSIM_LDFLAGS)
-libmemHierarchy_la_LIBADD += $(GOBLIN_HMCSIM_LIB)
-AM_CPPFLAGS += $(GOBLIN_HMCSIM_CPPFLAGS) -DHAVE_GOBLIN_HMCSIM
-endif
-
 AM_CPPFLAGS += $(HMC_FLAG)
 
 install-exec-hook:
-	$(SST_REGISTER_TOOL) GOBLIN_HMCSIM LIBDIR=$(GOBLIN_HMCSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) RAMULATOR LIBDIR=$(RAMULATOR_LIBDIR)
 	$(SST_REGISTER_TOOL) RAMULATOR2 LIBDIR=$(RAMULATOR2_LIBDIR)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     memHierarchy=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      memHierarchy=$(abs_srcdir)/tests
-
