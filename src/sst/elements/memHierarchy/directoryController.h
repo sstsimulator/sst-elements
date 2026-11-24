@@ -67,6 +67,7 @@ public:
             {"interleave_step",         "Distance between interleaved chunks. E.g., to interleave 8B chunks among 3 directories, set size=8B, step=24B", "0B"},
             {"node",					"Node number in multinode environment"},
             {"snapshotDir",             "(string) Directory for snapshot output files. Leave empty to disable.", ""},
+            {"snapshotIndex",           "(uint) Snapshot index to load from when snapshot='load'. Uses subdirectory snap_<index>.", "0"},
             {"snapshot",                "(string) Snapshot mode. Options: ''[disabled], 'save'[write directory state at finish], 'load'[restore directory state at setup]", ""},
             /* Old parameters - deprecated or moved */
             {"network_bw",                  "MOVED. Now a member of the MemNIC subcomponent.", "80GiB/s"}, // Remove SST 9.0
@@ -487,6 +488,7 @@ private:
 
     // Snapshot configuration
     std::string snapshot_dir_;
+    uint32_t snapshot_index_ = 0;
     std::string snapshot_;
 };
 

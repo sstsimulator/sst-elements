@@ -364,6 +364,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     flush_state_ = FlushState::Ready;
 
     snapshot_dir_ = params.find<std::string>("snapshotDir", "");
+    snapshot_index_ = params.find<uint32_t>("snapshotIndex", 0);
     snapshot_ = params.find<std::string>("snapshot", "");
 }
 
@@ -883,7 +884,8 @@ void DirectoryController::finish(void){
 
 void DirectoryController::setup(void){
     if (snapshot_ == "load" && !snapshot_dir_.empty()) {
-        std::string filename = snapshot_dir_ + "/" + getName();
+        std::string actualDir = snapshot_dir_ + "/snap_" + std::to_string(snapshot_index_) + "/";
+        std::string filename = actualDir + getName();
         FILE* fp = fopen(filename.c_str(), "r");
         if (!fp) {
             out.fatal(CALL_INFO, -1, "Failed to open directory snapshot for loading: %s\n", filename.c_str());
