@@ -77,6 +77,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
     snapshot_dir_ = params.find<std::string>("snapshotDir", "");
     snapshot_index_ = params.find<uint32_t>("snapshotIndex", 0);
+    std::string snapshot_mode = params.find<std::string>("snapshot", "");
 
     bool initBacking = params.find<bool>("backing_init_zero", false);
     // Debug address
@@ -293,7 +294,17 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
     /* Create the backing store */
     std::string infile = params.find<std::string>("backing_in_file", "");
+    const bool has_user_backing_in = !infile.empty();
     backing_outfile_ = params.find<std::string>("backing_out_file", "", found);
+    const bool has_user_backing_out = found && !backing_outfile_.empty();
+
+    if (snapshot_mode == "load" && !snapshot_dir_.empty() && !has_user_backing_in) {
+        infile = snapshot_dir_ + "/snap_" + std::to_string(snapshot_index_) + "/" + getName() + ".out";
+    }
+
+    if (snapshot_mode == "save" && !snapshot_dir_.empty() && !has_user_backing_out) {
+        backing_outfile_ = snapshot_dir_ + "/" + getName() + ".out";
+    }
 
     if (backingType == "mmap") {
         if (!found) { // memory_file deprecated in SST 15, remove SST 16
