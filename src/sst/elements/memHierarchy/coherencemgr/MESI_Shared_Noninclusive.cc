@@ -3849,6 +3849,42 @@ void MESISharNoninclusive::snapshotCache(const std::string& dir, const std::stri
     fclose(fp);
 }
 
+void MESISharNoninclusive::snapshotLoadCache(const std::string& dir, const std::string& cacheName) {
+    std::string filename = dir + "/" + cacheName;
+    FILE* fp = fopen(filename.c_str(), "r");
+    if (!fp) {
+        output_->fatal(CALL_INFO, -1, "Failed to open snapshot file for loading: %s\n", filename.c_str());
+    }
+    char buf[512];
+    /* Skip "# Cache Snapshot: <name>" */
+    if (!fgets(buf, sizeof(buf), fp)) {
+        output_->fatal(CALL_INFO, -1, "Failed to read snapshot header from: %s\n", filename.c_str());
+    }
+    /* Skip "# Directory Array" */
+    if (!fgets(buf, sizeof(buf), fp)) {
+        output_->fatal(CALL_INFO, -1, "Failed to read directory array header from: %s\n", filename.c_str());
+    }
+    dir_array_->snapshotLoadFromFile(fp);
+    /* Skip "# Data Array" */
+    if (!fgets(buf, sizeof(buf), fp)) {
+        output_->fatal(CALL_INFO, -1, "Failed to read data array header from: %s\n", filename.c_str());
+    }
+    data_array_->snapshotLoadFromFile(fp);
+    fclose(fp);
+
+    /* Link each loaded DataLine to its corresponding DirectoryLine.
+     * snapshotLoadFromFile sets addr and data but cannot set the tag
+     * pointer because it has no access to the directory array. */
+    for (auto it : *data_array_) {
+        if (it->getTag() == nullptr && it->getAddr() != std::numeric_limits<uint64_t>::max()) {
+            DirectoryLine* tag = dir_array_->lookup(it->getAddr(), false);
+            if (tag) {
+                it->setTag(tag);
+            }
+        }
+    }
+}
+
 void MESISharNoninclusive::recordLatency(Command cmd, int type, uint64_t latency) {
     if (type == -1)
         return;

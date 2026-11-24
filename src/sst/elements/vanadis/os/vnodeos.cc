@@ -19,6 +19,7 @@
 
 #include <math.h>
 #include <functional>
+#include <sys/stat.h>
 
 #include "os/vnodeos.h"
 #include "vanadisDbgFlags.h"
@@ -32,6 +33,7 @@
 #include "os/vdumpregsreq.h"
 #include "utils.h"
 #include "sst/elements/mmu/utils.h"
+#include "sst/elements/memHierarchy/snapshotCustomData.h"
 
 using namespace SST::Vanadis;
 
@@ -50,6 +52,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
     free(output_prefix);
 
     snapshot_dir_ = params.find<std::string>("snapshotDir", "");
+    snapshot_index_ = params.find<uint32_t>("snapshotIndex", 0);
     auto tmp = params.find<std::string>("snapshot", "");
     if ( ! tmp.empty() ) {
         assert( ! snapshot_dir_.empty() );
@@ -317,10 +320,13 @@ VanadisNodeOSComponent::snapshot( std::string dir )
     }
 
     fprintf(fp,"avail_hw_threads_.size() %zu\n",avail_hw_threads_.size());
-    while ( !avail_hw_threads_.empty() ) {
-        auto x = avail_hw_threads_.front();
+    // Snapshotting must not consume the live queue because mid-simulation
+    // snapshots resume execution immediately after saving state.
+    auto avail_hw_threads = avail_hw_threads_;
+    while ( !avail_hw_threads.empty() ) {
+        auto x = avail_hw_threads.front();
         fprintf(fp,"core: %d, hw_thread: %d\n",x->core,x->hw_thread);
-        avail_hw_threads_.pop();
+        avail_hw_threads.pop();
     }
 
     fprintf(fp,"process_debug_level_: %" PRIu32 "\n",process_debug_level_);
@@ -340,14 +346,16 @@ int VanadisNodeOSComponent::snapshotLoad( std::string dir )
 {
     size_t size;
     int process_number = 0;
+    
+    std::string actualDir = dir + "/snap_" + std::to_string(snapshot_index_) + "/";
     std::stringstream filename;
-    filename << snapshot_dir_ << "/" << getName();
+    filename << actualDir << getName();
     output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"Snapshot component `%s` %s\n",getName().c_str(), filename.str().c_str());
     auto fp = fopen(filename.str().c_str(),"r");
     assert(fp);
 
-    mmu_->snapshotLoad( dir );
-    phys_mem_mgr_->snapshotLoad( output_, dir );
+    mmu_->snapshotLoad( actualDir );
+    phys_mem_mgr_->snapshotLoad( output_, actualDir );
 
     // load ELF map
     assert( 1 == fscanf(fp,"elf_map_.size() %zu\n",&size) );
@@ -508,12 +516,7 @@ void VanadisNodeOSComponent::handleIncomingMemoryCallback(StandardMem::Request* 
                 output_->fatal(CALL_INFO, -1, "Error - received StandardMem response that does not match PageWrite request\n");
             }
         } else {
-//            output_->fatal(CALL_INFO, -1, "Error - received StandardMem response that does not belong to a core\n");
-            flush_pages_.pop_front();
-            if ( flush_pages_.empty() ) {
-                primaryComponentOKToEndSim();
-            }
-
+            output_->fatal(CALL_INFO, -1, "Error - received StandardMem response that does not belong to a core\n");
         }
     } else if (lookup_result != mem_resp_map_.end()) {
         handleIncomingMemory( lookup_result->second, ev );
@@ -622,33 +625,20 @@ VanadisNodeOSComponent::handleIncomingSyscallEvent(SST::Event* ev) {
 
             VanadisSnapshottResp* resp = dynamic_cast< VanadisSnapshottResp*>(ev);
             if ( nullptr != resp ) {
-                output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"snapshot \n");
-             //   primaryComponentOKToEndSim();
+                output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"snapshot response from core\n");
 
-                flush_pages_.push_back( 0x2bc0 );
-                flush_pages_.push_back( 0x163c0 );
-                flush_pages_.push_back( 0x16400 );
-                flush_pages_.push_back( 0x90c0 );
-                flush_pages_.push_back( 0x2c80 );
-                flush_pages_.push_back( 0x2c00 );
-                flush_pages_.push_back( 0x1b00 );
+                // Write OS state into snap_N/ subdirectory
+                std::string snapDir = snapshot_dir_ + "/snap_" + std::to_string(snapshot_count_);
+                mkdir(snapDir.c_str(), 0755);
+                snapshot(snapDir);
 
-                flush_pages_.push_back( 0x1b000 );
-                flush_pages_.push_back( 0x2b80 );
-                flush_pages_.push_back( 0x2980 );
-                flush_pages_.push_back( 0x2a00 );
-                flush_pages_.push_back( 0x2940 );
-                flush_pages_.push_back( 0x2900 );
-                flush_pages_.push_back( 0x3f80 );
-                flush_pages_.push_back( 0x2800 );
-                flush_pages_.push_back( 0x29c0 );
-                flush_pages_.push_back( 0x28c0 );
+                // Send snapshot request into the memory hierarchy via CustomReq.
+                // The L1 cache intercepts this and injects a SnapshotAll MemEvent.
+                StandardMem::Request* req = new SST::Interfaces::StandardMem::CustomReq(
+                    new SST::MemHierarchy::SnapshotCustomData(snapshot_count_));
+                mem_if_->send(req);
 
-                for ( auto & x : flush_pages_ ) {
-                    printf("%#" PRIx64 "\n",x);
-                    StandardMem::Request* req = new SST::Interfaces::StandardMem::FlushAddr( x, 64, true, 5, 0 );
-                    mem_if_->send(req);
-                }
+                snapshot_count_++;
             } else {
                 output_->fatal(CALL_INFO, -1,
                       "Error - received an event in the OS, but cannot cast it to "

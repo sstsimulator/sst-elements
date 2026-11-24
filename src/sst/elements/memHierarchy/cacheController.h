@@ -295,6 +295,7 @@ private:
 
     /** Snapshot configuration *************************************************/
     std::string         snapshot_dir_;
+    uint32_t               snapshot_index_ = 0;
     std::string         snapshot_;
 
     /** Clocks *****************************************************************/

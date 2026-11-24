@@ -15,6 +15,7 @@
 
 #include <sst/core/sst_config.h>
 #include <sst/core/params.h>
+#include <sys/stat.h>
 
 
 #include "memoryController.h"
@@ -73,6 +74,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     } else {
         checkpoint_ = NO_CHECKPOINT;
     }
+
+    snapshot_dir_ = params.find<std::string>("snapshotDir", "");
+    snapshot_index_ = params.find<uint32_t>("snapshotIndex", 0);
+    std::string snapshot_mode = params.find<std::string>("snapshot", "");
 
     bool initBacking = params.find<bool>("backing_init_zero", false);
     // Debug address
@@ -289,7 +294,17 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
     /* Create the backing store */
     std::string infile = params.find<std::string>("backing_in_file", "");
+    const bool has_user_backing_in = !infile.empty();
     backing_outfile_ = params.find<std::string>("backing_out_file", "", found);
+    const bool has_user_backing_out = found && !backing_outfile_.empty();
+
+    if (snapshot_mode == "load" && !snapshot_dir_.empty() && !has_user_backing_in) {
+        infile = snapshot_dir_ + "/snap_" + std::to_string(snapshot_index_) + "/" + getName() + ".out";
+    }
+
+    if (snapshot_mode == "save" && !snapshot_dir_.empty() && !has_user_backing_out) {
+        backing_outfile_ = snapshot_dir_ + "/" + getName() + ".out";
+    }
 
     if (backingType == "mmap") {
         if (!found) { // memory_file deprecated in SST 15, remove SST 16
@@ -382,6 +397,24 @@ void MemController::handleEvent(SST::Event* event) {
 
     if (cmd == Command::CustomReq) {
         handleCustomEvent(meb);
+        return;
+    }
+
+    /* Handle SnapshotAll before address validation since it carries a
+     * sequence number in the address field, not a real memory address */
+    if (cmd == Command::SnapshotAll) {
+        if (backing_ && !snapshot_dir_.empty()) {
+            MemEvent* ev = static_cast<MemEvent*>(meb);
+            std::string actualDir = snapshot_dir_ + "/snap_" + std::to_string(ev->getAddr()) + "/";
+            mkdir(actualDir.c_str(), 0755);
+            std::string filename = actualDir + "memory.out";
+            try {
+                backing_->printToFile(filename);
+            } catch (int e) {
+                out.output("%s, WARNING: Unable to write memory snapshot to '%s'\n", getName().c_str(), filename.c_str());
+            }
+        }
+        delete meb;
         return;
     }
 
@@ -483,7 +516,6 @@ void MemController::handleEvent(SST::Event* event) {
                 delete ev;
             }
             break;
-
         case Command::PutS:
         case Command::PutE:
             delete ev;
@@ -919,6 +951,7 @@ void MemController::serialize_order(SST::Core::Serialization::serializer& ser) {
 
     //SST_SER(listeners_);
     SST_SER(checkpointDir_);
+    SST_SER(snapshot_dir_);
 
     SST_SER(memSize_);
 

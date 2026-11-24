@@ -77,6 +77,7 @@ libmemHierarchy_la_SOURCES = \
 	directoryController.cc \
 	scratchpad.h \
 	scratchpad.cc \
+	snapshotCustomData.h \
 	coherencemgr/coherenceController.h \
 	coherencemgr/coherenceController.cc \
 	standardInterface.cc \

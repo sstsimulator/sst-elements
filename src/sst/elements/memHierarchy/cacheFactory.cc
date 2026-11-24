@@ -69,6 +69,7 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
 
     /* Snapshot configuration */
     snapshot_dir_               = params.find<std::string>("snapshotDir", "");
+    snapshot_index_             = params.find<uint32_t>("snapshotIndex", 0);
     snapshot_                   = params.find<std::string>("snapshot", "");
 
     try {
@@ -218,6 +219,7 @@ void Cache::createCoherenceManager(Params &params) {
     coherenceMgr_->setDebug(debug_addr_filter_);
     coherenceMgr_->setSliceAware(region_.interleaveSize, region_.interleaveStep);
     coherenceMgr_->registerClockEnableFunction(std::bind(&Cache::turnClockOn, this));
+    coherenceMgr_->setSnapshotDir(snapshot_dir_);
 }
 
 

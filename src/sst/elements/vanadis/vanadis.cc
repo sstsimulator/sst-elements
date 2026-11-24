@@ -25,6 +25,9 @@
 #include <cstdio>
 #include <sst/core/output.h>
 #include <vector>
+#include <sys/stat.h>
+
+#include <iostream>
 
 #include <iostream>
 
@@ -62,6 +65,7 @@ VanadisCore::VanadisCore(SST::ComponentId_t id, SST::Params& params) : Component
     free(output_prefix);
 
     m_snapshotDir = params.find<std::string>("snapshotDir", "");
+    m_snapshotIndex = params.find<uint32_t>("snapshotIndex", 0);
     auto tmp = params.find<std::string>("snapshot", "" );
     if ( ! tmp.empty( ) ) {
         assert( ! m_snapshotDir.empty() );
@@ -1385,7 +1389,7 @@ VanadisCore::tick(SST::Cycle_t cycle)
         for ( uint32_t i = 0; i < hw_threads; ++i ) {
             should_process = should_process | ! halted_masks[i];
         }
-        // if all theads have halted
+        // if all threads have halted
         if ( ! should_process ) {
             lsq->tick((uint64_t)cycle);
             #ifdef VANADIS_BUILD_DEBUG
@@ -1393,11 +1397,31 @@ VanadisCore::tick(SST::Cycle_t cycle)
             #endif
             if ( 0 == lsq->storeSize() && 0 == lsq->loadSize() ) {
                 #ifdef VANADIS_BUILD_DEBUG
-                output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"checkingpoint core %d all threads have halted\n",core_id);
+                output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"snapshot core %d all threads have halted\n",core_id);
                 #endif
+
+                // Write core register snapshot inline
+                assert( ! m_snapshotDir.empty() );
+                std::string snapDir = m_snapshotDir + "/snap_" + std::to_string(m_snapshotCount);
+                mkdir(snapDir.c_str(), 0755);
+                std::string filename = snapDir + "/" + getName();
+                FILE* fp = fopen(filename.c_str(), "w+");
+                assert(fp);
+                output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,
+                    "Snapshot component `%s` %s\n", getName().c_str(), filename.c_str());
+                snapshot(fp);
+                fclose(fp);
+
                 VanadisSnapshottResp* resp = new VanadisSnapshottResp( core_id );
                 os_link->send( resp );
-                return true;
+
+                // Clear snapshot state and resume threads
+                delete[] m_snapshotting;
+                m_snapshotting = nullptr;
+                for ( uint32_t i = 0; i < hw_threads; ++i ) {
+                    halted_masks[i] = false;
+                }
+                m_snapshotCount++;
             }
         }
     }
@@ -2000,7 +2024,7 @@ VanadisCore::setup()
 {
     if ( SNAPSHOT_LOAD == m_snapshot ) {
         std::stringstream filename;
-        filename << m_snapshotDir << "/" << getName();
+        filename << m_snapshotDir << "/snap_" << m_snapshotIndex << "/" << getName();
         output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"snapshot file %s\n",filename.str().c_str());
         auto fp = fopen(filename.str().c_str(),"r");
         assert(fp);

@@ -348,7 +348,9 @@ void CacheArray<T>::snapshotLoadFromFile(FILE* fp) {
         }
 
         lines_[idx]->setAddr(addr);
-        lines_[idx]->setState(state);
+        if constexpr (!std::is_same_v<T, DataLine>) {
+            lines_[idx]->setState(state);
+        }
         if constexpr (!std::is_same_v<T, DirectoryLine>) {
             lines_[idx]->setData(data_vec, 0);
         }

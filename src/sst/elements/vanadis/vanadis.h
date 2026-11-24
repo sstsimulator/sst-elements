@@ -361,7 +361,9 @@ private:
 
     bool* m_snapshotting = nullptr;
     std::string m_snapshotDir;
+    uint32_t m_snapshotIndex = 0;
     enum { NO_SNAPSHOT, SNAPSHOT_LOAD, SNAPSHOT_SAVE } m_snapshot;
+    uint32_t m_snapshotCount = 0;
     void snapshot(FILE*);
     void snapshotLoad(FILE*);
 };

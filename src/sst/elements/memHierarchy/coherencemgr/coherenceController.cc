@@ -18,6 +18,8 @@
 
 #include "coherencemgr/coherenceController.h"
 
+#include <sys/stat.h>
+
 using namespace SST;
 using namespace SST::MemHierarchy;
 
@@ -217,6 +219,22 @@ bool CoherenceController::handleFlushAll(MemEvent* event, bool in_mshr) {
     debug_->fatal(CALL_INFO, -1, "%s, Error: FlushAll events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
+}
+
+bool CoherenceController::handleSnapshotAll(MemEvent* event, bool in_mshr) {
+    /* Save cache state to snapshot subdirectory */
+    if (!snapshot_dir_.empty()) {
+        std::string snapDir = snapshot_dir_ + "/snap_" + std::to_string(event->getAddr());
+        mkdir(snapDir.c_str(), 0755);
+        snapshotCache(snapDir, cachename_);
+    }
+
+    /* Forward a copy of the event downward toward memory */
+    MemEvent* forward = new MemEvent(*event);
+    forwardByAddress(forward, timestamp_ + 1);
+
+    delete event;
+    return true;
 }
 
 bool CoherenceController::handleForwardFlush(MemEvent* event, bool in_mshr) {
@@ -940,6 +958,7 @@ void CoherenceController::serialize_order(SST::Core::Serialization::serializer& 
     SST_SER(drop_prefetch_level_);
     SST_SER(outstanding_prefetch_count_);
     SST_SER(cachename_);
+    SST_SER(snapshot_dir_);
     SST_SER(output_);
     SST_SER(debug_);
     SST_SER(debug_addr_filter_);

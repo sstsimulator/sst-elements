@@ -65,6 +65,7 @@ public:
     virtual bool handleFlushLine(MemEvent * event, bool in_mshr);
     virtual bool handleFlushLineInv(MemEvent * event, bool in_mshr);
     virtual bool handleFlushAll(MemEvent * event, bool in_mshr);
+    virtual bool handleSnapshotAll(MemEvent * event, bool in_mshr);
     virtual bool handleForwardFlush(MemEvent * event, bool in_mshr);
     virtual bool handleFetch(MemEvent * event, bool in_mshr);
     virtual bool handleInv(MemEvent * event, bool in_mshr);
@@ -176,6 +177,9 @@ public:
 
     /* Setup debug info (cache-wide) */
     void setDebug(std::set<Addr> debug_addr) { debug_addr_filter_ = debug_addr; }
+
+    /* Set snapshot directory for mid-simulation snapshots */
+    void setSnapshotDir(const std::string& dir) { snapshot_dir_ = dir; }
 
     /* Retry buffer - parent drains this each cycle */
     std::vector<MemEventBase*>* getRetryBuffer();
@@ -315,6 +319,7 @@ protected:
 
     /* Cache name - used for identifying where events came from/are going to */
     std::string cachename_;
+    std::string snapshot_dir_;
 
     /* Output & debug */
     Output* output_ = nullptr;   // Output stream for warnings, notices, fatal, etc.
