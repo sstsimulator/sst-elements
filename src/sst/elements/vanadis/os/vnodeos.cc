@@ -320,10 +320,13 @@ VanadisNodeOSComponent::snapshot( std::string dir )
     }
 
     fprintf(fp,"avail_hw_threads_.size() %zu\n",avail_hw_threads_.size());
-    while ( !avail_hw_threads_.empty() ) {
-        auto x = avail_hw_threads_.front();
+    // Snapshotting must not consume the live queue because mid-simulation
+    // snapshots resume execution immediately after saving state.
+    auto avail_hw_threads = avail_hw_threads_;
+    while ( !avail_hw_threads.empty() ) {
+        auto x = avail_hw_threads.front();
         fprintf(fp,"core: %d, hw_thread: %d\n",x->core,x->hw_thread);
-        avail_hw_threads_.pop();
+        avail_hw_threads.pop();
     }
 
     fprintf(fp,"process_debug_level_: %" PRIu32 "\n",process_debug_level_);
