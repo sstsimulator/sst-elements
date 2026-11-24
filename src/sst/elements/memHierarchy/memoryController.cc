@@ -394,7 +394,8 @@ void MemController::handleEvent(SST::Event* event) {
     if (cmd == Command::SnapshotAll) {
         if (backing_ && !snapshot_dir_.empty()) {
             MemEvent* ev = static_cast<MemEvent*>(meb);
-            std::string actualDir = snapshot_dir_ + "/snap_" + std::to_string(snapshot_index_) + "/";
+            std::string actualDir = snapshot_dir_ + "/snap_" + std::to_string(ev->getAddr()) + "/";
+            mkdir(actualDir.c_str(), 0755);
             std::string filename = actualDir + "memory.out";
             try {
                 backing_->printToFile(filename);
