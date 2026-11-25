@@ -1,8 +1,8 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -42,7 +42,7 @@ class MemLinkBase : public SST::SubComponent {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::MemLinkBase, TimeConverter*)
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::MemLinkBase, TimeConverter)
 
 #define MEMLINKBASE_ELI_PARAMS { "debug",              "(int) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},\
     { "debug_level",        "(int) Debug verbosity level. Between 0 and 10", "0"},\
@@ -84,7 +84,7 @@ public:
     enum class ReachableGroup{Source, Dest, Peer, Unknown};
 
     /* Constructor */
-    MemLinkBase(ComponentId_t id, Params &params, TimeConverter* tc) : SubComponent(id) {
+    MemLinkBase(ComponentId_t id, Params &params, TimeConverter tc) : SubComponent(id) {
         /* Create debug output */
         dlevel = params.find<int>("debug_level", 0);
         int debugLoc = params.find<int>("debug", 0);
@@ -97,7 +97,7 @@ public:
             debug_addr_filter_.insert(*it);
         }
 
-        setDefaultTimeBase(*tc);
+        setDefaultTimeBase(tc);
 
         // Set up address region TODO deprecate in the next major release (SST 10)
         bool found, foundany;

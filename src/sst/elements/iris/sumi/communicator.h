@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -72,6 +72,10 @@ class Communicator {
     return owner_comm_;
   }
 
+  bool smpInitialized() const {
+    return smp_initialized_;
+  }
+
   void registerRankCallback(RankCallback* cback){
     rank_callbacks_.insert(cback);
   }
@@ -85,7 +89,8 @@ class Communicator {
     my_comm_rank_(comm_rank),
     smp_comm_(nullptr),
     owner_comm_(nullptr),
-    smp_balanced_(false)
+    smp_balanced_(false),
+    smp_initialized_(false)
   {}
 
   void rankResolved(int global_rank, int comm_rank);
@@ -102,6 +107,7 @@ class Communicator {
   Communicator* smp_comm_;
   Communicator* owner_comm_;
   bool smp_balanced_;
+  bool smp_initialized_;
 
 };
 

@@ -1,13 +1,17 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // of the distribution for more information.
+//
+// Portions copyright (c) 2026, Hewlett Packard Enterprise Development LP
+// SPDX-FileCopyrightText: Copyright Hewlett Packard Enterprise Development LP
+// SPDX-License-Identifier: BSD-3-Clause
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -145,7 +149,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     assert( m_linkControl );
 
     m_recvNotifyFunctor =
-        new SimpleNetwork::Handler2<Nic,&Nic::recvNotify>(this);
+        new SimpleNetwork::Handler<Nic,&Nic::recvNotify>(this);
     assert( m_recvNotifyFunctor );
 
     m_linkRecvWidget = new LinkControlWidget( m_dbg,
@@ -156,7 +160,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     );
 
     m_sendNotifyFunctor =
-        new SimpleNetwork::Handler2<Nic,&Nic::sendNotify>(this);
+        new SimpleNetwork::Handler<Nic,&Nic::sendNotify>(this);
     assert( m_sendNotifyFunctor );
 
     m_linkSendWidget = new LinkControlWidget( m_dbg,
@@ -167,7 +171,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     );
 
     m_selfLink = configureSelfLink("Nic::selfLink", "1 ns",
-        new Event::Handler2<Nic,&Nic::handleSelfEvent>(this));
+        new Event::Handler<Nic,&Nic::handleSelfEvent>(this));
     assert( m_selfLink );
 
     m_dbg.verbose(CALL_INFO,2,1,"IdToNet()=%d\n", IdToNet( m_myNodeId ) );
@@ -179,6 +183,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
 	Params shmemParams = params.get_scoped_params( "shmem" );
     m_shmem = new Shmem( *this, shmemParams, m_myNodeId, m_num_vNics, m_dbg, getDelay_ns(), getDelay_ns() );
+    Params networkIOParams = params.get_scoped_params( "network" );
+    m_networkIO = new NetworkIO( *this, networkIOParams, m_dbg );
 	size_t FAM_memSizeBytes = params.find<SST::UnitAlgebra>("FAM_memSize" ).getRoundedValue();
 	if ( FAM_memSizeBytes ) {
 		if ( printConfig ) {
@@ -309,6 +315,13 @@ Nic::Nic(ComponentId_t id, Params &params) :
 	    m_useDetailedCompute = params.find<bool>("useDetailed", false );
     }
 
+    if(params.find<int>("useSimpleSSD", 0))
+    {
+        Params ssdParams = params.get_scoped_params("simpleSSD");
+        m_simpleSSDPtr = dynamic_cast<SimpleSSD*>(loadAnonymousSubComponent<SimpleSSDAPI>("firefly.SimpleSSD","SimpleSSD", 0, ComponentInfo::SHARE_NONE, ssdParams ));
+        assert(m_simpleSSDPtr && "Failed to load SimpleSSD subcomponent in NIC\n");
+    }
+
 	m_sentByteCount =     registerStatistic<uint64_t>("sentByteCount");
 	m_rcvdByteCount =     registerStatistic<uint64_t>("rcvdByteCount");
 	m_sentPkts = 	      registerStatistic<uint64_t>("sentPkts");
@@ -328,6 +341,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 Nic::~Nic()
 {
 	delete m_shmem;
+    delete m_networkIO;
 	delete m_unitPool;
  	delete m_linkSendWidget;
 	delete m_linkRecvWidget;
@@ -392,6 +406,10 @@ void Nic::handleVnicEvent( Event* ev, int id )
 		m_shmem->handleEvent( static_cast<NicShmemCmdEvent*>(event), id );
 		break;
 
+      case NicCmdBaseEvent::NetworkIO:
+		m_networkIO->handleEvent( static_cast<NicNetworkIOCmdEvent*>(event), id );
+		break;
+
 	  default:
 		assert(0);
 	}
@@ -451,6 +469,9 @@ void Nic::handleVnicEvent2( Event* ev, int id )
     case NicCmdBaseEvent::Shmem:
         m_shmem->handleNicEvent2( static_cast<NicShmemCmdEvent*>(event), id );
         break;
+      case NicCmdBaseEvent::NetworkIO:
+		m_networkIO->handleEvent( static_cast<NicNetworkIOCmdEvent*>(event), id );
+		break;
     default:
         assert(0);
     }

@@ -1,8 +1,8 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,6 +26,8 @@
 
 #include "mappers/llyrMapper.h"
 #include "csvParser.h"
+
+#define PRINTF_BUFSIZ 256
 
 namespace SST {
 namespace Llyr {
@@ -90,8 +92,8 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
 {
     // TraceFunction trace(CALL_INFO_LONG);
     //setup up i/o for messages
-    char prefix[256];
-    sprintf(prefix, "[t=@t][pyMapper]: ");
+    char prefix[PRINTF_BUFSIZ];
+    snprintf(prefix, PRINTF_BUFSIZ, "[t=@t][pyMapper]: ");
     SST::Output* output_ = new SST::Output(prefix, llyr_config->verbosity_, 0, Output::STDOUT);
 
     if( llyr_config->mapping_tool_ == "" ) {
@@ -99,7 +101,7 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
         exit(0);
     }
 
-    char tmp[256];
+    char tmp[PRINTF_BUFSIZ];
     if( getcwd(tmp, sizeof(tmp) ) != NULL) {
         std::cout << "Current working directory: " << tmp << std::endl;
     } else {
@@ -581,6 +583,8 @@ void PyMapper::printDot( std::string fileName, LlyrGraph< ProcessingElement* >* 
 
 }// namespace Llyr
 }// namespace SST
+
+#undef PRINTF_BUFSIZ
 
 #endif // _PY_MAPPER_H
 

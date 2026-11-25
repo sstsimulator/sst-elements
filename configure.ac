@@ -6,7 +6,7 @@
 AC_INIT([SST Elements Library],[-dev],[sst@sandia.gov])
 
 AC_PREREQ([2.69])
-AC_COPYRIGHT([Copyright National Technology and Engineering Solutions of Sandia (NTESS), 2004-2025])
+AC_COPYRIGHT([Copyright National Technology and Engineering Solutions of Sandia (NTESS), 2004-2026])
 
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([config])
@@ -25,6 +25,12 @@ AH_BOTTOM([
 AC_CONFIG_HEADERS([src/sst_element_config.h])
 
 m4_include([config/sst_elements_include.m4])
+
+# Record whether the user set CFLAGS/CXXFLAGS before AC_PROG_CC/AC_PROG_CXX
+# supply their defaults (used by SST_ENABLE_DEBUG_SYMBOLS). Must precede
+# AM_PROG_AS, which requires AC_PROG_CC.
+sst_user_cflags_set="${CFLAGS+set}"
+sst_user_cxxflags_set="${CXXFLAGS+set}"
 
 AM_PROG_AS
 
@@ -51,6 +57,9 @@ AC_CACHE_SAVE
 SST_CHECK_ARIEL_MPI([], [AC_MSG_ERROR([Can't enable Ariel MPI])])
 
 SST_CORE_CHECK_INSTALL()
+
+# -g1 by default, -g if SST-Core uses full debug symbols or --enable-debug-symbols
+SST_ENABLE_DEBUG_SYMBOLS()
 
 SST_CHECK_OSX()
 
@@ -150,6 +159,11 @@ printf "%38s : %s\n" "C Compiler Options" "$AM_CFLAGS $CFLAGS"
 printf "%38s : %s\n" "C++ Compiler Options" "$AM_CXXFLAGS $CXXFLAGS"
 
 printf "%38s : %s\n" "C++ Standard Compliance" "C++17"
+if test "x$enable_debug_symbols" = "xyes" ; then
+    printf "%38s : Yes\n" "Full debug symbols enabled"
+else
+    printf "%38s : No\n" "Full debug symbols enabled"
+fi
 
 printf "%38s : %s\n" "Linker Options" "$AM_LDFLAGS $LDFLAGS"
 echo ""

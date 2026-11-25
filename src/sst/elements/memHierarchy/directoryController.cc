@@ -1,8 +1,8 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -97,7 +97,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
                 getName().c_str(), ilStep.c_str());
     }
 
-    clockHandler = new Clock::Handler2<DirectoryController, &DirectoryController::clock>(this);
+    clockHandler = new Clock::Handler<DirectoryController, &DirectoryController::clock>(this);
     defaultTimeBase = registerClock(params.find<std::string>("clock", "1GHz"), clockHandler);
     clockOn = true;
 
@@ -117,9 +117,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
      *  the MCs their own region. We cannot error check from the parameters...
      */
 
-    linkUp_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, &defaultTimeBase);
+    linkUp_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, defaultTimeBase);
     if (!linkUp_) {
-        linkUp_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, &defaultTimeBase);
+        linkUp_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, defaultTimeBase);
         if (linkUp_) {
             out.output("%s, DEPRECATION WARNING: The 'cpulink' subcomponent slot has been renamed to 'highlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
         }
@@ -127,13 +127,13 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         if (!linkUp_ && isPortConnected("highlink")) {
             Params p;
             p.insert("port", "highlink");
-            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, p, &defaultTimeBase);
+            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, p, defaultTimeBase);
         }
     }
 
-    linkDown_ = loadUserSubComponent<MemLinkBase>("lowlink", ComponentInfo::SHARE_NONE, &defaultTimeBase);
+    linkDown_ = loadUserSubComponent<MemLinkBase>("lowlink", ComponentInfo::SHARE_NONE, defaultTimeBase);
     if (!linkDown_) {
-        linkDown_ = loadUserSubComponent<MemLinkBase>("memlink", ComponentInfo::SHARE_NONE, &defaultTimeBase);
+        linkDown_ = loadUserSubComponent<MemLinkBase>("memlink", ComponentInfo::SHARE_NONE, defaultTimeBase);
         if (linkDown_) {
             out.output("%s, DEPRECATION WARNING: The 'memlink' subcomponent slot has been renamed to 'lowlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
         }
@@ -141,7 +141,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         if (!linkDown_ && isPortConnected("lowlink")) {
             Params p;
             p.insert("port", "lowlink");
-            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, p, &defaultTimeBase);
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, p, defaultTimeBase);
         }
     }
 
@@ -163,12 +163,12 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         if (linkDown_)
             linkDown_->setRegion(region);
 
-        linkUp_->setRecvHandler(new Event::Handler2<DirectoryController, &DirectoryController::handlePacket>(this));
+        linkUp_->setRecvHandler(new Event::Handler<DirectoryController, &DirectoryController::handlePacket>(this));
         if (!linkDown_) {
             if (params.find<std::string>("net_memory_name", "") != "")
                 dbg.fatal(CALL_INFO, -1, "%s, Error: parameter 'net_memory_name' is no longer supported. Memory and directory components should specify their own address regions (address_range_start/end, interleave_step/size) and mapping will be inferred from that. Remove this parameter from your input deck to eliminate this error.\n", getName().c_str());
         } else {
-            linkDown_->setRecvHandler(new Event::Handler2<DirectoryController, &DirectoryController::handlePacket>(this));
+            linkDown_->setRecvHandler(new Event::Handler<DirectoryController, &DirectoryController::handlePacket>(this));
         }
     } else {
         /* Set up links/network to cache & memory the old way -> and fixup params accordingly */
@@ -202,22 +202,22 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             nicParams.insert("ack.port", "network_ack");
             nicParams.insert("fwd.port", "network_fwd");
             nicParams.insert("data.port", "network_data");
-            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, &defaultTimeBase);
+            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, defaultTimeBase);
             out.output("%s, DEPRECATION WARNING: The 'network', 'network_ack', 'network_fwd', and 'network_data' ports are deprecated. Instead, in your input file, fill the directory's 'highlink' subcomponent slot with 'memHierarchy.MemNICFour'.\n", getName().c_str());
 
         } else if (isPortConnected("network")) {
             nicParams.insert("port", "network");
-            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, &defaultTimeBase);
+            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, defaultTimeBase);
             out.output("%s, DEPRECATION WARNING: The 'network' port is deprecated. Instead, in your input file, fill the directory's 'highlink' subcomponent slot with 'memHierarchy.MemNIC'.\n", getName().c_str());
         } else if (isPortConnected("highlink")) {
             Params linkParams;
             linkParams.insert("port", "highlink");
-            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, &defaultTimeBase);
+            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, defaultTimeBase);
         } else {
             dbg.fatal(CALL_INFO, -1, "%s, Error: Either this component's 'highlink' port must be connected OR the 'highlink' subcomponent slot must be filled\n", getName().c_str());
         }
 
-        linkUp_->setRecvHandler(new Event::Handler2<DirectoryController, &DirectoryController::handlePacket>(this));
+        linkUp_->setRecvHandler(new Event::Handler<DirectoryController, &DirectoryController::handlePacket>(this));
 
         if (isPortConnected("memory")) {
             Params memParams = params.get_scoped_params("memlink");
@@ -227,11 +227,11 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             memParams.insert("addr_range_end", std::to_string(region.end), false);
             memParams.insert("interleave_size", ilSize, false);
             memParams.insert("interleave_step", ilStep, false);
-            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams, &defaultTimeBase);
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams, defaultTimeBase);
             if (!linkDown_) {
                 dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
             }
-            linkDown_->setRecvHandler(new Event::Handler2<DirectoryController, &DirectoryController::handlePacket>(this));
+            linkDown_->setRecvHandler(new Event::Handler<DirectoryController, &DirectoryController::handlePacket>(this));
             out.output("%s, DEPRECATION WARNING: The 'memory' port is deprecated. Use the 'lowlink' port instead.\n", getName().c_str());
         } else if (isPortConnected("lowlink")) {
             Params memParams;
@@ -240,11 +240,11 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             memParams.insert("addr_range_end", std::to_string(region.end), false);
             memParams.insert("interleave_size", ilSize, false);
             memParams.insert("interleave_step", ilStep, false);
-            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams, &defaultTimeBase);
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams, defaultTimeBase);
             if (!linkDown_) {
                 dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
             }
-            linkDown_->setRecvHandler(new Event::Handler2<DirectoryController, &DirectoryController::handlePacket>(this));
+            linkDown_->setRecvHandler(new Event::Handler<DirectoryController, &DirectoryController::handlePacket>(this));
         } else {
             // No linkDown_, traffic to/from memory will use the linkUp_
             linkDown_ = nullptr;
@@ -361,6 +361,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     mshrLatency     = params.find<uint64_t>("mshr_latency_cycles", 0);
 
     flush_state_ = FlushState::Ready;
+
+    snapshot_dir_ = params.find<std::string>("snapshotDir", "");
+    snapshot_ = params.find<std::string>("snapshot", "");
 }
 
 
@@ -807,10 +810,127 @@ void DirectoryController::complete(unsigned int phase) {
 
 void DirectoryController::finish(void){
     linkUp_->finish();
+
+    if (snapshot_ == "save" && !snapshot_dir_.empty()) {
+        std::string filename = snapshot_dir_ + "/" + getName();
+        FILE* fp = fopen(filename.c_str(), "w");
+        if (!fp) {
+            out.fatal(CALL_INFO, -1, "Failed to open directory snapshot file: %s\n", filename.c_str());
+        }
+        fprintf(fp, "# Directory Snapshot: %s\n", getName().c_str());
+        size_t count = 0;
+        for (auto& kv : directory) {
+            if (kv.second->getState() != I) count++;
+        }
+        fprintf(fp, "num_entries: %zu\n", count);
+        for (auto& kv : directory) {
+            DirEntry* de = kv.second;
+            if (de->getState() == I) continue;
+            fprintf(fp, "entry: 0x%" PRIx64 " %s\n",
+                (uint64_t)de->getBaseAddr(), StateString[de->getState()]);
+            fprintf(fp, "owner: %s\n", de->hasOwner() ? de->getOwner().c_str() : "");
+            std::set<std::string>* sharers = de->getSharers();
+            fprintf(fp, "sharers: %zu", sharers->size());
+            for (auto& shr : *sharers) {
+                fprintf(fp, " %s", shr.c_str());
+            }
+            fprintf(fp, "\n");
+        }
+        fclose(fp);
+    }
 }
 
 
 void DirectoryController::setup(void){
+    if (snapshot_ == "load" && !snapshot_dir_.empty()) {
+        std::string filename = snapshot_dir_ + "/" + getName();
+        FILE* fp = fopen(filename.c_str(), "r");
+        if (!fp) {
+            out.fatal(CALL_INFO, -1, "Failed to open directory snapshot for loading: %s\n", filename.c_str());
+        }
+        char buf[512];
+        if (!fgets(buf, sizeof(buf), fp)) {
+            out.fatal(CALL_INFO, -1, "Failed to read directory snapshot header from: %s\n", filename.c_str());
+        }
+
+        unsigned int num_entries;
+        if (1 != fscanf(fp, "num_entries: %u\n", &num_entries)) {
+            out.fatal(CALL_INFO, -1, "Failed to parse num_entries from directory snapshot: %s\n", filename.c_str());
+        }
+
+        for (unsigned int i = 0; i < num_entries; i++) {
+            uint64_t addr;
+            char state_str[64];
+            if (2 != fscanf(fp, "entry: 0x%" PRIx64 " %63s\n", &addr, state_str)) {
+                out.fatal(CALL_INFO, -1, "Failed to parse entry %u from directory snapshot\n", i);
+            }
+
+            // Read owner line with fgets, parse after "owner:" prefix
+            if (!fgets(buf, sizeof(buf), fp)) {
+                out.fatal(CALL_INFO, -1, "Failed to read owner for entry %u from directory snapshot\n", i);
+            }
+            std::string owner_line(buf);
+            std::string owner_val;
+            size_t opos = owner_line.find("owner: ");
+            if (opos != std::string::npos) {
+                owner_val = owner_line.substr(opos + 7);
+            } else {
+                opos = owner_line.find("owner:");
+                if (opos != std::string::npos)
+                    owner_val = owner_line.substr(opos + 6);
+            }
+            while (!owner_val.empty() && (owner_val.back() == '\n' || owner_val.back() == '\r' || owner_val.back() == ' '))
+                owner_val.pop_back();
+            while (!owner_val.empty() && owner_val.front() == ' ')
+                owner_val.erase(owner_val.begin());
+
+            // Read sharers
+            unsigned int num_sharers;
+            if (1 != fscanf(fp, "sharers: %u", &num_sharers)) {
+                out.fatal(CALL_INFO, -1, "Failed to parse sharers count for entry %u from directory snapshot\n", i);
+            }
+            std::vector<std::string> sharer_names;
+            for (unsigned int s = 0; s < num_sharers; s++) {
+                char shr_buf[256];
+                if (1 != fscanf(fp, " %255s", shr_buf)) {
+                    out.fatal(CALL_INFO, -1, "Failed to parse sharer %u for entry %u from directory snapshot\n", s, i);
+                }
+                sharer_names.push_back(std::string(shr_buf));
+            }
+            fscanf(fp, "\n");
+
+            // Create and populate DirEntry
+            State state = stringToState(state_str);
+            DirEntry* de = new DirEntry(addr);
+            de->setState(state);
+            if (!owner_val.empty()) {
+                de->setOwner(owner_val);
+            }
+            for (auto& shr : sharer_names) {
+                de->addSharer(shr);
+            }
+
+            directory[addr] = de;
+
+            // Add to entryCache
+            de->setCached(true);
+            entryCache.push_front(de);
+            de->cacheIter = entryCache.begin();
+            entryCacheSize++;
+        }
+
+        // Evict excess entries from entryCache if needed
+        while (entryCacheSize > entryCacheMaxSize) {
+            DirEntry* oldEntry = entryCache.back();
+            entryCache.pop_back();
+            entryCacheSize--;
+            oldEntry->cacheIter = entryCache.end();
+            oldEntry->setCached(false);
+        }
+
+        fclose(fp);
+    }
+
     linkUp_->setup();
     if (linkUp_ != linkDown_)
         linkDown_->setup();
@@ -2880,6 +3000,8 @@ void DirectoryController::serialize_order(SST::Core::Serialization::serializer& 
     SST_SER(sendWBAck);
     SST_SER(incoherentSrc);
     SST_SER(init_requests_); // Not strictly neccessary to save
+    SST_SER(snapshot_dir_);
+    SST_SER(snapshot_);
 
     // Reconstruct DirEntry iterators
     if (ser.mode() == SST::Core::Serialization::serializer::UNPACK) {

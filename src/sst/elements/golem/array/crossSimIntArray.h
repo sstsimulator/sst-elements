@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -29,7 +29,7 @@ public:
         "golem",
         "CrossSimIntArray",
         SST_ELI_ELEMENT_VERSION(1, 0, 0),
-        "Implements a Compute array using manual MVM with int64_ting-point representation",
+        "Implements a Compute array using CrossSim with integer representation",
         SST::Golem::CrossSimComputeArray<int64_t>
     )
 
@@ -48,7 +48,7 @@ public:
     )
 
     CrossSimIntArray(ComponentId_t id, Params& params,
-        TimeConverter* tc,
+        TimeConverter tc,
         Event::HandlerBase* handler)
         : CrossSimComputeArray<int64_t>(id, params, tc, handler) {
         // Constructor can be empty if no additional initialization is required

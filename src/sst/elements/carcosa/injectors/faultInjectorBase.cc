@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -124,13 +124,13 @@ installDirection FaultInjectorBase::setInstallDirection(std::string param) {
         if (valid_installation_[0]) {
             return installDirection::Receive;
         } else {
-            out_->fatal(CALL_INFO_LONG, 1, 0, "This PortModule Fault Injector cannot intercept Receive events.\n");
+            out_->fatal(CALL_INFO_LONG, 1, "This PortModule Fault Injector cannot intercept Receive events.\n");
         }
     } else if ( param == "Send" ) {
         if (valid_installation_[1]) {
             return installDirection::Send;
         } else {
-            out_->fatal(CALL_INFO_LONG, 1, 0, "This PortModule Fault Injector cannot intercept Send events.\n");
+            out_->fatal(CALL_INFO_LONG, 1, "This PortModule Fault Injector cannot intercept Send events.\n");
         }
     }
     return installDirection::Invalid;
@@ -156,13 +156,9 @@ void FaultInjectorBase::setValidInstallation(Params& params, std::array<bool,2> 
  * added to the vector
  */
 void FaultInjectorBase::executeFaults(Event*& ev) {
-    bool success = false;
     for (int i = 0; i < fault.size(); i++) {
         if (fault[i]) {
-            success = fault[i]->faultLogic(ev);
+            fault[i]->faultLogic(ev);
         }
-    }
-    if (!success) {
-        out_->fatal(CALL_INFO_LONG, -1, "No valid fault object, or no fault successfully executed.\n");
     }
 }

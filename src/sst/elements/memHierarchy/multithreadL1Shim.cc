@@ -1,8 +1,8 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -37,7 +37,7 @@ MultiThreadL1::MultiThreadL1(ComponentId_t id, Params &params) : Component(id) {
         debug_addr_filter_.insert(*it);
 
     /* Setup clock */
-    clockHandler = new Clock::Handler2<MultiThreadL1, &MultiThreadL1::tick>(this);
+    clockHandler = new Clock::Handler<MultiThreadL1, &MultiThreadL1::tick>(this);
     clock = registerClock(params.find<std::string>("clock", "1GHz"), clockHandler);
     clockOn = true;
     timestamp = 0;
@@ -45,7 +45,7 @@ MultiThreadL1::MultiThreadL1(ComponentId_t id, Params &params) : Component(id) {
 
     /* Setup links */
     if (isPortConnected("cache")) {
-        cacheLink = configureLink("cache", "50ps", new Event::Handler2<MultiThreadL1, &MultiThreadL1::handleResponse>(this));
+        cacheLink = configureLink("cache", "50ps", new Event::Handler<MultiThreadL1, &MultiThreadL1::handleResponse>(this));
         if (!cacheLink)
             output.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port 'cache'\n", getName().c_str());
     } else {
@@ -56,7 +56,7 @@ MultiThreadL1::MultiThreadL1(ComponentId_t id, Params &params) : Component(id) {
     std::string linkname = "thread0";
     int linkid = 0;
     while (isPortConnected(linkname)) {
-        SST::Link * link = configureLink(linkname, "50ps", new Event::Handler2<MultiThreadL1, &MultiThreadL1::handleRequest, unsigned int>(this, linkid));
+        SST::Link * link = configureLink(linkname, "50ps", new Event::Handler<MultiThreadL1, &MultiThreadL1::handleRequest, unsigned int>(this, linkid));
         if (!link)
             output.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), linkname.c_str());
         threadLinks.push_back(link);

@@ -1,8 +1,8 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -82,16 +82,16 @@ public:
     )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-        { "memory",         "The memory interface to use (e.g., interface to caches)", "Interfaces::SST::StandardMem" }
+        { "iface",          "The memory interface to use (e.g., interface to caches)", "SST::Interfaces::StandardMem" }
     )
 
     LlyrComponent(SST::ComponentId_t id, SST::Params& params);
     ~LlyrComponent();
 
-    void setup();
-    void finish();
+    void setup() override;
+    void finish() override;
 
-    void init( uint32_t phase );
+    void init( uint32_t phase ) override;
 
 protected:
 
@@ -130,7 +130,7 @@ private:
 
     std::string         mapping_tool_;
 
-    SST::TimeConverter*     time_converter_;
+    SST::TimeConverter      time_converter_;
     Clock::HandlerBase*     clock_tick_handler_;
     bool                    handler_registered_;
     bool                    clock_enabled_;

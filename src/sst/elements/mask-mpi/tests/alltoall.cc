@@ -1,5 +1,5 @@
 /**
-Copyright 2009-2025 National Technology and Engineering Solutions of Sandia,
+Copyright 2009-2026 National Technology and Engineering Solutions of Sandia,
 LLC (NTESS).  Under the terms of Contract DE-NA-0003525, the U.S. Government
 retains certain rights in this software.
 
@@ -8,7 +8,7 @@ by National Technology and Engineering Solutions of Sandia, LLC., a wholly
 owned subsidiary of Honeywell International, Inc., for the U.S. Department of
 Energy's National Nuclear Security Administration under contract DE-NA0003525.
 
-Copyright (c) 2009-2025, NTESS
+Copyright (c) 2009-2026, NTESS
 
 All rights reserved.
 
@@ -44,9 +44,8 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #define ssthg_app_name alltoall
 
-#include <stddef.h>
 #include <stdio.h>
-#include <iostream>
+#include <stdlib.h>
 
 #include <mask_mpi.h>
 #include <mercury/common/skeleton.h>
@@ -59,22 +58,56 @@ int main(int argc, char* argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    int problem_factor = 128;
-    int problem_size = size * problem_factor;
+    const int problem_factor = 128;
+    const int problem_size = size * problem_factor;
+    const int source_stride = 1000000;
+    const int destination_stride = 1000;
     int* values = new int[problem_size];
-    for(int i = 0; i < problem_size; i++) {
-      values[i] = rank;
+    for (int destination = 0; destination < size; ++destination) {
+      for (int element = 0; element < problem_factor; ++element) {
+        int index = destination * problem_factor + element;
+        values[index] = rank * source_stride +
+                        destination * destination_stride + element;
+      }
     }
 
     int* recv_values = new int[problem_size];
     MPI_Alltoall(values, problem_factor, MPI_INT, recv_values, problem_factor, MPI_INT, MPI_COMM_WORLD);
-    if(rank == 0) {
-      for(int i = 0; i < problem_size; ++i) {
-        printf("recv_values[%d]=%d\n",i, recv_values[i]);
+
+    int bad_source = -1;
+    int bad_element = -1;
+    int expected = 0;
+    int actual = 0;
+    for (int source = 0; source < size && bad_source < 0; ++source) {
+      for (int element = 0; element < problem_factor; ++element) {
+        int index = source * problem_factor + element;
+        expected = source * source_stride +
+                   rank * destination_stride + element;
+        actual = recv_values[index];
+        if (actual != expected) {
+          bad_source = source;
+          bad_element = element;
+          break;
+        }
       }
     }
 
+    if (bad_source < 0) {
+      printf("Rank %d PASS\n", rank);
+    } else {
+      printf("Rank %d mismatch:\n"
+             "  source=%d\n"
+             "  element=%d\n"
+             "  expected=%d\n"
+             "  actual=%d\n"
+             "Rank %d FAIL\n",
+             rank, bad_source, bad_element, expected, actual, rank);
+    }
+
+    delete[] recv_values;
+    delete[] values;
+
     MPI_Finalize();
 
-    return EXIT_SUCCESS;
+    return bad_source < 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

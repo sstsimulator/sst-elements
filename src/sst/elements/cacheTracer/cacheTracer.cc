@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -47,7 +47,7 @@ cacheTracer::cacheTracer( ComponentId_t id, Params& params ): Component( id ) {
 
     string frequency = params.find<std::string>("clock", "1 Ghz");
     out->debug(CALL_INFO, 1, 0, "Registering cacheTracer clock at %s\n", frequency.c_str());
-    registerClock( frequency, new Clock::Handler2<cacheTracer,&cacheTracer::clock>(this) );
+    registerClock( frequency, new Clock::Handler<cacheTracer,&cacheTracer::clock>(this) );
     out->debug(CALL_INFO, 1, 0, "Clock registered\n");
 
     string tracePrefix = params.find<std::string>("tracePrefix", "");

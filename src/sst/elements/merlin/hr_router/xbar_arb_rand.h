@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -51,27 +51,14 @@ private:
        Structure for sorting based on random priority
      */
     struct priority_entry_t {
-        uint16_t port;
-        uint16_t vc;
-        uint16_t next_port;
-        uint16_t next_vc;
-        double rand_pri;
-        int size_in_flits;
+        uint16_t port = 0;
+        uint16_t vc = 0;
+        uint16_t next_port = 0;
+        uint16_t next_vc = 0;
+        double rand_pri = 0.0;
+        int size_in_flits = 0;
 
-        // priority_entry_t(uint16_t port, uint16_t vc, SimTime_t injection_time) :
-        //     port(port),
-        //     vc(vc),
-        //     injection_time(injection_time)
-        // {}
-
-        priority_entry_t() :
-            port(0),
-            vc(0),
-            next_port(0),
-            next_vc(0),
-            rand_pri(0.0),
-            size_in_flits(0)
-        {}
+        priority_entry_t() = default;
 
         priority_entry_t(uint16_t port, uint16_t vc) :
             port(port),
@@ -81,6 +68,16 @@ private:
             rand_pri(0.0),
             size_in_flits(0)
         {}
+
+        void serialize_order(SST::Core::Serialization::serializer& ser)
+        {
+            SST_SER(port);
+            SST_SER(vc);
+            SST_SER(next_port);
+            SST_SER(next_vc);
+            SST_SER(rand_pri);
+            SST_SER(size_in_flits);
+        }
     };
 
     /** To use with STL priority queues, that order in reverse. */
@@ -101,20 +98,22 @@ private:
     typedef std::priority_queue<priority_entry_t*, std::vector<priority_entry_t*>, xbar_arb_rand::rand_priority> rand_queue_t;
     rand_queue_t rand_queue;
 
-    priority_entry_t* entries;
+    priority_entry_t* entries = nullptr;
 
-    int num_ports;
-    int num_vcs;
+    int num_ports = 0;
+    int num_vcs = 0;
 
-    int total_entries;
+    int total_entries = 0;
 
-    internal_router_event** vc_heads;
+    internal_router_event** vc_heads = nullptr;
 
-    RNG::XORShiftRNG* rng;
+    RNG::XORShiftRNG* rng = nullptr;
 
     // PortControl** ports;
 
 public:
+
+    xbar_arb_rand() = default;
 
     xbar_arb_rand(ComponentId_t cid, Params& params) :
         XbarArbitration(cid)
@@ -126,7 +125,23 @@ public:
         delete[] entries;
     }
 
-    void setPorts(int num_ports_s, int num_vcs_s) {
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        XbarArbitration::serialize_order(ser);
+        SST_SER(num_ports);
+        SST_SER(num_vcs);
+        SST_SER(total_entries);
+        SST_SER(rng);
+
+        SST_SER(SST::Core::Serialization::array(entries, total_entries));
+
+        if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+            vc_heads = new internal_router_event*[num_vcs];
+        }
+    }
+    ImplementSerializable(SST::Merlin::xbar_arb_rand)
+
+    void setPorts(int num_ports_s, int num_vcs_s) override
+    {
         num_ports = num_ports_s;
         num_vcs = num_vcs_s;
 
@@ -152,7 +167,7 @@ public:
 #else
                    PortInterface** ports, int* in_port_busy, int* out_port_busy, int* progress_vc
 #endif
-                   )
+                   ) override
     {
 
         for ( int i = 0; i < num_ports; i++ ) progress_vc[i] = -1;
@@ -228,10 +243,11 @@ public:
         return;
     }
 
-    void reportSkippedCycles(Cycle_t cycles) {
-    }
+    void reportSkippedCycles(Cycle_t cycles) override
+    {}
 
-    void dumpState(std::ostream& stream) {
+    void dumpState(std::ostream& stream) override
+    {
         /* stream << "Current round robin port: " << rr_port << std::endl; */
         /* stream << "  Current round robin VC by port:" << std::endl; */
         /* for ( int i = 0; i < num_ports; i++ ) { */

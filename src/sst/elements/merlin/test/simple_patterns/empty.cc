@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -31,7 +31,19 @@ empty_nic::empty_nic(ComponentId_t cid, Params& params) :
 
 empty_nic::~empty_nic()
 {
-    delete link_control;
+    // SST framework manages SubComponent lifecycle — do not delete link_control
+}
+
+empty_nic::empty_nic() :
+    Component(),
+    link_control(nullptr)
+{}
+
+void
+empty_nic::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Component::serialize_order(ser);
+    SST_SER(link_control);
 }
 
 void empty_nic::finish()

@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,13 +28,6 @@ namespace Miranda {
 class SingleStreamGenerator : public RequestGenerator {
 
 public:
-    SingleStreamGenerator( ComponentId_t id, Params& params );
-    void build(Params& params);
-    ~SingleStreamGenerator();
-    void generate(MirandaRequestQueue<GeneratorRequest*>* q);
-    bool isFinished();
-    void completed();
-
     SST_ELI_REGISTER_SUBCOMPONENT(
         SingleStreamGenerator,
         "miranda",
@@ -52,6 +45,29 @@ public:
         { "max_address",  "Maximum address allowed for generation", "524288" },
         { "memOp",        "All reqeusts will be of this type, [Read/Write]", "Read" },
     )
+
+    SingleStreamGenerator( ComponentId_t id, Params& params );
+    SingleStreamGenerator() = default;
+    ~SingleStreamGenerator();
+    void build(Params& params);
+    void generate(MirandaRequestQueue<GeneratorRequest*>* q) override;
+    bool isFinished() override;
+    void completed() override;
+
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::Miranda::RequestGenerator::serialize_order(ser);
+        SST_SER(reqLength);
+        SST_SER(maxAddr);
+        SST_SER(issueCount);
+        SST_SER(nextAddr);
+        SST_SER(startAddr);
+
+        SST_SER(out);
+        SST_SER(memOp);
+    }
+
+    ImplementSerializable(SST::Miranda::SingleStreamGenerator)
+
 
 private:
     uint64_t reqLength;

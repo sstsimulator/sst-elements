@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -31,6 +31,7 @@ void
 Communicator::createSmpCommunicator(const std::set<int>& neighbors, CollectiveEngine *engine,
                                     int cq_id)
 {
+  smp_initialized_ = true;
   if (!supportsSmp()) return;
 
   if (neighbors.size() == 1) return; //no smp parallelism

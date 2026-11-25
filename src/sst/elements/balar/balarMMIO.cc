@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -58,10 +58,10 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
         out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: clock. Must have units of Hz or s and be > 0. "
                 "(SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
     }
-    TimeConverter* tc = getTimeConverter(clockfreq);
+    TimeConverter tc = getTimeConverter(clockfreq);
 
     // Bind tick function
-    registerClock(*tc, new Clock::Handler2<BalarMMIO,&BalarMMIO::clockTic>(this));
+    registerClock(tc, new Clock::Handler<BalarMMIO,&BalarMMIO::clockTic>(this));
 
     // Link names
     char* link_buffer = (char*) malloc(sizeof(char) * 256);
@@ -73,7 +73,7 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
 
     // Interface to CPU via MMIO
     mmio_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mmio_iface", ComponentInfo::SHARE_NONE, tc,
-            new StandardMem::Handler2<BalarMMIO,&BalarMMIO::handleEvent>(this));
+            new StandardMem::Handler<BalarMMIO,&BalarMMIO::handleEvent>(this));
     if (!mmio_iface) {
         out.fatal(CALL_INFO, -1, "%s, Error: No interface found loaded into 'mmio_iface' subcomponent slot. Please check input file\n", getName().c_str());
     }
@@ -103,7 +103,7 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
     // Create and initialize GPU memHierarchy links (StandardMem)
     for (uint32_t i = 0; i < gpu_core_count; i++) {
         if (gpu_to_cache) {
-            gpu_to_cache_links[i] = gpu_to_cache->create<Interfaces::StandardMem>(i, ComponentInfo::INSERT_STATS, tc, new StandardMem::Handler2<BalarMMIO,&BalarMMIO::handleGPUCache>(this));
+            gpu_to_cache_links[i] = gpu_to_cache->create<Interfaces::StandardMem>(i, ComponentInfo::INSERT_STATS, tc, new StandardMem::Handler<BalarMMIO,&BalarMMIO::handleGPUCache>(this));
         } else {
     	    // Create a unique name for all links, the configure file links need to match this
     	    sprintf(link_cache_buffer, "requestGPUCacheLink%" PRIu32, i);
@@ -113,7 +113,7 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
 
             gpu_to_cache_links[i] = loadAnonymousSubComponent<SST::Interfaces::StandardMem>("memHierarchy.standardInterface",
                     "gpu_cache", i, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
-                    param, tc, new StandardMem::Handler2<BalarMMIO,&BalarMMIO::handleGPUCache>(this));
+                    param, tc, new StandardMem::Handler<BalarMMIO,&BalarMMIO::handleGPUCache>(this));
             out.verbose(CALL_INFO, 1, 0, "Finish configure cache link for core %d\n", i);
         }
 
@@ -164,7 +164,7 @@ void BalarMMIO::send_read_request_SST(unsigned core_id, uint64_t address, uint64
     numPendingCacheTransPerCore[core_id]++;
     gpu_to_cache_links[core_id]->send(req);
 
-    out.verbose(CALL_INFO, 1, 0, "Sent a read request with id (%ld) to addr %lx\n", req->getID(), req->pAddr);
+    out.verbose(CALL_INFO, 1, 0, "Sent a read request with id (%ld) to addr %lx\n", req->getID(), req->vAddr);
 }
 
 /**
@@ -185,7 +185,7 @@ void BalarMMIO::send_write_request_SST(unsigned core_id, uint64_t address, uint6
     gpuCachePendingTransactions->insert(std::pair<StandardMem::Request::id_t, cache_req_params>(req->getID(), cache_req_params(core_id, mem_req, req)));
     numPendingCacheTransPerCore[core_id]++;
     gpu_to_cache_links[core_id]->send(req);
-    out.verbose(CALL_INFO, 1, 0, "Sent a write request with id (%ld) to addr: %lx\n", req->getID(), req->pAddr);
+    out.verbose(CALL_INFO, 1, 0, "Sent a write request with id (%ld) to addr: %lx\n", req->getID(), req->vAddr);
 }
 
 /**

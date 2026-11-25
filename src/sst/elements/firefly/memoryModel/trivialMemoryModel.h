@@ -1,8 +1,8 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -45,7 +45,7 @@ public:
     TrivialMemoryModel( ComponentId_t id, Params& params ) : MemoryModel(id)
 	{
 		m_selfLink = configureSelfLink("Nic::TrivialMemoryModel", "1 ns",
-        new Event::Handler2<TrivialMemoryModel,&TrivialMemoryModel::handleSelfEvent>(this));
+        new Event::Handler<TrivialMemoryModel,&TrivialMemoryModel::handleSelfEvent>(this));
 	}
     virtual void printStatus( Output& out, int id ) { }
 	virtual void schedHostCallback( int core, std::vector< MemOp >* ops, Callback callback ) {

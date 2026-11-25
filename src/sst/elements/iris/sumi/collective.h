@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -24,6 +24,7 @@
 #include <iris/sumi/comm_functions.h>
 #include <iris/sumi/options.h>
 #include <sst/core/eli/elementbuilder.h>
+#include <sst/core/eli/elementinfo.h>
 //#include <mercury/common/factory.h>
 //#include <sprockit/debug.h>
 #include <list>
@@ -34,9 +35,15 @@
 
 namespace SST::Iris::sumi {
 
+struct CollectiveFactoryArgs;
+
 class Collective
 {
  public:
+  SST_ELI_DECLARE_BASE(Collective)
+  SST_ELI_DECLARE_DEFAULT_INFO()
+  SST_ELI_DECLARE_CTOR(const CollectiveFactoryArgs&)
+
   typedef enum {
     alltoall,
     alltoallv,

@@ -15,6 +15,13 @@ compdir = $(pkglibdir)
 ext_LTLIBRARIES = libcomputelibrary.la libostest.la libostest-nano.la
 extdir = $(pkglibdir)/ext
 
+ext_LTLIBRARIES += libfcontext_fp_preservation.la
+
+libfcontext_fp_preservation_la_SOURCES = \
+  tests/fcontext_fp_preservation.cc
+
+libfcontext_fp_preservation_la_LDFLAGS = -module -avoid-version -shared
+
 libhg_la_SOURCES = \
   common/event_link.cc \
   common/component.cc \
@@ -24,8 +31,8 @@ libhg_la_SOURCES = \
   common/output.cc \
   common/util.cc \
   common/timestamp.cc \
-  common/connection.cc \
   common/skeleton.cc \
+  common/hgcc_wrappers.cc \
   components/compute_library/node_cl.cc \
   components/compute_library/operating_system_cl.cc \
   components/compute_library/operating_system_cl_api.cc \
@@ -46,6 +53,8 @@ libhg_la_SOURCES = \
   operating_system/launch/app_launcher.cc \
   operating_system/libraries/library.cc \
   operating_system/libraries/unblock_event.cc \
+  operating_system/libraries/pthread/hg_pthread.cc \
+  operating_system/libraries/pthread/hg_pthread_runner.cc \
   operating_system/process/app.cc \
   operating_system/process/global.cc \
   operating_system/process/progress_queue.cc \
@@ -105,8 +114,6 @@ nobase_library_include_HEADERS = \
   common/appLoader.h \
   common/loader.h \
   common/loaderAPI.h \
-  common/connection.h \
-  common/connection_fwd.h \
   common/event_link.h \
   common/events.h \
   common/hg_printf.h \
@@ -172,6 +179,12 @@ nobase_library_include_HEADERS = \
   operating_system/libraries/library.h \
   operating_system/libraries/library_fwd.h \
   operating_system/libraries/unblock_event.h \
+  operating_system/libraries/pthread/hg_pthread.h \
+  operating_system/libraries/pthread/hg_pthread_impl.h \
+  operating_system/libraries/pthread/hg_pthread_macro.h \
+  operating_system/libraries/pthread/hg_pthread_clear_macros.h \
+  operating_system/libraries/pthread/hg_pthread_return.h \
+  operating_system/libraries/pthread/hg_pthread_runner.h \
   operating_system/threading/context_util.h \
   operating_system/threading/thread_lock.h \
   operating_system/threading/stack_alloc.h \
@@ -207,6 +220,10 @@ EXTRA_DIST = \
     tests/refFiles/ostest.out \
     tests/refFiles/ostest-nano.out
 
+EXTRA_DIST += \
+    tests/fcontext_fp_preservation.py \
+    tests/testsuite_default_hg_fcontext.py
+
 deprecated_EXTRA_DIST =
 
 if !SST_ENABLE_PREVIEW_BUILD
@@ -215,7 +232,8 @@ endif
 
 libhg_la_LDFLAGS = -module -avoid-version -shared
 libcomputelibrary_la_LDFLAGS = -module -avoid-version -shared
-libostest_la_LDFLAGS = -module -avoid-version
+libostest_la_LDFLAGS = -module -avoid-version -shared
+libostest_nano_la_LDFLAGS = -module -avoid-version -shared
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     mercury=$(abs_srcdir)

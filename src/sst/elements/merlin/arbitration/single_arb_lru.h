@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -39,22 +39,24 @@ public:
 
 private:
 
-    int16_t tail;
+    uint16_t array_size = 0;
+    int16_t tail = 0;
 
-    int16_t current;
-    int16_t last;
+    int16_t current = 0;
+    int16_t last = 0;
 
-    int16_t* order;
+    int16_t* order = nullptr;
 
 
 public:
 
-    single_arb_lru(Params& params, int16_t size) :
-        SingleArbitration()
+    single_arb_lru(Params& params, uint16_t size) :
+        SingleArbitration(),
+        array_size(size+1)
     {
         // Initialize head.  Index 0 of vector will be the head
         // pointer.
-        order = new int16_t[size + 1];
+        order = new int16_t[array_size];
         for ( int i = 0; i < size; ++i ) {
             order[i] = i + 1;
         }
@@ -65,11 +67,23 @@ public:
         last = tail;
     }
 
+    single_arb_lru() = default;
+
     ~single_arb_lru() {
         delete[] order;
     }
 
-    int next() {
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SingleArbitration::serialize_order(ser);
+        SST_SER(tail);
+        SST_SER(current);
+        SST_SER(last);
+        SST_SER(SST::Core::Serialization::array(order, array_size));
+    }
+    ImplementSerializable(SST::Merlin::single_arb_lru)
+
+    int next() override
+    {
         last = current;
         current = order[current];
         // Data array is one smaller than order array, so we need to
@@ -77,7 +91,8 @@ public:
         return current-1;
     }
 
-    void satisfied() {
+    void satisfied() override
+    {
         if ( current == 0 ) {
             // next() not called, so nothing to do
             return;

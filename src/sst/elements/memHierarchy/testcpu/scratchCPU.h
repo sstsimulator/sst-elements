@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -78,7 +78,7 @@ private:
     // Local variables
     Interfaces::StandardMem * memory;         // scratch interface
     std::unordered_map<uint64_t, SimTime_t> requests; // Request queue (outstanding requests)
-    TimeConverter *clockTC;                 // Clock object
+    TimeConverter clockTC;                 // Clock object
     Clock::HandlerBase *clockHandler;       // Clock handler
     SST::RNG::MarsagliaRNG rng;             // Random number generator for addresses, etc.
 

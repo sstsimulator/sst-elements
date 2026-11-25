@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,7 +21,9 @@
 #include "sumi_prov.h"
 #include "sumi_av.h"
 
+#include <sumi_fabric.hpp>
 #include <mercury/common/errors.h>
+#include <inttypes.h>
 
 EXTERN_C DIRECT_FN STATIC  int sumi_setname(fid_t fid, void *addr, size_t addrlen);
 EXTERN_C DIRECT_FN STATIC  int sumi_getname(fid_t fid, void *addr, size_t *addrlen);
@@ -103,83 +105,37 @@ struct fi_ops_cm sumi_pep_ops_cm = {
 EXTERN_C DIRECT_FN STATIC  int sumi_getname(fid_t fid, void *addr, size_t *addrlen)
 {
   sumi_fid_ep* ep = (sumi_fid_ep*) fid;
-  if (ep->domain->addr_format == FI_ADDR_STR){
+  FabricTransport* tport = (FabricTransport*) ep->domain->fabric->tport;
+  uint32_t rank = tport->rank();
+  uint16_t cq_id = ep->recv_cq ? ep->recv_cq->id : 0;
 
-  } else if (ep->domain->addr_format == FI_ADDR_SSTMAC){
-
-  } else {
-    sst_hg_abort_printf("internal error: got bad addr format");
+  if (ep->domain->addr_format == FI_ADDR_SSTMAC){
+    size_t need = sizeof(uint64_t);
+    if (*addrlen < need){
+      *addrlen = need;
+      return -FI_ETOOSMALL;
+    }
+    uint64_t encoded = ADDR_RANK_BITS((uint64_t)rank) | ADDR_CQ_BITS((uint64_t)cq_id);
+    memcpy(addr, &encoded, sizeof(encoded));
+    *addrlen = need;
+    return FI_SUCCESS;
   }
 
-	int ret;
-	size_t len = 0, cpylen = 0;
-#if 0
-  struct sumi_fid_ep *ep = NULL;
-  struct sumi_fid_sep *sep = NULL;
-  struct sumi_fid_pep *pep = NULL;
-	bool is_fi_addr_str;
-	struct fi_info *info;
-  struct sumi_ep_name *ep_name;
+  if (ep->domain->addr_format == FI_ADDR_STR){
+    // "<rank>.<cq>" zero-padded fixed width; round-trips through sumi_av_insert.
+    char buf[32];
+    int n = snprintf(buf, sizeof(buf), "%010" PRIu32 ".%05" PRIu16, rank, cq_id);
+    size_t need = (size_t)n + 1;
+    if (*addrlen < need){
+      *addrlen = need;
+      return -FI_ETOOSMALL;
+    }
+    memcpy(addr, buf, need);
+    *addrlen = need;
+    return FI_SUCCESS;
+  }
 
-	if (OFI_UNLIKELY(addrlen == NULL)) {
-    SUMI_INFO(FI_LOG_EP_CTRL, "parameter \"addrlen\" is NULL in "
-      "sumi_getname\n");
-		return -FI_EINVAL;
-	}
-
-	switch (fid->fclass) {
-	case FI_CLASS_EP:
-    ep = container_of(fid, struct sumi_fid_ep, ep_fid.fid);
-		info = ep->info;
-		ep_name = &ep->src_addr;
-		break;
-	case FI_CLASS_SEP:
-    sep = container_of(fid, struct sumi_fid_sep, ep_fid);
-		info = sep->info;
-		ep_name = &sep->my_name;
-		break;
-	case FI_CLASS_PEP:
-    pep = container_of(fid, struct sumi_fid_pep,
-				   pep_fid.fid);
-		info = pep->info;
-		ep_name = &pep->src_addr;
-		break;
-	default:
-    SUMI_INFO(FI_LOG_EP_CTRL,
-			  "Invalid fid class: %d\n",
-			  fid->fclass);
-		return -FI_EINVAL;
-	}
-
-	is_fi_addr_str = info->addr_format == FI_ADDR_STR;
-
-	if (!addr) {
-		if (OFI_UNLIKELY(is_fi_addr_str)) {
-      *addrlen = SUMI_FI_ADDR_STR_LEN;
-		} else {
-      *addrlen = sizeof(struct sumi_ep_name);
-		}
-
-		return -FI_ETOOSMALL;
-	}
-
-	if (OFI_UNLIKELY(is_fi_addr_str)) {
-    ret = _sumi_ep_name_to_str(ep_name, (char **) &addr);
-
-		if (ret)
-			return ret;
-
-    len = SUMI_FI_ADDR_STR_LEN;
-		cpylen = MIN(len, *addrlen);
-	} else {
-    len = sizeof(struct sumi_ep_name);
-		cpylen = MIN(len, *addrlen);
-		memcpy(addr, ep_name, cpylen);
-	}
-
-	*addrlen = len;
-#endif
-	return (len == cpylen) ? FI_SUCCESS : -FI_ETOOSMALL;
+  return -FI_EINVAL;
 }
 
 EXTERN_C DIRECT_FN STATIC  int sumi_setname(fid_t fid, void *addr, size_t addrlen)

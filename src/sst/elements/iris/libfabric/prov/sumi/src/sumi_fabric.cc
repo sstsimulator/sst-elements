@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -197,6 +197,25 @@ static void sumi_fini(void)
   FI_DIRECTED_RECV | FI_READ | FI_NAMED_RX_CTX | \
   FI_WRITE | FI_SEND | FI_RECV | FI_REMOTE_READ | FI_REMOTE_WRITE)
 
+// Advertised inject size; overridable at runtime via SUMI_FI_INJECT_SIZE,
+// clamped to [1, SUMI_MAX_INJECT_SIZE]. Resolved once on first call.
+static size_t sumi_runtime_inject_size()
+{
+  static size_t cached = [](){
+    size_t v = SUMI_INJECT_SIZE;
+    if (const char* env = getenv("SUMI_FI_INJECT_SIZE")){
+      char* end = nullptr;
+      long parsed = strtol(env, &end, 0);
+      if (end != env && parsed > 0){
+        if ((size_t)parsed > SUMI_MAX_INJECT_SIZE) parsed = SUMI_MAX_INJECT_SIZE;
+        v = (size_t)parsed;
+      }
+    }
+    return v;
+  }();
+  return cached;
+}
+
 static struct fi_info *sumi_allocinfo(void)
 {
   struct fi_info *sumi_info;
@@ -273,16 +292,16 @@ static struct fi_info *sumi_allocinfo(void)
 
 
   sumi_info->tx_attr->caps = SUMI_EP_PRIMARY_CAPS;
-  sumi_info->tx_attr->msg_order = FI_ORDER_SAS;
-  sumi_info->tx_attr->comp_order = FI_ORDER_NONE;
-  sumi_info->tx_attr->inject_size = SUMI_INJECT_SIZE;
+  sumi_info->tx_attr->msg_order = SUMI_MSG_ORDER_SUPPORTED;
+  sumi_info->tx_attr->comp_order = SUMI_COMP_ORDER_SUPPORTED;
+  sumi_info->tx_attr->inject_size = sumi_runtime_inject_size();
   sumi_info->tx_attr->size = SUMI_TX_SIZE_DEFAULT;
   sumi_info->tx_attr->iov_limit = SUMI_MAX_MSG_IOV_LIMIT;
   sumi_info->tx_attr->rma_iov_limit = SUMI_MAX_RMA_IOV_LIMIT;
 
   sumi_info->rx_attr->caps = SUMI_EP_PRIMARY_CAPS;
-  sumi_info->rx_attr->msg_order = FI_ORDER_SAS;
-  sumi_info->rx_attr->comp_order = FI_ORDER_NONE;
+  sumi_info->rx_attr->msg_order = SUMI_MSG_ORDER_SUPPORTED;
+  sumi_info->rx_attr->comp_order = SUMI_COMP_ORDER_SUPPORTED;
   sumi_info->rx_attr->size = SUMI_RX_SIZE_DEFAULT;
   sumi_info->rx_attr->iov_limit = SUMI_MAX_MSG_IOV_LIMIT;
 
@@ -319,6 +338,8 @@ static int sumi_ep_getinfo(enum fi_ep_type ep_type, uint32_t version,
     if (hints->addr_format == FI_ADDR_STR){
       info->addr_format = FI_ADDR_STR;
     } else if (hints->addr_format == FI_ADDR_SSTMAC){
+      info->addr_format = FI_ADDR_SSTMAC;
+    } else if (hints->addr_format == FI_FORMAT_UNSPEC){
       info->addr_format = FI_ADDR_SSTMAC;
     } else {
       return -FI_ENODATA;
@@ -390,14 +411,13 @@ static int sumi_ep_getinfo(enum fi_ep_type ep_type, uint32_t version,
         return -FI_ENODATA;
       }
 
-      //we current do not support any ordering relationships
-      //if the app requires ordering, we can't help it
-      if (hints->tx_attr->comp_order && hints->tx_attr->comp_order != FI_ORDER_NONE){
+      // Reject any ordering bits we cannot guarantee.
+      if ((hints->tx_attr->msg_order  & ~SUMI_MSG_ORDER_SUPPORTED) ||
+          (hints->tx_attr->comp_order & ~SUMI_COMP_ORDER_SUPPORTED)){
         return -FI_ENODATA;
       }
-      if (hints->tx_attr->msg_order && hints->tx_attr->msg_order != FI_ORDER_NONE){
-        return -FI_ENODATA;
-      }
+      info->tx_attr->comp_order = hints->tx_attr->comp_order;
+      info->tx_attr->msg_order  = hints->tx_attr->msg_order;
 
       if (hints->tx_attr->caps){
         if (hints->caps){
@@ -415,19 +435,17 @@ static int sumi_ep_getinfo(enum fi_ep_type ep_type, uint32_t version,
     }
 
     if (hints->rx_attr){
-      if ((hints->rx_attr->op_flags & SUMI_EP_OP_FLAGS) != hints->tx_attr->op_flags){
-        //the app is requesting operations I don't support
+      if ((hints->rx_attr->op_flags & SUMI_EP_OP_FLAGS) != hints->rx_attr->op_flags){
         return -FI_ENODATA;
       }
 
-      //we current do not support any ordering relationships
-      //if the app requires ordering, we can't help it
-      if (hints->rx_attr->comp_order && hints->rx_attr->comp_order != FI_ORDER_NONE){
+      // Reject any ordering bits we cannot guarantee.
+      if ((hints->rx_attr->msg_order  & ~SUMI_MSG_ORDER_SUPPORTED) ||
+          (hints->rx_attr->comp_order & ~SUMI_COMP_ORDER_SUPPORTED)){
         return -FI_ENODATA;
       }
-      if (hints->rx_attr->msg_order && hints->rx_attr->msg_order != FI_ORDER_NONE){
-        return -FI_ENODATA;
-      }
+      info->rx_attr->comp_order = hints->rx_attr->comp_order;
+      info->rx_attr->msg_order  = hints->rx_attr->msg_order;
     }
 
     if (hints->domain_attr) {
@@ -533,13 +551,8 @@ struct fi_provider sumi_prov = {
 	.cleanup = sumi_fini
 };
 
-__attribute__((visibility ("default"),EXTERNALLY_VISIBLE)) \
+extern "C" __attribute__((visibility ("default"),EXTERNALLY_VISIBLE))
 struct fi_provider* fi_prov_ini(void)
 {
-	struct fi_provider *provider = NULL;
-	sumi_return_t status;
-  //sumi_version_info_t lib_version;
-	int num_devices;
-	int ret;
-	return (provider);
+	return &sumi_prov;
 }

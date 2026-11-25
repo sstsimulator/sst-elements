@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -30,12 +30,6 @@ namespace Miranda {
 class EmptyGenerator : public RequestGenerator {
 
 public:
-	EmptyGenerator( ComponentId_t id, Params& params ) : RequestGenerator(id, params) {}
-	~EmptyGenerator() { }
-	void generate(MirandaRequestQueue<GeneratorRequest*>* q) { }
-	bool isFinished() { return true; }
-	void completed() { }
-
     SST_ELI_REGISTER_SUBCOMPONENT(
         EmptyGenerator,
         "miranda",
@@ -45,8 +39,22 @@ public:
         SST::Miranda::RequestGenerator
     )
 
-	SST_ELI_DOCUMENT_PARAMS(
+    SST_ELI_DOCUMENT_PARAMS(
     )
+
+    EmptyGenerator( ComponentId_t id, Params& params ) : RequestGenerator(id, params) {}
+    EmptyGenerator() = default;
+    ~EmptyGenerator() { }
+    void generate(MirandaRequestQueue<GeneratorRequest*>* q) override { }
+    bool isFinished() override { return true; }
+    void completed() override { }
+
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::Miranda::RequestGenerator::serialize_order(ser);
+    }
+
+    ImplementSerializable(SST::Miranda::EmptyGenerator)
+
 
 };
 

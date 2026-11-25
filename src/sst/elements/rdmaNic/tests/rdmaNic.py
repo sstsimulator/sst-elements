@@ -97,11 +97,11 @@ class Builder:
 
         # NIC DMA -> TLB
         link = sst.Link(prefix+".link_cpu_dtlb")
-        link.connect( (dmaIf, "lowlink", "1ns"), (tlbWrapper, "cpu_if", "1ns") )
+        link.connect( (dmaIf, "lowlink", "1ns"), (tlbWrapper, "highlink", "1ns") )
 
         # NIC DMA TLB -> cache
         link = sst.Link(prefix+".link_cpu_l1dcache")
-        link.connect( (tlbWrapper, "cache_if", "1ns"), (dmaCache, "highlink", "1ns") )
+        link.connect( (tlbWrapper, "lowlink", "1ns"), (dmaCache, "highlink", "1ns") )
 
         # NIC internode interface
         netLink = nic.setSubComponent( "rtrLink", "merlin.linkcontrol" )

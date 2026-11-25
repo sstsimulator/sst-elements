@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -43,9 +43,9 @@ class ZodiacSiriusTraceReader : public SST::Component {
 public:
 
   ZodiacSiriusTraceReader(SST::ComponentId_t id, SST::Params& params);
-  void setup();
-  void finish();
-  void init(unsigned int phase);
+  void setup() override;
+  void finish() override;
+  void init(unsigned int phase) override;
 
   SST_ELI_REGISTER_COMPONENT(
         ZodiacSiriusTraceReader,

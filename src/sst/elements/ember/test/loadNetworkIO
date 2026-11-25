@@ -1,0 +1,32 @@
+# SPDX-FileCopyrightText: Copyright Hewlett Packard Enterprise Development LP
+# SPDX-License-Identifier: BSD-3-Clause
+
+# This file must be ordered
+#
+# [JOB_ID]
+# [NID_LIST]
+# [MOTIF]
+# [MOTIF]
+#
+# keywords must be left justified and not contain white space
+# all characters between keywords will be considered part of the leading keyword
+# you can have multiple MOTIF keywords for a given JOB_ID
+# you can have multiple jobs
+# two jobs can not have the same NID
+
+[VAR] TOTAL_NODES=4
+[VAR] COMPUTE_OFFSET=0
+[VAR] COMPUTE_NODES=2
+[VAR] SSD_START_NODE=2
+[VAR] SSD_NODES=2
+
+[JOB_ID] 1
+[NID_LIST] generateNidList=generateNidListRange({COMPUTE_OFFSET},{COMPUTE_NODES})
+[PARAM] ember:firefly.hadesNetworkIO.ssd_start_node={SSD_START_NODE}
+[PARAM] ember:firefly.hadesNetworkIO.numStorageNodes={SSD_NODES}
+[PARAM] ember:firefly.hadesNetworkIO.storageNodeCapacity=1GiB
+[MOTIF] TestNetworkIO iterations=1  messageSize=1000 op=write
+
+[JOB_ID] 2
+[NID_LIST] generateNidList=generateNidListRange({SSD_START_NODE},{SSD_NODES})
+[MOTIF] Null

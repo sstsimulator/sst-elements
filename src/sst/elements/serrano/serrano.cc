@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -36,7 +36,7 @@ SerranoComponent::SerranoComponent( SST::ComponentId_t id, SST::Params& params )
 
 	const std::string clock = params.find<std::string>("clock", "1GHz");
 	output->verbose(CALL_INFO, 2, 0, "Configuring Serrano for clock of %s...\n", clock.c_str());
-	registerClock( clock, new Clock::Handler2<SerranoComponent,&SerranoComponent::tick>(this) );
+	registerClock( clock, new Clock::Handler<SerranoComponent,&SerranoComponent::tick>(this) );
 
 	constexpr int kernel_name_len = 128;
 	char* kernel_name = new char[kernel_name_len];
@@ -232,7 +232,7 @@ int SerranoComponent::read_line( FILE* file_h, char* buffer, const size_t buffer
 	bool keep_looping = true;
 
 	while( keep_looping ) {
-		char nxt_c = (char) fgetc( file_h );
+		int nxt_c = fgetc( file_h );
 
 		switch( nxt_c ) {
 		case EOF:
@@ -242,7 +242,8 @@ int SerranoComponent::read_line( FILE* file_h, char* buffer, const size_t buffer
 			keep_looping = false;
 			break;
 		default:
-			buffer[index++] = nxt_c;
+			if( index < (int)(buffer_max - 1) )
+				buffer[index++] = nxt_c;
 			break;
 		}
 	}

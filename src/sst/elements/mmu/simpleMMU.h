@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -72,7 +72,7 @@ class SimpleMMU : public MMU {
     virtual uint32_t getPerms( uint32_t pid, uint32_t vpn ) override {
         auto page_table = page_table_map_[pid];
         assert( page_table );
-        uint32_t perms = std::numeric_limits<uint32_t>::max();
+        uint32_t perms = page_perms::unset;
         PTE* pte = nullptr;
         if ( ( pte = page_table->find( vpn ) ) ) {
 #ifdef __SST_DEBUG_OUTPUT__
@@ -111,49 +111,49 @@ class SimpleMMU : public MMU {
         PageTable( SST::Output* output, FILE* fp ) {
             size_t size;
 
-            assert( 1 == fscanf( fp, "pteMap.size() zu\n", &size ) );
-            output->debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"pteMap.size() %zu\n",size);
+            assert( 1 == fscanf( fp, "pte_map_.size() %zu\n", &size ) );
+            output->debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"pte_map_.size() %zu\n",size);
             for ( auto i = 0; i < size; i++ ) {
                 uint32_t vpn;
                 uint32_t ppn;
                 uint32_t perms;
                 assert( 3 == fscanf( fp, "vpn: %" PRIu32 ", ppn: %" PRIu32 ", perms: %" PRIx32 "\n", &vpn, &ppn, &perms ) );
                 output->debug(CALL_INFO_LONG,1,MMU_DBG_SNAPSHOT,"vpn: %" PRIu32 ", ppn: %" PRIu32 ", perms: %" PRIx32 "\n", vpn, ppn, perms );
-                pteMap[vpn] = PTE( ppn, perms );
+                pte_map_[vpn] = PTE( ppn, perms );
             }
         }
 
         void add( uint32_t vpn, PTE pte ) {
-            pteMap[vpn] = pte;
+            pte_map_[vpn] = pte;
         }
         void remove( uint32_t vpn ) {
-            pteMap.erase(vpn);
+            pte_map_.erase(vpn);
         }
         PTE* find( uint32_t vpn ) {
-            if ( pteMap.find( vpn ) == pteMap.end() ) {
+            if ( pte_map_.find( vpn ) == pte_map_.end() ) {
                 return nullptr;
             } else {
-                return &pteMap[vpn];
+                return &pte_map_[vpn];
             }
         }
         void removeWrite(  ) {
-            for ( auto& kv : pteMap ) {
-                kv.second.perms &= ~0x2;
+            for ( auto& kv : pte_map_ ) {
+                kv.second.perms &= ~(page_perms::write);
             }
         }
         void print( const std::string str) {
-            for ( auto& kv : pteMap ) {
+            for ( auto& kv : pte_map_ ) {
                 printf("PageTabl::%s() %s vpn=%" PRIu32 " ppn=%" PRIu32 " perm=%#" PRIx32 "\n",__func__,str.c_str(),kv.first,kv.second.ppn,kv.second.perms);
             }
         }
         void snapshot( FILE* fp ) {
-            fprintf(fp,"pteMap.size() %zu\n",pteMap.size());
-            for ( auto & x : pteMap ) {
+            fprintf(fp,"pte_map_.size() %zu\n",pte_map_.size());
+            for ( auto & x : pte_map_ ) {
                 fprintf(fp,"vpn: %" PRIu32 ", ppn: %" PRIu32 ", perms: %#" PRIx32 " \n", x.first,x.second.ppn,x.second.perms );
             }
         }
       private:
-        std::map<uint32_t,PTE> pteMap;
+        std::map<uint32_t,PTE> pte_map_;
     };
 
     void initPageTable( uint32_t pid, PageTable* table = nullptr ) {
@@ -172,8 +172,8 @@ class SimpleMMU : public MMU {
         }
     }
 
-    void handleTlbEvent( Event* ev, int link );
-    void handleNicTlbEvent( Event* ev );
+    void handleTlbEvent( Event* ev, int link ) override;
+    void handleNicTlbEvent( Event* ev ) override;
 
 
     uint32_t getPid( uint32_t core, uint32_t hw_thread ) {

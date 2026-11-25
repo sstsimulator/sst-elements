@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -46,21 +46,23 @@ public:
 
 
 private:
-    int num_ports;
-    int num_vcs;
+    int num_ports = 0;
+    int num_vcs = 0;
 
-    int *rr_vcs;
-    int rr_port;
+    int* rr_vcs = nullptr;
+    int rr_port = 0;
 
 #if VERIFY_DECLOCKING
-    int rr_port_shadow;
+    int rr_port_shadow = 0;
 #endif
 
-    internal_router_event** vc_heads;
+    internal_router_event** vc_heads = nullptr;
 
     // PortControl** ports;
 
 public:
+
+    xbar_arb_rr() = default;
 
     xbar_arb_rr(ComponentId_t cid, Params& params) :
         XbarArbitration(cid),
@@ -72,7 +74,26 @@ public:
         if ( rr_vcs != NULL ) delete [] rr_vcs;
     }
 
-    void setPorts(int num_ports_s, int num_vcs_s) {
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        XbarArbitration::serialize_order(ser);
+        SST_SER(num_ports);
+        SST_SER(num_vcs);
+        SST_SER(rr_port);
+#if VERIFY_DECLOCKING
+        SST_SER(rr_port_shadow);
+#endif
+
+        SST_SER(SST::Core::Serialization::array(rr_vcs, num_vcs));
+
+        // vc_heads is a non-owning scratch buffer, re-allocated on UNPACK
+        if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+            vc_heads = new internal_router_event*[num_vcs];
+        }
+    }
+    ImplementSerializable(SST::Merlin::xbar_arb_rr)
+
+    void setPorts(int num_ports_s, int num_vcs_s) override
+    {
         num_ports = num_ports_s;
         num_vcs = num_vcs_s;
 
@@ -97,7 +118,7 @@ public:
 #else
                    PortInterface** ports, int* in_port_busy, int* out_port_busy, int* progress_vc
 #endif
-                   )
+                   ) override
     {
         // Run through each of the ports, giving first pick in a round robin fashion
         // for ( int port = rr_port, pcount = 0; pcount < num_ports; port = (port+1) % num_ports, pcount++ ) {
@@ -155,7 +176,8 @@ public:
         return;
     }
 
-    void reportSkippedCycles(Cycle_t cycles) {
+    void reportSkippedCycles(Cycle_t cycles) override
+    {
 #if VERIFY_DECLOCKING
         rr_port_shadow = (rr_port_shadow + cycles) % num_ports;
         if ( rr_port_shadow != rr_port ) std::cout << "  PROBLEM:  rr_port = "
@@ -166,7 +188,8 @@ public:
 #endif
     }
 
-    void dumpState(std::ostream& stream) {
+    void dumpState(std::ostream& stream) override
+    {
         stream << "Current round robin port: " << rr_port << std::endl;
         stream << "  Current round robin VC by port:" << std::endl;
         for ( int i = 0; i < num_ports; i++ ) {

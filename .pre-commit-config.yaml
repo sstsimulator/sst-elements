@@ -6,10 +6,12 @@ repos:
       - id: check-hooks-apply
       - id: check-useless-excludes
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: "v5.0.0"
+    rev: "v6.0.0"
     hooks:
       - id: check-case-conflict
+      - id: check-json
       - id: check-merge-conflict
+      - id: check-yaml
       - id: trailing-whitespace
         # allow it in patches, data files, and test references
         exclude: |
@@ -24,9 +26,14 @@ repos:
               patch\.txt|
               \.xml
           )
-  - repo: https://github.com/rhysd/actionlint
-    rev: v1.7.7
+  - repo: https://github.com/kjanat/actionlint
+    rev: "v1.17.0"
     hooks:
       - id: actionlint
         additional_dependencies:
-          - "github.com/wasilibs/go-shellcheck/cmd/shellcheck@latest"
+          - "github.com/wasilibs/go-shellcheck/cmd/shellcheck@v0.11.1"
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.31.1
+    hooks:
+      - id: zizmor
+        args: [--no-progress, --persona=pedantic, --fix=all]

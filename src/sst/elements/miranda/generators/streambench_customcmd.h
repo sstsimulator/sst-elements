@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,13 +28,6 @@ namespace Miranda {
 class STREAMBenchGenerator_CustomCmd : public RequestGenerator {
 
 public:
-	STREAMBenchGenerator_CustomCmd( ComponentId_t id, Params& params );
-        void build(Params& params);
-	~STREAMBenchGenerator_CustomCmd();
-	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
-	bool isFinished();
-	void completed();
-
 	SST_ELI_REGISTER_SUBCOMPONENT(
         STREAMBenchGenerator_CustomCmd,
         "miranda",
@@ -56,6 +49,36 @@ public:
         { "read_cmd",         "Sets the custom opcode for reads",  "0xFFFF" }
     )
 
+	STREAMBenchGenerator_CustomCmd( ComponentId_t id, Params& params );
+	STREAMBenchGenerator_CustomCmd() = default;
+	~STREAMBenchGenerator_CustomCmd();
+	void build(Params& params);
+	void generate(MirandaRequestQueue<GeneratorRequest*>* q) override;
+	bool isFinished() override;
+	void completed() override;
+
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::Miranda::RequestGenerator::serialize_order(ser);
+		SST_SER(reqLength);
+
+		SST_SER(start_a);
+		SST_SER(start_b);
+		SST_SER(start_c);
+
+		SST_SER(n);
+		SST_SER(n_per_call);
+		SST_SER(i);
+
+		SST_SER(custom_write_opcode);
+		SST_SER(custom_read_opcode);
+
+		SST_SER(out);
+    }
+
+    ImplementSerializable(SST::Miranda::STREAMBenchGenerator_CustomCmd)
+
+
+
 private:
 	uint64_t reqLength;
 
@@ -67,8 +90,8 @@ private:
 	uint64_t n_per_call;
 	uint64_t i;
 
-        uint32_t custom_write_opcode;
-        uint32_t custom_read_opcode;
+	uint32_t custom_write_opcode;
+	uint32_t custom_read_opcode;
 
 	Output*  out;
 

@@ -1,14 +1,17 @@
-
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // of the distribution for more information.
+//
+// Portions copyright (c) 2026, Hewlett Packard Enterprise Development LP
+// SPDX-FileCopyrightText: Copyright Hewlett Packard Enterprise Development LP
+// SPDX-License-Identifier: BSD-3-Clause
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -20,14 +23,16 @@
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>
 #include "sst/elements/hermes/shmemapi.h"
-
+#include "sst/elements/hermes/networkIOapi.h"
 #include "ioVec.h"
 
 namespace SST {
 namespace Firefly {
 
+
 class NicRespEvent;
 class NicShmemRespBaseEvent;
+class NicNetworkIORespBaseEvent;
 
 class VirtNic : public SST::SubComponent {
 
@@ -103,14 +108,14 @@ class VirtNic : public SST::SubComponent {
     };
 
     template <typename classT, typename T1, typename T2 >
-    class Handler2Args : public HandlerBase2Args< T1, T2 > {
+    class HandlerArgs : public HandlerBase2Args< T1, T2 > {
       private:
         typedef bool (classT::*PtrMember)( T1, T2 );
         classT* object;
         const PtrMember member;
 
       public:
-        Handler2Args( classT* const object, PtrMember member ) :
+        HandlerArgs( classT* const object, PtrMember member ) :
             object(object),
             member(member)
         {}
@@ -207,6 +212,9 @@ class VirtNic : public SST::SubComponent {
     void notifyRecvDmaDone( int src, int tag, size_t len, void* key );
     void notifyNeedRecv( int src, int tag, size_t length );
 
+    void networkIORead( int targetNid, Hermes::Vaddr dest, size_t len, std::function<void(int)> );
+    void networkIOWrite( int targetNid, Hermes::Vaddr src, size_t len, std::function<void(int)> );
+
     bool isBlocked() {
 		m_dbg.debug(CALL_INFO,2,0,"%d %d\n", m_curNicQdepth, m_maxNicQdepth);
         return m_curNicQdepth == m_maxNicQdepth;
@@ -254,6 +262,7 @@ class VirtNic : public SST::SubComponent {
     void handleEvent( Event * );
     void handleMsgEvent( NicRespEvent * );
     void handleShmemEvent( NicShmemRespBaseEvent * );
+    void handleNetworkIOEvent( NicNetworkIORespBaseEvent * );
 
     int         m_realNicId;
     int         m_coreId;

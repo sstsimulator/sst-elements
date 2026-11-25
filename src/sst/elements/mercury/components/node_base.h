@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -43,8 +43,8 @@ public:
   )
 
   SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-      {"os_slot", "The operating system", "hg.operating_system"},
-      {"nic_slot", "The nic", "hg.nic"},
+      {"os_slot", "The operating system", "SST::Hg::OperatingSystemAPI"},
+      {"nic_slot", "The nic", "SST::Hg::NicAPI"},
       {"link_control_slot", "Slot for a link control", "SST::Interfaces::SimpleNetwork" }
       )
 

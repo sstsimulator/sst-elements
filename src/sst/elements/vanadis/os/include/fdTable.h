@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -69,7 +69,7 @@ public:
         if ( ! lazy ) {
             fd = open(file_path.c_str(), flags, mode );
             if ( -1 == fd ) {
-                printf("%s() FAILED: %s flags=%#x mode=%#x\n",__func__,path.c_str(),flags,mode);
+                printf("%s() FAILED: %s flags=%#x mode=0x%" PRIxMAX "\n",__func__,path.c_str(),flags, (uintmax_t)mode);
                 throw errno;
             }
         } else {
@@ -96,10 +96,10 @@ public:
     int openLate() {
         fd = open(path.c_str(), flags, mode );
         if ( -1 == fd ) {
-            printf("%s() FAILED: %s flags=%#x mode=%#x\n",__func__,path.c_str(),flags,mode);
+            printf("%s() FAILED: %s flags=%#x mode=0x%" PRIxMAX "\n",__func__,path.c_str(),flags, (uintmax_t)mode);
             throw errno;
         } else {
-            printf("%s() %s flags=%#x mode=%#x\n",__func__,path.c_str(),flags,mode);
+            printf("%s() %s flags=%#x mode=%" PRIxMAX "\n",__func__,path.c_str(),flags, (uintmax_t)mode);
         }
         return fd;
     }
@@ -116,27 +116,39 @@ public:
         char str[80];
         int f = fscanf(fp, "path: %s\n", str);
         assert( 1 == f );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"path: %s\n",str );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"path: %s\n",str );
         path = str;
 
-        f = fscanf(fp,"fd: %d\n", &fd);
+        int saved_fd;
+        f = fscanf(fp,"fd: %d\n", &saved_fd);
         assert( 1 == f );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"fd: %d\n", fd);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"fd: %d (from snapshot)\n", saved_fd);
 
         f = fscanf(fp,"flags: %d\n", &flags );
         assert( 1 == f );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"flags: %d\n", flags );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"flags: %d\n", flags );
 
-        f = fscanf(fp,"mode: %d\n", &mode);
+        f = fscanf(fp,"mode: %" PRIuMAX "\n", (uintmax_t*)&mode);
         assert( 1 == f );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"mode: %d\n", mode);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"mode: %" PRIuMAX "\n", (uintmax_t)mode);
+
+        // Re-open the file - the saved fd is not valid in this process
+        fd = open(path.c_str(), flags, mode);
+        if ( -1 == fd ) {
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,
+                "WARNING: Failed to re-open file '%s' flags=%#x mode=%#" PRIxMAX ", errno=%d\n",
+                path.c_str(), flags, (uintmax_t)mode, errno);
+        } else {
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,
+                "Re-opened file '%s' with new fd=%d (was %d)\n", path.c_str(), fd, saved_fd);
+        }
     }
 
-    void checkpoint( FILE* fp) {
+    void snapshot( FILE* fp) {
         fprintf(fp, "path: %s\n", path.c_str() );
         fprintf(fp, "fd: %d\n", fd );
         fprintf(fp, "flags: %d\n", flags );
-        fprintf(fp, "mode: %d\n", mode );
+        fprintf(fp, "mode: %" PRIuMAX "\n", (uintmax_t)mode );
     }
 
 protected:
@@ -245,40 +257,40 @@ public:
         char* tmp = nullptr;
         size_t num = 0;
         (void) !getline( &tmp, &num, fp );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",tmp);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"%s",tmp);
         assert( 0 == strcmp(tmp,"#FileDescriptorTable start\n") );
         free(tmp);
 
         int f = fscanf(fp,"m_refCnt: %d\n",&m_refCnt);
         assert( 1 == f );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_refCnt: %d\n",m_refCnt);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"m_refCnt: %d\n",m_refCnt);
 
         f = fscanf(fp,"m_maxFD: %d\n",&m_maxFD);
         assert( 1 == f );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_maxFD: %d\n",m_maxFD);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"m_maxFD: %d\n",m_maxFD);
 
         size_t size;
         f = fscanf(fp,"m_fileDescriptors.size(): %zu\n",&size);
         assert( 1 == f );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_fileDescriptors.size(): %zu\n",size);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"m_fileDescriptors.size(): %zu\n",size);
 
         for ( auto i = 0; i < size; i++ ) {
             int fd;
             int f = fscanf(fp,"fd: %d\n", &fd );
             assert( 1 == f );
-            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"fd: %d\n", fd );
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"fd: %d\n", fd );
             m_fileDescriptors[fd] = new FileDescriptor(output, fp);
         }
 
         tmp = nullptr;
         num = 0;
         (void) !getline( &tmp, &num, fp );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",tmp);
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"%s",tmp);
         assert( 0 == strcmp(tmp,"#FileDescriptorTable end\n") );
         free(tmp);
     }
 
-    void checkpoint( FILE* fp ) {
+    void snapshot( FILE* fp ) {
         fprintf(fp,"#FileDescriptorTable start\n");
         fprintf(fp,"m_refCnt: %d\n",m_refCnt);
         fprintf(fp,"m_maxFD: %d\n",m_maxFD);
@@ -287,7 +299,7 @@ public:
 
         for ( auto & x : m_fileDescriptors ) {
             fprintf(fp,"fd: %d\n",x.first);
-            x.second->checkpoint(fp);
+            x.second->snapshot(fp);
         }
         fprintf(fp,"#FileDescriptorTable end\n");
     }

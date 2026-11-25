@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -44,9 +44,9 @@ public:
 	Rtlmodel( SST::ComponentId_t id, SST::Params& params );
     ~Rtlmodel();
 
-	void setup();
-	void init(unsigned);
-	void finish();
+	void setup() override;
+	void init(unsigned) override;
+	void finish() override;
 
 	bool clockTick( SST::Cycle_t currentCycle );
 
@@ -73,18 +73,18 @@ public:
 	SST_ELI_DOCUMENT_PARAMS(
 		{ "ExecFreq", "Clock frequency of RTL design in GHz", "1GHz" },
 		{ "maxCycles", "Number of Clock ticks the simulation must atleast execute before halting", "1000" },
-        {"memoryinterface", "Interface to memory", "memHierarchy.standardInterface"}
+        { "memoryinterface", "Interface to memory", "memHierarchy.standardInterface"}
 	)
 
     //Default will be single port for communicating with Ariel CPU. Need to see the requirement/use-case of multi-port design and how to incorporate it in our parser tool.
     SST_ELI_DOCUMENT_PORTS(
-        {"ArielRtllink", "Link to the Rtlmodel", { "Rtlmodel.RTLEvent", "" } },
-        {"RtlCacheLink", "Link to Cache", {"memHierarchy.memInterface" , ""} }
+        { "ArielRtllink", "Link to the Rtlmodel", { "Rtlmodel.RTLEvent", "" } },
+        { "RtlCacheLink", "Link to Cache", {"memHierarchy.memInterface" , ""} }
     )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-            {"memmgr", "Memory manager to translate virtual addresses to physical, handle malloc/free, etc.", "SST::RtlComponent::RtlMemoryManager"},
-            {"memory", "Interface to the memoryHierarchy (e.g., caches)", "SST::Interfaces::StandardMem" }
+            { "memmgr", "Memory manager to translate virtual addresses to physical, handle malloc/free, etc.", "SST::RtlComponent::RtlMemoryManager"},
+            { "memory", "Interface to the memoryHierarchy (e.g., caches)", "SST::Interfaces::StandardMem" }
     )
 
     void generateReadRequest(RtlReadEvent* rEv);

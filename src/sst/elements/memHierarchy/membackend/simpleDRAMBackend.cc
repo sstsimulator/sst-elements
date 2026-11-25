@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -104,7 +104,7 @@ SimpleDRAM::SimpleDRAM(ComponentId_t id, Params &params) : SimpleMemBackend(id, 
     }
 
     // Self link for timing requests
-    self_link = configureSelfLink("Self", cycTime, new Event::Handler2<SimpleDRAM, &SimpleDRAM::handleSelfEvent>(this));
+    self_link = configureSelfLink("Self", cycTime, new Event::Handler<SimpleDRAM, &SimpleDRAM::handleSelfEvent>(this));
 
     // Some statistics
     statRowHit = registerStatistic<uint64_t>("row_already_open");

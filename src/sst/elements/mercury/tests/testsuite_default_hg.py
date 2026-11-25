@@ -19,9 +19,13 @@ class testcase_hg(SSTTestCase):
 
 #####
 
+    @unittest.skipIf(testing_check_get_num_threads() > 1, "ostest skipped if threads > 1 - single component in config")
+    @unittest.skipIf(testing_check_get_num_ranks() > 1, "ostest skipped if ranks > 1 - single component in config")
     def test_os(self):
         self.simple_components_template("ostest")
 
+    @unittest.skipIf(testing_check_get_num_threads() > 1, "ostest-nano skipped if threads > 1 - single component in config")
+    @unittest.skipIf(testing_check_get_num_ranks() > 1, "ostest-nano skipped if ranks > 1 - single component in config")
     def test_os_nano(self):
         self.simple_components_template("ostest-nano")
 

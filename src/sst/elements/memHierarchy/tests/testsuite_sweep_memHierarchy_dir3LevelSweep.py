@@ -187,7 +187,6 @@ class testcase_memH_sweep_dir3levelsweep(SSTTestCase):
         # and verify it exists
         ompapppath = "{0}/openMP/{1}/{1}".format(test_path, omp_app)
         self.assertTrue(os.path.isfile(ompapppath), "Sweep dir3LevelSweep Test; ompfile {0} - not found".format(ompapppath))
-        os.environ["OMP_EXE"] = ompapppath
 
         # Set the model options for the test (This is what we sweep)
         otherargs = '--model-options="--L1cachesz={0} --L2cachesz={1} --L3cachesz={2} --L1Replacp={3} --L2Replacp={4} --L3Replacp={5} --L1assoc={6} --L2assoc={7} --L3assoc={8} --L2MSHR={9} --L3MSHR={10} --MSIMESI={11}" '.format(
@@ -205,7 +204,7 @@ class testcase_memH_sweep_dir3levelsweep(SSTTestCase):
                     test_type)
 
         # Run SST
-        self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
+        self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, mpi_out_files=mpioutfiles, timeout_sec=testtimeout, env={"OMP_EXE": ompapppath})
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
@@ -235,13 +234,13 @@ class testcase_memH_sweep_dir3levelsweep(SSTTestCase):
                     refcount = 0
                     # Grep the ref file for the count of this line occuring
                     cmd = 'grep -c "{0}" {1}'.format(testline, reffile)
-                    rtn = OSCommand(cmd).run()
+                    rtn = os_command(cmd).run()
                     self.assertEqual(rtn.result(), 0, "Sweep dir3LevelSweep Test failed running cmdline {0} - grepping reffile {1}".format(cmd, reffile))
                     refcount = int(rtn.output())
 
                     # Grep the out file for the count of this line occuring
                     cmd = 'grep -c "{0}" {1}'.format(testline, outfile)
-                    rtn = OSCommand(cmd).run()
+                    rtn = os_command(cmd).run()
                     if rtn.result() == 0:
                         outcount = int(rtn.output())
                     else:

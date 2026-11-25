@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -63,7 +63,7 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 		shared_mem_size += memPoolParams.find<uint64_t>("size", 0);
 		memset(buffer, 0 , 256);
 		snprintf(buffer, buffer_size, "globalMemCntrLink%" PRIu32, i);
-		sharedMemoryInfo[i]->link = configureLink(buffer, "1ns", new Event::Handler2<MemoryPrivateInfo,&MemoryPrivateInfo::handleRequest>((sharedMemoryInfo[i])));
+		sharedMemoryInfo[i]->link = configureLink(buffer, "1ns", new Event::Handler<MemoryPrivateInfo,&MemoryPrivateInfo::handleRequest>((sharedMemoryInfo[i])));
 	}
 
 	/* Configuring nodes */
@@ -76,16 +76,16 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 		for(uint32_t j=0; j<nodeInfo[i]->cores; j++) {
 			memset(buffer, 0 , 256);
 			snprintf(buffer, buffer_size, "coreLink%" PRIu32, num_cores);
-			nodeInfo[i]->coreInfo[j].coreLink = configureLink(buffer, "1ns", new Event::Handler2<CorePrivateInfo,&CorePrivateInfo::handleRequest>(&nodeInfo[i]->coreInfo[j]));
+			nodeInfo[i]->coreInfo[j].coreLink = configureLink(buffer, "1ns", new Event::Handler<CorePrivateInfo,&CorePrivateInfo::handleRequest>(&nodeInfo[i]->coreInfo[j]));
 			memset(buffer, 0 , 256);
 			snprintf(buffer, buffer_size, "mmuLink%" PRIu32, num_cores);
-			nodeInfo[i]->coreInfo[j].mmuLink = configureLink(buffer, "1ns", new Event::Handler2<CorePrivateInfo,&CorePrivateInfo::handleRequest>(&nodeInfo[i]->coreInfo[j]));
+			nodeInfo[i]->coreInfo[j].mmuLink = configureLink(buffer, "1ns", new Event::Handler<CorePrivateInfo,&CorePrivateInfo::handleRequest>(&nodeInfo[i]->coreInfo[j]));
 			num_cores++;
 		}
 		for(uint32_t j=0; j<nodeInfo[i]->memory_cntrls; j++) {
 			memset(buffer, 0 , 256);
 			snprintf(buffer, buffer_size, "memCntrLink%" PRIu32, num_memCntrls);
-			nodeInfo[i]->memCntrlInfo[j].link = configureLink(buffer, "1ns", new Event::Handler2<MemoryPrivateInfo,&MemoryPrivateInfo::handleRequest>(&nodeInfo[i]->memCntrlInfo[j]));
+			nodeInfo[i]->memCntrlInfo[j].link = configureLink(buffer, "1ns", new Event::Handler<MemoryPrivateInfo,&MemoryPrivateInfo::handleRequest>(&nodeInfo[i]->memCntrlInfo[j]));
 			num_memCntrls++;
 		}
 
@@ -102,7 +102,7 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 	/*----------------------------------------------------------------------------------------*/
 	std::string cpu_clock = params.find<std::string>("clock", "1GHz");
 	std::cerr << "clock: "<< cpu_clock.c_str() << std::endl;
-	registerClock( cpu_clock, new Clock::Handler2<Opal,&Opal::tick>(this) );
+	registerClock( cpu_clock, new Clock::Handler<Opal,&Opal::tick>(this) );
 }
 
 

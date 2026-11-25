@@ -36,7 +36,6 @@ class testcase_QOS(SSTTestCase):
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        self.qostest_Folder = "{0}/qostest_Folder".format(tmpdir)
         self.emberelement_testdir = "{0}/../test/".format(test_path)
 
         # Set the various file paths
@@ -113,7 +112,7 @@ class testcase_QOS(SSTTestCase):
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        self.qostest_Folder = "{0}/qostest_Folder".format(tmpdir)
+        self.qostest_Folder = "{0}/qostest_Folder/{1}".format(tmpdir, self.testname)
         self.emberelement_testdir = "{0}/../test/".format(test_path)
 
         # Create a clean version of the qostest_Folder Directory

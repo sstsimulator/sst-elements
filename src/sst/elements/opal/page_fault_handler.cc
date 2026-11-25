@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -38,7 +38,7 @@ PageFaultHandler::PageFaultHandler(ComponentId_t id, Params& params) :
     std::string latency = params.find<std::string>("opal_latency", "32ps");
 
     while (isPortConnected(linkname)) {
-        SST::Link* link = configureLink(linkname, latency, new Event::Handler2<PageFaultHandler,&PageFaultHandler::handleEvent>(this));
+        SST::Link* link = configureLink(linkname, latency, new Event::Handler<PageFaultHandler,&PageFaultHandler::handleEvent>(this));
         opalLink.push_back(link);
         numPorts++;
         linkname = linkprefix + std::to_string(numPorts);

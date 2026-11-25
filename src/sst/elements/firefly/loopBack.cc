@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -40,7 +40,7 @@ LoopBack::LoopBack(ComponentId_t id, Params& params ) :
 			core <<  i;
 
 			Event::HandlerBase* handler =
-                new Event::Handler2<LoopBack,&LoopBack::handleCoreEvent,int>( this, j*numCores + i );
+                new Event::Handler<LoopBack,&LoopBack::handleCoreEvent,int>( this, j*numCores + i );
 
 			Link* link = configureLink("nic"+ nic.str() + "core" + core.str(), "1 ns", handler );
 			assert(link);

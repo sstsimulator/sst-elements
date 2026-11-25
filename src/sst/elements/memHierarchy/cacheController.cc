@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -439,7 +439,8 @@ void Cache::checkTimeout() {
 
     if (entry) {
         SimTime_t curTime = getCurrentSimTimeNano();
-        SimTime_t startTime = getTimeConverter("1ns")->convertFromCoreTime(entry->getStartTime());
+        TimeConverter tc = getTimeConverter("1ns");
+        SimTime_t startTime = tc.convertFromCoreTime(entry->getStartTime());
         SimTime_t waitTime = curTime - startTime;
         if (waitTime > timeout_) {
             out_->fatal(CALL_INFO, -1, "%s, Error: Maximum cache timeout reached - potential deadlock or other error. Event: %s. Current time: %" PRIu64 "ns. Event start time: %" PRIu64 "ns.\n",
@@ -584,6 +585,10 @@ void Cache::processInitCoherenceEvent(MemEventInitCoherence* event, bool src) {
 }
 
 void Cache::setup() {
+    if (snapshot_ == "load" && !snapshot_dir_.empty()) {
+        coherenceMgr_->snapshotLoadCache(snapshot_dir_, getName());
+    }
+
     // Check that our sources and destinations exist or configure if needed
     linkUp_->setup();
     if (linkUp_ != linkDown_)
@@ -637,6 +642,10 @@ void Cache::finish() {
         listeners_[i]->printStats(*out_);
     linkDown_->finish();
     if (linkUp_ != linkDown_) linkUp_->finish();
+
+    if (snapshot_ == "save" && !snapshot_dir_.empty()) {
+        coherenceMgr_->snapshotCache(snapshot_dir_, getName());
+    }
 }
 
 
@@ -697,6 +706,9 @@ void Cache::serialize_order(SST::Core::Serialization::serializer& ser) {
     SST_SER(timeout_);
     SST_SER(maxOutstandingPrefetch_);
     SST_SER(banked_);
+
+    SST_SER(snapshot_dir_);
+    SST_SER(snapshot_);
 
     SST_SER(clockHandler_);
     SST_SER(defaultTimeBase_);

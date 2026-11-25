@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -13,11 +13,14 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-
 #ifndef _H_SST_MEM_H_REQUEST_GEN_EVENT
 #define _H_SST_MEM_H_REQUEST_GEN_EVENT
 
-#include <stdint.h>
+#include <cstdint>
+#include <deque>
+#include <string>
+#include <utility>
+
 #include <sst/core/event.h>
 #include <sst/core/params.h>
 
@@ -26,20 +29,16 @@ namespace Miranda {
 
 class MirandaReqEvent : public SST::Event {
 public:
-    struct Generator {
-        std::string name;
-        SST::Params params;
-    };
+    MirandaReqEvent() = default;
 
-	std::deque< std::pair< std::string, SST::Params> > generators;
+    uint64_t key;
+    std::deque<std::pair<std::string,SST::Params>> generators;
 
-	uint64_t 	key;
 private:
-
-    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
+    void serialize_order(SST::Core::Serialization::serializer &ser) override {
         Event::serialize_order(ser);
         SST_SER(key);
-		SST_SER(generators);
+        SST_SER(generators);
     }
 
     ImplementSerializable(SST::Miranda::MirandaReqEvent);
@@ -47,15 +46,18 @@ private:
 
 class MirandaRspEvent : public SST::Event {
 public:
-	uint64_t 	key;
+    MirandaRspEvent() = default;
+
+    uint64_t key;
+
 private:
-    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
+    void serialize_order(SST::Core::Serialization::serializer &ser) override {
         Event::serialize_order(ser);
-		SST_SER(key);
-	}
+        SST_SER(key);
+    }
+
     ImplementSerializable(SST::Miranda::MirandaRspEvent);
 };
-
 
 }
 }

@@ -35,8 +35,6 @@ class testcase_EmberOTF2(SSTTestCase):
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        self.emberOTF2_Folder = "{0}/emberotf2_folder".format(tmpdir)
-
         # Set the various file paths
         testDataFileName="{0}".format(testcase)
 
@@ -69,7 +67,7 @@ class testcase_EmberOTF2(SSTTestCase):
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        self.emberOTF2_Folder = "{0}/emberotf2_folder".format(tmpdir)
+        self.emberOTF2_Folder = "{0}/emberotf2_folder/{1}".format(tmpdir, self.testname)
         self.emberelement_testdir = "{0}/../test/".format(test_path)
 
         # Create a clean version of the emberotf2_folder Directory

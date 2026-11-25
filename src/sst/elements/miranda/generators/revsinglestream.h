@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,13 +28,6 @@ namespace Miranda {
 class ReverseSingleStreamGenerator : public RequestGenerator {
 
 public:
-    ReverseSingleStreamGenerator( ComponentId_t id, Params& params );
-    void build(Params& params);
-    ~ReverseSingleStreamGenerator();
-    void generate(MirandaRequestQueue<GeneratorRequest*>* q);
-    bool isFinished();
-    void completed();
-
     SST_ELI_REGISTER_SUBCOMPONENT(
         ReverseSingleStreamGenerator,
         "miranda",
@@ -51,6 +44,29 @@ public:
         { "datawidth",        "Sets the width of the memory operation", "8" },
         { "stride",           "Sets the stride, since this is a reverse stream this is subtracted per iteration, def=1", "1" },
     )
+
+    ReverseSingleStreamGenerator( ComponentId_t id, Params& params );
+    ReverseSingleStreamGenerator() = default;
+    ~ReverseSingleStreamGenerator();
+    void build(Params& params);
+    void generate(MirandaRequestQueue<GeneratorRequest*>* q) override;
+    bool isFinished() override;
+    void completed() override;
+
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::Miranda::RequestGenerator::serialize_order(ser);
+        SST_SER(startIndex);
+        SST_SER(stopIndex);
+        SST_SER(datawidth);
+        SST_SER(nextIndex);
+        SST_SER(stride);
+
+        SST_SER(out);
+    }
+
+    ImplementSerializable(SST::Miranda::ReverseSingleStreamGenerator)
+
+
 
 private:
     uint64_t startIndex;

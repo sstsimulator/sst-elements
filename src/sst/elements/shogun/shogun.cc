@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -57,7 +57,7 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
     output->verbose(CALL_INFO, 1, 0, "Creating Shogun crossbar at %s clock rate and %" PRIi32 " ports\n",
         clock_rate.c_str(), port_count);
 
-    clockTickHandler = new Clock::Handler2<ShogunComponent,&ShogunComponent::tick>(this);
+    clockTickHandler = new Clock::Handler<ShogunComponent,&ShogunComponent::tick>(this);
     tc = registerClock(clock_rate, clockTickHandler);
     handlerRegistered = true;
 
@@ -73,7 +73,7 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
         snprintf(linkName, 256, "port%" PRIi32, i);
         output->verbose(CALL_INFO, 1, 0, "Configuring port %s ...\n", linkName);
 
-        links[i] = configureLink(linkName, new Event::Handler2<ShogunComponent,&ShogunComponent::handleIncoming>(this));
+        links[i] = configureLink(linkName, new Event::Handler<ShogunComponent,&ShogunComponent::handleIncoming>(this));
 
         if (nullptr == links[i]) {
             output->fatal(CALL_INFO, -1, "Failed to configure link on port %" PRIi32 "\n", i);

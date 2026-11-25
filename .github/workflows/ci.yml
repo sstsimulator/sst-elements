@@ -3,35 +3,40 @@ name: ci
 
 # yamllint disable-line rule:truthy
 on:
+  # Branches in this repository get tested through their pull requests.
   push:
+    branches:
+      - devel
   pull_request:
     types:
       - opened
       - synchronize
 
 concurrency:
-  group: ci-${{github.ref}}-${{github.event.pull_request.number || github.run_number}}
+  group: ci-${{github.workflow}}-${{github.ref}}-${{github.event.pull_request.number || github.run_number}}
   cancel-in-progress: true
 
 permissions: {}
 
 jobs:
   prechecks:
-    uses: ./.github/workflows/pre-commit.yml
+    uses: $/.github/workflows/pre-commit.yml
   all-prechecks:
     needs: [prechecks]
-    runs-on: ubuntu-24.04
+    name: CI precheck success
+    runs-on: ubuntu-26.04
     steps:
       - name: Success
         run: "true"
   tests:
     needs: [all-prechecks]
-    uses: ./.github/workflows/build_and_test.yml
+    uses: $/.github/workflows/test-matrix-github.yml
     permissions:
-      actions: write
+      packages: write # to save ccache in ghcr.io
   all-tests:
     needs: [tests]
-    runs-on: ubuntu-24.04
+    name: CI success
+    runs-on: ubuntu-26.04
     steps:
       - name: Success
         run: "true"

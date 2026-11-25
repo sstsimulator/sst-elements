@@ -9,6 +9,10 @@ AM_CPPFLAGS += \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libcarcosa.la
 libcarcosa_la_SOURCES =                     \
+    components/hali.cc                      \
+    components/hali.h                       \
+    components/faultInjManager.cc           \
+    components/faultInjManager.h            \
     injectors/faultInjectorBase.cc          \
     injectors/faultInjectorBase.h           \
     injectors/stuckAtFaultInjector.cc       \
@@ -19,8 +23,10 @@ libcarcosa_la_SOURCES =                     \
     injectors/randomDropFaultInjector.h     \
     injectors/randomFlipFaultInjector.cc    \
     injectors/randomFlipFaultInjector.h     \
-    injectors/dropFlipFaultInjector.cc        \
-    injectors/dropFlipFaultInjector.h         \
+    injectors/dropFlipFaultInjector.cc      \
+    injectors/dropFlipFaultInjector.h       \
+    injectors/faultInjectorMemH.cc          \
+    injectors/faultInjectorMemH.h           \
     faultlogic/faultBase.cc                 \
     faultlogic/faultBase.h                  \
     faultlogic/stuckAtFault.cc              \
@@ -30,9 +36,33 @@ libcarcosa_la_SOURCES =                     \
     faultlogic/randomDropFault.cc           \
     faultlogic/randomDropFault.h            \
     faultlogic/randomFlipFault.cc           \
-    faultlogic/randomFlipFault.h
+    faultlogic/randomFlipFault.h            \
+    faultlogic/randomFlipMemHFault.cc       \
+    faultlogic/randomFlipMemHFault.h        \
+    components/pmDataRegistry.h             \
+    components/carcosaCPUBase.cc            \
+    components/carcosaCPUBase.h             \
+    components/carcosaCPU.cc                \
+    components/carcosaCPU.h                 \
+    components/faultInjCPU.cc               \
+    components/faultInjCPU.h                \
+    components/cpuEvent.h                   \
+    components/faultInjEvent.h              \
+    components/faultInjManagerAPI.h         \
+    components/interceptionAgentAPI.h       \
+    components/pingPongAgent.cc             \
+    components/pingPongAgent.h              \
+    components/carcosaMemCtrl.cc            \
+    components/carcosaMemCtrl.h             \
+    components/sensorComponent.cc           \
+    components/sensorComponent.h           \
+    components/sensorEvent.h                \
+    components/haliEvent.h
 
 EXTRA_DIST = \
+    hyades.h                                      \
+    tests/pingpong.c                              \
+    tests/testcarcosaPingPong.py                  \
     tests/testCorruptMemBasic.py                  \
     tests/testCorruptMemDouble.py                 \
     tests/testCorruptMemDoubleOverlap.py          \
@@ -41,7 +71,13 @@ EXTRA_DIST = \
     tests/testStuckAtBasic.py                     \
     tests/testStuckAtMultiple.py                  \
     tests/testStuckAtOverlap.py                   \
-    tests/testStuckAtSameByte.py
+    tests/testStuckAtSameByte.py                  \
+    tests/mhlib.py                                \
+    tests/testdynamicPM.py                        \
+    tests/testhaliBacking.py                      \
+    tests/testhaliMemH.py                         \
+    tests/testhaliPM.py                           \
+    tests/testmanagerLogic.py
 
 sstdir = $(includedir)/sst/elements/carcosa
 nobase_sst_HEADERS =                        \
@@ -51,11 +87,17 @@ nobase_sst_HEADERS =                        \
     injectors/randomDropFaultInjector.h     \
     injectors/randomFlipFaultInjector.h     \
     injectors/dropFlipFaultInjector.h       \
+    injectors/faultInjectorMemH.h           \
     faultlogic/faultBase.h                  \
     faultlogic/stuckAtFault.h               \
     faultlogic/corruptMemFault.h            \
     faultlogic/randomDropFault.h            \
-    faultlogic/randomFlipFault.h
+    faultlogic/randomFlipFault.h            \
+    faultlogic/randomFlipMemHFault.h        \
+    components/pmDataRegistry.h             \
+    components/faultInjManagerAPI.h        \
+    components/interceptionAgentAPI.h      \
+    components/pingPongAgent.h
 
 libcarcosa_la_LDFLAGS = -module -avoid-version
 libcarcosa_la_LIBADD =

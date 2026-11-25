@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,13 +28,6 @@ namespace Miranda {
 class Stencil3DBenchGenerator : public RequestGenerator {
 
 public:
-	Stencil3DBenchGenerator( ComponentId_t id, Params& params );
-        void build(Params& params);
-	~Stencil3DBenchGenerator();
-	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
-	bool isFinished();
-	void completed();
-
 	SST_ELI_REGISTER_SUBCOMPONENT(
         Stencil3DBenchGenerator,
         "miranda",
@@ -54,6 +47,34 @@ public:
         { "endz",             "Sets the end location in Z-plane for this instance, parallelism implemented as Z-plane decomposition", "10" },
         { "iterations",       "Sets the number of iterations to perform over this mesh", "1"}
     )
+
+	Stencil3DBenchGenerator( ComponentId_t id, Params& params );
+	Stencil3DBenchGenerator() = default;
+	~Stencil3DBenchGenerator();
+	void build(Params& params);
+	void generate(MirandaRequestQueue<GeneratorRequest*>* q) override;
+	bool isFinished() override;
+	void completed() override;
+
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SST::Miranda::RequestGenerator::serialize_order(ser);
+		SST_SER(nX);
+		SST_SER(nY);
+		SST_SER(nZ);
+		SST_SER(datawidth);
+
+		SST_SER(startZ);
+		SST_SER(endZ);
+
+		SST_SER(currentZ);
+		SST_SER(currentItr);
+		SST_SER(maxItr);
+
+		SST_SER(out);
+    }
+
+    ImplementSerializable(SST::Miranda::Stencil3DBenchGenerator)
+
 
 private:
 	void convertIndexToPosition(const uint32_t index,

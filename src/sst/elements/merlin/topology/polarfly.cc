@@ -27,6 +27,7 @@ topo_polarfly::topo_polarfly(ComponentId_t cid, Params& params, int num_ports, i
     total_radix         = params.find<int>("total_radix");
     total_routers       = params.find<int>("total_routers");
     total_endnodes      = params.find<int>("total_endnodes");
+    data_path           = params.find<std::string>("data_path");
     std::string algo    = params.find<std::string>("algorithm");
 
     if (!algo.compare("MINIMAL") ) {
@@ -75,6 +76,34 @@ topo_polarfly::topo_polarfly(ComponentId_t cid, Params& params, int num_ports, i
 }
 
 topo_polarfly::~topo_polarfly(){
+}
+
+void
+topo_polarfly::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Topology::serialize_order(ser);
+    SST_SER(router_id);
+    SST_SER(q);
+    SST_SER(hosts_per_router);
+    SST_SER(network_radix);
+    SST_SER(total_radix);
+    SST_SER(total_routers);
+    SST_SER(total_endnodes);
+    SST_SER(data_path);
+    SST_SER(routing_algo);
+    SST_SER(node_links);
+    SST_SER(route_table);
+    SST_SER(neighbor_list);
+    SST_SER(num_vns);
+    SST_SER(num_vcs);
+    SST_SER(rng);
+    SST_SER(output_buffer_size);
+    SST_SER(adaptive_bias);
+    SST_SER(polar);
+    SST_SER(hopcount1);
+    SST_SER(hopcount2);
+    SST_SER(hopcount3);
+    SST_SER(hopcount4);
 }
 
 void
@@ -222,13 +251,13 @@ void topo_polarfly::routeValiant(int port, int vc, internal_router_event* ev){
 
 
 void topo_polarfly::initPolarGraph() {
-    //Read polarfly topology from file
-    char dir[256];
-    (void) !getcwd(dir, 256);
-    std::string filepath    = std::string(dir) + "/polarfly_data/PolarFly.q_" + std::to_string(this->q) + ".txt";
+    //Read polarfly topology from the adjacency list written by the python module
+    std::string filepath    = data_path + "/PolarFly.q_" + std::to_string(this->q) + ".txt";
 
     std::fstream fp;
     fp.open(filepath.c_str(), std::ios::in);
+    if (!fp.is_open())
+        output.fatal(CALL_INFO, -1, "Could not open polarfly topology file %s\n", filepath.c_str());
 
     std::string line;
     int line_no = 0;

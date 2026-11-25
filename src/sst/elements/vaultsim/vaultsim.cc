@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -60,7 +60,7 @@ VaultSim::VaultSim( ComponentId_t id, Params& params ) :
     // Configuration if we're not using Phx Library
 
     registerClock( frequency,
-                   new Clock::Handler2<VaultSim,&VaultSim::clock>(this) );
+                   new Clock::Handler<VaultSim,&VaultSim::clock>(this) );
 
     std::string delay = "40ns";
     delay = params.find<std::string>("delay", "40ns");

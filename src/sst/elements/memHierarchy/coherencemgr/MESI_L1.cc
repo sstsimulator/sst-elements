@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -40,7 +40,7 @@ MESIL1::MESIL1(ComponentId_t id, Params& params, Params& owner_params, bool pref
 
     std::string frequency = params.find<std::string>("cache_frequency", "");
 
-    llsc_timeout_ = configureSelfLink("llscTimeoutLink", frequency, new Event::Handler2<MESIL1, &MESIL1::handleLoadLinkExpiration>(this));
+    llsc_timeout_ = configureSelfLink("llscTimeoutLink", frequency, new Event::Handler<MESIL1, &MESIL1::handleLoadLinkExpiration>(this));
 
     // Coherence protocol transition states
     if (MESI) {
@@ -2116,6 +2116,31 @@ void MESIL1::printLine(Addr addr) { }
 
 void MESIL1::printStatus(Output &out) {
     cache_array_->printCacheArray(out);
+}
+
+void MESIL1::snapshotCache(const std::string& dir, const std::string& cacheName) {
+    std::string filename = dir + "/" + cacheName;
+    FILE* fp = fopen(filename.c_str(), "w");
+    if (!fp) {
+        output_->fatal(CALL_INFO, -1, "Failed to open snapshot file: %s\n", filename.c_str());
+    }
+    fprintf(fp, "# Cache Snapshot: %s\n", cacheName.c_str());
+    cache_array_->snapshotToFile(fp);
+    fclose(fp);
+}
+
+void MESIL1::snapshotLoadCache(const std::string& dir, const std::string& cacheName) {
+    std::string filename = dir + "/" + cacheName;
+    FILE* fp = fopen(filename.c_str(), "r");
+    if (!fp) {
+        output_->fatal(CALL_INFO, -1, "Failed to open snapshot file for loading: %s\n", filename.c_str());
+    }
+    char buf[512];
+    if (!fgets(buf, sizeof(buf), fp)) {
+        output_->fatal(CALL_INFO, -1, "Failed to read snapshot header from: %s\n", filename.c_str());
+    }
+    cache_array_->snapshotLoadFromFile(fp);
+    fclose(fp);
 }
 
 

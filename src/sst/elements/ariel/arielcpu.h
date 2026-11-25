@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -114,16 +114,17 @@ class ArielCPU : public SST::Component {
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"memmgr", "Memory manager to translate virtual addresses to physical, handle malloc/free, etc.", "SST::ArielComponent::ArielMemoryManager"},
-            {"memory", "Interface to the memoryHierarchy (e.g., caches)", "SST::Interfaces::StandardMem" }
+            {"memory", "Interface to the memoryHierarchy (e.g., caches)", "SST::Interfaces::StandardMem" },
+            {"frontend", "Ariel frontend (instruction source), defaults to ariel.frontend.pin", "SST::ArielComponent::ArielFrontend"}
     )
 
         /* Ariel class */
         ArielCPU(ComponentId_t id, Params& params);
         ~ArielCPU();
-        virtual void emergencyShutdown();
-        virtual void init(unsigned int phase);
-        virtual void setup() {}
-        virtual void finish();
+        void emergencyShutdown() override;
+        void init(unsigned int phase) override;
+        void setup() override {}
+        void finish() override;
         virtual bool tick( SST::Cycle_t );
 
     private:

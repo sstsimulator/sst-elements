@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -88,8 +88,8 @@ OfferedLoad::OfferedLoad(ComponentId_t cid, Params& params) :
 
 
     // Register functors for the SimpleNetwork IF
-    send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler2<OfferedLoad,&OfferedLoad::send_notify>(this);
-    recv_notify_functor = new SST::Interfaces::SimpleNetwork::Handler2<OfferedLoad,&OfferedLoad::handle_receives>(this);
+    send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler<OfferedLoad,&OfferedLoad::send_notify>(this);
+    recv_notify_functor = new SST::Interfaces::SimpleNetwork::Handler<OfferedLoad,&OfferedLoad::handle_receives>(this);
 
     // link_if->setNotifyOnSend(send_notify_functor);
     link_if->setNotifyOnReceive(recv_notify_functor);
@@ -130,13 +130,13 @@ OfferedLoad::OfferedLoad(ComponentId_t cid, Params& params) :
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
-    // clock_functor = new Clock::Handler2<TrafficGen,&TrafficGen::clock_handler>(this);
+    // clock_functor = new Clock::Handler<TrafficGen,&TrafficGen::clock_handler>(this);
     // clock_tc = registerClock( params.find<std::string>("message_rate", "1GHz"), clock_functor, false);
 
     base_tc = registerTimeBase("1ps",false);
-    timing_link = configureSelfLink("timing_link", base_tc, new Event::Handler2<OfferedLoad,&OfferedLoad::output_timing>(this));
+    timing_link = configureSelfLink("timing_link", base_tc, new Event::Handler<OfferedLoad,&OfferedLoad::output_timing>(this));
 
-    end_link = configureSelfLink("end_link", base_tc, new Event::Handler2<OfferedLoad,&OfferedLoad::end_handler>(this));
+    end_link = configureSelfLink("end_link", base_tc, new Event::Handler<OfferedLoad,&OfferedLoad::end_handler>(this));
 
     complete_event.push_back(new offered_load_complete_event(generation));
 
@@ -146,9 +146,63 @@ OfferedLoad::OfferedLoad(ComponentId_t cid, Params& params) :
 }
 
 
+OfferedLoad::OfferedLoad() :
+    Component(),
+    next_time(0),
+    send_interval(0),
+    start_time(0),
+    end_time(0),
+    drain_time(0),
+    warmup_time(0),
+    collect_time(0),
+    generation(0),
+    link_if(nullptr),
+    send_notify_functor(nullptr),
+    recv_notify_functor(nullptr),
+    packetDestGen(nullptr),
+    id(-1),
+    num_peers(0),
+    packet_size(0),
+    packets_sent(0),
+    packets_recd(0),
+    timing_link(nullptr),
+    end_link(nullptr),
+    pattern_params(nullptr)
+{}
+
+void OfferedLoad::serialize_order(SST::Core::Serialization::serializer& ser) {
+    Component::serialize_order(ser);
+
+    SST_SER(offered_load);
+    SST_SER(link_bw);
+    SST_SER(serialization_time);
+    SST_SER(next_time);
+    SST_SER(send_interval);
+    SST_SER(start_time);
+    SST_SER(end_time);
+    SST_SER(drain_time);
+    SST_SER(warmup_time);
+    SST_SER(collect_time);
+    SST_SER(generation);
+    SST_SER(base_tc);
+    SST_SER(link_if);
+    SST_SER(send_notify_functor);
+    SST_SER(recv_notify_functor);
+    SST_SER(packetDestGen);
+    SST_SER(out);
+    SST_SER(id);
+    SST_SER(num_peers);
+    SST_SER(packet_size);
+    SST_SER(packets_sent);
+    SST_SER(packets_recd);
+    SST_SER(timing_link);
+    SST_SER(end_link);
+    SST_SER(complete_event);
+}
+
 OfferedLoad::~OfferedLoad()
 {
-    delete link_if;
+    // SST framework manages SubComponent lifecycle — do not delete link_if
 }
 
 

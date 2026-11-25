@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -82,17 +82,6 @@ struct sumi_mem_handle_t {
 #define SUMI_READ_ALIGN_MASK	(SUMI_READ_ALIGN - 1)
 
 /*
- * GNI IOV GET alignment
- *
- * We always pull 4byte chucks for unaligned GETs. To prevent stomping on
- * someone else's head or tail data, each segment must be four bytes
- * (i.e. SUMI_READ_ALIGN bytes).
- *
- * Note: "* 2" for head and tail
- */
-#define SUMI_INT_TX_BUF_SZ (SUMI_MAX_MSG_IOV_LIMIT * SUMI_READ_ALIGN * 2)
-
-/*
  * Flags
  * The 64-bit flag field is used as follows:
  * 1-grow up    common (usable with multiple operations)
@@ -159,7 +148,10 @@ struct sumi_mem_handle_t {
 #define SUMI_MAX_MSG_SIZE (1<<31)
 #define SUMI_CACHELINE_SIZE (64)
 #define SUMI_INJECT_SIZE 64
-#define SUMI_MAX_INJECT_SIZE 64
+#define SUMI_MAX_INJECT_SIZE 16384
+
+#define SUMI_MSG_ORDER_SUPPORTED  FI_ORDER_SAS
+#define SUMI_COMP_ORDER_SUPPORTED FI_ORDER_NONE
 
 #define SUMI_FAB_MODES	0
 
@@ -434,12 +426,11 @@ struct sumi_fid_srx {
   sumi_fid_domain* domain;
 };
 
-#define ADDR_CQ(addr)    ((addr >> 16) | 0xFFFF)
-#define ADDR_RANK(addr)  ((addr >> 32) | 0xFFFFFFFF)
-#define ADDR_QUEUE(addr) (addr | 0xFFFF)
-#define ADDR_RANK_BITS(rank)    (rank << 32)
-#define ADDR_QUEUE_BITS(queue)  (queue)
-#define ADDR_CQ_BITS(cq)        (cq << 16)
+#define ADDR_CQ(addr)    (((addr) >> 16) & 0xFFFF)
+#define ADDR_RANK(addr)  ((uint32_t)(((addr) >> 32) & 0xFFFFFFFFu))
+#define ADDR_QUEUE(addr) ((addr) & 0xFFFF)
+#define ADDR_RANK_BITS(rank)    ((rank) << 32)
+#define ADDR_CQ_BITS(cq)        ((cq) << 16)
 
 extern const char sumi_fab_name[];
 extern const char sumi_dom_name[];
@@ -529,11 +520,14 @@ struct ErrorDeallocate {
 
 struct RecvQueue {
 
+  static constexpr uint32_t ANY_SRC = ~uint32_t(0);
+
   struct Recv {
     uint32_t size;
     void* buf;
-    Recv(uint32_t s, void* b) :
-      size(s), buf(b)
+    uint32_t src_rank;
+    Recv(uint32_t s, void* b, uint32_t src) :
+      size(s), buf(b), src_rank(src)
     {
     }
   };
@@ -543,8 +537,9 @@ struct RecvQueue {
     void* buf;
     uint64_t tag;
     uint64_t tag_ignore;
-    TaggedRecv(uint32_t s, void* b, uint64_t t, uint64_t ti) :
-      size(s), buf(b), tag(t), tag_ignore(ti)
+    uint32_t src_rank;
+    TaggedRecv(uint32_t s, void* b, uint64_t t, uint64_t ti, uint32_t src) :
+      size(s), buf(b), tag(t), tag_ignore(ti), src_rank(src)
     {
     }
   };
@@ -558,6 +553,10 @@ struct RecvQueue {
     return (msg->tag() & ~ignore) == (tag & ~ignore);
   }
 
+  static bool srcMatches(uint32_t want, FabricMessage* msg){
+    return want == ANY_SRC || want == (uint32_t)msg->sender();
+  }
+
   std::list<Recv> recvs;
   std::list<TaggedRecv> tagged_recvs;
   std::list<FabricMessage*> unexp_recvs;
@@ -569,7 +568,8 @@ struct RecvQueue {
 
   void matchTaggedRecv(FabricMessage* msg);
 
-  void postRecv(uint32_t size, void* buf, uint64_t tag, uint64_t tag_ignore, bool tagged);
+  void postRecv(uint32_t size, void* buf, uint64_t tag, uint64_t tag_ignore,
+                bool tagged, uint32_t src_rank);
 
   void incoming(SST::Iris::sumi::Message* msg);
 

@@ -1,13 +1,17 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // of the distribution for more information.
+//
+// Portions copyright (c) 2026, Hewlett Packard Enterprise Development LP
+// SPDX-FileCopyrightText: Copyright Hewlett Packard Enterprise Development LP
+// SPDX-License-Identifier: BSD-3-Clause
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -23,7 +27,7 @@ public:
         tmp <<  id;
 
         m_toCoreLink = m_nic->configureLink( portName + tmp.str(), "1 ns",
-                                          new Event::Handler2<Nic::VirtNic,&Nic::VirtNic::handleCoreEvent>(this) );
+                                          new Event::Handler<Nic::VirtNic,&Nic::VirtNic::handleCoreEvent>(this) );
         assert( m_toCoreLink );
     }
     ~VirtNic() {}
@@ -43,10 +47,9 @@ public:
         m_toCoreLink->send( m_msgHostDelay, event );
     }
 
-    void sendShmem( SimTime_t delay, SST::Event * event ) {
+    void send( SimTime_t delay, SST::Event * event ) {
         m_toCoreLink->send( delay , event );
     }
-
 
     Link* m_toCoreLink;
     int id;
@@ -74,15 +77,18 @@ public:
     }
 
     void notifyShmem( SimTime_t delay ) {
-        sendShmem( delay, new NicShmemRespEvent( [](){} ));
+        send( delay, new NicShmemRespEvent( [](){} ));
     }
 
     void notifyShmem( SimTime_t delay, NicShmemRespEvent::Callback callback ) {
-        sendShmem( delay, new NicShmemRespEvent( callback ));
+        send( delay, new NicShmemRespEvent( callback ));
     }
 
     void notifyShmem( SimTime_t delay, NicShmemValueRespEvent::Callback callback, Hermes::Value& value ) {
-        sendShmem( delay, new NicShmemValueRespEvent( callback, value ));
+        send( delay, new NicShmemValueRespEvent( callback, value ));
+    }
+    void notifyNetworkIO( SimTime_t delay, std::function<void(int)> callback, int retval ) {
+        send( delay, new NicNetworkIORespEvent( callback, retval ));
     }
 
     // Following functions needed so checkpointable handlers will

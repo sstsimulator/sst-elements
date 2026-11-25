@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -12,12 +12,12 @@
 #ifndef SST_ELEMENTS_CARCOSA_FAULTINJECTORBASE_H
 #define SST_ELEMENTS_CARCOSA_FAULTINJECTORBASE_H
 
+#include <sst_config.h>
 #include "sst/core/portModule.h"
 #include "sst/core/event.h"
 #include "sst/core/output.h"
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/carcosa/faultlogic/faultBase.h"
-#include <sst_config.h>
 #include "sst/core/rng/mersenne.h"
 #include <vector>
 #include <string>

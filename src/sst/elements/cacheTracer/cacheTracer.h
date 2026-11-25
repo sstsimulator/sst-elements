@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -44,8 +44,8 @@ class cacheTracer : public SST::Component {
 public:
     cacheTracer(SST::ComponentId_t id, Params& params);
     ~cacheTracer();
-    void finish();
-    void init(unsigned int phase);
+    void finish() override;
+    void init(unsigned int phase) override;
 
     SST_ELI_REGISTER_COMPONENT(
        	cacheTracer,
@@ -59,11 +59,11 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
 	{ "clock", "Frequency, same as system clock frequency", "1 GHz" },
     	{ "statsPrefix", "writes stats to statsPrefix file", "" },
-    	{ "tracePrefix", "writes trace to tracePrefix tracing is enable", "" },
+    	{ "tracePrefix", "Enables tracing; writes trace entries to files with this prefix", "" },
     	{ "debug", "Print debug statements with increasing verbosity [0-10]", "0" },
     	{ "statistics", "0-No-stats, 1-print-stats", "0" },
     	{ "pageSize", "Page Size (bytes), used for selecting number of bins for address histogram ", "4096" },
-    	{"accessLatencyBins", "Number of bins for access latency histogram" "10" }
+    	{"accessLatencyBins", "Number of bins for access latency histogram", "10" }
     )
 
     SST_ELI_DOCUMENT_PORTS(

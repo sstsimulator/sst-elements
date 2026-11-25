@@ -2,7 +2,7 @@
 #
 #
 
-ext_LTLIBRARIES = libmask_mpi.la libsendrecv.la libreduce.la liballtoall.la liballgather.la libhalo3d26.la
+ext_LTLIBRARIES = libmask_mpi.la libsendrecv.la libreduce.la liballreduce.la libringallreduce.la liballtoall.la liballgather.la libhalo3d26.la
 extdir = $(pkglibdir)/ext
 
 AM_CPPFLAGS += -I$(top_srcdir)/src/sst/elements
@@ -80,6 +80,8 @@ library_include_HEADERS = \
 
 libsendrecv_la_SOURCES = tests/sendrecv.cc
 libreduce_la_SOURCES = tests/reduce.cc
+liballreduce_la_SOURCES = tests/allreduce.cc
+libringallreduce_la_SOURCES = tests/ring_allreduce.cc
 liballtoall_la_SOURCES = tests/alltoall.cc
 liballgather_la_SOURCES = tests/allgather.cc
 libhalo3d26_la_SOURCES = skeletons/halo3d-26.cc
@@ -88,19 +90,34 @@ EXTRA_DIST = \
  tests/testsuite_default_mask_mpi.py \
  tests/platform_file_mask_mpi_test.py \
  tests/test_reduce.py \
+ tests/test_allreduce.py \
+ tests/test_ring_allreduce.py \
+ tests/test_hierarchical_allreduce.py \
  tests/test_sendrecv.py \
  tests/test_alltoall.py \
  tests/test_allgather.py \
  tests/test_halo3d26.py \
  tests/refFiles/test_reduce.out \
+ tests/refFiles/test_allreduce.out \
+ tests/refFiles/test_ring_allreduce.out \
+ tests/refFiles/test_hierarchical_allreduce.out \
+ tests/refFiles/test_hierarchical_allreduce_auto_smp.out \
+ tests/refFiles/test_hierarchical_allreduce_flat_smp.out \
+ tests/refFiles/test_hierarchical_allreduce_one_node.out \
+ tests/refFiles/test_hierarchical_allreduce_no_smp.out \
+ tests/refFiles/test_hierarchical_allreduce_sparse_comm_warning.out \
  tests/refFiles/test_sendrecv.out \
  tests/refFiles/test_alltoall.out \
+ tests/refFiles/test_direct_alltoall.out \
  tests/refFiles/test_allgather.out \
+ tests/refFiles/test_ring_allgather.out \
  tests/refFiles/test_halo3d26.out
 
 libmask_mpi_la_LDFLAGS = -module -avoid-version
 libsendrecv_la_LDFLAGS = -module -avoid-version
 libreduce_la_LDFLAGS = -module -avoid-version
+liballreduce_la_LDFLAGS = -module -avoid-version
+libringallreduce_la_LDFLAGS = -module -avoid-version
 liballtoall_la_LDFLAGS = -module -avoid-version
 liballgather_la_LDFLAGS = -module -avoid-version
 libhalo3d26_la_LDFLAGS = -module -avoid-version

@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -29,10 +29,10 @@ CramSimMemory::CramSimMemory(ComponentId_t id, Params &params) : SimpleMemBacken
     std::string access_time = params.find<std::string>("access_time", "100 ns");
     if (isPortConnected("cramsim_link"))
         cramsim_link = configureLink( "cramsim_link", access_time,
-                new Event::Handler2<CramSimMemory, &CramSimMemory::handleCramsimEvent>(this));
+                new Event::Handler<CramSimMemory, &CramSimMemory::handleCramsimEvent>(this));
     else
         cramsim_link = configureLink( "cube_link", access_time,
-                new Event::Handler2<CramSimMemory, &CramSimMemory::handleCramsimEvent>(this));
+                new Event::Handler<CramSimMemory, &CramSimMemory::handleCramsimEvent>(this));
 
     m_maxNumOutstandingReqs = params.find<int>("max_outstanding_requests",256);
     output= new Output("CramSimMemory[@p:@l]: ", 1, 0, Output::STDOUT);

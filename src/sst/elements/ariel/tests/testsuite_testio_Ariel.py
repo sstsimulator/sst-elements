@@ -145,17 +145,17 @@ class testcase_Ariel(SSTTestCase):
             ArielElementTestIOApp = ArielElementTestIOApp + ".arielinst"
 
         # Set the Path to the stream applications
-        os.environ["ARIEL_EXE"] = ArielElementTestIOApp
+        env = {"ARIEL_EXE": ArielElementTestIOApp}
         log_debug("ARIEL_EXE = {0}".format(ArielElementTestIOApp))
 
         libpath = os.environ.get("LD_LIBRARY_PATH")
         if libpath:
-            os.environ["LD_LIBRARY_PATH"] = ArielElementAPIDir + ":" + libpath
+            env["LD_LIBRARY_PATH"] = ArielElementAPIDir + ":" + libpath
         else:
-            os.environ["LD_LIBRARY_PATH"] = ArielElementAPIDir
+            env["LD_LIBRARY_PATH"] = ArielElementAPIDir
 
         # Set the frontend (epa or pin)
-        os.environ["ARIEL_TEST_FRONTEND"] = frontend
+        env["ARIEL_TEST_FRONTEND"] = frontend
 
         # Set the various file paths
         testDataFileName=("test_Ariel_{0}".format(testcase))
@@ -173,7 +173,7 @@ class testcase_Ariel(SSTTestCase):
 
         # Run SST in the tests directory
         self.run_sst(sdlfile, outfile, errfile, set_cwd=ArielElementTestIODir,
-                     mpi_out_files=mpioutfiles, timeout_sec=testtimeout, other_args=other_args)
+                     mpi_out_files=mpioutfiles, timeout_sec=testtimeout, other_args=other_args, env=env)
 
         testing_remove_component_warning_from_file(outfile)
 
@@ -263,7 +263,7 @@ class testcase_Ariel(SSTTestCase):
 
         # Build the testio binary
         cmd = "make testio"
-        rtn1 = OSCommand(cmd, set_cwd=self.ArielElementTestIODir).run()
+        rtn1 = os_command(cmd, set_cwd=self.ArielElementTestIODir).run()
         log_debug("Ariel ariel/tests/testIO make result = {1}; output =\n{2}".format(self.ArielElementTestIODir, rtn1.result(), rtn1.output()))
 
         # Check that everything compiled OK
@@ -283,7 +283,7 @@ class testcase_Ariel(SSTTestCase):
             # Instrument with pebil
             if (pebil_loaded):
                 cmd = "pebil --tool ArielIntercept --app testio --inp +"
-                rtn2 = OSCommand(cmd, set_cwd=self.ArielElementTestIODir).run()
+                rtn2 = os_command(cmd, set_cwd=self.ArielElementTestIODir).run()
                 log_debug("Ariel ariel/tests/testIO pebil result = {0}; output =\n{1}".format(rtn2.result(), rtn2.output()))
                 if rtn2.result() != 0:
                     log_debug("Ariel {0} pebil returned non-zero exit code. Error:\n{1}".format(self.ArielElementTestIODir, rtn2.error()))

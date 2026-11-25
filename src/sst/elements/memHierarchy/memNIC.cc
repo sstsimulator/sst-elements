@@ -1,8 +1,8 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,7 +28,7 @@ using namespace SST::Interfaces;
 
 /* Constructor */
 
-MemNIC::MemNIC(ComponentId_t id, Params &params, TimeConverter* tc) : MemNICBase(id, params, tc) {
+MemNIC::MemNIC(ComponentId_t id, Params &params, TimeConverter tc) : MemNICBase(id, params, tc) {
 
     link_control = loadUserSubComponent<SimpleNetwork>("linkcontrol", ComponentInfo::SHARE_NONE, 1); // 1 is the num virtual networks
     if (!link_control) {
@@ -48,13 +48,13 @@ MemNIC::MemNIC(ComponentId_t id, Params &params, TimeConverter* tc) : MemNICBase
             dbg.fatal(CALL_INFO, -1, "%s, Error: MemNIC is unable to load the default merlin.linkcontrol subcomponent. Ensure merlin library is available or load a linkcontrol in the MemNIC's 'linkcontrol' subcomponent slot\n", getName().c_str());
         }
     }
-    link_control->setNotifyOnReceive(new SimpleNetwork::Handler2<MemNIC, &MemNIC::recvNotify>(this));
+    link_control->setNotifyOnReceive(new SimpleNetwork::Handler<MemNIC, &MemNIC::recvNotify>(this));
 
     // Packet size
     packetHeaderBytes = extractPacketHeaderSize(params, "min_packet_size");
 
-    clockHandler = new Clock::Handler2<MemNIC, &MemNIC::clock>(this);
-    clockTC = registerClock(*tc, clockHandler);
+    clockHandler = new Clock::Handler<MemNIC, &MemNIC::clock>(this);
+    clockTC = registerClock(tc, clockHandler);
 }
 
 void MemNIC::init(unsigned int phase) {

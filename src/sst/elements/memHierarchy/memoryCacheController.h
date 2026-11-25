@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -71,9 +71,9 @@ public:
     typedef uint64_t ReqId;
 
     MemCacheController(ComponentId_t id, Params &params);
-    virtual void init(unsigned int);
-    virtual void setup();
-    void finish();
+    void init(unsigned int) override;
+    void setup() override;
+    void finish() override;
 
     virtual void handleLocalMemResponse(SST::Event::id_type id, uint32_t flags);
 
@@ -181,8 +181,8 @@ protected:
     CustomCmdMemHandler * customCommandHandler_;
 
     /* Debug -triggered by output.fatal() and/or SIGUSR2 */
-    virtual void printStatus(Output &out);
-    virtual void emergencyShutdown();
+    void printStatus(Output &out) override;
+    void emergencyShutdown() override;
 
     Statistic<uint64_t>* statReadHit;
     Statistic<uint64_t>* statReadMiss;

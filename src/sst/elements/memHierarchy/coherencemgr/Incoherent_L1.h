@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -148,6 +148,10 @@ public:
 
     MemEventInitCoherence * getInitCoherenceEvent() override;
     std::set<Command> getValidReceiveEvents() override;
+
+    /** Snapshot support */
+    void snapshotCache(const std::string& dir, const std::string& cacheName) override;
+    void snapshotLoadCache(const std::string& dir, const std::string& cacheName) override;
 
     /** Serialization */
     void serialize_order(SST::Core::Serialization::serializer& ser) override;

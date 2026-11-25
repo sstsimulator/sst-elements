@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -74,11 +74,11 @@ namespace SST {
             )
 
             SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-                {"AddrMapper", "address hasher. Default: CramSim.c_AddressHasher", "SST::CramSim::c_AddressHasher"},
-                {"TxnScheduler", "Transaction Scheduler. Default: CramSim.c_TxnScheduler", "SST::CramSim::c_TxnScheduler"},
-                {"TxnConverter", "Transaction Converter. Default: CramSim.c_TxnConverter", "SST::CramSim::c_TxnConverter"},
-                {"CmdScheduler", "Command Scheduler. Default: CramSim.c_CmdScheduler", "SST::CramSim::c_CmdScheduler"},
-                {"DeviceDriver", "device driver. Default: CramSim.c_DeviceDriver", "SST::CramSim::c_DeviceDriver"}
+                {"AddrMapper", "address hasher. Default: cramSim.c_AddressHasher", "SST::CramSim::c_AddressHasher"},
+                {"TxnScheduler", "Transaction Scheduler. Default: cramSim.c_TxnScheduler", "SST::CramSim::c_TxnScheduler"},
+                {"TxnConverter", "Transaction Converter. Default: cramSim.c_TxnConverter", "SST::CramSim::c_TxnConverter"},
+                {"CmdScheduler", "Command Scheduler. Default: cramSim.c_CmdScheduler", "SST::CramSim::c_CmdScheduler"},
+                {"DeviceDriver", "device driver. Default: cramSim.c_DeviceDriver", "SST::CramSim::c_DeviceDriver"}
             )
 
             c_Controller(SST::ComponentId_t id, SST::Params &params);

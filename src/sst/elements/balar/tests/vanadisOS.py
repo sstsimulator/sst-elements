@@ -101,11 +101,10 @@ class Builder:
             "num_cores": 1,
             "num_threads": 1,
             "page_size": 4096,
-            "useNicTlb": True,
+            "use_nic_tlb": True,
         })
 
         mem_if = self.nodeOS.setSubComponent( "mem_interface", "memHierarchy.standardInterface" )
-        mem_if.addParam("coreId",cpuId)
         mem_if.addParams({
             "debug" : stdMem_debug,
             "debug_level" : 11,

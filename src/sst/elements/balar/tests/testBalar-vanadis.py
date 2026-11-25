@@ -67,14 +67,14 @@ balarBuilder = balarBlock.Builder(args)
 # ===========================================================
 # build the Vanadis CPU block, this returns
 # cpu, L2 cache, DTLB ITLB
-cpu, L1, l1dcache_2_cpu, L2, dtlb, coredtlbWrapper, itlb = cpuBuilder.build(nodeId,0)
+cpu, L1, l1dcache_2_cpu, L2, dtlb, coredcache_iface, itlb = cpuBuilder.build(nodeId,0)
 
 # build the Vanadis OS, it returns
 # OS cache
 osCache = osBuilder.build(numNodes, nodeId, 0)
 
 # Build balar
-balarTlbWrapper, balarTlb, balar_mmio_iface, dma_mmio_if = balarBuilder.buildVanadisIntegration(cfgFile, verbosity, dma_verbosity)
+balar_dma_iface, balarTlb, balar_mmio_iface, dma_mmio_if = balarBuilder.buildVanadisIntegration(cfgFile, verbosity, dma_verbosity)
 
 # Build CPU memory
 numPorts = 4
@@ -94,9 +94,9 @@ coreCacheBus.addParams({
 })
 
 # Connect the mem links for coreTLB and balarTLB
-connect("coreTLB_coreCacheBus_link", balarTlbWrapper, "cache_if",
+connect("coreTLB_coreCacheBus_link", balar_dma_iface, "lowlink",
         coreCacheBus, "highlink0", "1ns")
-connect("balarTLB_coreCacheBus_link", coredtlbWrapper, "cache_if",
+connect("balarTLB_coreCacheBus_link", coredcache_iface, "lowlink",
         coreCacheBus, "highlink1", "1ns")
 connect("coreCacheBus_l1cache_link", coreCacheBus, "lowlink0",
         l1dcache_2_cpu, "port", "1ns")

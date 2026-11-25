@@ -1,0 +1,28 @@
+allreduce rank=1 errors=0
+recv_values[0]=6
+recv_values[1]=10
+recv_values[2]=14
+recv_values[3]=18
+recv_values[4]=22
+recv_values[5]=26
+recv_values[6]=30
+recv_values[7]=34
+recv_values[8]=38
+recv_values[9]=42
+recv_values[10]=46
+recv_values[11]=50
+recv_values[12]=54
+recv_values[13]=58
+recv_values[14]=62
+recv_values[15]=66
+recv_values[16]=70
+recv_values[17]=74
+recv_values[18]=78
+allreduce rank=0 errors=0
+allreduce rank=2 errors=0
+allreduce rank=3 errors=0
+iallreduce rank=1 errors=0
+iallreduce rank=0 errors=0
+iallreduce rank=2 errors=0
+iallreduce rank=3 errors=0
+Simulation is complete, simulated time: 12.1653 us

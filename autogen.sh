@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [ -z $LIBTOOLIZE ] ; then
     LIBTOOLIZE=$(type -P libtoolize)
@@ -132,7 +132,7 @@ if test -d libltdl; then
 fi
 
 if test ! -d src/libltdl ; then
-    echo "libltdl for elements exist.  Aborting."
+    echo "libltdl for elements doesn't exist.  Aborting."
     exit 1
 fi
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -66,8 +66,8 @@ NIC::sendManagerMsg(NetworkMessage *msg) {
 void
 NIC::init(unsigned int phase) {
   if (phase == 0) {
-    auto recv_notify = new SST::Interfaces::SimpleNetwork::Handler2<SST::Hg::NIC,&SST::Hg::NIC::incomingPacket>(this);
-    auto send_notify = new SST::Interfaces::SimpleNetwork::Handler2<SST::Hg::NIC,&SST::Hg::NIC::incomingCredit>(this);
+    auto recv_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC,&SST::Hg::NIC::incomingPacket>(this);
+    auto send_notify = new SST::Interfaces::SimpleNetwork::Handler<SST::Hg::NIC,&SST::Hg::NIC::incomingCredit>(this);
     link_control_->setNotifyOnReceive(recv_notify);
     link_control_->setNotifyOnSend(send_notify);
 
@@ -125,17 +125,20 @@ NIC::incomingPacket(int vn){
     auto bytes = req->size_in_bits/8;
     auto* payload = req->takePayload();
 
+    // Key reassembly by (source, flowId): flowId is only unique per sender.
+    uint64_t src = uint64_t(req->src);
+
     uint64_t flow_id = 0;
     auto* tracker = dynamic_cast<FlowTracker*>(payload);
     if (tracker != nullptr) {
       flow_id = tracker->id();
-      Flow* flow = cq_.recv(flow_id, bytes, nullptr);
+      Flow* flow = cq_.recv(src, flow_id, bytes, nullptr);
     }
 
     if (req->tail) {
       auto* incoming_msg = payload ? dynamic_cast<NetworkMessage*>(payload) : nullptr;
       if (incoming_msg == nullptr) sst_hg_abort_printf("couldn't cast event to NetworkMessage\n");
-      Flow* flow = cq_.recv(incoming_msg->flowId(), bytes, incoming_msg);
+      Flow* flow = cq_.recv(src, incoming_msg->flowId(), bytes, incoming_msg);
       if (flow == nullptr) sst_hg_abort_printf("couldn't get a flow\n");
       auto* msg = dynamic_cast<NetworkMessage*>(flow);
       if (msg == nullptr) sst_hg_abort_printf("couldn't cast flow to message\n");

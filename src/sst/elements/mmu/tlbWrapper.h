@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -43,15 +43,18 @@ class TLB_Wrapper : public SST::Component {
 
     SST_ELI_DOCUMENT_PARAMS(
         {"dbg_level", "Level of verbosity in debug","1"},
-        {"exe", "instruction TLB","0"},
+        {"exe", "Whether pages should have execute permissions by default. Generally, set to True/1 for an Instruction TLB or unified TLB and False/0 for a Data TLB","0"},
     )
 
     SST_ELI_DOCUMENT_PORTS(
-        { "cpu_if", "Interface to cpu", {} },
-        { "cache_if", "Interface to cache", {} },
-    )
+        { "highlink", "Port to the CPU" },
+        { "lowlink", "Port to the Cache or memory side"},
+        { "cpu_if", "DEPRECATED: Use 'highlink' port instead for naming consistency with memHierarchy. Interface to cpu", {} },
+        { "cache_if", "DEPRECATED: Use 'lowlink' port instead for naming consistency with memHierarchy. Interface to cache", {} },
+      )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+        { "tlb", "The TLB subcomponent", "SST::MMU_Lib::TLB" }
     )
 
     TLB_Wrapper(SST::ComponentId_t id, SST::Params& params);
@@ -71,10 +74,10 @@ class TLB_Wrapper : public SST::Component {
         switch( ev->getCmd() ) {
           case MemHierarchy::Command::GetS:
           case MemHierarchy::Command::GetSX:
-            perms |= 1<<2;
+            perms |= page_perms::read;
             break;
           case MemHierarchy::Command::Write:
-            perms |= 1<<1;
+            perms |= page_perms::write;
             break;
           default:
             assert(0);

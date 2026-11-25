@@ -38,6 +38,8 @@ topo_polarstar::topo_polarstar(ComponentId_t cid, Params& params, int num_ports,
 
     total_endnodes      = params.find<int>("total_endnodes");
 
+    data_path           = params.find<std::string>("data_path");
+
     std::string algo    = params.find<std::string>("algorithm");
 
     if (!algo.compare("MINIMAL") ) {
@@ -87,6 +89,39 @@ topo_polarstar::topo_polarstar(ComponentId_t cid, Params& params, int num_ports,
 }
 
 topo_polarstar::~topo_polarstar(){
+}
+
+void
+topo_polarstar::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Topology::serialize_order(ser);
+    SST_SER(router_id);
+    SST_SER(d);
+    SST_SER(pfq);
+    SST_SER(snq);
+    SST_SER(sn_type);
+    SST_SER(hosts_per_router);
+    SST_SER(network_radix);
+    SST_SER(total_radix);
+    SST_SER(total_routers);
+    SST_SER(total_endnodes);
+    SST_SER(data_path);
+    SST_SER(routing_algo);
+    SST_SER(node_links);
+    SST_SER(route_table);
+    SST_SER(neighbor_list);
+    SST_SER(num_vns);
+    SST_SER(num_vcs);
+    SST_SER(rng);
+    SST_SER(output_buffer_size);
+    SST_SER(adaptive_bias);
+    SST_SER(polar);
+    SST_SER(hopcount1);
+    SST_SER(hopcount2);
+    SST_SER(hopcount3);
+    SST_SER(hopcount4);
+    SST_SER(hopcount5);
+    SST_SER(hopcount6);
 }
 
 void topo_polarstar::route_packet(int port, int vc, internal_router_event* ev){
@@ -286,15 +321,15 @@ void topo_polarstar::routeUgal(int port, int vc, internal_router_event* ev){
 
 
 void topo_polarstar::initPolarGraph() {
-    char dir[256];
-    (void) !getcwd(dir, 256);
-    std::string filepath    = std::string(dir) + "/polarstar_data/PolarStar.d_" +
+    std::string filepath    = data_path + "/PolarStar.d_" +
                             std::to_string(this->d) + "_pfq_" + std::to_string(this->pfq) +
                             + "_sn_" + this->sn_type +
                             "_snq_" + std::to_string(this->snq) + ".txt";
 
     std::fstream fp;
     fp.open(filepath.c_str(), std::ios::in);
+    if (!fp.is_open())
+        output.fatal(CALL_INFO, -1, "Could not open polarstar topology file %s\n", filepath.c_str());
 
     std::string line;
     int line_no = 0;

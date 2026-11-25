@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -22,15 +22,15 @@ namespace MMU_Lib {
 
     static bool checkPerms( uint32_t want_perms, uint32_t have_perms ) {
         // want executable
-        if ( want_perms & 1 && ! ( have_perms & 1 ) ) {
+        if ( ( want_perms & page_perms::exe ) && ! ( have_perms & page_perms::exe ) ) {
             return false;
         }
         // want write
-        if ( want_perms & (1<<1) && ! ( have_perms & (1<<1) ) ) {
+        if ( ( want_perms & page_perms::write ) && ! ( have_perms & page_perms::write ) ) {
             return false;
         }
         // want read
-        if ( want_perms & (1<<2) && ! ( have_perms & (1<<2) ) ) {
+        if ( ( want_perms & page_perms::read ) && ! ( have_perms & page_perms::read ) ) {
             return false;
         }
         return true;

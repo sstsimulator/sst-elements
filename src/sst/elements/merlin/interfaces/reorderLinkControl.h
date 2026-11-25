@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -35,63 +35,30 @@ class Component;
 
 namespace Merlin {
 
-// Need our own version of Request to add a sequence number
-class ReorderRequest : public SST::Interfaces::SimpleNetwork::Request {
-
-public:
-    uint32_t seq;
-
-    ReorderRequest() :
-        Request(),
-        seq(0)
-        {}
-
-    // ReorderRequest(SST::Interfaces::SimpleNetwork::nid_t dest, SST::Interfaces::SimpleNetwork::nid_t src,
-    //                size_t size_in_bits, bool head, bool tail, uint32_t seq, Event* payload = NULL) :
-    //     Request(dest, src, size_in_bits, head, tail, payload ),
-    //     seq(seq)
-    //     {
-    //     }
-
-    ReorderRequest(SST::Interfaces::SimpleNetwork::Request* req, uint32_t seq = 0) :
-        Request(req->dest, req->src, req->size_in_bits, req->head, req->tail),
-        seq(seq)
-        {
-            givePayload(req->takePayload());
-            trace = req->getTraceType();
-            traceID = req->getTraceID();
-        }
-
-    ~ReorderRequest() {}
-
-
-    // This is here just for the priority_queue insertion, so is
-    // sorting based on what comes out of queue first (i.e. lowest
-    // number, which makes this look backwards)
-    class Priority {
-    public:
-        bool operator()(ReorderRequest* const& lhs, ReorderRequest* const& rhs) {
-            return lhs->seq > rhs->seq;
-        }
-    };
-
-    typedef std::priority_queue<ReorderRequest*, std::vector<ReorderRequest*>, Priority> PriorityQueue;
-
-    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
-        SST::Interfaces::SimpleNetwork::Request::serialize_order(ser);
-        SST_SER(seq);
-    }
-
-private:
-    ImplementSerializable(SST::Merlin::ReorderRequest)
-};
-
-
-
 struct ReorderInfo {
     uint32_t send;
     uint32_t recv;
-    ReorderRequest::PriorityQueue queue;
+
+    // Priority queue that stores (seq_number, Request*) pairs
+    struct QueueEntry {
+        uint32_t seq;
+        SST::Interfaces::SimpleNetwork::Request* req;
+
+        QueueEntry() : seq(0), req(nullptr) {}
+        QueueEntry(uint32_t s, SST::Interfaces::SimpleNetwork::Request* r) : seq(s), req(r) {}
+
+        bool operator>(const QueueEntry& other) const {
+            return seq > other.seq;
+        }
+
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(seq);
+            SST_SER(req);
+        }
+    };
+
+    typedef std::priority_queue<QueueEntry, std::vector<QueueEntry>, std::greater<QueueEntry>> PriorityQueue;
+    PriorityQueue queue;
 
     ReorderInfo() :
         send(0),
@@ -101,9 +68,32 @@ struct ReorderInfo {
         // on when looking for fragments to deliver.  This does mean
         // we can't handle more than 4 billion fragments to each host
         // with overflow.
-        ReorderRequest* req = new ReorderRequest();
-        req->seq = 0xffffffff;
-        queue.push(req);
+        queue.push(QueueEntry(0xffffffff, nullptr));
+    }
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) {
+        SST_SER(send);
+        SST_SER(recv);
+
+        // std::priority_queue has no built-in SST serialization support;
+        // manually convert to/from a vector.
+        if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+            while ( !queue.empty() )
+                queue.pop();
+            std::vector<QueueEntry> entries;
+            SST_SER(entries);
+            for ( auto& e : entries )
+                queue.push(e);
+        }
+        else {
+            std::vector<QueueEntry> entries;
+            PriorityQueue tmp = queue;
+            while ( !tmp.empty() ) {
+                entries.push_back(tmp.top());
+                tmp.pop();
+            }
+            SST_SER(entries);
+        }
     }
 };
 
@@ -139,12 +129,12 @@ public:
     typedef std::queue<SST::Interfaces::SimpleNetwork::Request*> request_queue_t;
 
 private:
-    int vns;
-    SST::Interfaces::SimpleNetwork* link_control;
+    int vns = 0;
+    SST::Interfaces::SimpleNetwork* link_control = nullptr;
 
 
     UnitAlgebra link_bw;
-    int id;
+    int id = 0;
 
     std::unordered_map<SST::Interfaces::SimpleNetwork::nid_t, ReorderInfo*> reorder_info;
 
@@ -152,51 +142,55 @@ private:
     // provide a virtual channel abstraction.  Don't need output
     // buffers, sends will go directly to LinkControl.  Do need input
     // buffers.
-    request_queue_t* input_buf;
+    request_queue_t* input_buf = nullptr;
 
     // Functors for notifying the parent when there is more space in
     // output queue or when a new packet arrives
-    HandlerBase* receiveFunctor;
+    HandlerBase* receiveFunctor = nullptr;
 //    HandlerBase* sendFunctor;
 
 public:
     ReorderLinkControl(ComponentId_t cid, Params &params, int vns);
+    ReorderLinkControl() = default;
 
     ~ReorderLinkControl();
 
-    void setup();
-    void init(unsigned int phase);
-    void complete(unsigned int phase);
-    void finish();
+    void setup() override;
+    void init(unsigned int phase) override;
+    void complete(unsigned int phase) override;
+    void finish() override;
 
     // Returns true if there is space in the output buffer and false
     // otherwise.
-    bool send(SST::Interfaces::SimpleNetwork::Request* req, int vn);
+    bool send(SST::Interfaces::SimpleNetwork::Request* req, int vn) override;
 
     // Returns true if there is space in the output buffer and false
     // otherwise.
-    bool spaceToSend(int vn, int flits);
+    bool spaceToSend(int vn, int flits) override;
 
     // Returns NULL if no event in input_buf[vn]. Otherwise, returns
     // the next event.
-    SST::Interfaces::SimpleNetwork::Request* recv(int vn);
+    SST::Interfaces::SimpleNetwork::Request* recv(int vn) override;
 
     // Returns true if there is an event in the input buffer and false
     // otherwise.
-    bool requestToReceive( int vn );
+    bool requestToReceive( int vn ) override;
 
-    void sendUntimedData(SST::Interfaces::SimpleNetwork::Request* ev);
-    SST::Interfaces::SimpleNetwork::Request* recvUntimedData();
+    void sendUntimedData(SST::Interfaces::SimpleNetwork::Request* ev) override;
+    SST::Interfaces::SimpleNetwork::Request* recvUntimedData() override;
 
     // const PacketStats& getPacketStats(void) const { return stats; }
 
-    void setNotifyOnReceive(HandlerBase* functor);
-    void setNotifyOnSend(HandlerBase* functor);
+    void setNotifyOnReceive(HandlerBase* functor) override;
+    void setNotifyOnSend(HandlerBase* functor) override;
 
-    bool isNetworkInitialized() const;
-    nid_t getEndpointID() const;
-    const UnitAlgebra& getLinkBW() const;
+    bool isNetworkInitialized() const override;
+    nid_t getEndpointID() const override;
+    const UnitAlgebra& getLinkBW() const override;
 
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::Merlin::ReorderLinkControl)
 
 private:
 

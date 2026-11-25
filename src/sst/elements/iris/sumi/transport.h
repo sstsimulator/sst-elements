@@ -1,5 +1,5 @@
 /**
-Copyright 2009-2025 National Technology and Engineering Solutions of Sandia,
+Copyright 2009-2026 National Technology and Engineering Solutions of Sandia,
 LLC (NTESS).  Under the terms of Contract DE-NA-0003525, the U.S. Government
 retains certain rights in this software.
 
@@ -8,7 +8,7 @@ by National Technology and Engineering Solutions of Sandia, LLC., a wholly
 owned subsidiary of Honeywell International, Inc., for the U.S. Department of
 Energy's National Nuclear Security Administration under contract DE-NA0003525.
 
-Copyright (c) 2009-2025, NTESS
+Copyright (c) 2009-2026, NTESS
 
 All rights reserved.
 
@@ -60,6 +60,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <iris/sumi/options.h>
 #include <iris/sumi/communicator_fwd.h>
 
+#include <functional>
 #include <unordered_map>
 #include <queue>
 
@@ -275,6 +276,11 @@ class Transport {
 
   CollectiveEngine* engine() const {
     return engine_;
+  }
+
+  // Ranks co-located on this node (empty unless smp_optimize found neighbors).
+  const std::set<int>& smpNeighbors() const {
+    return smp_neighbors_;
   }
 
   virtual void logMessageDelay(Message *msg, uint64_t size, int stage,
@@ -533,6 +539,22 @@ class CollectiveEngine
 
   CollectiveDoneMessage* deliverPending(Collective* coll, int tag, Collective::type_t ty);
 
+  // Name of the algorithm selected for op `ty` (Python param > SUMI_<OP>_ALG
+  // env > ""), resolved once at construction. Empty means "use built-in".
+  std::string engineAlgName(Collective::type_t ty) const;
+
+  Collective* makeRegisteredCollective(Collective::type_t ty,
+      void* dst, void* src, int root, int nelems, int type_size, int tag,
+      int cq_id, reduce_fxn fxn, Communicator* comm,
+      const std::string& selected_alg, const char* fallback_alg,
+      const char* param_key = nullptr, const char* env_key = nullptr);
+
+  // Start the selected registry implementation or the built-in default.
+  CollectiveDoneMessage* startCollectiveOp(Collective::type_t ty,
+      void* dst, void* src, int root, int nelems, int type_size, int tag,
+      int cq_id, reduce_fxn fxn, Communicator* comm,
+      const std::function<Collective*()>& makeDefault);
+
  private:
   Transport* tport_;
 
@@ -557,8 +579,15 @@ class CollectiveEngine
 
   int system_collective_tag_;
 
-  std::string alltoall_type_;
-  std::string allgather_type_;
+  // Per-op user-selected algorithm names (see engineAlgName).
+  spkt_enum_map<Collective::type_t, std::string> alg_names_;
+
+  enum class AllreduceHierarchy { automatic, hierarchical, flat };
+  AllreduceHierarchy allreduce_hierarchy_;
+  bool warned_no_smp_hierarchy_;
+  std::string allreduce_intra_alg_;
+  std::string allreduce_inter_alg_;
+  std::string allreduce_bcast_alg_;
 
   int rdma_header_qos_;
   int rdma_get_qos_;

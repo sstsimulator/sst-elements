@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -93,7 +93,7 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
     route_y_first = params.find<bool>("route_y_first",false);
 
     // Register the clock
-    my_clock_handler = new Clock::Handler2<noc_mesh,&noc_mesh::clock_handler>(this);
+    my_clock_handler = new Clock::Handler<noc_mesh,&noc_mesh::clock_handler>(this);
     clock_tc = registerClock( clock_freq, my_clock_handler);
     clock_is_off = false;
 
@@ -101,7 +101,7 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
     ports = new Link*[local_port_start + local_ports];
 
     // Configure directional ports
-    Event::HandlerBase* dummy_handler = new Event::Handler2<noc_mesh,&noc_mesh::handle_input_r2r,int>(this,-1);
+    Event::HandlerBase* dummy_handler = new Event::Handler<noc_mesh,&noc_mesh::handle_input_r2r,int>(this,-1);
 
     last_time = 0;
 
@@ -575,7 +575,7 @@ noc_mesh::init(unsigned int phase)
                         endpoint_start++;
                         delete nie;
                         // Endpoint to router link
-                        ports[i]->setFunctor(new Event::Handler2<noc_mesh,&noc_mesh::handle_input_ep2r,int>(this,i));
+                        ports[i]->setFunctor(new Event::Handler<noc_mesh,&noc_mesh::handle_input_ep2r,int>(this,i));
                     }
                     else {
                         // Unexpected command
@@ -583,7 +583,7 @@ noc_mesh::init(unsigned int phase)
                 }
                 else {
                     // Router to router link
-                    ports[i]->setFunctor(new Event::Handler2<noc_mesh,&noc_mesh::handle_input_r2r,int>(this,i));
+                    ports[i]->setFunctor(new Event::Handler<noc_mesh,&noc_mesh::handle_input_r2r,int>(this,i));
                 }
             }
         }

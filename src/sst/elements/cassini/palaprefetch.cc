@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -51,48 +51,48 @@ void PalaPrefetcher::notifyAccess(const CacheListenerNotification& notify)
     // remains unchanged.
     int32_t tempStride = 0;
     std::pair < std::unordered_map< uint64_t, StrideFilter >::iterator, bool >  retVal;
-    retVal = recentAddrList->insert ( std::pair< uint64_t, StrideFilter >(tag, filterEntry) );
+    retVal = recentAddrList.insert ( std::make_pair(tag, filterEntry) );
     if( retVal.second == false )
     {
-        tempStride = int32_t( addr - (*recentAddrList)[tag].lastAddress );
-        if( (*recentAddrList)[tag].state == P_INVALID )
+        tempStride = int32_t( addr - recentAddrList[tag].lastAddress );
+        if( recentAddrList[tag].state == P_INVALID )
         {
-            if( (*recentAddrList)[tag].lastStride == tempStride )
+            if( recentAddrList[tag].lastStride == tempStride )
             {
-                (*recentAddrList)[tag].state = P_PENDING;
+                recentAddrList[tag].state = P_PENDING;
             }
         }
-        else if( (*recentAddrList)[tag].state == P_PENDING )
+        else if( recentAddrList[tag].state == P_PENDING )
         {
-            if( (*recentAddrList)[tag].lastStride == tempStride )
+            if( recentAddrList[tag].lastStride == tempStride )
             {
-                (*recentAddrList)[tag].state = P_VALID;
-                (*recentAddrList)[tag].stride = tempStride;
+                recentAddrList[tag].state = P_VALID;
+                recentAddrList[tag].stride = tempStride;
             }
 
         }
         else
         {
-            if( (*recentAddrList)[tag].lastStride != tempStride )
+            if( recentAddrList[tag].lastStride != tempStride )
             {
-                (*recentAddrList)[tag].state = P_PENDING;
+                recentAddrList[tag].state = P_PENDING;
             }
         }
 
-        (*recentAddrList)[tag].lastStride = tempStride;
-        (*recentAddrList)[tag].lastAddress = addr;
+        recentAddrList[tag].lastStride = tempStride;
+        recentAddrList[tag].lastAddress = addr;
 
         // Insert a reference to the new element at the front of the queue
         // and remove any other references to the element. Requires traversal
         // of the list (max n - 1), but need to keep it lru.
-        if( recentAddrListQueue->front() != retVal.first )
+        if( recentAddrListQueue.front() != retVal.first )
         {
-            for( it = recentAddrListQueue->begin(); it != recentAddrListQueue->end(); it++ )
+            for( auto it = recentAddrListQueue.begin(); it != recentAddrListQueue.end(); it++ )
             {
                 if( *it == retVal.first )
                 {
-                    recentAddrListQueue->erase(it);
-                    recentAddrListQueue->push_front(retVal.first);
+                    recentAddrListQueue.erase(it);
+                    recentAddrListQueue.push_front(retVal.first);
                     break;
                 }
             }
@@ -101,13 +101,13 @@ void PalaPrefetcher::notifyAccess(const CacheListenerNotification& notify)
     else
     {
         // Insert a reference to the new element at the front of the queue
-        recentAddrListQueue->push_front(retVal.first);
+        recentAddrListQueue.push_front(retVal.first);
     }
 
-    if( recentAddrList->size() >= recentAddrListCount )
+    if( recentAddrList.size() >= recentAddrListCount )
     {
-        recentAddrList->erase(recentAddrListQueue->back());
-        recentAddrListQueue->pop_back();
+        recentAddrList.erase(recentAddrListQueue.back());
+        recentAddrListQueue.pop_back();
     }
 
     recheckCountdown = (recheckCountdown + 1) % strideDetectionRange;
@@ -124,7 +124,7 @@ void PalaPrefetcher::DispatchRequest(Addr targetAddress)
     MemEvent* ev = NULL;
 
     uint64_t tag = targetAddress >> (addressSize - tagSize);
-    int32_t stride = (*recentAddrList)[tag].stride;
+    int32_t stride = recentAddrList[tag].stride;
 
     Addr targetPrefetchAddress = targetAddress + (strideReach * stride);
     targetPrefetchAddress = targetPrefetchAddress - (targetPrefetchAddress % blockSize);
@@ -178,14 +178,14 @@ void PalaPrefetcher::DispatchRequest(Addr targetAddress)
 
         Addr prefetchCacheLineBase = ev->getAddr() - (ev->getAddr() % blockSize);
         bool inHistory = false;
-        const uint32_t currentHistCount = prefetchHistory->size();
+        const uint32_t currentHistCount = prefetchHistory.size();
 
         output->verbose(CALL_INFO, 2, 0, "Checking prefetch history for cache line at base %" PRIx64 ", valid prefetch history entries=%" PRIu32 "\n", prefetchCacheLineBase,
                         currentHistCount);
 
         for(uint32_t i = 0; i < currentHistCount; ++i)
         {
-            if(prefetchHistory->at(i) == prefetchCacheLineBase)
+            if(prefetchHistory.at(i) == prefetchCacheLineBase)
             {
                 inHistory = true;
                 break;
@@ -199,11 +199,11 @@ void PalaPrefetcher::DispatchRequest(Addr targetAddress)
             // Remove the oldest cache line
             if(currentHistCount == prefetchHistoryCount)
             {
-                    prefetchHistory->pop_front();
+                    prefetchHistory.pop_front();
             }
 
             // Put the cache line at the back of the queue
-            prefetchHistory->push_back(prefetchCacheLineBase);
+            prefetchHistory.push_back(prefetchCacheLineBase);
 
             assert((ev->getAddr() % blockSize) == 0);
 
@@ -248,7 +248,6 @@ PalaPrefetcher::PalaPrefetcher(ComponentId_t id, Params& params) : CacheListener
     addressSize = params.find<uint64_t>("addr_size", 64);
 
     prefetchHistoryCount = params.find<uint32_t>("history", 16);
-    prefetchHistory = new std::deque<uint64_t>();
 
     strideReach = params.find<uint32_t>("reach", 2);
     strideDetectionRange = params.find<uint64_t>("detect_range", 4);
@@ -259,8 +258,6 @@ PalaPrefetcher::PalaPrefetcher(ComponentId_t id, Params& params) : CacheListener
     overrunPageBoundary = (overrunPB == 0) ? false : true;
 
     nextRecentAddressIndex = 0;
-    recentAddrList = new std::unordered_map< uint64_t, StrideFilter >;
-    recentAddrListQueue = new std::deque< std::unordered_map< uint64_t, StrideFilter >::iterator >;
 
     output->verbose(CALL_INFO, 1, 0, "PalaPrefetcher created, cache line: %" PRIu64 ", page size: %" PRIu64 "\n",
             blockSize, pageSize);
@@ -276,9 +273,6 @@ PalaPrefetcher::PalaPrefetcher(ComponentId_t id, Params& params) : CacheListener
 
 PalaPrefetcher::~PalaPrefetcher()
 {
-    delete prefetchHistory;
-    delete recentAddrList;
-    delete recentAddrListQueue;
 }
 
 void PalaPrefetcher::registerResponseCallback(Event::HandlerBase* handler)
@@ -288,6 +282,34 @@ void PalaPrefetcher::registerResponseCallback(Event::HandlerBase* handler)
 
 void PalaPrefetcher::printStats(Output& out)
 {
+}
+
+void PalaPrefetcher::serialize_order(SST::Core::Serialization::serializer& ser) {
+    MemHierarchy::CacheListener::serialize_order(ser);
+    SST_SER(output);
+    SST_SER(registeredCallbacks);
+    SST_SER(prefetchHistory);
+    SST_SER(recentAddrList);
+
+    SST_SER(pageSize);
+    SST_SER(blockSize);
+    SST_SER(tagSize);
+    SST_SER(addressSize);
+    SST_SER(overrunPageBoundary);
+    SST_SER(prefetchHistoryCount);
+    SST_SER(recentAddrListCount);
+    SST_SER(nextRecentAddressIndex);
+    SST_SER(strideDetectionRange);
+    SST_SER(strideReach);
+    SST_SER(recheckCountdown);
+    SST_SER(missEventsProcessed);
+    SST_SER(hitEventsProcessed);
+    SST_SER(verbosity);
+
+    SST_SER(statPrefetchOpportunities);
+    SST_SER(statPrefetchEventsIssued);
+    SST_SER(statPrefetchIssueCanceledByPageBoundary);
+    SST_SER(statPrefetchIssueCanceledByHistory);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////

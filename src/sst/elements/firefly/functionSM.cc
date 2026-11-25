@@ -1,8 +1,8 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -56,14 +56,14 @@ FunctionSM::FunctionSM( ComponentId_t id, SST::Params& params, ProtocolAPI* prot
             Output::STDOUT );
 
     m_toDriverLink = configureSelfLink("ToDriver", "1 ps",
-        new Event::Handler2<FunctionSM,&FunctionSM::handleToDriver>(this));
+        new Event::Handler<FunctionSM,&FunctionSM::handleToDriver>(this));
 
     m_fromDriverLink = configureSelfLink("FromDriver", "1 ps",
-        new Event::Handler2<FunctionSM,&FunctionSM::handleStartEvent>(this));
+        new Event::Handler<FunctionSM,&FunctionSM::handleStartEvent>(this));
     assert( m_fromDriverLink );
 
     m_toMeLink = configureSelfLink("ToMe", "1 ns",
-        new Event::Handler2<FunctionSM,&FunctionSM::handleEnterEvent>(this));
+        new Event::Handler<FunctionSM,&FunctionSM::handleEnterEvent>(this));
     assert( m_toMeLink );
 }
 

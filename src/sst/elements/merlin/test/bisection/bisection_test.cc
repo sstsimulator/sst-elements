@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -86,18 +86,53 @@ bisection_test::bisection_test(ComponentId_t cid, Params& params) :
 
 
     // Set up a receive functor that will handle all incoming packets
-    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler2<bisection_test,&bisection_test::receive_handler>(this));
+    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler<bisection_test,&bisection_test::receive_handler>(this));
 
     // Set up a send functor that will handle sending packets
-    link_control->setNotifyOnSend(new SST::Interfaces::SimpleNetwork::Handler2<bisection_test,&bisection_test::send_handler>(this));
+    link_control->setNotifyOnSend(new SST::Interfaces::SimpleNetwork::Handler<bisection_test,&bisection_test::send_handler>(this));
 
 
     self_link = configureSelfLink("complete_link", "2GHz",
-                                  new Event::Handler2<bisection_test,&bisection_test::handle_complete>(this));
+                                  new Event::Handler<bisection_test,&bisection_test::handle_complete>(this));
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
+}
+
+bisection_test::~bisection_test() {}
+
+bisection_test::bisection_test() :
+    Component(),
+    id(0),
+    partner_id(0),
+    num_vns(0),
+    num_peers(0),
+    packets_sent(0),
+    packets_recd(0),
+    start_time(0),
+    packets_to_send(0),
+    packet_size(0),
+    link_control(nullptr),
+    self_link(nullptr)
+{}
+
+void
+bisection_test::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Component::serialize_order(ser);
+    SST_SER(id);
+    SST_SER(partner_id);
+    SST_SER(num_vns);
+    SST_SER(num_peers);
+    SST_SER(packets_sent);
+    SST_SER(packets_recd);
+    SST_SER(start_time);
+    SST_SER(packets_to_send);
+    SST_SER(packet_size);
+    SST_SER(buffer_size);
+    SST_SER(link_control);
+    SST_SER(self_link);
 }
 
 void bisection_test::setup()

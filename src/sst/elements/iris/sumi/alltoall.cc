@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -205,9 +205,13 @@ BruckAlltoallActor::finalize()
 void
 DirectAlltoallActor::initBuffers()
 {
-  total_send_size_ = nelems_ * type_size_;
-  total_recv_size_ = nelems_ * type_size_;
+  total_send_size_ = dom_nproc_ * nelems_ * type_size_;
+  total_recv_size_ = total_send_size_;
   recv_buffer_ = result_buffer_;
+  int self_offset = dom_me_ * nelems_ * type_size_;
+  my_api_->memcopy(Message::offset_ptr(result_buffer_, self_offset),
+                   Message::offset_ptr(send_buffer_, self_offset),
+                   nelems_ * type_size_);
 }
 
 void
@@ -242,23 +246,22 @@ DirectAlltoallActor::initDag()
   RecvAction::buf_type_t recv_ty = slicer_->contiguous() ?
         RecvAction::in_place : RecvAction::unpack_temp_buf;
 
-  int send_offset = 0;
-  int recv_offset = 0;
   int round = 0;
   for (int i=0; i < dom_nproc_; ++i){
+    if (i == dom_me_) continue;
     Action* recv = new RecvAction(round, i, recv_ty);
-    Action* send = new SendAction(round, i, SendAction::in_place);
-    send->offset = send_offset;
-    send->nelems = nelems_ * i;
-    recv->offset = recv_offset;
-    recv->nelems = nelems_ * i;
+    Action* send = new SendAction(round, i, SendAction::temp_send);
+    send->offset = nelems_ * i;
+    send->nelems = nelems_;
+    recv->offset = nelems_ * i;
+    recv->nelems = nelems_;
 
     sends[i] = send;
     recvs[i] = recv;
   }
 
   int num_initial = 3;
-  for (int i=0; i < dom_nproc_; ++i){
+  for (int i=1; i < dom_nproc_; ++i){
     //move down for recvs
     addAction(recvs, -1, num_initial, i);
     //move up for sends

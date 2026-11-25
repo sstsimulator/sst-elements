@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -367,6 +367,9 @@ private:
 /* Miscellaneous */
     void printLine(Addr addr);
     void printStatus(Output &out) override;
+
+    /** Snapshot support */
+    void snapshotCache(const std::string& dir, const std::string& cacheName) override;
     void beginCompleteStage() override;
     void processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) override;
 

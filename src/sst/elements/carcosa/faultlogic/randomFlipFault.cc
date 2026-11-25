@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -28,7 +28,7 @@ bool RandomFlipFault::faultLogic(Event*& ev) {
     return true;
 }
 
-inline std::pair<uint32_t, uint32_t> RandomFlipFault::pickByteAndBit(size_t payload_sz) {
+std::pair<uint32_t, uint32_t> RandomFlipFault::pickByteAndBit(size_t payload_sz) {
     uint32_t byte = injector_->randUInt32(0, payload_sz);
     uint32_t bit = injector_->randUInt32(0, 8);
 #ifdef __SST_DEBUG_OUTPUT__

@@ -288,7 +288,7 @@ class testcase_Ariel(SSTTestCase):
 
         # Build the test mpi programs
         cmd = "make"
-        rtn1 = OSCommand(cmd, set_cwd=self.ArielElementTestMPIDir).run()
+        rtn1 = os_command(cmd, set_cwd=self.ArielElementTestMPIDir).run()
         log_debug("Ariel tests/testMPI `make` result = {1}; output =\n{2}".format(self.ArielElementTestMPIDir, rtn1.result(), rtn1.output()))
 
         # Check that everything compiled OK
@@ -308,7 +308,7 @@ class testcase_Ariel(SSTTestCase):
             # Instrument with pebil
             if (pebil_loaded):
                 cmd = "pebil --tool ArielIntercept --app hello --inp + --threaded"
-                rtn2 = OSCommand(cmd, set_cwd=self.ArielElementTestMPIDir).run()
+                rtn2 = os_command(cmd, set_cwd=self.ArielElementTestMPIDir).run()
                 log_debug("Ariel tests/testMPI pebil result = {0}; output =\n{1}".format(rtn2.result(), rtn2.output()))
                 if rtn2.result() != 0:
                     log_debug("Ariel {0} pebil returned non-zero exit code. Error:\n{1}".format(self.ArielElementTestMPIDir, rtn2.error()))
@@ -322,7 +322,7 @@ class testcase_Ariel(SSTTestCase):
             # Instrument with pebil
             if (pebil_loaded):
                 cmd = "pebil --tool ArielIntercept --app reduce --inp + --threaded"
-                rtn3 = OSCommand(cmd, set_cwd=self.ArielElementTestMPIDir).run()
+                rtn3 = os_command(cmd, set_cwd=self.ArielElementTestMPIDir).run()
                 log_debug("Ariel tests/testMPI pebil result = {0}; output =\n{1}".format(rtn3.result(), rtn3.output()))
                 if rtn3.result() != 0:
                     log_debug("Ariel {0} pebil returned non-zero exit code. Error:\n{1}".format(self.ArielElementTestMPIDir, rtn3.error()))

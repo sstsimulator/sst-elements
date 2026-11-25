@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -845,6 +845,14 @@ void CoherenceController::printStatus(Output& out) {
     }
 
     out.output("  End MemHierarchy::CoherenceController\n");
+}
+
+void CoherenceController::snapshotCache(const std::string& dir, const std::string& cacheName) {
+    // Default: no-op. Subclasses with cache arrays override this.
+}
+
+void CoherenceController::snapshotLoadCache(const std::string& dir, const std::string& cacheName) {
+    // Default: no-op. Subclasses with cache arrays override this.
 }
 
 /**************************************/

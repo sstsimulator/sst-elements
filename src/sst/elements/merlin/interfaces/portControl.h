@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -96,34 +96,34 @@ public:
 
 private:
     // Link to NIC or other router
-    Link* port_link;
+    Link* port_link = nullptr;
     // Self link for timing output.  This is how we manage bandwidth
     // usage
-    Link* output_timing;
+    Link* output_timing = nullptr;
     TimeConverter flit_cycle;
 
 	// Self link for dynamic link additions
-	Link* dynlink_timing;
+	Link* dynlink_timing = nullptr;
 	// Threshold of how idle a link is before it reduces link width 0 to 1 (negative means no link adjustments).
 	// i.e. if (idle > dlink_thresh) then reduce link width.
-	float dlink_thresh;
+	float dlink_thresh = 0.0;
 
 	// Self link for disabling a port temporarily
-	Link* disable_timing;
+	Link* disable_timing = nullptr;
 
     std::deque<Event*> init_events;
 
-    int rtr_id;
+    int rtr_id = -1;
     // Number of virtual channels
-    int num_vcs;
+    int num_vcs = 0;
 
-    int num_vns;
+    int num_vns = 0;
     std::string vn_remap_shm;
-    int vn_remap_shm_size;
+    int vn_remap_shm_size = 0;
     Shared::SharedArray<int> vn_remap;
 
-	int max_link_width;
-	int cur_link_width;
+	int max_link_width = 0;
+	int cur_link_width = 0;
 
 	// Delay before a link width can be increased (limited by PLL ~400ns to 1us).
 	UnitAlgebra link_width_transition_delay;
@@ -133,18 +133,18 @@ private:
     UnitAlgebra input_buf_size;
     UnitAlgebra output_buf_size;
 
-    Topology* topo;
-    int port_number;
-    bool host_port;
-    bool remote_rdy_for_credits;
+    Topology* topo = nullptr;
+    int port_number = -1;
+    bool host_port = false;
+    bool remote_rdy_for_credits = false;
 
-    int remote_rtr_id;
-    int remote_port_number;
+    int remote_rtr_id = -1;
+    int remote_port_number = -1;
 
     // One buffer for each virtual network.  At the NIC level, we just
     // provide a virtual network abstraction.
-    port_queue_t* input_buf;
-    port_queue_t* output_buf;
+    port_queue_t* input_buf = nullptr;
+    port_queue_t* output_buf = nullptr;
 
     // Need an output queue for topology events.  Incoming topology
     // events will be directed right to the topolgy object.
@@ -154,26 +154,26 @@ private:
     // the arbitration logic, so we'll have each PortControl put the
     // head of each of its VC queues into a single array to speed
     // things up.  This is an array passed into the constructor.
-    internal_router_event** vc_heads;
+    internal_router_event** vc_heads = nullptr;
 
-    int* input_buf_count;
-    int* output_buf_count;
+    int* input_buf_count = nullptr;
+    int* output_buf_count = nullptr;
 
     // Keep track of how many items are in the output queues.  This
     // can be used by topology objects to make adaptive routing
     // decisions.
-    int* output_queue_lengths;
+    int* output_queue_lengths = nullptr;
 
     // Tracks whether queue_lengths are per VC or for the entire port.
     // If for the entire port, it will increment and decrement all VCs
     // so that they track the enire queue occupancy for the port.
-    bool oql_track_port;
+    bool oql_track_port = false;
 
     // Tracks whether or not the output_queue_lengths will track only
     // the local output port, or will also track the next input queue.
     // In this mode, it only decrements the count on returned credits
     // from next router.
-    bool oql_track_remote;
+    bool oql_track_remote = false;
 
 
 
@@ -181,35 +181,35 @@ private:
     // the credits available for your next buffer, as well as track
     // the credits you need to return to the buffer sending data to
     // you,
-    int* xbar_in_credits;
+    int* xbar_in_credits = nullptr;
 
-    int* port_ret_credits;
-    int* port_out_credits;
+    int* port_ret_credits = nullptr;
+    int* port_out_credits = nullptr;
 
     // Represents the start of when a port was idle
     // If the buffer was empty we instantiate this to the current time
-    SimTime_t idle_start;
+    SimTime_t idle_start = 0;
 	// Represents the start of a data transmit
-	SimTime_t active_start;
+	SimTime_t active_start = 0;
 
 	// Tells us whether the link was in an idle or active state.
 	// Used to let us know when we need to record an idle window
 	// as a statistic.
-	bool is_idle;
-	bool is_active;
+	bool is_idle = false;
+	bool is_active = false;
 
     // Vairable to tell us if we are waiting for something to happen
     // before we begin more output.  The two things we are waiting on
     // is: 1 - adding new data to output buffers, or 2 - getting
     // credits back from the router.
-    bool waiting;
+    bool waiting = false;
     // Tracks whether we have packets while waiting.  If we do, that
     // means we're blocked and we need to keep track of block time
-    bool have_packets;
-    SimTime_t start_block;
+    bool have_packets = false;
+    SimTime_t start_block = 0;
 
-    Router* parent;
-    bool connected;
+    Router* parent = nullptr;
+    bool connected = false;
 
     // Statistics
     Statistic<uint64_t>* send_bit_count;
@@ -220,45 +220,58 @@ private:
 
 	// SAI Metrics (S+A+I=1) corresponds to
 	// sai_win_start to (sai_win_start + sai_win_length)
-	double stalled;
-	double active;
-	double idle;
+	double stalled = 0.0;
+	double active = 0.0;
+	double idle = 0.0;
 
 	// The length of time SAI represents
-	double sai_win_length;
-	uint64_t sai_win_length_nano;
-	uint64_t sai_win_length_pico;
+	double sai_win_length = 0.0;
+	uint64_t sai_win_length_nano = 0;
+	uint64_t sai_win_length_pico = 0;
 	// The start time of the window
-	SimTime_t sai_win_start;
+	SimTime_t sai_win_start = 0;
 	// The amount of delay from adjusting a link width
-	SimTime_t sai_adj_delay;
+	SimTime_t sai_adj_delay = 0;
 	// After adjusting a link the port is disable for sai_adj_delay
-	bool sai_port_disabled;
+	bool sai_port_disabled = false;
 
     // Specifies if the active time is going past the window
-	bool ongoing_transmit;
-	uint64_t time_active_nano_remaining;
+	bool ongoing_transmit = false;
+	uint64_t time_active_nano_remaining = 0;
 
     RtrInitEvent* checkInitProtocol(Event* ev, RtrInitEvent::Commands command, uint32_t line, const char* file, const char* func);
 
     Output& output;
 
-    PortInterface::OutputArbitration* output_arb;
+    PortInterface::OutputArbitration* output_arb = nullptr;
 
     // For supporting congestion management
     struct CongestionInfo {
-        const int32_t  src;
-        uint32_t  count;
-        uint32_t  total_count;
-        uint32_t  flit_count;
-        uint32_t  throttle;
-        SimTime_t last_seen;
-        SimTime_t expiration_time;
-        bool active;
-        bool reported_done;
+        int32_t  src = 0;
+        uint32_t  count = 0;
+        uint32_t  total_count = 0;
+        uint32_t  flit_count = 0;
+        uint32_t  throttle = 0;
+        SimTime_t last_seen = 0;
+        SimTime_t expiration_time = 0;
+        bool active = false;
+        bool reported_done = false;
+
+        CongestionInfo() = default;
 
         CongestionInfo(uint32_t src) : src(src), count(0), total_count(0), flit_count(0), throttle(0),last_seen(0), expiration_time(0), active(false), reported_done(false)  {}
 
+        void serialize_order(SST::Core::Serialization::serializer& ser) {
+            SST_SER(src);
+            SST_SER(count);
+            SST_SER(total_count);
+            SST_SER(flit_count);
+            SST_SER(throttle);
+            SST_SER(last_seen);
+            SST_SER(expiration_time);
+            SST_SER(active);
+            SST_SER(reported_done);
+        }
     };
 
     class congestion_info_expiration_pq_order {
@@ -287,62 +300,91 @@ private:
         }
     };
 
-    SimTime_t mtu_ser_time;
-    SimTime_t flit_ser_time;
-    bool enable_congestion_management;
-    bool cm_activated;
-    int cm_outstanding_threshold;
-    int cm_incast_threshold;
-    int cm_pktsize_threshold;
-    double cm_window_factor;
+    SimTime_t mtu_ser_time = 0;
+    SimTime_t flit_ser_time = 0;
+    bool enable_congestion_management = false;
+    bool cm_activated = false;
+    int cm_outstanding_threshold = 0;
+    int cm_incast_threshold = 0;
+    int cm_pktsize_threshold = 0;
+    double cm_window_factor = 0.0;
 
     std::map<uint32_t,CongestionInfo> congestion_map;
     std::priority_queue<CongestionInfo*, std::vector<CongestionInfo* >, congestion_info_expiration_pq_order> expiration_queue;
-    int current_incast;
-    int total_flits_incoming;
-    int total_incast_flits;
-    int congestion_events;
-    int congestion_count_at_last_throttle;
+    int current_incast = 0;
+    int total_flits_incoming = 0;
+    int total_incast_flits = 0;
+    int congestion_events = 0;
+    int congestion_count_at_last_throttle = 0;
 
 public:
 
-    void recvCtrlEvent(CtrlRtrEvent* ev);
-    void sendCtrlEvent(CtrlRtrEvent* ev);
+    void recvCtrlEvent(CtrlRtrEvent* ev) override;
+    void sendCtrlEvent(CtrlRtrEvent* ev) override;
     // Returns true if there is space in the output buffer and false
     // otherwise.
-    void send(internal_router_event* ev, int vc);
+    void send(internal_router_event* ev, int vc) override;
     // Returns true if there is space in the output buffer and false
     // otherwise.
-    bool spaceToSend(int vc, int flits);
+    bool spaceToSend(int vc, int flits) override;
     // Returns NULL if no event in input_buf[vc]. Otherwise, returns
     // the next event.
-    internal_router_event* recv(int vc);
-    internal_router_event** getVCHeads() {
+    internal_router_event* recv(int vc) override;
+    internal_router_event** getVCHeads() override
+    {
     	return vc_heads;
     }
-    virtual void reportIncomingEvent(internal_router_event* ev);
+    virtual void reportIncomingEvent(internal_router_event* ev) override;
+
+    PortControl() : PortInterface(), output(getSimulationOutput()) {}
 
     // time_base is a frequency which represents the bandwidth of the link in flits/second.
     PortControl(ComponentId_t cid, Params& params, Router* rif, int rtr_id, int port_number, Topology *topo);
 
-    void initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads, int* xbar_in_credits, int* output_queue_lengths);
+    void initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads, int* xbar_in_credits, int* output_queue_lengths) override;
+
+    // Re-establish non-owning pointers after checkpoint restart
+    void restoreSharedArrays(internal_router_event** vc_heads_in, int* xbar_in_credits_in, int* output_queue_lengths_in)
+    {
+        vc_heads = vc_heads_in;
+        if ( connected ) {
+            xbar_in_credits = xbar_in_credits_in;
+            output_queue_lengths = output_queue_lengths_in;
+        }
+    }
+
+    // After checkpoint restart, repopulate vc_heads from deserialized
+    // input_buf fronts. Events were already routed pre-checkpoint so
+    // we must NOT call route_packet() again.
+    void repopulateVCHeads()
+    {
+        if ( !connected ) return;
+        for ( int i = 0; i < num_vcs; i++ ) {
+            if ( !input_buf[i].empty() ) {
+                vc_heads[i] = input_buf[i].front();
+            }
+        }
+    }
 
 
     ~PortControl();
-    void setup();
-    void finish();
-    void init(unsigned int phase);
-    void complete(unsigned int phase);
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::Merlin::PortControl)
+    void setup() override;
+    void finish() override;
+    void init(unsigned int phase) override;
+    void complete(unsigned int phase) override;
 
 
-    void sendUntimedData(Event *ev);
-    Event* recvUntimedData();
+    void sendUntimedData(Event *ev) override;
+    Event* recvUntimedData() override;
 
-    void dumpState(std::ostream& stream);
-    void printStatus(Output& out, int out_port_busy, int in_port_busy);
+    void dumpState(std::ostream& stream) override;
+    void printStatus(Output& out, int out_port_busy, int in_port_busy) override;
 
-	bool decreaseLinkWidth();
-	bool increaseLinkWidth();
+	bool decreaseLinkWidth() override;
+	bool increaseLinkWidth() override;
 
 private:
 

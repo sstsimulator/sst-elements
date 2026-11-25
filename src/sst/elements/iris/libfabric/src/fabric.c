@@ -672,6 +672,7 @@ libdl_done:
 	ofi_register_provider(UDP_INIT, NULL);
 	ofi_register_provider(SOCKETS_INIT, NULL);
 	ofi_register_provider(TCP_INIT, NULL);
+	ofi_register_provider(SUMI_INIT, NULL);
 
 	ofi_register_provider(HOOK_PERF_INIT, NULL);
 	ofi_register_provider(HOOK_DEBUG_INIT, NULL);

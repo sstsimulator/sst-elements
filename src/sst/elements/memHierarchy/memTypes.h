@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,6 +17,7 @@
 #define MEMHIERARCHY_MEMTYPES_H
 
 #include <sst/core/sst_types.h>
+#include <cstring>
 #include <limits>
 #include <numeric>
 
@@ -226,6 +227,16 @@ static State NextState[] __attribute__((unused)) = {
 };
 
 #undef STATE_TYPES
+
+/** Convert a state name string (e.g. "M", "S", "E") to the State enum.
+ *  Returns I (Invalid) if the string is not recognized. */
+static State stringToState(const char* str) __attribute__((unused));
+static State stringToState(const char* str) {
+    for (int i = 0; i < LAST_STATE; i++) {
+        if (strcmp(StateString[i], str) == 0) return (State)i;
+    }
+    return I;
+}
 
 static const std::string NONE = "None";
 

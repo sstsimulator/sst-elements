@@ -1,0 +1,9 @@
+---
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        # sst-ci-job.yml follows sst-core@devel on purpose; see the comment
+        # in test-matrix-github.yml.
+        "sstsimulator/sst-core/*": ref-pin
+        "*": hash-pin

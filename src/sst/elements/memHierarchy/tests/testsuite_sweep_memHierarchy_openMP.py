@@ -162,7 +162,6 @@ class testcase_memH_sweep_openMP(SSTTestCase):
         # and verify it exists
         ompapppath = "{0}/openMP/{1}/{1}".format(test_path, omp_app)
         self.assertTrue(os.path.isfile(ompapppath), "Sweep openMP Test; ompfile {0} - not found".format(ompapppath))
-        os.environ["OMP_EXE"] = ompapppath
 
         # Set the model options for the test (This is what we sweep)
         otherargs = '--model-options="--L1cachesz={0} --L1assoc={1} --L2cachesz={2} --L2assoc={3} --L2MSHR={4} --Replacp={5} --MSIMESI={6} --Pref={7}" '.format(
@@ -176,7 +175,7 @@ class testcase_memH_sweep_openMP(SSTTestCase):
                     prefetch)
 
         # Run SST
-        self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
+        self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, mpi_out_files=mpioutfiles, timeout_sec=testtimeout, env={"OMP_EXE": ompapppath})
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
@@ -206,13 +205,13 @@ class testcase_memH_sweep_openMP(SSTTestCase):
                     refcount = 0
                     # Grep the ref file for the count of this line occuring
                     cmd = 'grep -c "{0}" {1}'.format(testline, reffile)
-                    rtn = OSCommand(cmd).run()
+                    rtn = os_command(cmd).run()
                     self.assertEqual(rtn.result(), 0, "Sweep openMP Test failed running cmdline {0} - grepping reffile {1}".format(cmd, reffile))
                     refcount = int(rtn.output())
 
                     # Grep the out file for the count of this line occuring
                     cmd = 'grep -c "{0}" {1}'.format(testline, outfile)
-                    rtn = OSCommand(cmd).run()
+                    rtn = os_command(cmd).run()
                     if rtn.result() == 0:
                         outcount = int(rtn.output())
                     else:

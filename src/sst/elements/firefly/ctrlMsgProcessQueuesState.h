@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -224,7 +224,13 @@ class ProcessQueuesState : public SubComponent
             Msg( (MatchHdr*)_vec[0].addr.getBacking() ),
             srcCore( _srcCore ), vec(_vec), key( _key)
         {
-            m_ioVec.push_back( vec[1] );
+            // vec[0]=MatchHdr, vec[1..N]=data segments. A multi-segment sender
+            // (e.g. a wrapped recursive-doubling Allgather window) must keep ALL
+            // segments; only keeping vec[1] truncates the payload and trips
+            // copyIoVec's copied==len check. Do not reduce this to vec[1].
+            for ( size_t i = 1; i < vec.size(); i++ ) {
+                m_ioVec.push_back( vec[i] );
+            }
         }
 
         int srcCore;

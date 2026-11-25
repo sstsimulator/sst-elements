@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -35,10 +35,10 @@ BroadcastShim::BroadcastShim(ComponentId_t id, Params &params) : Component(id) {
 
     while (true) {
         std::string linkName = "cpu_alloc_link_" + std::to_string(linkCPU);
-        link = configureLink(linkName, "100 ps", new Event::Handler2<BroadcastShim, &BroadcastShim::processCoreEvent>(this));
+        link = configureLink(linkName, "100 ps", new Event::Handler<BroadcastShim, &BroadcastShim::processCoreEvent>(this));
         if (link) {
             cpuAllocLinks_.push_back(link);
-            output_->output(CALL_INFO, "Port %d = Link %d\n", link->getId(), linkCPU);
+            output_->output(CALL_INFO, "Port %d = Link %" PRIu64 "\n", linkCPU, link->getId());
             linkCPU++;
         } else {
             break;
@@ -47,10 +47,10 @@ BroadcastShim::BroadcastShim(ComponentId_t id, Params &params) : Component(id) {
 
     while (true) {
         std::string linkName = "sieve_alloc_link_" + std::to_string(linkSieve);
-        link = configureLink(linkName, "100 ps", new Event::Handler2<BroadcastShim, &BroadcastShim::processSieveEvent>(this));
+        link = configureLink(linkName, "100 ps", new Event::Handler<BroadcastShim, &BroadcastShim::processSieveEvent>(this));
         if (link) {
             sieveAllocLinks_.push_back(link);
-            output_->output(CALL_INFO, "Port %d = Link %d\n", link->getId(), linkSieve);
+            output_->output(CALL_INFO, "Port %d = Link %" PRIu64 "\n", linkSieve, link->getId());
             linkSieve++;
         } else {
             break;

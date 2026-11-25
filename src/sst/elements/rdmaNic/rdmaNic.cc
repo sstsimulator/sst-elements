@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -80,10 +80,10 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
 
     // Clock handler
     std::string clockFreq = params.find<std::string>("clock", "1GHz");
-    m_clockHandler = new Clock::Handler2<RdmaNic,&RdmaNic::clock>(this);
+    m_clockHandler = new Clock::Handler<RdmaNic,&RdmaNic::clock>(this);
     m_clockTC = registerClock( clockFreq, m_clockHandler );
 
-    m_mmioLink = loadUserSubComponent<StandardMem>("mmio", ComponentInfo::SHARE_NONE, m_clockTC, new StandardMem::Handler2<RdmaNic,&RdmaNic::handleEvent>(this));
+    m_mmioLink = loadUserSubComponent<StandardMem>("mmio", ComponentInfo::SHARE_NONE, m_clockTC, new StandardMem::Handler<RdmaNic,&RdmaNic::handleEvent>(this));
 
     if (!m_mmioLink) {
         out.fatal(CALL_INFO_LONG, -1, "Unable to load StandardMem subcomponent; check that 'mmio' slot is filled in input.\n");
@@ -93,7 +93,7 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
 
 	auto useDmaCache = params.find<bool>("useDmaCache",false);
 	if ( useDmaCache ) {
-        m_dmaLink = loadUserSubComponent<StandardMem>("dma", ComponentInfo::SHARE_NONE, m_clockTC, new StandardMem::Handler2<RdmaNic,&RdmaNic::handleEvent>(this));
+        m_dmaLink = loadUserSubComponent<StandardMem>("dma", ComponentInfo::SHARE_NONE, m_clockTC, new StandardMem::Handler<RdmaNic,&RdmaNic::handleEvent>(this));
 
     	if (!m_dmaLink) {
             out.fatal(CALL_INFO_LONG, -1, " Unable to load StandardMem subcomponent; check that 'dma' slot is filled in input.\n");

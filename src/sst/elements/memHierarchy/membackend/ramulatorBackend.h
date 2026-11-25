@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -40,6 +40,7 @@ public:
             {"configFile",  "Name of the Ramulator Device config file", NULL} )
 
 /* Begin class definition */
+    [[deprecated("The Ramulator memory backend has been deprecated and will be removed in SST 17. Please switch to Ramulator2.")]]
     ramulatorMemory(ComponentId_t id, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );
     //virtual bool issueRequest(DRAMReq *req);

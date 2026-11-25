@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -45,7 +45,7 @@ basicStatistics::basicStatistics(ComponentId_t id, Params& params) : Component(i
     primaryComponentDoNotEndSim();
 
     //set our clock. The simulator will call 'clockTic' at a 4GHz frequency
-    registerClock("4 GHz", new Clock::Handler2<basicStatistics, &basicStatistics::clockTic>(this));
+    registerClock("4 GHz", new Clock::Handler<basicStatistics, &basicStatistics::clockTic>(this));
 
     // Initialize the random number generators
     rng0 = new SST::RNG::MarsagliaRNG(mars_z, mars_w);

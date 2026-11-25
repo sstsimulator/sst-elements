@@ -1,5 +1,5 @@
 /**
-Copyright 2009-2025 National Technology and Engineering Solutions of Sandia,
+Copyright 2009-2026 National Technology and Engineering Solutions of Sandia,
 LLC (NTESS).  Under the terms of Contract DE-NA-0003525, the U.S. Government
 retains certain rights in this software.
 
@@ -8,7 +8,7 @@ by National Technology and Engineering Solutions of Sandia, LLC., a wholly
 owned subsidiary of Honeywell International, Inc., for the U.S. Department of
 Energy's National Nuclear Security Administration under contract DE-NA0003525.
 
-Copyright (c) 2009-2025, NTESS
+Copyright (c) 2009-2026, NTESS
 
 All rights reserved.
 
@@ -86,7 +86,7 @@ Eager0::incoming(MpiMessage *msg, MpiQueueRecvRequest *req)
 {
   //1 = stage, TimeDelay() = time since last quiesce
   logRecvDelay(1, SST::Hg::TimeDelta(), msg, req);
-  if (req->recv_buffer_){
+  if (isNonNullBuffer(req->recv_buffer_)){
 #if SST_HG_SANITY_CHECK
     if (!msg->smsgBuffer()){
       spkt_abort_printf("have receive buffer, but no send buffer on %s", msg->toString().c_str());

@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -65,18 +65,40 @@ route_test::route_test(ComponentId_t cid, Params& params) :
 
 
     // // Register a clock
-    // registerClock( "1GHz", new Clock::Handler2<route_test,&route_test::clock_handler>(this), false);
+    // registerClock( "1GHz", new Clock::Handler<route_test,&route_test::clock_handler>(this), false);
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
-    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler2<route_test,&route_test::handle_event>(this));
+    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler<route_test,&route_test::handle_event>(this));
 }
 
 
 route_test::~route_test()
 {
-    delete link_control;
+    // SST framework manages SubComponent lifecycle — do not delete link_control
+}
+
+route_test::route_test() :
+    Component(),
+    id(0),
+    num_peers(0),
+    sending(false),
+    done(false),
+    initialized(false),
+    link_control(nullptr)
+{}
+
+void
+route_test::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Component::serialize_order(ser);
+    SST_SER(id);
+    SST_SER(num_peers);
+    SST_SER(sending);
+    SST_SER(done);
+    SST_SER(initialized);
+    SST_SER(link_control);
 }
 
 void route_test::finish()

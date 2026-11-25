@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,7 +23,7 @@
 #define VANADIS_DBG_RETIRE_FLG  (1<<4)
 // Change 'checkpoint' to 'snapshot' to
 // indicate this is not the same as SST's checkpoint
-#define VANADIS_DBG_CHECKPOINT  (1<<5)
+#define VANADIS_DBG_SNAPSHOT  (1<<5)
 #define VANADIS_DBG_SNAPSHOT  (1<<5)
 
 #endif

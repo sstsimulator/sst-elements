@@ -1,13 +1,17 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // of the distribution for more information.
+//
+// Portions copyright (c) 2026, Hewlett Packard Enterprise Development LP
+// SPDX-FileCopyrightText: Copyright Hewlett Packard Enterprise Development LP
+// SPDX-License-Identifier: BSD-3-Clause
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -43,7 +47,7 @@ VirtNic::VirtNic( ComponentId_t id, Params& params ) :
     m_latPerSend_ns = params.find<int>("latPerSend_ns",2);
 
     m_toNicLink = configureLink( params.find<std::string>("portName","nic"),
-			"1 ns", new Event::Handler2<VirtNic,&VirtNic::handleEvent>(this) );
+			"1 ns", new Event::Handler<VirtNic,&VirtNic::handleEvent>(this) );
 
     assert( m_toNicLink );
 }
@@ -92,6 +96,9 @@ void VirtNic::handleEvent( Event* ev )
     case NicRespBaseEvent::Shmem:
         handleShmemEvent( static_cast<NicShmemRespEvent*>(ev ) );
         break;
+    case NicRespBaseEvent::NetworkIO:
+        handleNetworkIOEvent( static_cast<NicNetworkIORespBaseEvent*>(ev ) );
+        break;
     }
     delete ev;
 }
@@ -122,6 +129,22 @@ void VirtNic::handleShmemEvent( NicShmemRespBaseEvent* event )
     NicShmemRespBaseEvent* ev = static_cast<NicShmemRespBaseEvent*>(event);
 
    	m_dbg.debug(CALL_INFO,2,0,"calling callback\n");
+   	ev->callback();
+
+	m_dbg.debug(CALL_INFO,2,0," %d %d\n", m_curNicQdepth, m_maxNicQdepth);
+   	assert( m_curNicQdepth > 0 );
+   	--m_curNicQdepth;
+   	if ( m_blockedCallback ) {
+       	m_blockedCallback();
+       	m_blockedCallback = NULL;
+   	}
+}
+
+void VirtNic::handleNetworkIOEvent( NicNetworkIORespBaseEvent* event )
+{
+    NicNetworkIORespBaseEvent* ev = static_cast<NicNetworkIORespBaseEvent*>(event);
+
+   	m_dbg.debug(CALL_INFO,2,0,"[VirtNic] calling NetworkIO callback\n");
    	ev->callback();
 
 	m_dbg.debug(CALL_INFO,2,0," %d %d\n", m_curNicQdepth, m_maxNicQdepth);
@@ -278,4 +301,16 @@ void VirtNic::setNotifyNeedRecv(
 {
     m_dbg.debug(CALL_INFO,2,0,"\n");
     m_notifyNeedRecv = functor;
+}
+
+void VirtNic::networkIORead( int targetNid, Hermes::Vaddr dest, size_t len, std::function<void(int)> callback )
+{
+    m_dbg.debug(CALL_INFO,2,0,"dest=%#" PRIx64 " len=%zu\n", dest, len);
+    sendCmd(0, new NicNetworkIOReadCmdEvent(  targetNid, dest, len, callback ) );
+}
+
+void VirtNic::networkIOWrite( int targetNid, Hermes::Vaddr src, size_t len, std::function<void(int)> callback )
+{
+    m_dbg.debug(CALL_INFO,2,0,"src=%#" PRIx64 " len=%zu\n", src, len);
+    sendCmd(0, new NicNetworkIOWriteCmdEvent(  targetNid, src, len, callback ) );
 }

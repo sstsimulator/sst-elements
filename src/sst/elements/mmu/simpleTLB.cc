@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -52,7 +52,7 @@ SimpleTLB::SimpleTLB(SST::ComponentId_t id, SST::Params& params) : TLB(id,params
             getName().c_str(), clock.toStringBestSI().c_str());
     }
 
-    self_link_ = configureSelfLink("selfLink", clock, new Event::Handler2<SimpleTLB,&SimpleTLB::callback>(this));
+    self_link_ = configureSelfLink("selfLink", clock, new Event::Handler<SimpleTLB,&SimpleTLB::callback>(this));
 
     uint32_t num_hw_threads = params.find<uint32_t>("num_hardware_threads", 1 );
     if ( 0 == num_hw_threads) {
@@ -84,7 +84,7 @@ SimpleTLB::SimpleTLB(SST::ComponentId_t id, SST::Params& params) : TLB(id,params
         }
     }
 
-    mmu_link_ = configureLink( "mmu", new Event::Handler2<SimpleTLB,&SimpleTLB::handleMMUEvent>(this) );
+    mmu_link_ = configureLink( "mmu", new Event::Handler<SimpleTLB,&SimpleTLB::handleMMUEvent>(this) );
     if ( nullptr == mmu_link_ ) {
         dbg_.fatal(CALL_INFO, -1, "Error: was unable to configure mmu link\n");
     }
@@ -129,7 +129,7 @@ void SimpleTLB::handleMMUEvent( Event* ev ) {
         }
     }
 
-    dbg_.debug(CALL_INFO,1,0,"req_id=%#" PRIx64 " ppn=%" PRIu32 " perms=%#" PRIx32 "\n", req->getReqId(), req->getPPN(), req->getPerms() );
+    dbg_.debug(CALL_INFO,1,0,"req_id=%#" PRI_REQUESTID " ppn=%" PRIu32 " perms=%#" PRIx32 "\n", req->getReqId(), req->getPPN(), req->getPerms() );
 
     auto record = reinterpret_cast<TlbRecord*>(req->getReqId());
     uint32_t vpn = record->virt_addr >> page_shift_;
@@ -182,7 +182,7 @@ void SimpleTLB::handleMMUEvent( Event* ev ) {
 
 void SimpleTLB::getVirtToPhys( RequestID req_id, uint32_t hw_thread_id, uint64_t virt_addr, uint32_t perms, uint64_t inst_ptr ) {
     uint32_t vpn = virt_addr >> page_shift_;
-    dbg_.debug(CALL_INFO,1,0,"req_id=%#" PRIx64 ", hw_thread_id=%" PRIu32 " virt_addr=%#" PRIx64 " vpn=%" PRIu32" perms=%#" PRIx32 "\n", req_id, hw_thread_id, virt_addr, vpn, perms);
+    dbg_.debug(CALL_INFO,1,0,"req_id=%#" PRI_REQUESTID ", hw_thread_id=%" PRIu32 " virt_addr=%#" PRIx64 " vpn=%" PRIu32" perms=%#" PRIx32 "\n", req_id, hw_thread_id, virt_addr, vpn, perms);
 
     if ( virt_addr < min_virt_addr_ || virt_addr > max_virt_addr_ ) {
         dbg_.debug(CALL_INFO,1,0,"virt_addr=%#" PRIx64 " is out of virtual memory range, flag error\n", virt_addr);
@@ -196,7 +196,7 @@ void SimpleTLB::getVirtToPhys( RequestID req_id, uint32_t hw_thread_id, uint64_t
 
     if ( nullptr != entry && checkPerms( perms, entry->perms() ) && waiting.find( vpn ) == waiting.end()) {
 
-        dbg_.debug(CALL_INFO,1,0,"hit ppn=%zu\n", entry->ppn() );
+        dbg_.debug(CALL_INFO,1,0,"hit ppn=%" PRIu32 "\n", entry->ppn() );
         uint64_t phys_addr = entry->ppn() << page_shift_ | blockOffset( virt_addr );
         self_link_->send( hit_latency_, new SelfEvent( req_id, phys_addr ));
 
@@ -204,14 +204,32 @@ void SimpleTLB::getVirtToPhys( RequestID req_id, uint32_t hw_thread_id, uint64_t
         auto record = new TlbRecord( req_id, hw_thread_id, virt_addr, perms, inst_ptr );
         auto id = reinterpret_cast<RequestID>( record );
 
-        dbg_.debug(CALL_INFO,1,0,"miss id=%#" PRIx64 "\n", id );
+        dbg_.debug(CALL_INFO,1,0,"miss id=%#" PRI_REQUESTID "\n", id );
 
         if ( waiting.find( vpn ) == waiting.end() ) {
-            dbg_.debug(CALL_INFO,1,0,"miss id=%#" PRIx64 " send to MMU\n", id );
+            dbg_.debug(CALL_INFO,1,0,"miss id=%#" PRI_REQUESTID " send to MMU\n", id );
             // we are passing the virt_addr as well as the vpn because we use it for debug with inst_ptr
             // this addition happened after the initial design and it makes VPN uneeded becuse VPN can be deduced at the MMU with virt_addr
             mmu_link_->send( new TlbMissEvent( id, hw_thread_id, vpn, perms, inst_ptr, virt_addr) );
         }
         waiting[vpn].push( id );
     }
+}
+
+void SimpleTLB::serialize_order(SST::Core::Serialization::serializer& ser) {
+    TLB::serialize_order(ser);
+
+    SST_SER(self_link_);
+    SST_SER(mmu_link_);
+    SST_SER(hit_latency_);
+    SST_SER(tlb_size_);
+    SST_SER(tlb_set_size_);
+    SST_SER(page_size_);
+    SST_SER(page_shift_);
+    SST_SER(tlb_index_shift_);
+    SST_SER(tlb_data_);
+    SST_SER(rng_);
+    SST_SER(min_virt_addr_);
+    SST_SER(max_virt_addr_);
+    SST_SER(waiting_miss_);
 }

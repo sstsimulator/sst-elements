@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -178,6 +178,14 @@ BruckActor::finalize()
 void
 RingAllgatherActor::initBuffers()
 {
+  // Seed the local chunk before it enters the ring.
+  void* dst = result_buffer_;
+  void* src = send_buffer_;
+  if (src != dst){
+    int block_size = nelems_ * type_size_;
+    void* my_chunk = ((char*)dst) + dom_me_ * block_size;
+    my_api_->memcopy(my_chunk, src, block_size);
+  }
   recv_buffer_ = result_buffer_;
 }
 

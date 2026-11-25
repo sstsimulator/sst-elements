@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -97,10 +97,10 @@ void Sieve::configureLinks() {
         std::ostringstream linkName;
         linkName << "cpu_link_" << cpuLinkCount_;
         std::string ln = linkName.str();
-        link = configureLink(ln, "100 ps", new Event::Handler2<Sieve, &Sieve::processEvent, int>(this, cpuLinkCount_));
+        link = configureLink(ln, "100 ps", new Event::Handler<Sieve, &Sieve::processEvent, int>(this, cpuLinkCount_));
         if (link) {
             cpuLinks_.push_back(link);
-            output_->output(CALL_INFO, "Port %d = Link %d\n", cpuLinks_[cpuLinkCount_]->getId(), cpuLinkCount_);
+            output_->output(CALL_INFO, "Port %d = Link %" PRIu64 "\n", cpuLinkCount_, cpuLinks_[cpuLinkCount_]->getId());
             cpuLinkCount_++;
         } else {
             break;
@@ -113,7 +113,7 @@ void Sieve::configureLinks() {
         std::ostringstream linkName;
         linkName << "alloc_link_" << i;
         std::string ln = linkName.str();
-        allocLinks_[i] = configureLink(ln, "50ps", new Event::Handler2<Sieve, &Sieve::processAllocEvent>(this));
+        allocLinks_[i] = configureLink(ln, "50ps", new Event::Handler<Sieve, &Sieve::processAllocEvent>(this));
     }
 }
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,6 +21,7 @@
 #include <iris/sumi/communicator.h>
 #include <set>
 #include <map>
+#include <limits>
 #include <stdint.h>
 //#include <sstmac/common/sstmac_config.h>
 #include <mercury/common/allocator.h>
@@ -71,22 +72,32 @@ struct Action
 
   std::string toString() const;
 
-  static const uint32_t max_round = 500;
+  // Message-id round multiplier; must exceed 2*(nproc-1) for ring all-reduce.
+  static const uint32_t max_round = 4096;
+  static const uint32_t num_action_types = 6;
+  static const uint32_t max_partner =
+    (std::numeric_limits<uint32_t>::max() -
+      (max_round * num_action_types - 1)) /
+    (max_round * num_action_types);
 
   static uint32_t messageId(type_t ty, int r, int p){
-    //factor of two is for send or receive
-    const int num_enums = 6;
-    return p*max_round*num_enums + r*num_enums + ty;
+    if (r < 0 || static_cast<uint32_t>(r) >= max_round ||
+        p < 0 || static_cast<uint32_t>(p) > max_partner){
+      sst_hg_abort_printf("Action message-id fields out of range: round=%d "
+                          "(max %u), partner=%d (max %u)",
+                          r, max_round - 1, p, max_partner);
+    }
+    return static_cast<uint32_t>(p) * max_round * num_action_types +
+           static_cast<uint32_t>(r) * num_action_types + ty;
   }
 
   static void details(uint32_t round, type_t& ty, int& r, int& p){
-    const int num_enums = 6;
     uint32_t remainder = round;
-    p = remainder / max_round / num_enums;
-    remainder -= p*max_round*num_enums;
+    p = remainder / max_round / num_action_types;
+    remainder -= p*max_round*num_action_types;
 
-    r = remainder / num_enums;
-    remainder -= r*num_enums;
+    r = remainder / num_action_types;
+    remainder -= r*num_action_types;
 
     ty = (type_t) remainder;
   }

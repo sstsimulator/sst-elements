@@ -1,13 +1,17 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // of the distribution for more information.
+//
+// Portions copyright (c) 2026, Hewlett Packard Enterprise Development LP
+// SPDX-FileCopyrightText: Copyright Hewlett Packard Enterprise Development LP
+// SPDX-License-Identifier: BSD-3-Clause
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -27,12 +31,15 @@
 #include <sst/core/link.h>
 
 #include "sst/elements/hermes/shmemapi.h"
+#include "sst/elements/hermes/networkIOapi.h"
 #include "sst/elements/thornhill/detailedCompute.h"
 #include "ioVec.h"
 #include "merlinEvent.h"
 //#include "memoryModel/trivialMemoryModel.h"
 #include "memoryModel/simpleMemoryModel.h"
 #include "memoryModel/detailedInterface.h"
+
+#include "storageModel/simpleSSD.h"
 
 #define CALL_INFO_LAMBDA     __LINE__, __FILE__
 
@@ -53,6 +60,7 @@ namespace Firefly {
 #define NIC_DBG_RECV_STREAM  (1<<8)
 #define NIC_DBG_RECV_MOVE    (1<<9)
 #define NIC_DBG_LINK_CTRL    (1<<10)
+#define NIC_DBG_NETWORKIO      (1<<11)
 
 class Nic : public SST::Component  {
 
@@ -124,6 +132,8 @@ public:
         { "dmaContentionMult", "set the DMA contention mult", "100"},
 
         { "useDetailed", "Use detailed compute model", "false"},
+
+        { "useSimpleSSD", "Use simple SSD model for Network I/O simulations", "false"},
     )
 
 	/* PARAMS
@@ -206,12 +216,17 @@ public:
 private:
 
     struct __attribute__ ((packed)) MsgHdr {
-        enum Op : unsigned char { Msg, Rdma, Shmem } op;
+        enum Op : unsigned char { Msg, Rdma, Shmem, NetworkIO } op;
     };
 
     struct __attribute__ ((packed)) MatchMsgHdr {
         size_t len;
         int    tag;
+    };
+
+    struct __attribute__ ((packed)) NetworkIOMsgHdr {
+        enum Op { Read, Write };
+        unsigned char op;
     };
 
     struct __attribute__ ((packed)) ShmemMsgHdr {
@@ -323,12 +338,14 @@ private:
 	};
 
 
+    #include "nicNetworkIO.h"
     #include "nicVirtNic.h"
     #include "nicShmem.h"
     #include "nicShmemMove.h"
     #include "nicEntryBase.h"
     #include "nicSendEntry.h"
     #include "nicShmemSendEntry.h"
+    #include "nicNetworkIOSendEntry.h"
     #include "nicRecvEntry.h"
     #include "nicSendMachine.h"
     #include "nicRecvMachine.h"
@@ -347,23 +364,23 @@ public:
     Nic(ComponentId_t, Params& );
     ~Nic();
 
-    void init( unsigned int phase );
+    void init( unsigned int phase ) override;
     int getNodeId() { return m_myNodeId; }
     int getNum_vNics() { return m_num_vNics; }
-    void printStatus(Output &out) {
+    void printStatus(Output &out) override {
         out.output("NIC %d: start time=%zu\n", m_myNodeId, (size_t) getCurrentSimTimeNano() );
         m_memoryModel->printStatus( out, m_myNodeId );
         out.output("NIC %d: done\n", m_myNodeId );
     }
 
-	Statistic<uint64_t>* m_sentByteCount;
-	Statistic<uint64_t>* m_rcvdByteCount;
-	Statistic<uint64_t>* m_sentPkts;
-	Statistic<uint64_t>* m_rcvdPkts;
-	Statistic<uint64_t>* m_networkStall;
-	Statistic<uint64_t>* m_hostStall;
-	Statistic<uint64_t>* m_recvStreamPending;
-	Statistic<uint64_t>* m_sendStreamPending;
+    Statistic<uint64_t>* m_sentByteCount;
+    Statistic<uint64_t>* m_rcvdByteCount;
+    Statistic<uint64_t>* m_sentPkts;
+    Statistic<uint64_t>* m_rcvdPkts;
+    Statistic<uint64_t>* m_networkStall;
+    Statistic<uint64_t>* m_hostStall;
+    Statistic<uint64_t>* m_recvStreamPending;
+    Statistic<uint64_t>* m_sendStreamPending;
 
     void detailedMemOp( Thornhill::DetailedCompute* detailed,
             std::vector<MemOp>& vec, std::string op, Callback callback );
@@ -519,6 +536,7 @@ struct X {
 	DetailedInterface* m_detailedInterface;
 	bool m_useDetailedCompute;
     Shmem* m_shmem;
+    NetworkIO* m_networkIO;
 	SimTime_t m_nic2host_lat_ns;
 	SimTime_t m_shmemRxDelay_ns;
 
@@ -665,6 +683,13 @@ struct X {
     int m_shmemPutLargeVN;
     int m_shmemPutSmallVN;
     size_t m_shmemPutThresholdLength;
+
+  private:
+    SimpleSSD* m_simpleSSDPtr;
+
+  public:
+    SimpleSSD* getSimpleSSDPtr() { return m_simpleSSDPtr; }
+
 };
 
 } // namesapce Firefly

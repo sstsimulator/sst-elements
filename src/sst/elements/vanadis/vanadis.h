@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -32,7 +32,7 @@
 
 #include "os/vgetthreadstate.h"
 #include "os/vdumpregsreq.h"
-#include "os/vcheckpointreq.h"
+#include "os/vsnapshotreq.h"
 
 #include <array>
 #include <limits>
@@ -183,12 +183,12 @@ public:
     VanadisCore(SST::ComponentId_t id, SST::Params& params);
     ~VanadisCore();
 
-    virtual void init(unsigned int phase);
+    void init(unsigned int phase) override;
 
-    void setup();
-    void finish();
+    void setup() override;
+    void finish() override;
 
-    void printStatus(SST::Output& output);
+    void printStatus(SST::Output& output) override;
 
     //    void handleIncomingDataCacheEvent( StandardMem::Request* ev );
     void handleIncomingInstCacheEvent(StandardMem::Request* ev);
@@ -359,11 +359,11 @@ private:
     std::vector<VanadisFloatingPointFlags*> fp_flags;
     SST::Link* os_link = nullptr;
 
-    bool* m_checkpointing = nullptr;
-    std::string m_checkpointDir;
-    enum { NO_CHECKPOINT, CHECKPOINT_LOAD, CHECKPOINT_SAVE } m_checkpoint;
-    void checkpoint(FILE*);
-    void checkpointLoad(FILE*);
+    bool* m_snapshotting = nullptr;
+    std::string m_snapshotDir;
+    enum { NO_SNAPSHOT, SNAPSHOT_LOAD, SNAPSHOT_SAVE } m_snapshot;
+    void snapshot(FILE*);
+    void snapshotLoad(FILE*);
 };
 
 } // namespace Vanadis

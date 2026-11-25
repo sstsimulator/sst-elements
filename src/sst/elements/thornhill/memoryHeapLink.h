@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -38,6 +38,10 @@ class MemoryHeapLink : public SubComponent {
 		SST::Thornhill::MemoryHeapLink
     )
 
+	SST_ELI_DOCUMENT_PORTS(
+		{"memoryHeap", "Link to the memory heap allocator", {}}
+	)
+
 	struct Entry {
 		Entry( std::function<void(uint64_t)> _fini ) : fini( _fini ) {}
 		std::function<void(uint64_t)> fini;
@@ -47,7 +51,7 @@ class MemoryHeapLink : public SubComponent {
     MemoryHeapLink( ComponentId_t id, Params& params ) : SubComponent(id)
 	{
 		m_link = configureLink( "memoryHeap", "0ps",
-            new Event::Handler2<MemoryHeapLink,&MemoryHeapLink::eventHandler>( this ) );
+            new Event::Handler<MemoryHeapLink,&MemoryHeapLink::eventHandler>( this ) );
         assert(m_link);
 	}
 

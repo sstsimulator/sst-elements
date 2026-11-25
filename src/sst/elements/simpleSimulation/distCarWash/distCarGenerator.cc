@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -41,12 +41,12 @@ distCarGenerator::distCarGenerator(ComponentId_t id, Params& params) :
 	// Register a clock so that this component can try to generate a car on a regular basis
     int arrival_frequency = params.find<int>("arrival_frequency", 3) * 60;
     std::string arrival_frequency_string = std::to_string(arrival_frequency) + "s";
-	registerClock(arrival_frequency_string, new SST::Clock::Handler2<distCarGenerator, &distCarGenerator::tick>(this));
+	registerClock(arrival_frequency_string, new SST::Clock::Handler<distCarGenerator, &distCarGenerator::tick>(this));
 
     minute_tc_ = getTimeConverter("60s");
 
 	// Configure the link that this component will use to send cars to the carwash
-	link_ = configureLink("car", new SST::Event::Handler2<distCarGenerator, &distCarGenerator::linkHandler>(this));
+	link_ = configureLink("car", new SST::Event::Handler<distCarGenerator, &distCarGenerator::linkHandler>(this));
     sst_assert(link_, CALL_INFO, -1, "Error: Is the car generator's 'car' port connected? SST was unable to configure it.\n");
 
 	// This component does not help decide when the car wash closes, so it does not register as primary

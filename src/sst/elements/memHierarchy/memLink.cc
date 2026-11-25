@@ -1,8 +1,8 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,16 +21,16 @@ using namespace SST::MemHierarchy;
 
 /* Constructor */
 
-MemLink::MemLink(ComponentId_t id, Params &params, TimeConverter* tc) : MemLinkBase(id, params, tc) {
+MemLink::MemLink(ComponentId_t id, Params &params, TimeConverter tc) : MemLinkBase(id, params, tc) {
     // Configure link
     bool found;
     std::string latency = params.find<std::string>("latency", "0ps", found);
     std::string port = params.find<std::string>("port", "port");
 
     if (found) {
-        link_ = configureLink(port, latency, new Event::Handler2<MemLinkBase, &MemLinkBase::recvNotify>(this));
+        link_ = configureLink(port, latency, new Event::Handler<MemLinkBase, &MemLinkBase::recvNotify>(this));
     } else {
-        link_ = configureLink(port, new Event::Handler2<MemLinkBase, &MemLinkBase::recvNotify>(this));
+        link_ = configureLink(port, new Event::Handler<MemLinkBase, &MemLinkBase::recvNotify>(this));
     }
 
     if (!link_)

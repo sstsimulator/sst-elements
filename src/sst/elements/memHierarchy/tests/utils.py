@@ -164,17 +164,7 @@ class Config:
             })
     def getMemParams(self):
         return dict({
-            #"backend" : "memHierarchy.simpleMem",
-            #"backend.access_time" : "30ns",
-            #"memNIC.network_bw": self.ring_bandwidth,
             "mem_size" : self.memory_capacity,
-            #"system_ini" : "system.ini",
-            #"clock" : "1Ghz",
-            #"backend.access_time" : "100 ns",
-            #"backend.device_ini" : "HBMDevice.ini",
-            #"backend.system_ini" : "HBMSystem.ini",
-            #"backend.tracing" : "1",
-            #"backend" : "memHierarchy.hbmdramsim",
             "clock" : self.memory_clock,
             "access_time" : "1000 ns",
             "verbose" : "0",

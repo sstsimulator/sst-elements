@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -110,7 +110,7 @@
 #define VANADIS_SYSCALL_RISCV64_GETRANDOM 278
 #define VANADIS_SYSCALL_RISCV64_RSEQ 293
 #define VANADIS_SYSCALL_RISCV64_CLONE3 435
-#define VANADIS_SYSCALL_RISCV64_CHECKPOINT 500
+#define VANADIS_SYSCALL_RISCV64_SNAPSHOT 500
 
 #define VANADIS_SYSCALL_RISCV_RET_REG 10
 
@@ -152,14 +152,14 @@ public:
         InstallRISCV64FuncPtr( LSEEK );
         InstallRISCV64FuncPtr( HWPROBE );
         InstallRISCV64FuncPtr( RSEQ );
-        InstallRISCV64FuncPtr( CHECKPOINT );
+        InstallRISCV64FuncPtr( SNAPSHOT );
     }
 
     virtual ~VanadisRISCV64OSHandler2() {}
 
-    VanadisSyscallEvent* CHECKPOINT( int hw_thr ) {
-        output_->verbose(CALL_INFO, 8, 0, "checkpoint()\n");
-        return new VanadisSyscallCheckpointEvent(core_id_, hw_thr, VanadisOSBitType::VANADIS_OS_64B );
+    VanadisSyscallEvent* SNAPSHOT( int hw_thr ) {
+        output_->verbose(CALL_INFO, 8, 0, "snapshot()\n");
+        return new VanadisSyscallSnapshotEvent(core_id_, hw_thr, VanadisOSBitType::VANADIS_OS_64B );
     }
 
     VanadisSyscallEvent* CLONE( int hw_thr ) {

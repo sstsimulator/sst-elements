@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -66,8 +66,8 @@ BackgroundTraffic::BackgroundTraffic(ComponentId_t cid, Params& params) :
 
 
     // Register functors for the SimpleNetwork IF
-    send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler2<BackgroundTraffic,&BackgroundTraffic::send_notify>(this);
-    recv_notify_functor = new SST::Interfaces::SimpleNetwork::Handler2<BackgroundTraffic,&BackgroundTraffic::handle_receives>(this);
+    send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler<BackgroundTraffic,&BackgroundTraffic::send_notify>(this);
+    recv_notify_functor = new SST::Interfaces::SimpleNetwork::Handler<BackgroundTraffic,&BackgroundTraffic::handle_receives>(this);
 
     // link_if->setNotifyOnSend(send_notify_functor);
     link_if->setNotifyOnReceive(recv_notify_functor);
@@ -88,15 +88,54 @@ BackgroundTraffic::BackgroundTraffic(ComponentId_t cid, Params& params) :
     primaryComponentOKToEndSim();
 
     base_tc = registerTimeBase("1ps",false);
-    timing_link = configureSelfLink("timing_link", base_tc, new Event::Handler2<BackgroundTraffic,&BackgroundTraffic::output_timing>(this));
+    timing_link = configureSelfLink("timing_link", base_tc, new Event::Handler<BackgroundTraffic,&BackgroundTraffic::output_timing>(this));
 
 
 }
 
 
+BackgroundTraffic::BackgroundTraffic() :
+    Component(),
+    offered_load(0.0),
+    next_time(0),
+    send_interval(0),
+    link_if(nullptr),
+    send_notify_functor(nullptr),
+    recv_notify_functor(nullptr),
+    packetDestGen(nullptr),
+    id(-1),
+    num_peers(0),
+    packet_size(0),
+    packets_sent(0),
+    packets_recd(0),
+    timing_link(nullptr),
+    pattern_params(nullptr)
+{}
+
+void BackgroundTraffic::serialize_order(SST::Core::Serialization::serializer& ser) {
+    Component::serialize_order(ser);
+
+    SST_SER(offered_load);
+    SST_SER(link_bw);
+    SST_SER(serialization_time);
+    SST_SER(next_time);
+    SST_SER(send_interval);
+    SST_SER(base_tc);
+    SST_SER(link_if);
+    SST_SER(send_notify_functor);
+    SST_SER(recv_notify_functor);
+    SST_SER(packetDestGen);
+    SST_SER(id);
+    SST_SER(num_peers);
+    SST_SER(packet_size);
+    SST_SER(packets_sent);
+    SST_SER(packets_recd);
+    SST_SER(timing_link);
+}
+
 BackgroundTraffic::~BackgroundTraffic()
 {
-    delete link_if;
+    // SST framework manages SubComponent lifecycle — do not delete link_if
 }
 
 

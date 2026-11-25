@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -40,7 +40,7 @@ HgBase(uint32_t id) :
     if (!time_converter_){
       time_converter_ = CoreBase::getTimeConverter(_tick_spacing_string_);
     }
-    self_link_ = CoreBase::configureSelfLink("HgComponent" + std::to_string(self_id()), time_converter_,new SST::Event::Handler2<HgBase,&HgBase::handleExecutionEvent>(this));
+    self_link_ = CoreBase::configureSelfLink("HgComponent" + std::to_string(self_id()), time_converter_,new SST::Event::Handler<HgBase,&HgBase::handleExecutionEvent>(this));
     ++selfid;
 
     RankInfo num_ranks = CoreBase::getNumRanks();

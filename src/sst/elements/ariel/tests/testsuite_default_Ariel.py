@@ -2,6 +2,7 @@
 
 from sst_unittest import *
 from sst_unittest_support import *
+import fcntl
 import os
 
 ##############################################
@@ -130,25 +131,25 @@ class testcase_Ariel(SSTTestCase):
             Ariel_test_stream_mlm_app = Ariel_test_stream_mlm_app + ".arielinst"
 
         # Set the Path to the stream applications
-        os.environ["ARIEL_TEST_STREAM_APP"] = Ariel_test_stream_app
+        env = {"ARIEL_TEST_STREAM_APP": Ariel_test_stream_app}
+        libpaths = [self.ariel_libdir]
         if app == "":
-            os.environ["OMP_EXE"] = Ariel_ompmybarrier_app
+            env["OMP_EXE"] = Ariel_ompmybarrier_app
         elif app == "stream_mlm":
-            os.environ["OMP_EXE"] = Ariel_test_stream_mlm_app
-            libpath = os.environ.get("LD_LIBRARY_PATH")
-            if libpath:
-                os.environ["LD_LIBRARY_PATH"] = ArielElementAPIDir + ":" + libpath
-            else:
-                os.environ["LD_LIBRARY_PATH"] = ArielElementAPIDir
+            env["OMP_EXE"] = Ariel_test_stream_mlm_app
+            libpaths.insert(0, ArielElementAPIDir)
             # Also simlink in malloc.txt
             filepath = "{0}/malloc.txt".format(ArielElementFrontendDir)
             if os.path.islink(filepath) == False:
                 os_symlink_file(ArielElementStreamDir, ArielElementFrontendDir, "malloc.txt")
         else:
-            os.environ["OMP_EXE"] = app # Probably will fail unless this path is correctly set, but will give a useful error message
+            env["OMP_EXE"] = app # Probably will fail unless this path is correctly set, but will give a useful error message
+        if os.environ.get("LD_LIBRARY_PATH"):
+            libpaths.append(os.environ["LD_LIBRARY_PATH"])
+        env["LD_LIBRARY_PATH"] = ":".join(libpaths)
 
         # Set the frontend (epa or pin)
-        os.environ["ARIEL_TEST_FRONTEND"] = frontend
+        env["ARIEL_TEST_FRONTEND"] = frontend
 
         # Set the various file paths
         testDataFileName=("test_Ariel_{0}_{1}".format(testcase, frontend))
@@ -170,7 +171,7 @@ class testcase_Ariel(SSTTestCase):
 
         # Run SST in the tests directory
         self.run_sst(sdlfile, outfile, errfile, set_cwd=ArielElementStreamDir,
-                     mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
+                     mpi_out_files=mpioutfiles, timeout_sec=testtimeout, env=env)
 
         testing_remove_component_warning_from_file(outfile)
 
@@ -201,6 +202,14 @@ class testcase_Ariel(SSTTestCase):
 #######################
 
     def _setup_ariel_test_files(self):
+        # Concurrent tests build and instrument the same binaries in the
+        # source tree, so only one test at a time may do that.
+        lockfile = "{0}/ariel_build.lock".format(self.get_test_output_tmp_dir())
+        with open(lockfile, "w") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            self._build_ariel_test_files()
+
+    def _build_ariel_test_files(self):
         # NOTE: This routine is called a single time at module startup, so it
         #       may have some redunant
         log_debug("_setup_ariel_test_files() Running")
@@ -217,25 +226,18 @@ class testcase_Ariel(SSTTestCase):
         # There is no separate config variable for this so we get the parent of the element library directory.
         elements_libdir = sstsimulator_conf_get_value('SST_ELEMENT_LIBRARY', 'SST_ELEMENT_LIBRARY_LIBDIR', str)
         libdir = os.path.join(elements_libdir, '..')
-
-        current_ld_library_path = os.environ.get("LD_LIBRARY_PATH", "")
-        if current_ld_library_path != "":
-            new_ld_library_path = f"{current_ld_library_path}:{libdir}"
-        else:
-            new_ld_library_path = libdir
-
-        os.environ["LD_LIBRARY_PATH"] = new_ld_library_path
+        self.ariel_libdir = libdir
 
         # Now build the Ariel stream example
         cmd = f"make LDFLAGS=-L{libdir}"
-        rtn1 = OSCommand(cmd, set_cwd=self.ArielElementStreamDir).run()
+        rtn1 = os_command(cmd, set_cwd=self.ArielElementStreamDir).run()
         log_debug("Ariel stream Make result = {0}; output =\n{1}".format(rtn1.result(), rtn1.output()))
         if rtn1.result() != 0:
             log_debug("Ariel {0} Make returned non-zero exit code. Error:\n{1}".format(self.ArielElementStreamDir, rtn1.error()))
 
         # Now build the ompmybarrier binary
         cmd = "make"
-        rtn2 = OSCommand(cmd, set_cwd=self.ArielElementompmybarrierDir).run()
+        rtn2 = os_command(cmd, set_cwd=self.ArielElementompmybarrierDir).run()
         log_debug("Ariel ompmybarrier Make result = {0}; output =\n{1}".format(rtn2.result(), rtn2.output()))
         if rtn2.result() != 0:
             log_debug("Ariel {0} Make returned non-zero exit code. Error:\n{1}".format(self.ArielElementompmybarrierDir, rtn2.error()))
@@ -260,7 +262,7 @@ class testcase_Ariel(SSTTestCase):
             # Instrument with pebil
             if (pebil_loaded):
                 cmd = "pebil --tool ArielIntercept --app stream --inp +"
-                rtn3 = OSCommand(cmd, set_cwd=self.ArielElementStreamDir).run()
+                rtn3 = os_command(cmd, set_cwd=self.ArielElementStreamDir).run()
                 log_debug("Ariel stream pebil result = {0}; output =\n{1}".format(rtn3.result(), rtn3.output()))
                 if rtn3.result() != 0:
                     log_debug("Ariel {0} pebil returned non-zero exit code. Error:\n{1}".format(self.ArielElementStreamDir, rtn3.error()))
@@ -276,7 +278,7 @@ class testcase_Ariel(SSTTestCase):
             # Instrument with pebil
             if (pebil_loaded):
                 cmd = "pebil --tool ArielIntercept --app stream_mlm --inp +"
-                rtn4 = OSCommand(cmd, set_cwd=self.ArielElementStreamDir).run()
+                rtn4 = os_command(cmd, set_cwd=self.ArielElementStreamDir).run()
                 log_debug("Ariel stream pebil result = {0}; output =\n{1}".format(rtn4.result(), rtn4.output()))
                 if rtn4.result() != 0:
                     log_debug("Ariel {0} pebil returned non-zero exit code. Error:\n{1}".format(self.ArielElementStreamDir, rtn4.error()))
@@ -292,7 +294,7 @@ class testcase_Ariel(SSTTestCase):
             # Instrument with pebil
             if (pebil_loaded):
                 cmd = "pebil --tool ArielIntercept --app ompmybarrier --inp + --threaded"
-                rtn5 = OSCommand(cmd, set_cwd=self.ArielElementompmybarrierDir).run()
+                rtn5 = os_command(cmd, set_cwd=self.ArielElementompmybarrierDir).run()
                 log_debug("Ariel stream pebil result = {0}; output =\n{1}".format(rtn5.result(), rtn5.output()))
                 if rtn5.result() != 0:
                     log_debug("Ariel {0} pebil returned non-zero exit code. Error:\n{1}".format(self.ArielElementompmybarrierDir, rtnr.error()))

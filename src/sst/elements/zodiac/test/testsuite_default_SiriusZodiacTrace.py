@@ -29,7 +29,7 @@ class testcase_SiriusZodiacTrace(SSTTestCase):
     def test_Sirius_Zodiac_16(self):
         self.SiriusZodiacTrace_test_template("4x4")
 
-    @unittest.skipIf(not testing_check_is_nightly(), "Sirius_Zodiac_128 only runs on Nightly builds.")
+    @categorize("nightly")
     def test_Sirius_Zodiac_128(self):
         self.SiriusZodiacTrace_test_template("8x8x2")
 
@@ -44,7 +44,6 @@ class testcase_SiriusZodiacTrace(SSTTestCase):
 
         self.SiriusZodiacTraceElementDir = os.path.abspath("{0}/../".format(test_path))
         self.SiriusZodiacTraceElementTestsDir = "{0}/sirius/tests".format(self.SiriusZodiacTraceElementDir)
-        self.testSiriusZodiacTraceDir = "{0}/testSiriusZodiacTrace".format(tmpdir)
         self.testSiriusZodiacTraceTestsDir = "{0}/sst/elements/zodiac/test/allreduce".format(self.testSiriusZodiacTraceDir)
 
         # Set the various file paths
@@ -95,7 +94,7 @@ class testcase_SiriusZodiacTrace(SSTTestCase):
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        self.testSiriusZodiacTraceDir = "{0}/testSiriusZodiacTrace".format(tmpdir)
+        self.testSiriusZodiacTraceDir = "{0}/testSiriusZodiacTrace/{1}".format(tmpdir, self.testname)
 
         # Create a clean version of the testSiriusZodiacTrace Directory
         if os.path.isdir(self.testSiriusZodiacTraceDir):

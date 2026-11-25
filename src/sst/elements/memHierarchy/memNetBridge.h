@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -51,12 +51,12 @@ public:
 /* Begin class definition */
     MemNetBridge(SST::ComponentId_t id, SST::Params &params, Merlin::Bridge*  bridge);
     ~MemNetBridge();
-    void init(unsigned int);
-    void setup(void);
-    void finish(void);
+    void init(unsigned int) override;
+    void setup(void) override;
+    void finish(void) override;
 
-    SimpleNetwork::Request* translate(SimpleNetwork::Request* req, uint8_t fromNetwork);
-    SimpleNetwork::Request* initTranslate(SimpleNetwork::Request* req, uint8_t fromNetwork);
+    SimpleNetwork::Request* translate(SimpleNetwork::Request* req, uint8_t fromNetwork) override;
+    SimpleNetwork::Request* initTranslate(SimpleNetwork::Request* req, uint8_t fromNetwork) override;
 
 private:
     // Debug

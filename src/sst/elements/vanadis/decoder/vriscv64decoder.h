@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -360,7 +360,6 @@ protected:
         int64_t  simm64     = 0;
 
         bool decode_fault = true;
-
 
         // if the last two bits that are set are 11, then we are performing at least 32bit instruction formats,
         // otherwise we are performing decodes on the C-extension (16b) formats
@@ -3458,6 +3457,7 @@ protected:
                     "[decode] -> decode fault detected at 0x%" PRI_ADDR " / thr: %" PRIu32 ", set to fatal on detect\n",
                     ins_address, hw_thr);
             }
+
             bundle->addInstruction(new VanadisInstructionDecodeFault(ins_address, hw_thr, options));
         }
     }

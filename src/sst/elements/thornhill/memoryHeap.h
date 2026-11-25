@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -44,18 +44,18 @@ class MemoryHeap : public Component {
     MemoryHeap( ComponentId_t id, Params& params );
     ~MemoryHeap(){};
 
-	void setup() {}
-    void finish() {}
-    void init( unsigned int phase ) {}
+    void setup() override {}
+    void finish() override {}
+    void init( unsigned int phase ) override {}
 
   private:
     void eventHandler( SST::Event* ev, int src );
 
-    std::vector<Link*>  		m_links;
-	uint64_t                    m_currentVaddr;
-	Output						m_output;
+    std::vector<Link*>  m_links;
+    uint64_t            m_currentVaddr;
+    Output              m_output;
 
-	MemoryHeap() : Component(-1) {}
+    MemoryHeap() : Component(-1) {}
 
 };
 

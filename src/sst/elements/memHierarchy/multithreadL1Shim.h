@@ -1,8 +1,8 @@
-// Copyright 2013-2025 NTESS. Under the terms
+// Copyright 2013-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2025, NTESS
+// Copyright (c) 2013-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -57,9 +57,9 @@ public:
     ~MultiThreadL1();
 
     /** SST component basic functions */
-    void setup(void);
-    void init(unsigned int phase);
-    void finish(void);
+    void setup(void) override;
+    void init(unsigned int phase) override;
+    void finish(void) override;
 
     /** Handles response from memory hierarchy, passes to correct thread's CPU */
     void handleResponse(SST::Event *event);

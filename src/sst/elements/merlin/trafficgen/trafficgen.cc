@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -127,18 +127,46 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
-    clock_functor = new Clock::Handler2<TrafficGen,&TrafficGen::clock_handler>(this);
+    clock_functor = new Clock::Handler<TrafficGen,&TrafficGen::clock_handler>(this);
     clock_tc = registerClock( params.find<std::string>("message_rate", "1GHz"), clock_functor, false);
 
     // Register a receive handler which will simply strip the events as they arrive
-    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler2<TrafficGen,&TrafficGen::handle_receives>(this));
-    send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler2<TrafficGen,&TrafficGen::send_notify>(this);
+    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler<TrafficGen,&TrafficGen::handle_receives>(this));
+    send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler<TrafficGen,&TrafficGen::send_notify>(this);
 }
 
 
 TrafficGen::~TrafficGen()
 {
-    delete link_control;
+}
+
+void
+TrafficGen::serialize_order(SST::Core::Serialization::serializer& ser)
+{
+    Component::serialize_order(ser);
+
+    SST_SER(addressMode);
+
+    SST_SER(out);
+    SST_SER(id);
+    SST_SER(ft_loading);
+    SST_SER(ft_radix);
+    SST_SER(num_peers);
+    SST_SER(num_vns);
+    SST_SER(packets_sent);
+    SST_SER(packets_recd);
+    SST_SER(done);
+    SST_SER(link_control);
+    SST_SER(send_notify_functor);
+    SST_SER(clock_functor);
+    SST_SER(clock_tc);
+    SST_SER(base_packet_size);
+    SST_SER(packets_to_send);
+    SST_SER(base_packet_delay);
+    SST_SER(packet_delay);
+    SST_SER(packetDestGen);
+    SST_SER(packetSizeGen);
+    SST_SER(packetDelayGen);
 }
 
 

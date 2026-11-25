@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -84,14 +84,14 @@ c_TxnGenBase::c_TxnGenBase(ComponentId_t x_id, Params& x_params) :
     //// send token chg to txn unit
     m_memLink = configureLink(
             "memLink",
-            new Event::Handler2<c_TxnGenBase,&c_TxnGenBase::handleResEvent>(this));
+            new Event::Handler<c_TxnGenBase,&c_TxnGenBase::handleResEvent>(this));
 
     // get configured clock frequency
     std::string l_controllerClockFreqStr = (std::string)x_params.find<std::string>("strControllerClockFrequency", "1GHz", l_found);
 
     //set our clock
     registerClock(l_controllerClockFreqStr,
-                  new Clock::Handler2<c_TxnGenBase,&c_TxnGenBase::clockTic>(this));
+                  new Clock::Handler<c_TxnGenBase,&c_TxnGenBase::clockTic>(this));
 
     // Statistics
     s_readTxnsCompleted = registerStatistic<uint64_t>("readTxnsCompleted");

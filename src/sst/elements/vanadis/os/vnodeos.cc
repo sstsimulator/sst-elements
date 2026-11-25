@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2026 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2026, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -22,7 +22,7 @@
 
 #include "os/vnodeos.h"
 #include "vanadisDbgFlags.h"
-#include "os/vcheckpointreq.h"
+#include "os/vsnapshotreq.h"
 #include "os/vgetthreadstate.h"
 #include "os/resp/voscallresp.h"
 #include "os/resp/vosexitresp.h"
@@ -49,19 +49,19 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
     output_ = new SST::Output(output_prefix, verbosity, mask, Output::STDOUT);
     free(output_prefix);
 
-    checkpoint_dir_ = params.find<std::string>("checkpointDir", "");
-    auto tmp = params.find<std::string>("checkpoint", "");
+    snapshot_dir_ = params.find<std::string>("snapshotDir", "");
+    auto tmp = params.find<std::string>("snapshot", "");
     if ( ! tmp.empty() ) {
-        assert( ! checkpoint_dir_.empty() );
+        assert( ! snapshot_dir_.empty() );
         if ( 0 == tmp.compare( "load" ) ) {
-            enable_checkpoint_ = CHECKPOINT_LOAD;
+            enable_snapshot_ = SNAPSHOT_LOAD;
         } else if ( 0 == tmp.compare( "save" ) ) {
-            enable_checkpoint_ = CHECKPOINT_SAVE;
+            enable_snapshot_ = SNAPSHOT_SAVE;
         } else {
             assert(0);
         }
     } else {
-        enable_checkpoint_ = NO_CHECKPOINT;
+        enable_snapshot_ = NO_SNAPSHOT;
     }
     core_count_ = params.find<uint32_t>("cores", 1);
     hardware_thread_count_ = params.find<uint32_t>("hardwareThreadCount", 1);
@@ -124,7 +124,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
 
     int process_number = 0;
 
-    if ( CHECKPOINT_LOAD != enable_checkpoint_ ) {
+    if ( SNAPSHOT_LOAD != enable_snapshot_ ) {
         while( 1 ) {
             std::string name("process" + std::to_string(process_number) );
             Params tmp = params.get_scoped_params(name);
@@ -158,7 +158,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
         }
 
     } else {
-        process_number = checkpointLoad(checkpoint_dir_);
+        process_number = snapshotLoad(snapshot_dir_);
     }
 
     // make sure we have a thread for each process
@@ -181,7 +181,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
     mem_if_ = loadUserSubComponent<Interfaces::StandardMem>(
         "mem_interface", ComponentInfo::SHARE_NONE,
         getTimeConverter("1ps"),
-        new StandardMem::Handler2<SST::Vanadis::VanadisNodeOSComponent,&VanadisNodeOSComponent::handleIncomingMemoryCallback>(this));
+        new StandardMem::Handler<SST::Vanadis::VanadisNodeOSComponent,&VanadisNodeOSComponent::handleIncomingMemoryCallback>(this));
 
     if (mem_if_ == nullptr) {
         output_->fatal(CALL_INFO, -1, "Error: failed to load mem interface subcomponent!\n");
@@ -199,7 +199,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
 
         SST::Link* core_link = configureLink(
             port_name_buffer, "0ns",
-            new Event::Handler2<VanadisNodeOSComponent,&VanadisNodeOSComponent::handleIncomingSyscallEvent>(this));
+            new Event::Handler<VanadisNodeOSComponent,&VanadisNodeOSComponent::handleIncomingSyscallEvent>(this));
 
         if (nullptr == core_link) {
             output_->fatal(CALL_INFO, -1, "Error: unable to configure link: %s\n", port_name_buffer);
@@ -245,7 +245,7 @@ VanadisNodeOSComponent::init(unsigned int phase) {
 void
 VanadisNodeOSComponent::setup() {
 
-    if ( CHECKPOINT_LOAD == enable_checkpoint_ ) return;
+    if ( SNAPSHOT_LOAD == enable_snapshot_ ) return;
 
     // start all of the processes
     for ( const auto kv : thread_map_ ) {
@@ -263,25 +263,25 @@ void
 VanadisNodeOSComponent::finish() {
 
 
-    if ( CHECKPOINT_SAVE == enable_checkpoint_ ) {
-        if ( UNLIKELY( ! checkpoint_dir_.empty() ) ) {
-            checkpoint( checkpoint_dir_ );
+    if ( SNAPSHOT_SAVE == enable_snapshot_ ) {
+        if ( UNLIKELY( ! snapshot_dir_.empty() ) ) {
+            snapshot( snapshot_dir_ );
         }
     }
 }
 
 void
-VanadisNodeOSComponent::checkpoint( std::string dir )
+VanadisNodeOSComponent::snapshot( std::string dir )
 {
     std::stringstream filename;
     filename << dir << "/" << getName();
-    output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"Checkpoint component `%s` %s\n",getName().c_str(), filename.str().c_str());
+    output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"Snapshot component `%s` %s\n",getName().c_str(), filename.str().c_str());
 
     auto fp = fopen(filename.str().c_str(),"w+");
     assert(fp);
 
     mmu_->snapshot( dir );
-    phys_mem_mgr_->checkpoint( output_, dir );
+    phys_mem_mgr_->snapshot( output_, dir );
 
     // dump ELF map
     fprintf(fp,"elf_map_.size() %zu\n",elf_map_.size());
@@ -296,14 +296,14 @@ VanadisNodeOSComponent::checkpoint( std::string dir )
         assert( 100 == x.second->getpid() );
         fprintf(fp,"thread: %d, pid: %d %s\n",x.first,x.second->getpid(), x.second->getElfInfo()->getBinaryPath());
         if ( x.second->getpid() == x.second->gettid() ) {
-            x.second->checkpoint( output_, dir );
+            x.second->snapshot( output_, dir );
         }
     }
 
     fprintf(fp, "core_info_.size() %zu\n",core_info_.size());
     for ( auto i = 0; i < core_info_.size(); i++ ) {
         fprintf(fp, "core: %d\n",i);
-        core_info_[i].checkpoint(fp);
+        core_info_[i].snapshot(fp);
     }
 
     fprintf(fp,"elf_page_cache_.size() %zu\n",elf_page_cache_.size());
@@ -336,27 +336,26 @@ VanadisNodeOSComponent::checkpoint( std::string dir )
     assert( mem_resp_map_.empty() );
 }
 
-int VanadisNodeOSComponent::checkpointLoad( std::string dir )
+int VanadisNodeOSComponent::snapshotLoad( std::string dir )
 {
     size_t size;
     int process_number = 0;
     std::stringstream filename;
-    filename << checkpoint_dir_ << "/" << getName();
-    output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"Checkpoint component `%s` %s\n",getName().c_str(), filename.str().c_str());
-
+    filename << snapshot_dir_ << "/" << getName();
+    output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"Snapshot component `%s` %s\n",getName().c_str(), filename.str().c_str());
     auto fp = fopen(filename.str().c_str(),"r");
     assert(fp);
 
     mmu_->snapshotLoad( dir );
-    phys_mem_mgr_->checkpointLoad( output_, dir );
+    phys_mem_mgr_->snapshotLoad( output_, dir );
 
     // load ELF map
     assert( 1 == fscanf(fp,"elf_map_.size() %zu\n",&size) );
-    output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"elf_map_.size() %zu\n",size);
+    output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"elf_map_.size() %zu\n",size);
     for ( auto i = 0; i < size; i++ ) {
         char key[80], value[80];
         assert( 2 == fscanf(fp,"%s %s\n",key, value ) );
-        output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s %s\n",key,value);
+        output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"%s %s\n",key,value);
 
         VanadisELFInfo* elf_info = readBinaryELFInfo(output_, key);
         // readBinaryELFInfo does not return if fatal error is encountered
@@ -368,7 +367,7 @@ int VanadisNodeOSComponent::checkpointLoad( std::string dir )
 
     // create processes
     assert( 1 == fscanf(fp,"thread_map_.size() %zu\n", &size) );
-    output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"thread_map_.size() %zu\n", size);
+    output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"thread_map_.size() %zu\n", size);
 
     std::map<uint32_t,OS::ProcessInfo*> process_map;
     std::map<uint32_t,uint32_t> thread_to_process_map;
@@ -376,7 +375,7 @@ int VanadisNodeOSComponent::checkpointLoad( std::string dir )
         uint32_t tid, pid;
         char str[80];
         assert( 3 == fscanf(fp,"thread: %" PRIu32 ", pid: %" PRIu32 " %s\n",&tid,&pid,str ) );
-        output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"thread: %" PRIu32 ", pid: %" PRIu32 " %s\n",tid,pid, str);
+        output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"thread: %" PRIu32 ", pid: %" PRIu32 " %s\n",tid,pid, str);
         if ( tid == pid ) {
             thread_map_[tid] = new OS::ProcessInfo( output_, dir, mmu_, phys_mem_mgr_, node_num_, tid, elf_map_[str], process_debug_level_, page_size_, logical_core_count_);
             process_map[pid] = thread_map_[tid];
@@ -399,28 +398,28 @@ int VanadisNodeOSComponent::checkpointLoad( std::string dir )
 
     // core_info_.size() 1
     assert( 1 == fscanf(fp,"core_info_.size() %zu\n",&size) );
-    output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"core_info_.size() %zu\n",size);
+    output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"core_info_.size() %zu\n",size);
     assert( size == core_info_.size() );
 
     for ( auto i = 0; i < core_info_.size(); i++ ) {
 
         uint32_t core;
         assert( 1 == fscanf(fp, "core: %" SCNu32 "\n",&core) );
-        output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"core: %" PRIu32 "\n",core);
+        output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"core: %" PRIu32 "\n",core);
         assert( core == i );
 
-        assert( 1 == fscanf(fp,"hw_thread_map_.size(): %zd\n",&size) );
-        output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"hw_thread_map_.size(): %zu\n",size);
+        assert( 1 == fscanf(fp,"m_hwThreadMap.size(): %zd\n",&size) );
+        output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"hw_thread_map_.size(): %zu\n",size);
 
         for ( auto j = 0; j < size; j++ ) {
             uint32_t hw_thread;
             // hw_thread: 0
-            assert( 1 == fscanf(fp, "hw_thread: %" SCNu32 "\n",&hw_thread) );
-            output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"hw_thread: " PRIu32 "\n",hw_thread);
+            assert( 1 == fscanf(fp, "hwThread: %" SCNu32 "\n",&hw_thread) );
+            output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"hw_thread: %" PRIu32 "\n",hw_thread);
             assert( hw_thread == j );
             uint32_t pid,tid;
             assert ( 2 == fscanf(fp, "pid,tid: %" SCNu32 ", %" SCNu32 "\n",&pid,&tid) );
-            output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"pid,tid: %" PRIu32 " %" PRIu32 "\n",pid,tid);
+            output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"pid,tid: %" PRIu32 " %" PRIu32 "\n",pid,tid);
             if ( std::numeric_limits<uint32_t>::max() != pid ) {
                 setProcess( i, j, thread_map_[tid] );
             }
@@ -428,22 +427,21 @@ int VanadisNodeOSComponent::checkpointLoad( std::string dir )
     }
 
     assert ( 1 == fscanf(fp,"elf_page_cache_.size() %zu\n",&size) );
-    output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"elf_page_cache_.size() %zu\n",size);
+    output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"elf_page_cache_.size() %zu\n",size);
     for ( auto i = 0; i < size; i++ ) {
         char str [80];
         assert( 1 == fscanf(fp,"filename: %s\n",str));
-        output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"filename: %s\n",str);
-
+        output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"filename: %s\n",str);
         auto & page_map = elf_page_cache_[ elf_map_[str] ];
 
         size_t size2;
         assert( 1 == fscanf(fp,"page_map.size(): %zu\n", &size2 ) );
-        output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"page_map.size(): %zu\n",size2);
+        output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"page_map.size(): %zu\n",size2);
 
         for ( auto j = 0; j < size2; j++ ) {
             int vpn,ppn,refCnt;
             assert( 3 == fscanf(fp,"vpn: %d, ppn: %d, refCnt: %d\n",&vpn, &ppn, &refCnt ) );
-            output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"vpn: %d, ppn: %d, refCnt: %d\n",vpn,ppn,refCnt);
+            output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"vpn: %d, ppn: %d, refCnt: %d\n",vpn,ppn,refCnt);
 
             auto region = thread_map_[100]->findMemRegion("text");
 
@@ -459,34 +457,34 @@ int VanadisNodeOSComponent::checkpointLoad( std::string dir )
     }
 
     assert( 1 == fscanf(fp,"avail_hw_threads_.size() %zu\n",&size) );
-    output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"avail_hw_threads_.size() %zu\n",size);
+    output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"avail_hw_threads_.size() %zu\n",size);
     for ( auto i = 0; i < size; i++ ) {
         int core, hw_thread;
         assert( 2 == fscanf(fp,"core: %d, hw_thread: %d\n",&core,&hw_thread) );
-        output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"core: %d, hw_thread: %d\n",core,hw_thread);
+        output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"core: %d, hw_thread: %d\n",core,hw_thread);
         avail_hw_threads_.push(new OS::HwThreadID(core,hw_thread));
     }
 
     assert( 1 == fscanf(fp,"process_debug_level_: %" SCNu32 "\n",&process_debug_level_) );
-    output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"process_debug_level_: %" PRIu32 "\n",process_debug_level_);
+    output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"process_debug_level_: %" PRIu32 "\n",process_debug_level_);
 
     assert( 1 == fscanf(fp,"page_size_: %" SCNu32 "\n",&page_size_) );
-    output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"page_size_: %" PRIu32 "\n",page_size_);
+    output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"page_size_: %" PRIu32 "\n",page_size_);
 
     assert( 1 == fscanf(fp,"phdr_address_: %" SCNx64 "\n",&phdr_address_) );
-    output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"phdr_address_: %#" PRIx64 "\n",phdr_address_);
+    output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"phdr_address_: %#" PRIx64 "\n",phdr_address_);
 
     assert( 1 == fscanf(fp,"stack_top_: %" SCNx64 "\n",&stack_top_) );
-    output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"stack_top_: %#" PRIx64 "\n",stack_top_);
+    output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"stack_top_: %#" PRIx64 "\n",stack_top_);
 
     assert( 1 == fscanf(fp,"node_num_: %d\n",&node_num_) );
-    output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"node_num_: %d\n",node_num_);
+    output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"node_num_: %d\n",node_num_);
 
     assert( 1 == fscanf(fp,"os_start_time_nano_: %" PRIu64 "\n",&os_start_time_nano_) );
-    output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"os_start_time_nano_: %" PRIu64 "\n",os_start_time_nano_);
+    output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"os_start_time_nano_: %" PRIu64 "\n",os_start_time_nano_);
 
     assert( 1 == fscanf(fp,"current_tid_: %" SCNu32 "\n",&current_tid_) );
-    output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"current_tid_: %" PRIu32 "\n",current_tid_);
+    output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"current_tid_: %" PRIu32 "\n",current_tid_);
 
 //    exit(0);
     return thread_map_.size();
@@ -615,13 +613,16 @@ VanadisNodeOSComponent::handleIncomingSyscallEvent(SST::Event* ev) {
 
         if ( nullptr != event ) {
             auto syscall = getSyscall( event->getCore(), event->getThread() );
-            syscall->handleEvent( event );
-            processSyscallPost( syscall );
+            if (syscall != nullptr)
+            {
+                syscall->handleEvent( event );
+                processSyscallPost( syscall );
+            }
         } else {
 
-            VanadisCheckpointResp* resp = dynamic_cast< VanadisCheckpointResp*>(ev);
+            VanadisSnapshottResp* resp = dynamic_cast< VanadisSnapshottResp*>(ev);
             if ( nullptr != resp ) {
-                output_->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"checkpoint \n");
+                output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"snapshot \n");
              //   primaryComponentOKToEndSim();
 
                 flush_pages_.push_back( 0x2bc0 );
@@ -658,8 +659,10 @@ VanadisNodeOSComponent::handleIncomingSyscallEvent(SST::Event* ev) {
 	    auto process = core_info_.at(sys_ev->getCoreID()).getProcess( sys_ev->getThreadID() );
 	    if ( process ) {
 		    auto syscall = handleIncomingSyscall( process, sys_ev, core_links_[ sys_ev->getCoreID() ] );
-
-		    processSyscallPost( syscall );
+            if (syscall != nullptr)
+            {
+    		    processSyscallPost( syscall );
+            }
 	    } else {
             // Probable error, do not ifdef
 		    output_->output("%s: no active process for core %d, hwthread %d\n", getName().c_str(), sys_ev->getCoreID(), sys_ev->getThreadID() );
@@ -711,7 +714,7 @@ void VanadisNodeOSComponent::processOsPageFault( VanadisSyscall* syscall, uint64
     #endif
 
     uint32_t vpn = virt_addr >> page_shift_;
-    uint32_t fault_perms = is_write ? 1 << 1:  1<< 2;
+    uint32_t fault_perms = is_write ? MMU_Lib::page_perms::write : MMU_Lib::page_perms::read;
     uint32_t uninit = std::numeric_limits<uint32_t>::max();
     pageFaultHandler2( uninit, uninit, uninit, uninit, syscall->getPid(), vpn, fault_perms, 0, virt_addr, syscall );
 }
@@ -720,7 +723,7 @@ void VanadisNodeOSComponent::pageFaultHandler2( MMU_Lib::RequestID req_id, uint3
                 uint32_t pid,  uint32_t vpn, uint32_t fault_perms, uint64_t inst_ptr, uint64_t mem_virt_addr, VanadisSyscall* syscall )
 {
     #ifdef VANADIS_BUILD_DEBUG
-    output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "RequestID=%#" PRIx64 " link=%d pid=%d vpn=%d perms=%#x inst_ptr=%#" PRIx64 " syscall=%p\n",
+    output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "RequestID=%#" PRIxPTR " link=%" PRIu32 " pid=%" PRIu32 " vpn=%" PRIu32 " perms=%" PRIu32 " inst_ptr=%#" PRIx64 " syscall=%p\n",
             req_id, link, pid, vpn, fault_perms, inst_ptr, syscall );
     #endif
 
@@ -779,16 +782,16 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
     #ifdef VANADIS_BUILD_DEBUG
     output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"link=%" PRIu32 " pid=%" PRIu32 " virt_addr=%#" PRIx64 " %c%c%c inst_ptr=%#" PRIx64 " virtMemAddr=%#" PRIx64 "\n",
             link,pid,virt_addr,
-            fault_perms & 0x4 ? 'R' : '-',
-            fault_perms & 0x2 ? 'W' : '-',
-            fault_perms & 0x1 ? 'X' : '-',
+            fault_perms & MMU_Lib::page_perms::read ? 'R' : '-',
+            fault_perms & MMU_Lib::page_perms::write ? 'W' : '-',
+            fault_perms & MMU_Lib::page_perms::exe  ? 'X' : '-',
             info->inst_ptr,
             info->mem_virt_addr);
     #endif
     auto region = thread->findMemRegion( virt_addr + 1 );
 
     if ( region ) {
-        // std::numeric_limits::max indicates the vpn is not mapped to a physical page
+        // MMU_Lib::page_perms::unset indicates the vpn is not mapped to a physical page
         uint32_t page_perms = mmu_->getPerms( pid, vpn);
 
         // We got here because a TLB has to have an address resolved.
@@ -799,17 +802,17 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
         #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"found region %#" PRIx64 "-%#" PRIx64 "\n",region->addr_,region->addr_ + region->length_);
 
-        output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"virt_addr=%#010" PRIx64 ": fault-perms %c%c%c, VM-perms %c%c%c page_perms=%#x\n",virt_addr,
-            fault_perms & 0x4 ? 'R' : '-',
-            fault_perms & 0x2 ? 'W' : '-',
-            fault_perms & 0x1 ? 'X' : '-',
-            region->perms_ & 0x4 ? 'R' : '-',
-            region->perms_ & 0x2 ? 'W' : '-',
-            region->perms_ & 0x1 ? 'X' : '-',
+        output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"virt_addr=%#010" PRIx64 ": fault-perms %c%c%c, VM-perms %c%c%c page_perms=%#" PRIx32"\n",virt_addr,
+            fault_perms & MMU_Lib::page_perms::read ? 'R' : '-',
+            fault_perms & MMU_Lib::page_perms::write ? 'W' : '-',
+            fault_perms & MMU_Lib::page_perms::exe ? 'X' : '-',
+            region->perms_ & MMU_Lib::page_perms::read ? 'R' : '-',
+            region->perms_ & MMU_Lib::page_perms::write ? 'W' : '-',
+            region->perms_ & MMU_Lib::page_perms::exe ? 'X' : '-',
             page_perms);
         #endif
         // if the page is present the fault wants to write but the page doesn't have write, could be COW
-        if( (page_perms != std::numeric_limits<uint32_t>::max()) && (fault_perms & 0x2 &&  0 == (page_perms & 0x2 ) ) ) {
+        if( (page_perms != MMU_Lib::page_perms::unset) && (fault_perms & MMU_Lib::page_perms::write &&  0 == (page_perms & MMU_Lib::page_perms::write ) ) ) {
             OS::Page* new_page;
             uint32_t orig_ppn = mmu_->virtToPhys(pid,vpn);
             #ifdef VANADIS_BUILD_DEBUG
@@ -860,7 +863,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
         #ifdef VANADIS_BUILD_DEBUG
         output_->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"vpn %" PRIu32 " perms %#x\n",vpn,page_table_perms);
         #endif
-        if ( page_table_perms != std::numeric_limits<uint32_t>::max() ) {
+        if ( page_table_perms != MMU_Lib::page_perms::unset ) {
             if ( ! MMU_Lib::checkPerms( fault_perms, region->perms_ ) ) {
                 #ifdef VANADIS_BUILD_DEBUG
                 output_->verbose(CALL_INFO, 1, 0,"core %" PRIu32 ", hw_thread %" PRIu32 ", inst_ptr %#" PRIx64 " caused page fault at address %#" PRIx64 "\n",
